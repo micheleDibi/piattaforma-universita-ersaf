@@ -20,6 +20,7 @@ class ClienteBase(BaseModel):
     cliente_provinciaNascita: str
     cliente_dataNascita: date
     cliente_cittadinanza: str
+    cliente_tipoDocumento:str
     cliente_documento: str
     cliente_comuneRilascio: str
     cliente_dataRilascio: date

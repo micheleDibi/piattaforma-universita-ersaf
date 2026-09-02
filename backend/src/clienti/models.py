@@ -24,6 +24,7 @@ class Cliente(Base):
     cliente_provinciaNascita:Mapped[str] = mapped_column(String(2), nullable=False)
     cliente_dataNascita:Mapped[date] = mapped_column(Date, nullable=False)
     cliente_cittadinanza:Mapped[str] = mapped_column(String, nullable=False)
+    cliente_tipoDocumento:Mapped[str] = mapped_column(String, nullable=False)    
     cliente_documento:Mapped[str] = mapped_column(String, nullable=False)
     cliente_comuneRilascio:Mapped[str] = mapped_column(String, nullable=False)
     cliente_dataRilascio:Mapped[date] = mapped_column(Date, nullable=False)
