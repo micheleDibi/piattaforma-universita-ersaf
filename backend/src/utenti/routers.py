@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.utenti.models import Utente
 from sqlalchemy.orm import Session
-from src.utenti.schemas import UtenteResponse, UtenteBase, UtenteCreate
+from src.utenti.schemas import UtenteResponse, UtenteCreate
 from src.database import get_db
 from typing import List
+from src.auth.routers import get_current_utente
 
 
 router = APIRouter(
@@ -12,8 +13,16 @@ router = APIRouter(
 
 #POST
 @router.post("/", response_model=UtenteResponse, status_code=status.HTTP_201_CREATED)
-def crea_utente(utente: UtenteCreate, db: Session = Depends(get_db)):
-    db_utente = Utente(**utente.model_dump())
+def crea_utente(utente: UtenteCreate, 
+                db: Session = Depends(get_db), 
+                current_utente = Depends(get_current_utente)):
+    dati_utente = utente.model_dump()
+    id_corrente = current_utente.utente_id
+    dati_utente["utente_created_by"] = id_corrente
+    dati_utente["utente_updated_by"] = id_corrente
+    dati_utente["utente_padre"] = id_corrente
+
+    db_utente = Utente(**dati_utente)
     db.add(db_utente)
     db.commit()
     db.refresh(db_utente)

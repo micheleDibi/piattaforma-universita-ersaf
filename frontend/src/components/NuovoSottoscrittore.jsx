@@ -47,9 +47,27 @@ function NuovoSottoscrittore() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Dati salvati:", formData);
+
+    try {
+      const response = await fetch("http://localhost:8000/clienti", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) {
+        throw new Error("Errore durante il salvataggio dei dati");
+      }
+      const result = await response.json();
+      console.log("Dati salvati con successo nel DB:", result);
+      alert("Sottoscrittore salvato correttamente!");
+    } catch (error) {
+      console.error("Errore:", error);
+      alert("Si è verificato un errore durante il salvataggio.");
+    }
   };
 
   return (
@@ -485,6 +503,30 @@ function NuovoSottoscrittore() {
                     type="email"
                     name="pec"
                     value={formData.pec}
+                    onChange={handleChange}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
                     onChange={handleChange}
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />

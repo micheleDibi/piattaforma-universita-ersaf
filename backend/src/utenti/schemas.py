@@ -11,7 +11,7 @@ class UtenteCreate(UtenteBase):
     utente_password: str
     utente_created_by: Optional[int] = None
     utente_updated_by: Optional[int] = None
-    utente_salt: str
+    utente_salt: str | None = None
 
 class UtenteResponse(UtenteBase):
     utente_id: int

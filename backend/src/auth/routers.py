@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from src.database import get_db
@@ -36,3 +36,24 @@ def login(creds: LoginRequest, db: Session = Depends(get_db)):
         "utente_username": user.utente_username,
         "ruolo_codice": ruolo_codice
     }
+
+def get_current_utente(
+    x_utente_id: int | None = Header(default=None),
+    db: Session = Depends(get_db),
+) -> Utente:
+  if x_utente_id is None:
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Manca l'header di autenticazione (x-utente-id)",
+    )
+
+  db_utente = (
+      db.query(Utente).filter(Utente.utente_id == x_utente_id).first()
+  )
+  if not db_utente:
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Utente non trovato o non valido",
+    )
+
+  return db_utente
