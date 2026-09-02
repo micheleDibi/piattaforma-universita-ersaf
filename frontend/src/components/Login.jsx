@@ -12,7 +12,7 @@ function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/utenti/login", {
+      const response = await fetch("http://localhost:8000/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -26,6 +26,12 @@ function Login() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (Array.isArray(data.detail)) {
+          const errorMessages = data.detail
+            .map((err) => `${err.loc.join(".")}: ${err.msg}`)
+            .join(", ");
+          throw new Error(errorMessages);
+        }
         throw new Error(data.detail || "Credenziali non valide");
       }
 
