@@ -46,18 +46,9 @@ function Login() {
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-        <div className="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left shadow-xl transition-all">
-          <button className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 focus:outline-none">
-            ✕
-          </button>
-
+        <div className="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white px-14 py-5 text-left shadow-xl transition-all border-2 border-blue-900">
           <div className="mb-6 text-center">
-            <h3 className="text-2xl font-bold tracking-tight text-gray-900">
-              Accedi al tuo account
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Inserisci le tue credenziali per continuare
-            </p>
+            <h5 className="text-2xl  tracking-tight text-blue-900">Accedi</h5>
           </div>
 
           {error && (
@@ -68,40 +59,47 @@ function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Username
-              </label>
+              <label className="block text-sm  text-blue-900">Username</label>
               <input
                 type="text"
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="janesmith"
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-full border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
+              <label className="block text-sm  text-blue-900">Password</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-full border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 rounded-lg bg-indigo-600 py-2.5 px-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 transition-colors disabled:opacity-50"
+              className="w-full mt-2 rounded-full bg-indigo-600 py-2.5 px-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 transition-colors disabled:opacity-50"
             >
-              {loading ? "Accesso in corso..." : "Login"}
+              {loading ? "Accesso in corso..." : "Entra"}
             </button>
+            <div className="flex items-center justify-center text-sm pt-1">
+              <a
+                href="#forgot-password"
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log("Password dimenticata cliccata");
+                }}
+              >
+                Hai dimenticato la password?
+              </a>
+            </div>
           </form>
         </div>
       </div>
