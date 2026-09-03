@@ -1,20 +1,21 @@
 from datetime import date
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, EmailStr, PositiveInt
+from pydantic import BaseModel, ConfigDict, PositiveInt
 
 class ClienteBase(BaseModel):
     cliente_codice: str
     cliente_nome: str
     cliente_cognome: str
-    cliente_email: EmailStr
+    cliente_email: Optional[str] = None
     cliente_telefono: Optional[str] = None
     cliente_pec: Optional[str] = None
     cliente_indirizzo: str
     cliente_civico: str
     cliente_citta: str
-    cliente_CAP: int
+    cliente_CAP: Optional[str] = None
     cliente_provincia: str
     cliente_cellulare: Optional[str] = None
+    
     utente_id: PositiveInt
     cliente_luogoNascita: str
     cliente_provinciaNascita: str
@@ -29,7 +30,7 @@ class ClienteBase(BaseModel):
     cliente_indirizzoDomicilio: Optional[str] = None
     cliente_civicoDomicilio: Optional[str] = None
     cliente_cittaDomicilio: Optional[str] = None
-    cliente_CAPDomicilio: Optional[int] = None
+    cliente_CAPDomicilio: Optional[str] = None
     cliente_provinciaDomicilio: Optional[str] = None
     cliente_ruolo: int
     cliente_gg: Optional[int] = None

@@ -1,35 +1,92 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router";
 
 function NuovoSottoscrittore() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const isEditMode = Boolean(id);
+
   const [formData, setFormData] = useState({
-    codiceFiscale: "RSSMRA85M01H501Z",
+    codiceFiscale: "",
     genere: "",
-    nome: "Mario",
-    cognome: "Rossi",
-    cittadinanza: "Italiana",
-    luogoDiNascita: "Roma",
-    provDiNascita: "RM",
-    dataDiNascita: "1985-01-01",
+    nome: "",
+    cognome: "",
+    cittadinanza: "",
+    luogoDiNascita: "",
+    provDiNascita: "",
+    dataDiNascita: "",
     tipoDocumento: "",
-    nDocumento: "AA1234567",
-    comuneDiRilascio: "Milano",
-    dataInizioRilascio: "2015-01-01",
-    dataScadenza: "2015-01-01",
-    residenzaIndirizzo: "Via Roma",
-    residenzaCivico: "123",
-    residenzaComune: "Milano",
-    residenzaCap: "20100",
-    residenzaProvincia: "MI",
-    domicilioIndirizzo: "Via Milano",
-    domicilioCivico: "456",
-    domicilioComune: "Roma",
-    domicilioCap: "RM",
-    domicilioProvincia: "00100",
-    email: "mario.rossi@email.com",
-    cellulare: "+39 345 678 9100",
-    telefono: "+39 02 1234 5678",
-    pec: "mario.rossi@pec.it",
+    nDocumento: "",
+    comuneDiRilascio: "",
+    dataInizioRilascio: "",
+    dataScadenza: "",
+    residenzaIndirizzo: "",
+    residenzaCivico: "",
+    residenzaComune: "",
+    residenzaCap: "",
+    residenzaProvincia: "",
+    domicilioIndirizzo: "",
+    domicilioCivico: "",
+    domicilioComune: "",
+    domicilioCap: "",
+    domicilioProvincia: "",
+    email: "",
+    cellulare: "",
+    telefono: "",
+    pec: "",
   });
+
+  useEffect(() => {
+    if (isEditMode) {
+      fetch(`http://localhost:8000/clienti/${id}`)
+        .then((res) => {
+          if (!res.ok)
+            throw new Error("Errore nel recupero del sottoscrittore");
+          return res.json();
+        })
+        .then((data) => {
+          setFormData({
+            codiceFiscale: data.cliente_codice || "",
+            genere: data.cliente_sesso || "",
+            nome: data.cliente_nome || "",
+            cognome: data.cliente_cognome || "",
+            cittadinanza: data.cliente_cittadinanza || "",
+            luogoDiNascita: data.cliente_luogoNascita || "",
+            provDiNascita: data.cliente_provinciaNascita || "",
+            dataDiNascita: data.cliente_dataNascita
+              ? data.cliente_dataNascita.split("T")[0]
+              : "",
+            tipoDocumento: data.cliente_tipoDocumento || "",
+            nDocumento: data.cliente_documento || "",
+            comuneDiRilascio: data.cliente_comuneRilascio || "",
+            dataInizioRilascio: data.cliente_dataRilascio
+              ? data.cliente_dataRilascio.split("T")[0]
+              : "",
+            dataScadenza: data.cliente_dataScadenzaDocumento
+              ? data.cliente_dataScadenzaDocumento.split("T")[0]
+              : "",
+            residenzaIndirizzo: data.cliente_indirizzo || "",
+            residenzaCivico: data.cliente_civico || "",
+            residenzaComune: data.cliente_citta || "",
+            residenzaCap: data.cliente_CAP || "",
+            residenzaProvincia: data.cliente_provincia || "",
+            domicilioIndirizzo: data.cliente_indirizzoDomicilio || "",
+            domicilioCivico: data.cliente_civicoDomicilio || "",
+            domicilioComune: data.cliente_cittaDomicilio || "",
+            domicilioCap: data.cliente_CAPDomicilio || "",
+            domicilioProvincia: data.cliente_provinciaDomicilio || "",
+            email: data.cliente_email || "",
+            cellulare: data.cliente_cellulare || "",
+            telefono: data.cliente_telefono || "",
+            pec: data.cliente_pec || "",
+          });
+        })
+        .catch((err) => {
+          console.error("Errore:", err);
+          alert("Impossibile caricare i dati del sottoscrittore.");
+        });
+    }
+  }, [id, isEditMode]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,20 +107,77 @@ function NuovoSottoscrittore() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const utenteId = Number(localStorage.getItem("utente_id"));
+
+    const payload = {
+      cliente_codice: formData.codiceFiscale,
+      cliente_nome: formData.nome,
+      cliente_cognome: formData.cognome,
+      cliente_email: formData.email || null,
+      cliente_telefono: formData.telefono || null,
+      cliente_pec: formData.pec || null,
+      cliente_indirizzo: formData.residenzaIndirizzo,
+      cliente_civico: formData.residenzaCivico,
+      cliente_citta: formData.residenzaComune,
+      cliente_CAP: formData.residenzaCap || null,
+      cliente_provincia: formData.residenzaProvincia,
+      cliente_cellulare: formData.cellulare || null,
+
+      utente_id: utenteId,
+      cliente_ruolo: 1,
+      cliente_abilPraticheUniv: 0,
+      cliente_abilitazione_ecampus: 0,
+      cliente_abilitazione_link_campus: 0,
+      cliente_abilitazione_corsi_speciali: 0,
+      cliente_abilitazione_a4u: 0,
+
+      cliente_luogoNascita: formData.luogoDiNascita,
+      cliente_provinciaNascita: formData.provDiNascita,
+      cliente_dataNascita: formData.dataDiNascita,
+      cliente_cittadinanza: formData.cittadinanza,
+      cliente_tipoDocumento: formData.tipoDocumento,
+      cliente_documento: formData.nDocumento,
+      cliente_comuneRilascio: formData.comuneDiRilascio,
+      cliente_dataRilascio: formData.dataInizioRilascio,
+      cliente_dataScadenzaDocumento: formData.dataScadenza,
+      cliente_sesso: formData.genere, // "M" o "F"
+
+      cliente_indirizzoDomicilio: formData.domicilioIndirizzo || null,
+      cliente_civicoDomicilio: formData.domicilioCivico || null,
+      cliente_cittaDomicilio: formData.domicilioComune || null,
+      cliente_CAPDomicilio: formData.domicilioCap || null,
+      cliente_provinciaDomicilio: formData.domicilioProvincia || null,
+    };
+
+    // URL in base al fatto se siamo in modifica o creazione
+    const url = isEditMode
+      ? `http://localhost:8000/clienti/${id}`
+      : "http://localhost:8000/clienti/";
+    const method = isEditMode ? "PUT" : "POST";
+
     try {
-      const response = await fetch("http://localhost:8000/clienti", {
-        method: "POST",
+      const response = await fetch(url, {
+        method: method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
+
       if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Dettagli errore backend:", errorData);
         throw new Error("Errore durante il salvataggio dei dati");
       }
+
       const result = await response.json();
       console.log("Dati salvati con successo nel DB:", result);
-      alert("Sottoscrittore salvato correttamente!");
+      alert(
+        isEditMode
+          ? "Modifiche salvate con successo!"
+          : "Sottoscrittore salvato correttamente!",
+      );
+      navigate("/elenco"); // Torna alla lista dopo il salvataggio
     } catch (error) {
       console.error("Errore:", error);
       alert("Si è verificato un errore durante il salvataggio.");
@@ -73,23 +187,29 @@ function NuovoSottoscrittore() {
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-        {/* Header / Tabs simulate */}
-        <div className="flex border-b border-slate-100 px-6 pt-6 gap-3 bg-slate-50/50">
-          <button className="px-5 py-2.5 text-sm font-semibold text-blue-600 bg-white rounded-2xl shadow-sm border border-slate-100">
-            Dati Principali
-          </button>
-          <button className="px-5 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition">
-            Curriculum Formativo
-          </button>
-          <button className="px-5 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition">
-            Esami
+        <div className="flex border-b border-slate-100 px-6 pt-6 gap-3 bg-slate-50/50 justify-between items-center">
+          <div className="flex gap-3">
+            <button className="px-5 py-2.5 text-sm font-semibold text-blue-600 bg-white rounded-2xl shadow-sm border border-slate-100">
+              Dati Principali {isEditMode ? "(Modifica)" : "(Nuovo)"}
+            </button>
+            <button className="px-5 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition">
+              Curriculum Formativo
+            </button>
+            <button className="px-5 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition">
+              Esami
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/elenco")}
+            className="text-sm font-medium text-slate-500 hover:text-slate-800 mb-2 px-3 py-1"
+          >
+            ← Torna all'elenco
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-8">
-          {/* Sezione: Informazioni Personali & Documento */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Informazioni Personali */}
             <div className="space-y-4">
               <h3 className="text-base font-bold text-slate-800 mb-4">
                 Informazioni Personali
@@ -119,8 +239,8 @@ function NuovoSottoscrittore() {
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                 >
                   <option value="">Seleziona il genere</option>
-                  <option value="M">uomo</option>
-                  <option value="F">donna</option>
+                  <option value="uomo">uomo</option>
+                  <option value="donna">donna</option>
                 </select>
               </div>
 
@@ -372,6 +492,7 @@ function NuovoSottoscrittore() {
             </div>
 
             {/* Domicilio */}
+
             <div className="space-y-4">
               <h3 className="text-base font-bold text-slate-800 mb-4">
                 Domicilio
@@ -448,7 +569,8 @@ function NuovoSottoscrittore() {
 
           <hr className="border-slate-100 my-6" />
 
-          {/* Sezione: Contatti & Pulsante Salvataggio */}
+          {/* Sezione Contatti  */}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
             <div className="space-y-4">
               <h3 className="text-base font-bold text-slate-800 mb-4">
@@ -507,46 +629,24 @@ function NuovoSottoscrittore() {
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Username
-                  </label>
-                  <input
-                    type="text"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  />
-                </div>
               </div>
             </div>
 
-            {/* Azioni finali modellate sullo stile della seconda foto */}
+            {/* Sezione Pulsanti */}
+
             <div className="flex justify-end gap-3 pt-6">
               <button
                 type="button"
+                onClick={() => navigate("/elenco")}
                 className="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-2xl transition"
               >
-                Cambia Riferimenti
+                Annulla
               </button>
               <button
                 type="submit"
                 className="px-8 py-3.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold text-sm rounded-2xl shadow-sm transition flex items-center gap-2"
               >
-                Salva
+                {isEditMode ? "Aggiorna Modifiche" : "Salva"}
               </button>
             </div>
           </div>
@@ -555,4 +655,5 @@ function NuovoSottoscrittore() {
     </div>
   );
 }
+
 export default NuovoSottoscrittore;

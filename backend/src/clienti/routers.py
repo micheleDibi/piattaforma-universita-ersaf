@@ -16,9 +16,9 @@ def crea_cliente(cliente: ClienteCreate, db: Session = Depends(get_db)):
     db.refresh(db_cliente)
     return db_cliente
 
-#GET ALL (paginazione a 20)
+#GET ALL (paginazione a 40)
 @router.get("/", response_model=List[ClienteResponse])
-def leggi_clienti(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
+def leggi_clienti(skip: int = 0, limit: int = 40, db: Session = Depends(get_db)):
     clienti = db.query(Cliente).offset(skip).limit(limit).all()
     return clienti
 

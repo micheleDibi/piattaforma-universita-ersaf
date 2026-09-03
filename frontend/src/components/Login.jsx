@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,6 +38,14 @@ function Login() {
       }
 
       console.log("Login effettuato con successo:", data);
+
+      localStorage.setItem("utente_id", data.utente_id);
+
+      if (data.ruolo_codice === "nazionale") {
+        navigate("/nazionale");
+      } else {
+        navigate("/elenco");
+      }
     } catch (err) {
       setError(err.message);
     } finally {
