@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from src.clienti.models import Cliente
 from src.clienti.schemas import ClienteCreate, ClienteResponse
 from src.database import get_db
 from typing import Optional
+from src.ruolo.models import Ruolo
 
 router = APIRouter(prefix="/clienti", tags=["Clienti"])
 
@@ -23,9 +24,19 @@ def leggi_clienti(
     skip: int = 0, 
     limit: int = 50, 
     search: Optional[str] = None, 
+    ruolo_codice: Optional[str] = None,
+    solo_attuatori: bool=False,
     db: Session = Depends(get_db)
 ):
-    query = db.query(Cliente)
+    query = db.query(Cliente).options(joinedload(Cliente.azienda))
+
+    if ruolo_codice or solo_attuatori:
+        query = query.join(Ruolo, Cliente.cliente_ruolo == Ruolo.ruolo_id)
+        
+    if solo_attuatori:
+        query = query.filter(Ruolo.ruolo_codice.in_(["Nazionale", "Regionale", "Provinciale", "Aderente"]))
+    elif ruolo_codice:
+        query = query.filter(Ruolo.ruolo_codice == ruolo_codice)
     
     if search:
         search_term = f"%{search}%"

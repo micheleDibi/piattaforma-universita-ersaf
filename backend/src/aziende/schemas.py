@@ -9,8 +9,8 @@ class AziendaBase(BaseModel):
     azienda_via: str
     azienda_civico: Optional[str] = None
     azienda_citta: str
-    azienda_CAP: int
-    azienda_provincia: str = Field(..., min_length=2, max_length=2)
+    azienda_CAP: str | None = None
+    azienda_provincia: str | None = None
     azienda_sitoWeb: Optional[str] = None
     azienda_email: Optional[str] = None
     azienda_telefono: Optional[str] = None

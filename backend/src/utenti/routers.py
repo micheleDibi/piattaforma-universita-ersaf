@@ -30,7 +30,7 @@ def crea_utente(utente: UtenteCreate,
 
 #GET ALL
 @router.get("/", response_model=List[UtenteResponse])
-def leggi_utenti(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
+def leggi_utenti(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
     utenti = db.query(Utente).offset(skip).limit(limit).all()
     return utenti
 

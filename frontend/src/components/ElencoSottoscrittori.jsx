@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 
-function ElencoSottoscrittori() {
+function ElencoSottoscrittori({ soloAttuatori = false }) {
   const [sottoscrittori, setSottoscrittori] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -18,6 +18,10 @@ function ElencoSottoscrittori() {
 
   const navigate = useNavigate();
 
+  // Visibilità
+  const ruoloCodice = localStorage.getItem("ruolo_codice");
+  const canSeeAzienda = ruoloCodice === "nazionale";
+
   useEffect(() => {
     loadingRef.current = loading;
   }, [loading]);
@@ -30,7 +34,7 @@ function ElencoSottoscrittori() {
     searchTermRef.current = searchTerm;
   }, [searchTerm]);
 
-  // Gestione della ricerca iniziale e quando cambia searchTerm con debounce
+  // Gestione della ricerca iniziale e quando cambia searchTerm o la vista (sottoscrittori/attuatori) con debounce
   useEffect(() => {
     const fetchClientiFiltrati = async () => {
       try {
@@ -39,8 +43,9 @@ function ElencoSottoscrittori() {
         setSkip(0);
         skipRef.current = 0;
 
+        const attuatoriParam = soloAttuatori ? "&solo_attuatori=true" : "";
         const response = await fetch(
-          `http://localhost:8000/clienti/?skip=0&limit=${LIMIT}&search=${encodeURIComponent(searchTerm)}`,
+          `http://localhost:8000/clienti/?skip=0&limit=${LIMIT}${attuatoriParam}&search=${encodeURIComponent(searchTerm)}`,
         );
         if (!response.ok) {
           throw new Error("Errore durante il recupero dei dati");
@@ -70,7 +75,7 @@ function ElencoSottoscrittori() {
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
+  }, [searchTerm, soloAttuatori]);
 
   // Funzione per caricare altri elementi allo scroll
   useEffect(() => {
@@ -89,8 +94,9 @@ function ElencoSottoscrittori() {
         skipRef.current = nextSkip;
 
         try {
+          const attuatoriParam = soloAttuatori ? "&solo_attuatori=true" : "";
           const response = await fetch(
-            `http://localhost:8000/clienti/?skip=${nextSkip}&limit=${LIMIT}&search=${encodeURIComponent(searchTermRef.current)}`,
+            `http://localhost:8000/clienti/?skip=${nextSkip}&limit=${LIMIT}${attuatoriParam}&search=${encodeURIComponent(searchTermRef.current)}`,
           );
           if (!response.ok) {
             throw new Error("Errore durante il recupero dei dati");
@@ -120,7 +126,7 @@ function ElencoSottoscrittori() {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [skip]);
+  }, [skip, soloAttuatori]);
 
   if (initialLoading)
     return <div className="p-4 text-center text-gray-500">Caricamento...</div>;
@@ -129,90 +135,107 @@ function ElencoSottoscrittori() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto my-6 flex flex-col sm:flex-row justify-between items-center gap-4 px-2">
-        <h3 className="text-xl font-bold text-gray-800">
-          Elenco Sottoscrittori:
-        </h3>
+      <div className="w-full p-6">
+        <div className="w-full my-6 flex flex-col sm:flex-row justify-between items-center gap-4 px-2">
+          <h3 className="text-xl font-bold text-gray-800">
+            {soloAttuatori ? "Elenco Attuatori:" : "Elenco Sottoscrittori:"}
+          </h3>
 
-        <div className="w-full sm:w-72">
-          <input
-            type="text"
-            placeholder="Cerca per nome o cognome..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-          />
+          <div className="w-full sm:w-72">
+            <input
+              type="text"
+              placeholder="Cerca per nome o cognome..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            />
+          </div>
+
+          <button
+            onClick={() => navigate("/nuovo")}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors cursor-pointer whitespace-nowrap"
+          >
+            Nuovo Sottoscrittore
+          </button>
         </div>
 
-        <button
-          onClick={() => navigate("/nuovo")}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors cursor-pointer whitespace-nowrap"
-        >
-          Nuovo Sottoscrittore
-        </button>
-      </div>
-
-      <div className="max-w-4xl mx-auto bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 my-6">
-        <table className="min-w-full divide-y divide-gray-200 text-left">
-          <thead className="bg-gray-100 sticky top-0 z-10">
-            <tr>
-              <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Nome
-              </th>
-              <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Cognome
-              </th>
-              <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider text-right">
-                Modifica
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {sottoscrittori.map((item, index) => (
-              <tr
-                key={item.cliente_id || index}
-                className="hover:bg-gray-50 transition-colors"
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {item.cliente_nome}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {item.cliente_cognome}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => navigate(`/modifica/${item.cliente_id}`)}
-                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors cursor-pointer"
-                  >
-                    Modifica
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {sottoscrittori.length === 0 && !loading && (
+        <div className="w-full bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 my-6">
+          <table className="min-w-full divide-y divide-gray-200 text-left">
+            <thead className="bg-gray-100 sticky top-0 z-10">
               <tr>
-                <td
-                  colSpan="3"
-                  className="px-6 py-8 text-center text-sm text-gray-500"
-                >
-                  Nessun sottoscrittore trovato.
-                </td>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Nome
+                </th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Cognome
+                </th>
+
+                {canSeeAzienda && (
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Azienda
+                  </th>
+                )}
+
+                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider text-right">
+                  Modifica
+                </th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {sottoscrittori.map((item, index) => (
+                <tr
+                  key={item.cliente_id || index}
+                  className="hover:bg-gray-50 transition-colors"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {item.cliente_nome}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {item.cliente_cognome}
+                  </td>
 
-        {loading && (
-          <div className="py-4 text-center text-sm text-gray-500 bg-gray-50">
-            Caricamento altri elementi...
-          </div>
-        )}
+                  {canSeeAzienda && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {item.azienda?.azienda_ragione_sociale || "-"}
+                    </td>
+                  )}
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => navigate(`/modifica/${item.cliente_id}`)}
+                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors cursor-pointer"
+                    >
+                      Modifica
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {sottoscrittori.length === 0 && !loading && (
+                <tr>
+                  <td
+                    colSpan={canSeeAzienda ? 4 : 3}
+                    className="px-6 py-8 text-center text-sm text-gray-500"
+                  >
+                    {soloAttuatori
+                      ? "Nessun attuatore trovato."
+                      : "Nessun sottoscrittore trovato."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
 
-        {!hasMore && (
-          <div className="py-4 text-center text-xs text-gray-400 bg-gray-50">
-            Hai raggiunto la fine dell'elenco
-          </div>
-        )}
+          {loading && (
+            <div className="py-4 text-center text-sm text-gray-500 bg-gray-50">
+              Caricamento altri elementi...
+            </div>
+          )}
+
+          {!hasMore && (
+            <div className="py-4 text-center text-xs text-gray-400 bg-gray-50">
+              Hai raggiunto la fine dell'elenco
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

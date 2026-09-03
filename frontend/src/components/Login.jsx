@@ -40,6 +40,7 @@ function Login() {
       console.log("Login effettuato con successo:", data);
 
       localStorage.setItem("utente_id", data.utente_id);
+      localStorage.setItem("ruolo_codice", data.ruolo_codice);
 
       if (data.ruolo_codice === "nazionale") {
         navigate("/nazionale");
