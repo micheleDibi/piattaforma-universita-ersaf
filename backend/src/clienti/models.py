@@ -18,13 +18,13 @@ class Cliente(Base):
     cliente_civico:Mapped[str] = mapped_column(String, nullable=False)
     cliente_citta:Mapped[str] = mapped_column(String, nullable=False)
     cliente_CAP:Mapped[str] = mapped_column(String, nullable=False)
-    cliente_provincia:Mapped[str] = mapped_column(String(2), nullable=False)
+    cliente_provincia:Mapped[str] = mapped_column(String, nullable=False)
     cliente_cellulare:Mapped[str] = mapped_column(String, nullable=False)
 
     #Relazione
     utente_id:Mapped[int] = mapped_column(Integer, ForeignKey("utenti.utente_id"))
     cliente_luogoNascita:Mapped[str] = mapped_column(String, nullable=False)
-    cliente_provinciaNascita:Mapped[str] = mapped_column(String(2), nullable=False)
+    cliente_provinciaNascita:Mapped[str] = mapped_column(String, nullable=False)
     cliente_dataNascita:Mapped[date] = mapped_column(Date, nullable=False)
     cliente_cittadinanza:Mapped[str] = mapped_column(String, nullable=False)
     cliente_tipoDocumento:Mapped[str] = mapped_column(String, nullable=False)    
@@ -37,7 +37,7 @@ class Cliente(Base):
     cliente_civicoDomicilio:Mapped[str] = mapped_column(String, nullable=True)
     cliente_cittaDomicilio:Mapped[str] = mapped_column(String, nullable=True)
     cliente_CAPDomicilio:Mapped[str] = mapped_column(String, nullable=True)
-    cliente_provinciaDomicilio:Mapped[str] = mapped_column(String(2), nullable=True)
+    cliente_provinciaDomicilio:Mapped[str] = mapped_column(String, nullable=True)
 
     #Relazione
     cliente_ruolo:Mapped[int] = mapped_column(ForeignKey("ruoli.ruolo_id"), default=0)

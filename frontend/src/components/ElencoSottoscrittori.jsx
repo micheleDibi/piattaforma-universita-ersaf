@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 
 function ElencoSottoscrittori() {
@@ -8,16 +8,39 @@ function ElencoSottoscrittori() {
   const [error, setError] = useState(null);
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const LIMIT = 20;
+
+  const skipRef = useRef(0);
+  const loadingRef = useRef(false);
+  const hasMoreRef = useRef(true);
+  const searchTermRef = useRef(searchTerm);
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchClientiIniziali = async () => {
+    loadingRef.current = loading;
+  }, [loading]);
+
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
+
+  useEffect(() => {
+    searchTermRef.current = searchTerm;
+  }, [searchTerm]);
+
+  // Gestione della ricerca iniziale e quando cambia searchTerm con debounce
+  useEffect(() => {
+    const fetchClientiFiltrati = async () => {
       try {
         setLoading(true);
+        loadingRef.current = true;
+        setSkip(0);
+        skipRef.current = 0;
+
         const response = await fetch(
-          `http://localhost:8000/clienti/?skip=0&limit=${LIMIT}`,
+          `http://localhost:8000/clienti/?skip=0&limit=${LIMIT}&search=${encodeURIComponent(searchTerm)}`,
         );
         if (!response.ok) {
           throw new Error("Errore durante il recupero dei dati");
@@ -26,6 +49,10 @@ function ElencoSottoscrittori() {
 
         if (data.length < LIMIT) {
           setHasMore(false);
+          hasMoreRef.current = false;
+        } else {
+          setHasMore(true);
+          hasMoreRef.current = true;
         }
 
         setSottoscrittori(data);
@@ -34,11 +61,16 @@ function ElencoSottoscrittori() {
       } finally {
         setLoading(false);
         setInitialLoading(false);
+        loadingRef.current = false;
       }
     };
 
-    fetchClientiIniziali();
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      fetchClientiFiltrati();
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
 
   // Funzione per caricare altri elementi allo scroll
   useEffect(() => {
@@ -46,16 +78,19 @@ function ElencoSottoscrittori() {
       if (
         window.innerHeight + window.scrollY >=
           document.documentElement.scrollHeight - 100 &&
-        !loading &&
-        hasMore
+        !loadingRef.current &&
+        hasMoreRef.current
       ) {
+        setLoading(true);
+        loadingRef.current = true;
+
         const nextSkip = skip + LIMIT;
         setSkip(nextSkip);
+        skipRef.current = nextSkip;
 
         try {
-          setLoading(true);
           const response = await fetch(
-            `http://localhost:8000/clienti/?skip=${nextSkip}&limit=${LIMIT}`,
+            `http://localhost:8000/clienti/?skip=${nextSkip}&limit=${LIMIT}&search=${encodeURIComponent(searchTermRef.current)}`,
           );
           if (!response.ok) {
             throw new Error("Errore durante il recupero dei dati");
@@ -64,20 +99,28 @@ function ElencoSottoscrittori() {
 
           if (data.length < LIMIT) {
             setHasMore(false);
+            hasMoreRef.current = false;
           }
 
-          setSottoscrittori((prev) => [...prev, ...data]);
+          setSottoscrittori((prev) => {
+            const existingIds = new Set(prev.map((item) => item.cliente_id));
+            const uniqueNewItems = data.filter(
+              (item) => !existingIds.has(item.cliente_id),
+            );
+            return [...prev, ...uniqueNewItems];
+          });
         } catch (err) {
           setError(err.message);
         } finally {
           setLoading(false);
+          loadingRef.current = false;
         }
       }
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [loading, hasMore, skip]);
+  }, [skip]);
 
   if (initialLoading)
     return <div className="p-4 text-center text-gray-500">Caricamento...</div>;
@@ -86,17 +129,29 @@ function ElencoSottoscrittori() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto my-6 flex justify-between items-center px-2">
+      <div className="max-w-4xl mx-auto my-6 flex flex-col sm:flex-row justify-between items-center gap-4 px-2">
         <h3 className="text-xl font-bold text-gray-800">
-          Elenco Sottoscrittori
+          Elenco Sottoscrittori:
         </h3>
+
+        <div className="w-full sm:w-72">
+          <input
+            type="text"
+            placeholder="Cerca per nome o cognome..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+          />
+        </div>
+
         <button
           onClick={() => navigate("/nuovo")}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors cursor-pointer"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors cursor-pointer whitespace-nowrap"
         >
           Nuovo Sottoscrittore
         </button>
       </div>
+
       <div className="max-w-4xl mx-auto bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 my-6">
         <table className="min-w-full divide-y divide-gray-200 text-left">
           <thead className="bg-gray-100 sticky top-0 z-10">
@@ -134,6 +189,16 @@ function ElencoSottoscrittori() {
                 </td>
               </tr>
             ))}
+            {sottoscrittori.length === 0 && !loading && (
+              <tr>
+                <td
+                  colSpan="3"
+                  className="px-6 py-8 text-center text-sm text-gray-500"
+                >
+                  Nessun sottoscrittore trovato.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
 

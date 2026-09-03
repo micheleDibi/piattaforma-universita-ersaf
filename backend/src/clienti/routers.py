@@ -4,6 +4,7 @@ from typing import List
 from src.clienti.models import Cliente
 from src.clienti.schemas import ClienteCreate, ClienteResponse
 from src.database import get_db
+from typing import Optional
 
 router = APIRouter(prefix="/clienti", tags=["Clienti"])
 
@@ -16,10 +17,24 @@ def crea_cliente(cliente: ClienteCreate, db: Session = Depends(get_db)):
     db.refresh(db_cliente)
     return db_cliente
 
-#GET ALL (paginazione a 40)
+#GET ALL (paginazione a 50)
 @router.get("/", response_model=List[ClienteResponse])
-def leggi_clienti(skip: int = 0, limit: int = 40, db: Session = Depends(get_db)):
-    clienti = db.query(Cliente).offset(skip).limit(limit).all()
+def leggi_clienti(
+    skip: int = 0, 
+    limit: int = 50, 
+    search: Optional[str] = None, 
+    db: Session = Depends(get_db)
+):
+    query = db.query(Cliente)
+    
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            (Cliente.cliente_nome.ilike(search_term)) | 
+            (Cliente.cliente_cognome.ilike(search_term))
+        )
+        
+    clienti = query.order_by(Cliente.cliente_id.asc()).offset(skip).limit(limit).all()
     return clienti
 
 #GET BY ID

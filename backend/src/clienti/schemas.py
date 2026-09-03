@@ -13,12 +13,12 @@ class ClienteBase(BaseModel):
     cliente_civico: str
     cliente_citta: str
     cliente_CAP: Optional[str] = None
-    cliente_provincia: str = Field(min_length=2, max_length=2)
+    cliente_provincia: Optional[str] = None
     cliente_cellulare: Optional[str] = None
     
     utente_id: PositiveInt
     cliente_luogoNascita: str
-    cliente_provinciaNascita: str = Field(min_length=2, max_length=2)
+    cliente_provinciaNascita:Optional[str] = None
     cliente_dataNascita: date
     cliente_cittadinanza: str
     cliente_tipoDocumento:str
@@ -31,7 +31,7 @@ class ClienteBase(BaseModel):
     cliente_civicoDomicilio: Optional[str] = None
     cliente_cittaDomicilio: Optional[str] = None
     cliente_CAPDomicilio: Optional[str] = None
-    cliente_provinciaDomicilio: Optional[str] = Field(None, min_length=2, max_length=2)
+    cliente_provinciaDomicilio: Optional[str] = None
     cliente_ruolo: int
     cliente_gg: Optional[int] = None
     attuatore_id: Optional[int] = None
