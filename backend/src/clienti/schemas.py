@@ -1,12 +1,12 @@
 from datetime import date
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, PositiveInt
 
 class ClienteBase(BaseModel):
     cliente_codice: str
     cliente_nome: str
     cliente_cognome: str
-    cliente_email: str
+    cliente_email: EmailStr
     cliente_telefono: Optional[str] = None
     cliente_pec: Optional[str] = None
     cliente_indirizzo: str
@@ -15,7 +15,7 @@ class ClienteBase(BaseModel):
     cliente_CAP: int
     cliente_provincia: str
     cliente_cellulare: Optional[str] = None
-    utente_id: int
+    utente_id: PositiveInt
     cliente_luogoNascita: str
     cliente_provinciaNascita: str
     cliente_dataNascita: date
