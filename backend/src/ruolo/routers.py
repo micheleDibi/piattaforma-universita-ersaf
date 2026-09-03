@@ -43,13 +43,3 @@ def aggiorna_ruolo(ruolo_id: int, ruolo: RuoloCreate, db: Session = Depends(get_
     db.refresh(db_ruolo)
     return db_ruolo
 
-#DELETE
-@router.delete("/{ruolo_id}", status_code=status.HTTP_204_NO_CONTENT)
-def elimina_ruolo(ruolo_id: int, db: Session = Depends(get_db)):
-    db_ruolo = db.query(Ruolo).filter(Ruolo.ruolo_id == ruolo_id).first()
-    if not db_ruolo:
-        raise HTTPException(status_code=404, detail="Ruolo non trovato")
-    
-    db.delete(db_ruolo)
-    db.commit()
-    return None
