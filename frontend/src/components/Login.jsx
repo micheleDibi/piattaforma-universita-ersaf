@@ -45,7 +45,7 @@ function Login() {
       if (data.ruolo_codice === "nazionale") {
         navigate("/nazionale");
       } else {
-        navigate("/elenco");
+        navigate("/home");
       }
     } catch (err) {
       setError(err.message);
