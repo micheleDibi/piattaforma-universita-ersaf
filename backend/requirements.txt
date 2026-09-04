@@ -36,4 +36,8 @@ bcrypt>=4.0,<5
 
 # --- test -------------------------------------------------------------------
 pytest>=8.0
+# TestClient di starlette 1.3 usa httpx2 e segnala come deprecato l'uso di
+# httpx: con `filterwarnings = error` nel pytest.ini quella deprecazione
+# fermerebbe la suite, quindi si installa quello giusto.
+httpx2>=2.12
 httpx>=0.27

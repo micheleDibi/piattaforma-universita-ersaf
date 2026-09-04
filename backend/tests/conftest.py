@@ -185,9 +185,69 @@ def db(db_pulito):
 
     Committa davvero: l'applicazione committa, e i test devono vedere lo stato
     committato.
+
+    ISOLAMENTO READ COMMITTED, e serve. Il default di InnoDB e' REPEATABLE
+    READ: la prima lettura apre uno snapshot e tutte le successive, nella
+    stessa transazione, continuano a vederlo. Una sessione di test che ha
+    letto qualcosa PRIMA della richiesta HTTP non vedrebbe mai le righe che
+    l'applicazione ha committato dopo — il test fallirebbe sostenendo che la
+    sessione non e' stata creata, mentre nel database c'e'. Qui la sessione di
+    test e' un osservatore e deve vedere lo stato piu' recente; l'isolamento
+    dell'applicazione non viene toccato, ed e' proprio quello che il test di
+    consumo concorrente verifica.
     """
-    sessione = SessionLocal()
+    connessione = engine.connect().execution_options(isolation_level="READ COMMITTED")
+    sessione = SessionLocal(bind=connessione)
     try:
         yield sessione
     finally:
         sessione.close()
+        connessione.close()
+
+
+# =============================================================================
+# Client HTTP
+# =============================================================================
+@pytest.fixture
+def client(db_pulito):
+    """Client di prova con un indirizzo IP VALIDO.
+
+    Senza il parametro `client`, TestClient mette in request.client.host la
+    stringa "testclient", che non e' un indirizzo IP: prr_ip e' VARBINARY(16)
+    NOT NULL, quindi ogni richiesta finirebbe nel contenitore degli IP
+    sconosciuti e i test sul rate limit per IP non proverebbero nulla.
+
+    raise_server_exceptions=False e' obbligatorio: senza, un 500 diventa
+    un'eccezione dentro il test invece di una risposta, e i test
+    sull'indistinguibilita' non potrebbero verificare che il 500 NON si
+    verifica.
+    """
+    from fastapi.testclient import TestClient
+
+    from src.main import app
+
+    with TestClient(
+        app, client=("203.0.113.7", 44444), raise_server_exceptions=False
+    ) as istanza:
+        yield istanza
+
+
+@pytest.fixture
+def client_da(db_pulito):
+    """Fabbrica di client con indirizzo IP arbitrario, per il rate limit."""
+    from fastapi.testclient import TestClient
+
+    from src.main import app
+
+    aperti = []
+
+    def costruisci(ip: str, porta: int = 40000):
+        istanza = TestClient(
+            app, client=(ip, porta), raise_server_exceptions=False
+        ).__enter__()
+        aperti.append(istanza)
+        return istanza
+
+    yield costruisci
+    for istanza in aperti:
+        istanza.__exit__(None, None, None)
