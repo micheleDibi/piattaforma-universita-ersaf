@@ -163,3 +163,24 @@ def test_enum_esiti_allineato_al_codice(database_vergine):
 
     nel_database = set(tipo.removeprefix("enum(").removesuffix(")").replace("'", "").split(","))
     assert nel_database == {e.value for e in Esito}
+
+
+def test_il_database_di_test_e_in_modalita_severa():
+    """La suite deve girare nelle condizioni piu' severe fra quelle plausibili.
+
+    Con una sql_mode permissiva un troncamento e' solo un avviso, mentre su
+    un'installazione reale con STRICT_TRANS_TABLES lo stesso statement
+    fallisce. E' esattamente cosi' che un difetto in segna_ultimo_accesso e'
+    passato inosservato: il container di test era piu' tollerante della
+    macchina di chi ha poi eseguito il codice.
+    """
+    import sqlalchemy as sa
+
+    from src.database import engine
+
+    with engine.connect() as connessione:
+        modo = connessione.execute(sa.text("SELECT @@SESSION.sql_mode")).scalar()
+    assert "STRICT_TRANS_TABLES" in modo, (
+        f"sql_mode del database di test troppo permissiva: {modo}. "
+        "Vedi db/test/docker-compose.test.yml."
+    )

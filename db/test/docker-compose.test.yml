@@ -10,6 +10,12 @@
 # La porta e' la 3307 per non collidere con un MariaDB gia' installato in
 # locale, e i dati stanno in tmpfs: il database e' usa e getta, veloce, e non
 # lascia volumi da ripulire. Nessun dato reale deve mai finire qui.
+#
+# LA sql_mode E' SEVERA DI PROPOSITO. Con la configurazione permissiva un
+# troncamento e' solo un avviso, mentre su un'installazione reale con
+# STRICT_TRANS_TABLES lo stesso statement fallisce. Un difetto di questo tipo e'
+# gia' sfuggito una volta: la suite deve girare nelle condizioni piu' severe fra
+# quelle plausibili, non nelle piu' comode.
 
 services:
   db:
@@ -25,6 +31,7 @@ services:
       --collation-server=utf8mb4_unicode_ci
       --event-scheduler=ON
       --innodb-lock-wait-timeout=5
+      --sql-mode=STRICT_TRANS_TABLES,STRICT_ALL_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ZERO_DATE,NO_ZERO_IN_DATE,NO_ENGINE_SUBSTITUTION
     ports:
       - "3307:3306"
     tmpfs:

@@ -36,6 +36,13 @@ def istante_meno_ore(ore: int) -> ClauseElement:
     return func.datetime(func.now(), f"-{ore} hours")
 
 
+def istante_meno_minuti(minuti: int) -> ClauseElement:
+    minuti = int(minuti)
+    if _mariadb():
+        return text(f"NOW() - INTERVAL {minuti} MINUTE")
+    return func.datetime(func.now(), f"-{minuti} minutes")
+
+
 def istante_piu_minuti(minuti: int) -> ClauseElement:
     minuti = int(minuti)
     if _mariadb():

@@ -15,14 +15,14 @@ Developer ancora in produzione.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from sqlalchemy import func, or_, select, update
 from sqlalchemy.orm import Session
 
 from src.auth.models import ATTIVO, AuthSessione, MotivoRevoca
 from src.config import get_impostazioni
-from src.security.tempo import istante_piu_ore
+from src.security.tempo import istante_meno_minuti, istante_piu_ore
 from src.security.tokens import TipoToken, forma_token_valida, genera_token, impronta
 from src.utenti.models import Utente
 
@@ -30,7 +30,15 @@ logger = logging.getLogger("ersaf.sessioni")
 
 # Ogni quanto si aggiorna sess_last_seen_at. Senza una soglia sarebbe una
 # scrittura per ogni richiesta autenticata.
-SOGLIA_ULTIMO_ACCESSO = timedelta(minutes=5)
+#
+# E' un numero di minuti e non un timedelta, e la differenza non e' di stile:
+# `func.now() - timedelta(minutes=5)` viene compilato in `NOW() - %s` con il
+# timedelta legato come parametro DATETIME, quindi MariaDB riceve
+# `NOW() - '00:05:00'` e fa una sottrazione NUMERICA. Con sql_mode
+# STRICT_TRANS_TABLES quella troncatura e' un errore 1292 e l'intera richiesta
+# autenticata fallisce; senza, la condizione e' semplicemente sempre falsa e la
+# soglia non funziona. Serve `NOW() - INTERVAL 5 MINUTE`.
+MINUTI_SOGLIA_ULTIMO_ACCESSO = 5
 
 
 def crea_sessione(
@@ -92,7 +100,8 @@ def segna_ultimo_accesso(db: Session, sess_id: int) -> None:
             AuthSessione.sess_id == sess_id,
             or_(
                 AuthSessione.sess_last_seen_at.is_(None),
-                AuthSessione.sess_last_seen_at < func.now() - SOGLIA_ULTIMO_ACCESSO,
+                AuthSessione.sess_last_seen_at
+                < istante_meno_minuti(MINUTI_SOGLIA_ULTIMO_ACCESSO),
             ),
         )
         .values(sess_last_seen_at=func.now())
