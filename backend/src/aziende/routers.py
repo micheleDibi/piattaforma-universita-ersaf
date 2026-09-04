@@ -11,16 +11,27 @@ router = APIRouter(prefix="/aziende", tags=["Aziende"])
 #POST
 @router.post("/", response_model=AziendaResponse, status_code=status.HTTP_201_CREATED)
 def crea_azienda(azienda_in: AziendaCreate, db: Session = Depends(get_db)):
-    # Controllo su Codice Fiscale
-    esistente = db.query(Azienda).filter(
-        (Azienda.azienda_codiceFiscale == azienda_in.azienda_codiceFiscale)
-    ).first()
-    
-    if esistente:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Un'azienda con questo Codice Fiscale esiste già."
-        )
+
+    if azienda_in.azienda_codiceFiscale and db.query(Azienda).filter(Azienda.azienda_codiceFiscale == azienda_in.azienda_codiceFiscale).first():
+        raise HTTPException(status_code=400, detail="Esiste già un'azienda con questo Codice Fiscale.")
+        
+    if azienda_in.azienda_partitaIVA and db.query(Azienda).filter(Azienda.azienda_partitaIVA == azienda_in.azienda_partitaIVA).first():
+        raise HTTPException(status_code=400, detail="Esiste già un'azienda con questa Partita IVA.")
+        
+    if azienda_in.azienda_ragione_sociale and db.query(Azienda).filter(Azienda.azienda_ragione_sociale == azienda_in.azienda_ragione_sociale).first():
+        raise HTTPException(status_code=400, detail="Esiste già un'azienda con questa Ragione Sociale.")
+        
+    if azienda_in.azienda_email and db.query(Azienda).filter(Azienda.azienda_email == azienda_in.azienda_email).first():
+        raise HTTPException(status_code=400, detail="Esiste già un'azienda con questa Email.")
+        
+    if azienda_in.azienda_pec and db.query(Azienda).filter(Azienda.azienda_pec == azienda_in.azienda_pec).first():
+        raise HTTPException(status_code=400, detail="Esiste già un'azienda con questa PEC.")
+        
+    if azienda_in.azienda_telefono and db.query(Azienda).filter(Azienda.azienda_telefono == azienda_in.azienda_telefono).first():
+        raise HTTPException(status_code=400, detail="Esiste già un'azienda con questo Telefono.")
+        
+    if azienda_in.azienda_iban and db.query(Azienda).filter(Azienda.azienda_iban == azienda_in.azienda_iban).first():
+        raise HTTPException(status_code=400, detail="Esiste già un'azienda con questo IBAN.")
     
     nuova_azienda = Azienda(**azienda_in.model_dump())
     db.add(nuova_azienda)

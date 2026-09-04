@@ -19,6 +19,16 @@ router = APIRouter(
 def crea_utente(utente: UtenteCreate,
                 db: Session = Depends(get_db),
                 current_utente = Depends(get_current_utente)):
+
+    esistente = db.query(Utente).filter(Utente.utente_username == utente.utente_username).first()
+    if esistente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "codice": "username_preso",
+                "messaggio": "Esiste già un utente registrato con questo username."
+            },
+        )
     # Prima la password finiva in chiaro nella colonna, esattamente come nel
     # PUT. Il criterio "nessuna password in chiaro scritta da nessun percorso
     # di codice" non e' soddisfatto se si sistema solo il PUT.
