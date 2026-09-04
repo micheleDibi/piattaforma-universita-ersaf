@@ -1,25 +1,29 @@
 from datetime import date
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, PositiveInt, Field
+from src.aziende.schemas import AziendaResponse
+from src.ruolo.schemas import RuoloResponse
 
 class ClienteBase(BaseModel):
     cliente_codice: str
     cliente_nome: str
     cliente_cognome: str
-    cliente_email: str
+    cliente_email: Optional[str] = None
     cliente_telefono: Optional[str] = None
     cliente_pec: Optional[str] = None
     cliente_indirizzo: str
     cliente_civico: str
     cliente_citta: str
-    cliente_CAP: int
-    cliente_provincia: str
+    cliente_CAP: Optional[str] = None
+    cliente_provincia: Optional[str] = None
     cliente_cellulare: Optional[str] = None
-    utente_id: int
+    
+    utente_id: PositiveInt
     cliente_luogoNascita: str
-    cliente_provinciaNascita: str
+    cliente_provinciaNascita:Optional[str] = None
     cliente_dataNascita: date
     cliente_cittadinanza: str
+    cliente_tipoDocumento:str
     cliente_documento: str
     cliente_comuneRilascio: str
     cliente_dataRilascio: date
@@ -28,7 +32,7 @@ class ClienteBase(BaseModel):
     cliente_indirizzoDomicilio: Optional[str] = None
     cliente_civicoDomicilio: Optional[str] = None
     cliente_cittaDomicilio: Optional[str] = None
-    cliente_CAPDomicilio: Optional[int] = None
+    cliente_CAPDomicilio: Optional[str] = None
     cliente_provinciaDomicilio: Optional[str] = None
     cliente_ruolo: int
     cliente_gg: Optional[int] = None
@@ -47,5 +51,12 @@ class ClienteCreate(ClienteBase):
 
 class ClienteResponse(ClienteBase):
     cliente_id: int
+    azienda: Optional[AziendaResponse] = None
+    ruolo: Optional[RuoloResponse] = None
+
+class ClienteConUtenteCreate(ClienteBase):
+    utente_id: Optional[int] = None
+    utente_username: Optional[str] = None  
+    utente_password: Optional[str] = None 
 
     model_config = ConfigDict(from_attributes=True)
