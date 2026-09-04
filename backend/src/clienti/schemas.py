@@ -2,6 +2,7 @@ from datetime import date
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, PositiveInt, Field
 from src.aziende.schemas import AziendaResponse
+from src.ruolo.schemas import RuoloResponse
 
 class ClienteBase(BaseModel):
     cliente_codice: str
@@ -51,5 +52,6 @@ class ClienteCreate(ClienteBase):
 class ClienteResponse(ClienteBase):
     cliente_id: int
     azienda: Optional[AziendaResponse] = None
+    ruolo: Optional[RuoloResponse] = None
 
     model_config = ConfigDict(from_attributes=True)

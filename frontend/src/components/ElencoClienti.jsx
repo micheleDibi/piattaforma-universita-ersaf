@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 
-function ElencoSottoscrittori({ soloAttuatori = false }) {
+function ElencoClienti({ soloAttuatori = false }) {
   const [sottoscrittori, setSottoscrittori] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -9,18 +9,21 @@ function ElencoSottoscrittori({ soloAttuatori = false }) {
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const LIMIT = 20;
+  const [selectedRuolo, setSelectedRuolo] = useState("");
+  const LIMIT = 40;
 
   const skipRef = useRef(0);
   const loadingRef = useRef(false);
   const hasMoreRef = useRef(true);
   const searchTermRef = useRef(searchTerm);
+  const selectedRuoloRef = useRef(selectedRuolo);
 
   const navigate = useNavigate();
 
   // Visibilità
   const ruoloCodice = localStorage.getItem("ruolo_codice");
-  const canSeeAzienda = ruoloCodice === "nazionale";
+  const canSee = ruoloCodice === "Aderente";
+  const canSeeAzienda = canSee && soloAttuatori;
 
   useEffect(() => {
     loadingRef.current = loading;
@@ -34,7 +37,11 @@ function ElencoSottoscrittori({ soloAttuatori = false }) {
     searchTermRef.current = searchTerm;
   }, [searchTerm]);
 
-  // Gestione della ricerca iniziale e quando cambia searchTerm o la vista (sottoscrittori/attuatori) con debounce
+  useEffect(() => {
+    selectedRuoloRef.current = selectedRuolo;
+  }, [selectedRuolo]);
+
+  // Gestione della ricerca iniziale e quando cambiano searchTerm, selectedRuolo o soloAttuatori con debounce
   useEffect(() => {
     const fetchClientiFiltrati = async () => {
       try {
@@ -44,8 +51,13 @@ function ElencoSottoscrittori({ soloAttuatori = false }) {
         skipRef.current = 0;
 
         const attuatoriParam = soloAttuatori ? "&solo_attuatori=true" : "";
+        const ruoloParam =
+          soloAttuatori && selectedRuolo
+            ? `&ruolo_codice=${encodeURIComponent(selectedRuolo)}`
+            : "";
+
         const response = await fetch(
-          `http://localhost:8000/clienti/?skip=0&limit=${LIMIT}${attuatoriParam}&search=${encodeURIComponent(searchTerm)}`,
+          `http://localhost:8000/clienti/?skip=0&limit=${LIMIT}${attuatoriParam}${ruoloParam}&search=${encodeURIComponent(searchTerm)}`,
         );
         if (!response.ok) {
           throw new Error("Errore durante il recupero dei dati");
@@ -75,7 +87,7 @@ function ElencoSottoscrittori({ soloAttuatori = false }) {
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, soloAttuatori]);
+  }, [searchTerm, selectedRuolo, soloAttuatori]);
 
   // Funzione per caricare altri elementi allo scroll
   useEffect(() => {
@@ -95,8 +107,13 @@ function ElencoSottoscrittori({ soloAttuatori = false }) {
 
         try {
           const attuatoriParam = soloAttuatori ? "&solo_attuatori=true" : "";
+          const ruoloParam =
+            soloAttuatori && selectedRuoloRef.current
+              ? `&ruolo_codice=${encodeURIComponent(selectedRuoloRef.current)}`
+              : "";
+
           const response = await fetch(
-            `http://localhost:8000/clienti/?skip=${nextSkip}&limit=${LIMIT}${attuatoriParam}&search=${encodeURIComponent(searchTermRef.current)}`,
+            `http://localhost:8000/clienti/?skip=${nextSkip}&limit=${LIMIT}${attuatoriParam}${ruoloParam}&search=${encodeURIComponent(searchTermRef.current)}`,
           );
           if (!response.ok) {
             throw new Error("Errore durante il recupero dei dati");
@@ -133,6 +150,10 @@ function ElencoSottoscrittori({ soloAttuatori = false }) {
   if (error)
     return <div className="p-4 text-center text-red-500">Errore: {error}</div>;
 
+  let colSpanCount = 3;
+  if (soloAttuatori) colSpanCount += 1;
+  if (canSeeAzienda) colSpanCount += 1;
+
   return (
     <>
       <div className="w-full p-6">
@@ -141,14 +162,20 @@ function ElencoSottoscrittori({ soloAttuatori = false }) {
             {soloAttuatori ? "Elenco Attuatori:" : "Elenco Sottoscrittori:"}
           </h3>
 
-          <div className="w-full sm:w-72">
-            <input
-              type="text"
-              placeholder="Cerca per nome o cognome..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-            />
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <div className="w-full sm:w-72">
+              <input
+                type="text"
+                placeholder={
+                  soloAttuatori
+                    ? "Cerca per nome, cognome o azienda..."
+                    : "Cerca per nome o cognome..."
+                }
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+              />
+            </div>
           </div>
 
           <button
@@ -157,6 +184,21 @@ function ElencoSottoscrittori({ soloAttuatori = false }) {
           >
             Nuovo Sottoscrittore
           </button>
+        </div>
+        <div>
+          {soloAttuatori && (
+            <select
+              value={selectedRuolo}
+              onChange={(e) => setSelectedRuolo(e.target.value)}
+              className="w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white"
+            >
+              <option value="">Tutti i ruoli</option>
+              <option value="Aderente">Aderente</option>
+              <option value="Provinciale">Provinciale</option>
+              <option value="Regionale">Regionale</option>
+              <option value="Nazionale">Nazionale</option>
+            </select>
+          )}
         </div>
 
         <div className="w-full bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 my-6">
@@ -169,6 +211,13 @@ function ElencoSottoscrittori({ soloAttuatori = false }) {
                 <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Cognome
                 </th>
+
+                {/* Colonna Ruolo visibile solo per gli attuatori */}
+                {soloAttuatori && (
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Ruolo
+                  </th>
+                )}
 
                 {canSeeAzienda && (
                   <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -194,6 +243,13 @@ function ElencoSottoscrittori({ soloAttuatori = false }) {
                     {item.cliente_cognome}
                   </td>
 
+                  {/* Stampiamo il ruolo prendendolo dalla relazione del backend */}
+                  {soloAttuatori && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {item.ruolo?.ruolo_codice || "-"}
+                    </td>
+                  )}
+
                   {canSeeAzienda && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {item.azienda?.azienda_ragione_sociale || "-"}
@@ -212,7 +268,7 @@ function ElencoSottoscrittori({ soloAttuatori = false }) {
               {sottoscrittori.length === 0 && !loading && (
                 <tr>
                   <td
-                    colSpan={canSeeAzienda ? 4 : 3}
+                    colSpan={colSpanCount}
                     className="px-6 py-8 text-center text-sm text-gray-500"
                   >
                     {soloAttuatori
@@ -241,4 +297,4 @@ function ElencoSottoscrittori({ soloAttuatori = false }) {
   );
 }
 
-export default ElencoSottoscrittori;
+export default ElencoClienti;

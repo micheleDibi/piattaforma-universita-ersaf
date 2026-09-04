@@ -1,9 +1,9 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
-import ElencoSottoscrittori from "./ElencoSottoscrittori";
+import ElencoClienti from "./ElencoClienti";
 
 export default function Homepage() {
-  const [active, setActive] = useState("subscribers");
+  const [active, setActive] = useState("sottoscrittori");
 
   return (
     <div className="flex min-h-screen w-screen bg-gray-100 font-sans">
@@ -16,12 +16,12 @@ export default function Homepage() {
           </div>
         )}
 
-        {active === "subscribers" && (
-          <ElencoSottoscrittori key="subscribers" soloAttuatori={false} />
+        {active === "sottoscrittori" && (
+          <ElencoClienti key="sottoscrittori" soloAttuatori={false} />
         )}
 
-        {active === "actuators" && (
-          <ElencoSottoscrittori key="actuators" soloAttuatori={true} />
+        {active === "attuatori" && (
+          <ElencoClienti key="attuatori" soloAttuatori={true} />
         )}
       </main>
     </div>

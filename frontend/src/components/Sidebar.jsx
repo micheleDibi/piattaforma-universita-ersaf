@@ -1,9 +1,11 @@
-export default function Sidebar({ active, setActive }) {
+function Sidebar({ active, setActive }) {
+  const ruoloCodice = localStorage.getItem("ruolo_codice");
+  const canSee = ruoloCodice === "Aderente";
   const links = [
     { id: "dashboard", label: "Dashboard" },
-    { id: "subscribers", label: "Elenco Sottoscrittori" },
-    { id: "actuators", label: "Elenco Attuatori" },
-  ];
+    { id: "sottoscrittori", label: "Elenco Sottoscrittori" },
+    { id: "attuatori", label: "Elenco Attuatori", visible: canSee },
+  ].filter((link) => link.visible != false);
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 p-4 flex flex-col shrink-0 h-screen">
@@ -27,3 +29,4 @@ export default function Sidebar({ active, setActive }) {
     </aside>
   );
 }
+export default Sidebar;

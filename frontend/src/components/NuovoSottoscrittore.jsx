@@ -201,7 +201,7 @@ function NuovoSottoscrittore() {
           </div>
           <button
             type="button"
-            onClick={() => navigate("/elenco")}
+            onClick={() => navigate("/home")}
             className="text-sm font-medium text-slate-500 hover:text-slate-800 mb-2 px-3 py-1"
           >
             ← Torna all'elenco

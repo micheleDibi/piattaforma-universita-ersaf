@@ -6,6 +6,7 @@ from src.clienti.schemas import ClienteCreate, ClienteResponse
 from src.database import get_db
 from typing import Optional
 from src.ruolo.models import Ruolo
+from src.aziende.models import Azienda
 
 router = APIRouter(prefix="/clienti", tags=["Clienti"])
 
@@ -25,28 +26,39 @@ def leggi_clienti(
     limit: int = 50, 
     search: Optional[str] = None, 
     ruolo_codice: Optional[str] = None,
-    solo_attuatori: bool=False,
+    solo_attuatori: bool = False,
     db: Session = Depends(get_db)
 ):
-    query = db.query(Cliente).options(joinedload(Cliente.azienda))
+    query = db.query(Cliente).options(
+        joinedload(Cliente.azienda),
+        joinedload(Cliente.ruolo))
 
     if ruolo_codice or solo_attuatori:
         query = query.join(Ruolo, Cliente.cliente_ruolo == Ruolo.ruolo_id)
         
-    if solo_attuatori:
-        query = query.filter(Ruolo.ruolo_codice.in_(["Nazionale", "Regionale", "Provinciale", "Aderente"]))
-    elif ruolo_codice:
+    if ruolo_codice:
         query = query.filter(Ruolo.ruolo_codice == ruolo_codice)
+    elif solo_attuatori:
+        query = query.filter(Ruolo.ruolo_codice.in_(["Nazionale", "Regionale", "Provinciale", "Aderente"]))
     
     if search:
-        search_term = f"%{search}%"
-        query = query.filter(
-            (Cliente.cliente_nome.ilike(search_term)) | 
-            (Cliente.cliente_cognome.ilike(search_term))
-        )
+        search_term = f"{search}%"
+        if solo_attuatori:
+            query = query.outerjoin(Cliente.azienda)
+            query = query.filter(
+                (Cliente.cliente_nome.ilike(search_term)) | 
+                (Cliente.cliente_cognome.ilike(search_term)) |
+                (Azienda.azienda_ragione_sociale.ilike(search_term))
+            )
+        else:
+            query = query.filter(
+                (Cliente.cliente_nome.ilike(search_term)) | 
+                (Cliente.cliente_cognome.ilike(search_term))
+            )
         
     clienti = query.order_by(Cliente.cliente_id.asc()).offset(skip).limit(limit).all()
     return clienti
+
 
 #GET BY ID
 @router.get("/{cliente_id}", response_model=ClienteResponse)
