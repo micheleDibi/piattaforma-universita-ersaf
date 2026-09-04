@@ -1,6 +1,15 @@
 -- =============================================================================
 -- SCHEMA BASE PER IL DATABASE DI TEST
 -- =============================================================================
+--
+--   ⚠️  NON ESEGUIRE QUESTO FILE SU UN DATABASE CON DEI DATI.  ⚠️
+--
+--   Fa DROP TABLE su utenti, clienti, aziende, ruoli e messaggi_email.
+--   Serve a costruire da zero il database usa-e-getta della suite di test.
+--   Non e' una migrazione e non va mai eseguito su admin_entedb ne' su una
+--   copia di lavoro che contenga dati veri.
+--
+-- =============================================================================
 -- Le migrazioni 001-006 presuppongono che `utenti`, `clienti`, `ruoli`,
 -- `aziende` e `messaggi_email` esistano gia': fanno parte delle 171 tabelle
 -- ereditate dalla piattaforma Instant Developer e non sono gestite da alcuna

@@ -17,7 +17,8 @@ db/
 │   ├── 003_rate_limiting.sql
 │   ├── 004_sessioni.sql
 │   ├── 005_indici_e_integrita.sql
-│   └── 006_template_email.sql
+│   ├── 006_template_email.sql
+│   └── 008_esito_errore_interno.sql          il 007 non esiste, non è un buco
 └── rollback/                                        annullamento, ordine inverso
 ```
 
@@ -26,13 +27,22 @@ db/
 ```bash
 mariadb -u <user> -p admin_entedb < db/diagnostica/000_diagnostica_pre_migrazione.sql | tee diag_$(date +%F).txt
 
-for f in db/migrations/00{1,2,3,4,5,6}_*.sql; do
-  echo "== $f"; mariadb -u <user> -p admin_entedb < "$f" || break
+# Il glob prende TUTTE le migrazioni in ordine numerico: non elencarle a mano,
+# è così che si dimentica l'ultima.
+for f in db/migrations/*.sql; do
+  echo "== $f"; mariadb -u <user> -p <database> < "$f" || break
 done
 ```
 
-**Nessuna migrazione modifica o cancella i dati esistenti.** Le 001–006 sono
+**Nessuna migrazione modifica o cancella i dati esistenti.** Le 001–008 sono
 solo DDL (colonne, tabelle, indici) più l'inserimento di due template email.
+
+> ⚠️ **`db/test/` non è una migrazione.** `db/test/schema_base.sql` fa
+> `DROP TABLE` su `utenti`, `clienti`, `aziende`, `ruoli` e `messaggi_email`:
+> serve a costruire da zero il database usa-e-getta della suite di test, e
+> **cancella i dati** se eseguito su un database vero. Non compare nel glob
+> qui sopra proprio per questo. Applicando le migrazioni a mano, non toccare
+> quella cartella.
 Le password si convertono una riga alla volta, al login del singolo utente:
 chi non accede resta intatto. L'avanzamento si segue con
 `db/diagnostica/010_stato_migrazione_password.sql`.
