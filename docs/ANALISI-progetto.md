@@ -401,5 +401,18 @@ Vanno detti, perché sono le prime cose che verranno segnalate come difetti.
 - **Il frontend non ha test automatici.** Non esiste un test runner nel
   progetto: introdurre vitest e testing-library è una task a sé. I requisiti
   dell'interfaccia sono stati verificati a mano in un browser reale.
+- **`POST /clienti/con-utente` scrive una password in chiaro, e un test
+  fallisce apposta.** L'endpoint, aggiunto dopo questo lavoro, crea l'utente con
+  `utente_password = f"{nome[:3]}{cognome[:3]}{utente_id}"`: la password finisce
+  in chiaro nella colonna ed è **indovinabile da chiunque conosca nome e
+  cognome della persona**. `test_scritture_su_utente_password_solo_dove_previsto`
+  lo segnala, e resta rosso di proposito: è il segnale, non un difetto del test.
+  Va sistemato passando da `hash_password()` e generando la password con
+  `secrets`, restituendola una sola volta nella risposta.
+- **Lo stesso endpoint imposta `utente_attivoSN = 1`**, mentre la convenzione
+  legacy è `-1` = attivo e `0` = disattivo. Finché il login non controllava quel
+  campo la cosa non si notava; ora che lo controlla, **gli utenti creati da lì
+  non riescono ad accedere**. È una regressione che nasce dalla combinazione dei
+  due lavori, non da uno dei due preso da solo.
 - **L'indicatore di robustezza è un'euristica**, non una stima dell'entropia, e
   non blocca mai l'invio: NIST prescrive lunghezza, non composizione.
