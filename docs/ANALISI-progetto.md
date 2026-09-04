@@ -1,83 +1,121 @@
 # Analisi del progetto — piattaforma-universita-ersaf
 
-Data: 2026-09-04 · Branch analizzato: `Login` (commit `289af57`)
+Data: 2026-09-04 · Branch: `recupero-password` (parte da `Login`, commit `289af57`)
 Fonti: `backend/`, `frontend/`, `dump.sql` (5,3 GB, MariaDB 10.11, 171 tabelle)
+
+> Il documento è scritto al presente e viene **riportato al presente** a ogni
+> lavoro, invece di essere allungato con un changelog: chi lo legge fra sei mesi
+> deve trovarci lo stato di oggi, non la stratificazione di ciò che è stato.
+> Le sezioni 1–6 descrivono la situazione **dopo** l'implementazione del
+> recupero password; i numeri misurati sul dump restano quelli, perché
+> descrivono i dati di produzione e non sono stati toccati.
 
 ---
 
-## 1. La verità scomoda, in tre righe
+## 1. Dove siamo
 
-Le **4.771 password nel database sono in chiaro** e l'autenticazione è l'header
-`x-utente-id`: chiunque può impersonare qualsiasi utente scrivendo un numero.
-Il recupero password, così com'è nel prompt, **non è implementabile** — i
-requisiti 12 e 14 presuppongono un hashing e delle sessioni che non esistono.
+Le fondamenta che mancavano ci sono. L'autenticazione non è più l'header
+`x-utente-id` — un intero non firmato con cui chiunque poteva impersonare
+qualsiasi utente — ma un token di sessione opaco, revocabile, di cui nel
+database esiste solo l'impronta. L'hashing bcrypt c'è, e le password si
+convertono **una riga alla volta**, al primo accesso riuscito di ciascun utente.
 
-E c'è un rischio immediato, indipendente dalla feature: `dump.sql` (5,3 GB) è
-**untracked ma non ignorato**. Un `git add -A` distratto committa in modo
-permanente password in chiaro, codici fiscali, numeri di documento e date di
-nascita di ~3.900 persone. È l'unica cosa da fare oggi, prima di scrivere
-codice.
+Il debito che resta è dichiarato e misurabile: finché esiste
+`utenti.utente_password`, il database contiene password in chiaro per ogni
+utente che non ha ancora rifatto login. È una scelta consapevole — la
+conversione è graduale e non chiude fuori nessuno — e l'avanzamento si legge
+con `db/diagnostica/010_stato_migrazione_password.sql`. Cosa fare di chi resta
+indietro è una decisione da prendere con i numeri davanti, e in `db/` non
+esiste nessuno script che la esegua.
+
+`dump.sql` (5,3 GB) era **untracked ma non ignorato**: un `git add -A`
+distratto lo avrebbe committato in modo permanente, con password in chiaro,
+codici fiscali, numeri di documento e date di nascita di ~3.900 persone. Ora è
+escluso da `.gitignore` (regola `*.sql` più la riammissione di `db/`), ed è
+verificato che non sia mai entrato nella history: non serve riscriverla.
 
 ---
 
 ## 2. Architettura attuale
 
 **Backend** — FastAPI + SQLAlchemy 2.0 (`Mapped`/`mapped_column`), organizzato
-per dominio: `clienti`, `utenti`, `ruolo`, `aziende`, `auth`. Ogni modulo ha
-`models.py` / `schemas.py` / `routers.py`. `src/database.py` legge `DATABASE_URL`
-da `.env` con fallback hardcoded a `mysql+pymysql://root:1234@localhost`.
+per dominio: `clienti`, `utenti`, `ruolo`, `aziende`, `auth`, `notifiche`. Ogni
+modulo ha `models.py` / `schemas.py` / `routers.py`, più `servizio_*.py` dove la
+logica non sta comodamente in una funzione di rotta. `src/security/` raccoglie
+le primitive trasversali: password, token, indirizzi IP, sessioni, orologio.
 
-**Frontend** — React 19 + Vite + Tailwind 4 + react-router. Quattro componenti:
-`Login`, `Sidebar`, `ElencoSottoscrittori`, `NuovoSottoscrittore`.
+La configurazione è a due strati, ed è la scelta centrale di `config.py`:
+`Impostazioni` è permissiva e non solleva mai — `database.py` chiama
+`create_engine` a import-time, e un'eccezione lì renderebbe impossibile perfino
+la raccolta dei test — mentre `verifica_configurazione()` è severa e gira nel
+lifespan, elencando **tutti** i problemi in una volta.
+
+Le route sono `def` sincrone, tranne `POST /auth/password-reset/request`: è
+`async def` perché il pavimento temporale deve attendere senza occupare uno dei
+40 thread condivisi da tutta l'applicazione. Il lavoro sul database resta
+sincrono, dentro `run_in_threadpool`.
+
+**Frontend** — React 19 + Vite + Tailwind 4 + `react-router` v8 (non
+`react-router-dom`). Sei componenti — `Login`, `Sidebar`,
+`ElencoSottoscrittori`, `NuovoSottoscrittore`, `PasswordDimenticata`,
+`ReimpostaPassword` — più `src/lib/` con l'unico punto d'uscita verso l'API, la
+sessione, la policy delle password e la lettura del token.
 
 **Database** — MariaDB 10.11, 171 tabelle ereditate da una piattaforma
 **Instant Developer** ancora in produzione (`aderenti.ersaf.it`). Il backend
 mappa 4 tabelle su 171. Convenzione legacy pervasiva: **`-1` = TRUE, `0` = FALSE**.
 
-**Cosa non esiste** — e va costruito da zero se la feature lo richiede:
+**Stato delle fondamenta:**
 
 | | |
 |---|---|
-| Hashing password | assente (confronto `==` in chiaro) |
-| Sessioni / token | assenti (header `x-utente-id` non firmato) |
-| Invio email | assente (nessun SMTP, nessuna libreria) |
-| Rate limiting | assente |
-| Migrazioni | assenti (nessun Alembic) |
-| Test | assenti |
-| `requirements.txt` / `pyproject.toml` | **assenti** — il progetto non è installabile |
-| Logging strutturato | assente |
+| Hashing password | bcrypt costo 12, `backend/src/security/password.py`; rehash pigro al login |
+| Sessioni / token | token opaco in `auth_sessione`, `Authorization: Bearer`; nel DB solo l'impronta |
+| Invio email | `smtplib` in `BackgroundTasks`, template in `messaggi_email`; quattro backend (smtp, file, console, memoria) |
+| Rate limiting | 5/ora per IP **e** per account, su `password_reset_richiesta` |
+| Migrazioni | `db/migrations/001–008` + rollback; nessun Alembic, e il perché è in `db/README.md` |
+| Test | `backend/tests/`, 179 casi (103 richiedono MariaDB) |
+| `requirements.txt` | presente; il progetto si installa con un venv |
+| Logging | configurato, con redazione di token, impronte, hash ed email — tracce di stack comprese |
 
 ---
 
-## 3. Sicurezza — in ordine di gravità
+## 3. Sicurezza — stato dei rilievi
 
-**S1 · Password in chiaro.** `utente_password` VARCHAR(255), 4.771 righe, zero
-hash bcrypt/argon2/md5/sha. Lunghezze da 1 a 20 caratteri.
-`utenti.utente_salt` contiene un UUID distinto per utente ma **non viene mai
-usato**: è un residuo Instant Developer.
+**S1 · Password in chiaro — risolto per chi accede, aperto per gli altri.**
+Il login converte la riga del singolo utente che si autentica: scrive
+l'hash bcrypt e svuota `utente_password` con `''` (la colonna è `NOT NULL`).
+Nessuna operazione massiva, mai. Le righe di chi non accede restano intatte e
+continuano a funzionare come prima. `utenti.utente_salt` resta dov'è, inutile e
+non usato: bcrypt genera e incorpora il proprio salt.
 
-**S2 · Autenticazione falsificabile.** `get_current_utente` in
-`backend/src/auth/routers.py` si fida di `x-utente-id`. `curl -H "x-utente-id: 1"`
-è già l'exploit completo. Non c'è autorizzazione per ruolo su nessuna rotta.
+**S2 · Autenticazione falsificabile — risolto.** `Authorization: Bearer` con
+validazione contro `auth_sessione` (query [B] della migrazione 004), che scarta
+anche le sessioni di utenti disattivati e quelle nate prima dell'ultimo cambio
+password. **Resta aperta l'autorizzazione per ruolo**: nessuna rotta la
+verifica, e `/clienti/` è ancora completamente non autenticato.
 
-**S3 · Nessuna verifica dello stato account al login.** `utente_attivoSN` non
-viene controllato: i 21 utenti disattivati (di cui 19 attuatori) accedono
-regolarmente.
+**S3 · Stato account al login — risolto.** `utente_attivoSN` viene controllato,
+con lo stesso 401 generico di una password sbagliata.
 
-**S4 · 500 come oracolo di enumerazione.** `user.clienti.ruolo.ruolo_codice`
-esplode con `AttributeError` per gli **869 utenti senza riga `clienti`**. Chi
-prova un login distingue "password sbagliata" (401) da "utente esistente ma
-orfano" (500). Va sistemato *insieme* al recupero password, altrimenti il lavoro
-sull'indistinguibilità è vano.
+**S4 · 500 come oracolo — risolto.** Gli 869 utenti senza riga `clienti`
+ricevono lo stesso 401 di una password errata. La riga `clienti` si prende con
+una query esplicita e ordinata, non tramite la relazione `uselist=False`, che
+con 4 utenti a due righe non era deterministica.
 
-**S5 · Credenziali SMTP nel DB.** La tabella `mail` contiene host, porta e
-password in chiaro della casella di invio. La nuova app non deve leggerle da lì.
+**S5 · Credenziali SMTP nel DB — invariato, e per scelta.** La tabella `mail`
+contiene ancora host, porta e password in chiaro della casella di invio: è
+un'impostazione della piattaforma legacy e non viene toccata. La nuova
+applicazione non la legge: le credenziali stanno in `.env`.
 
-**S6 · Credenziali di default nel codice.** `root:1234` come fallback in
-`database.py`: in assenza di `.env` l'app tenta di connettersi con quelle.
+**S6 · Credenziali di default nel codice — risolto.** Il fallback `root:1234` è
+sparito da `database.py`, e la verifica di avvio rifiuta esplicitamente una
+`DATABASE_URL` che le contenga.
 
-**S7 · CORS e configurazione.** `allow_origins=["http://localhost:5173"]`
-hardcoded, `allow_credentials=True`. Non deployabile così.
+**S7 · CORS — parzialmente risolto, resta aperto.** L'elenco delle origini
+arriva da `CORS_ORIGINS` in `.env` invece che dal codice, e in produzione la
+verifica di avvio rifiuta un `*`. Ma `allow_credentials=True` e
+`allow_methods=["*"]` restano, e vanno rivisti prima di un deploy vero.
 
 ---
 
@@ -130,62 +168,121 @@ sottoscrittori — nessuna mail, stesso messaggio a video.
 
 ---
 
-## 6. Bug funzionali (indipendenti dalla feature)
+## 6. Bug funzionali
 
-1. `auth/routers.py` → 500 sugli 869 utenti orfani (vedi S4).
-2. `utenti/routers.py::aggiorna_utente` → `setattr` ciclico su tutti i campi
-   dello schema: sovrascrive `utente_password` con quella in arrivo, senza
-   hashing e senza validazione, e azzera i campi non passati.
-3. `utenti/routers.py::crea_utente` → forza `utente_padre = current_utente.id`
+**Chiusi**
+
+1. `auth/routers.py` → 500 sugli 869 utenti orfani: ora 401 generico.
+2. `utenti/routers.py::aggiorna_utente` → lo schema del PUT non ha più
+   `utente_password` né `utente_salt`, usa `exclude_unset` (prima azzerava i
+   campi non inviati) e richiede autenticazione: era aperto a chiunque.
+4. `Login.jsx` → il ramo `/nazionale` era **codice morto**, non solo una rotta
+   mancante: per quel ruolo il backend esce prima con `requires_2fa`, quindi
+   `ruolo_codice === "nazionale"` non poteva mai essere vero. Il ramo è stato
+   rimosso e `App.jsx` ha un `path="*"`, perché il difetto vero era che una
+   rotta assente non produce alcun segnale.
+5. `Login.jsx` → il ramo `requires_2fa` viene intercettato prima di qualunque
+   scrittura: niente più `"undefined"` in `localStorage`.
+
+**Aggiunto in corso d'opera, perché il criterio "nessuna password in chiaro"
+non era soddisfatto sistemando solo il PUT**
+
+3-bis. `utenti/routers.py::crea_utente` scriveva la password in chiaro
+   esattamente come il PUT. Ora applica la policy, salva l'hash e genera
+   `utente_salt` lato server invece di accettarlo dal chiamante.
+
+**Aperti**
+
+3. `crea_utente` forza ancora `utente_padre = current_utente.utente_id`
    ignorando il valore dello schema. Se è voluto, il campo va tolto da
    `UtenteCreate`.
-4. `Login.jsx` → naviga a `/nazionale`, rotta **non registrata** in `App.jsx`:
-   gli utenti Nazionale finiscono su una pagina bianca.
-5. `Login.jsx` → il ramo `requires_2fa` del backend non è gestito: il frontend
-   legge `data.utente_id` che in quel caso è `undefined` e scrive
-   `"undefined"` in `localStorage`.
 6. `models.py::Utente` → `utente_ultimo_login`/`_logout` sono `Date` nel modello
-   e `date` nel DB, ma lo schema `UtenteResponse` li tipizza `datetime`.
-7. `Cliente.utente` → `relationship` con `cascade="all, delete-orphan"` sul lato
-   `Utente.clienti`: cancellare un utente cancella il cliente. Con 4 utenti che
-   hanno 2 clienti, il comportamento è imprevedibile.
-8. Nessuna rotta `DELETE` da nessuna parte (rimosse in `6a82858`): coerente, ma
-   va detto che la disattivazione logica via `utente_attivoSN` non è esposta.
+   e `date` nel DB, ma `UtenteResponse` li tipizza `datetime`.
+7. `Utente.clienti` → `cascade="all, delete-orphan"`: cancellare un utente
+   cancella il cliente. Con 4 utenti che hanno 2 righe, il comportamento è
+   imprevedibile. Le tabelle nuove evitano di proposito ogni `relationship`
+   verso `Utente` e si affidano ai vincoli del database.
+8. Nessuna rotta `DELETE` da nessuna parte: coerente, ma la disattivazione
+   logica via `utente_attivoSN` non è esposta da nessun endpoint.
+9. `POST /clienti/` accetta `utente_id` dal corpo **senza autenticazione**:
+   chiunque può creare un cliente attribuito a qualunque utente. Fuori dal
+   perimetro di questo lavoro, ma va sistemato.
 
 ---
 
 ## 7. Cosa è stato prodotto
 
-- `db/diagnostica/000_*.sql` — 15 controlli in sola lettura, con i valori attesi
-- `db/diagnostica/010_*.sql` — avanzamento del rehash pigro, sola lettura
-- `db/migrations/001..006` — hashing, token, rate limiting, sessioni, indici,
-  template email. **Nessuna modifica ai dati esistenti**: solo DDL più due
-  template email inseriti.
-- `db/rollback/` — annullamento di ognuna
-- `docs/PROMPT-recupero-password.md` — il prompt riscritto
+**Database** — `db/diagnostica/000` e `010` in sola lettura;
+`db/migrations/001–008` con i rispettivi rollback; `db/test/schema_base.sql`,
+che ricrea le cinque tabelle preesistenti che le migrazioni presuppongono e che
+nessuna migrazione crea, più `docker-compose.test.yml` con MariaDB 10.11.
+Serve MariaDB e non MySQL: le migrazioni usano `ADD COLUMN IF NOT EXISTS`
+dentro `ALTER TABLE`, sintassi che su MySQL 8/9 è un errore.
 
-Le migrazioni sono state applicate, rieseguite (idempotenza), annullate e
-ri-applicate su MariaDB 10.11.14 reale. Il flusso token (consumo atomico,
-replay, revoca sessioni, conteggio rate limit) è stato eseguito end-to-end.
+La **008** è l'unica migrazione aggiunta: introduce l'esito `errore_interno`
+nell'ENUM `prr_esito`. Serve perché l'endpoint di richiesta risponde 200 anche
+quando qualcosa fallisce — un 500 sarebbe un oracolo — e senza quel valore la
+riga di audit andrebbe persa proprio nel caso in cui serve di più.
+
+**Backend** — `config.py` (verifica di avvio), `logging_config.py` (redazione),
+`security/{password,tokens,rete,sessioni,tempo}.py`, `auth/{dipendenze,
+schemas,servizio_login,servizio_reset}.py`, `notifiche/{email,backend_invio}.py`,
+i modelli delle tabelle nuove e `requirements.txt`.
+
+**Frontend** — `lib/{api,sessione,passwordPolicy,resetToken}.js`, le pagine
+`PasswordDimenticata.jsx` e `ReimpostaPassword.jsx`, `.env.example`, e la
+riscrittura di `Login.jsx`.
+
+**Test** — `backend/tests/`, 179 casi. Girano su due livelli: quelli unitari
+ovunque, senza Docker e senza rete; i 103 che dipendono da MariaDB vengono
+saltati con un riepilogo rosso che elenca cosa **non** è stato verificato, e la
+CI usa `--require-mariadb`, perché uno skip lì è un errore. Il rischio numero
+uno di una suite così è essere verde per skip.
+
+Verifiche eseguite, non solo dichiarate:
+
+- migrazioni 001–008 su database pulito, idempotenti alla riesecuzione, e
+  rollback che riporta allo stato iniziale confrontando colonne, indici,
+  vincoli ed eventi;
+- i quattro scenari di richiesta con **uvicorn e curl reali**: stesso codice,
+  stesso MD5 del corpo, 73 byte, tempi fra 0,9033 e 0,9044 s;
+- le nove mediane dei rami, misurate interlacciate: fra 156,7 e 157,9 ms;
+- consumo concorrente su quattro livelli, **controllo negativo compreso** — una
+  UPDATE senza le guardie nella WHERE deve consumare due volte, e lo fa: è ciò
+  che rende non vacuo il test positivo;
+- flusso completo in un browser reale, dal link nella mail al login con la
+  nuova password.
 
 ---
 
-## 8. Ordine consigliato
+## 8. Cosa resta
 
-**Oggi, prima di tutto**
-1. `echo "dump.sql" >> .gitignore` e verificare con `git status`.
-2. Creare `backend/requirements.txt` — il progetto oggi non si installa.
+**Prima di andare in produzione**
+1. Backup completo **verificato** — provare il restore, non fidarsi del dump.
+2. Eseguire `db/diagnostica/000` sulla copia e confrontarne l'output con i
+   numeri della sezione 4.
+3. Applicare `001`–`008`, poi rieseguire la diagnostica.
+4. Generare i due pepper e completare `.env`: senza, l'applicazione **non
+   parte** (uvicorn esce con codice 3, verificato).
+5. Configurare il fallback SPA sul server statico: il link della mail è un deep
+   link a una rotta gestita dal browser, e senza fallback restituisce 404 —
+   la feature non funzionerebbe per nessuno.
+6. Dietro reverse proxy, avviare uvicorn con `--proxy-headers
+   --forwarded-allow-ips=<ip del proxy>`: senza, tutte le richieste
+   risulterebbero dallo stesso IP e il limite orario le bloccherebbe insieme.
+   Nella configurazione di nginx, per la rotta di validazione, usare `$uri` al
+   posto di `$request` nel `log_format`: la query string contiene il token, e
+   nginx logga per conto suo.
 
-**Prima della feature**
-3. Applicare `000` diagnostica e leggerne l'output.
-4. Applicare `001`–`006` su una copia.
-
-**Con la feature**
-5. Hashing bcrypt + rehash pigro, sessioni, e il fix di S4 (il 500).
-
-**Dopo**
-6. Bonifica username duplicati → `UNIQUE`.
-7. Chiavi esterne su `clienti`.
+**Poi**
+7. Bonifica dei sei gruppi di username duplicati → `UNIQUE` (procedura nella
+   migrazione 005). Finché non è fatta, quegli account **non possono accedere**:
+   il login rifiuta un'identità ambigua.
+8. Chiavi esterne su `clienti` (sezione facoltativa della 005).
+9. Autorizzazione per ruolo e autenticazione su `/clienti/`.
+10. Bonifica dell'attuatore senza email valida e dei 20 con email condivisa: per
+    i primi il recupero password non funzionerà mai, per i secondi funziona ma
+    il link arriva in una casella che qualcun altro legge.
 
 **Mai**
 - Nessuna riscrittura massiva delle password. La conversione a bcrypt avviene
@@ -193,3 +290,116 @@ replay, revoca sessioni, conteggio rate limit) è stato eseguito end-to-end.
   intatto e continua a entrare come prima. L'avanzamento si legge con
   `db/diagnostica/010_stato_migrazione_password.sql`; cosa fare degli utenti
   rimasti indietro è una decisione da prendere quando i numeri saranno noti.
+  Un test della suite fallisce se qualcuno introduce un `UPDATE utenti SET
+  utente_password` senza un `WHERE utente_id`.
+
+---
+
+## 9. Decisioni che il codice non spiega da solo
+
+Sono le cose che un lettore futuro non può dedurre leggendo i file, e che
+qualcuno "semplificherebbe" rompendole.
+
+**Il rehash pigro non tocca `utente_password_changed_at`.** Quel campo è il
+cut-off della query [B] della migrazione 004, che scarta le sessioni nate prima
+dell'ultimo cambio password. Valorizzarlo al login invaliderebbe la sessione
+appena emessa — `DATETIME` ha risoluzione al secondo, basta che i due `NOW()`
+cadano sullo stesso confine — e tutte quelle sugli altri dispositivi, al primo
+accesso post-migrazione di ognuno dei 4.771 utenti. Un rehash converte il
+formato, non cambia la password.
+
+**Le tre condizioni nella `WHERE` della query [C] sono portanti.** SQLAlchemy
+attiva sempre `CLIENT.FOUND_ROWS` sui dialetti MySQL — è documentato come
+*hardcoded* — quindi `rowcount` conta le righe **trovate**, non quelle
+modificate. Una UPDATE senza quelle guardie restituirebbe 1 anche al secondo
+tentativo e il controllo di stato finirebbe fuori dall'atomicità. Un test di
+controllo negativo lo dimostra.
+
+**Il confronto della password legacy ha una guardia sulla stringa vuota.**
+`utente_password` è `NOT NULL`, quindi `''` esiste davvero, e
+`compare_digest("", "")` è `True`: senza la guardia si entrerebbe con la
+password vuota su ogni riga già convertita.
+
+**L'IP si impacchetta in Python, non con `INET6_ATON`.** I byte sono identici,
+ma un valore non interpretabile non diventa `NULL` — e `prr_ip` è `NOT NULL` —
+e gli indirizzi IPv4-mapped finiscono nello stesso contenitore degli IPv4 nudi,
+mentre `INET6_ATON` ne produrrebbe due e chi passa da un proxy dual-stack
+raddoppierebbe il proprio limite orario.
+
+**Il campo `email` dello schema è `str` e non `EmailStr`.** Con `EmailStr` un
+indirizzo malformato produrrebbe un 422 con il dettaglio della validazione: è
+il modo più banale di bucare l'indistinguibilità, proprio nel caso che la
+specifica nomina.
+
+**Il pavimento temporale, e perché quegli endpoint sono `async def`.** I rami
+differiscono di pochi millisecondi ma in modo sistematico, e poche decine di
+campioni con una mediana li separano. Il ritardo sta in un `finally`, quindi
+vale anche sulle eccezioni: un 500 più veloce di un 200 sarebbe esso stesso
+l'oracolo. Usa `anyio.sleep` e non `time.sleep` perché esiste un solo
+threadpool da 40 slot condiviso da **tutte** le route sync: quaranta richieste
+concorrenti congelerebbero anche `/clienti/` e `/auth/login`.
+
+**Il token si legge con una memoizzazione a livello di modulo, non con un
+`useRef`.** Sotto `StrictMode` React invoca due volte initializer ed effetti, e
+alla seconda invocazione l'URL è già stato ripulito.
+
+**Il `<meta name="referrer">` è in `index.html` e non in un effetto.** Le
+sottorisorse del documento partono durante il parsing dell'`<head>`, prima che
+React monti, e una referrer policy non è retroattiva.
+
+**La policy delle password è duplicata di proposito.** Un endpoint che la
+esponesse regalerebbe l'elenco delle password vietate su una rotta non
+autenticata e introdurrebbe un giro di rete su una pagina che deve disegnare le
+regole subito. La deriva è sorvegliata da un test che esegue davvero il modulo
+JavaScript con node e confronta gli esiti, non solo le costanti.
+
+**La regola "diversa dall'email" non è verificabile nel browser.** Su
+`/reimposta-password` il client non sa a chi appartenga il token, e farlo dire
+a `validate` costruirebbe un oracolo perfetto: chiunque intercettasse un link
+scoprirebbe a chi appartiene. Compare come "verificata al salvataggio".
+
+**Il deposito della sessione è isolato in una riga.** `src/lib/sessione.js`,
+costante `DEPOSITO`. Le tre chiavi devono restare nello stesso deposito: se
+`utente_id` sopravvivesse al token, `NuovoSottoscrittore` salverebbe clienti
+attribuiti a una sessione morta.
+
+---
+
+## 10. Limiti noti
+
+Vanno detti, perché sono le prime cose che verranno segnalate come difetti.
+
+- **Gli utenti con ruolo Nazionale non possono accedere.** Il backend esce con
+  `requires_2fa` e il flusso 2FA è fuori perimetro. Non è una regressione —
+  prima finivano su una pagina bianca — ma ora lo schermo lo dice.
+- **I sei gruppi di username duplicati non accedono più.** È deliberato: prima
+  entravano "a caso", il che era peggio. Si sblocca con la bonifica della 005.
+- **Un attuatore che condivide la casella con un sottoscrittore riceve
+  comunque il link**, e chi legge quella casella può reimpostargli la password.
+  È la regola del §2.2 della specifica presa alla lettera: ambiguo significa
+  più di un utente *idoneo*. Riguarda parte dei 20 attuatori con email
+  condivisa.
+- **Il token viaggia nella query string.** Nel fragment (`#token=...`) non
+  verrebbe mai inviato al server né in un `Referer`, ed è strettamente meglio;
+  la specifica prescrive la query string, quindi resta una proposta.
+- **Nessuna route guard nel frontend.** Ogni URL è raggiungibile senza
+  sessione: il token serve solo per le chiamate all'API.
+- **Nessun rinnovo della sessione**: a 12 ore si viene disconnessi senza
+  preavviso.
+- **Il token di sessione sta in `localStorage`**, quindi è esposto a un XSS. Un
+  cookie `HttpOnly` sarebbe più solido ma è incompatibile con
+  `Authorization: Bearer` e porterebbe CSRF e modifiche a CORS.
+- **Il rate limit non è atomico**: conteggio e inserimento sono due statement,
+  quindi richieste davvero simultanee possono far passare la sesta. È un limite
+  di frequenza, non un confine di sicurezza.
+- **Nessuna outbox transazionale**: se il processo muore fra il commit e
+  l'invio, la mail di reset si perde.
+- **Un indirizzo con uno spazio iniziale è irraggiungibile.** La collation
+  `utf8mb4_unicode_ci` è PAD SPACE: ignora gli spazi in coda ma non quelli in
+  testa, e normalizzare la colonna annullerebbe l'indice. Va bonificato a mano
+  su `clienti`.
+- **Il frontend non ha test automatici.** Non esiste un test runner nel
+  progetto: introdurre vitest e testing-library è una task a sé. I requisiti
+  dell'interfaccia sono stati verificati a mano in un browser reale.
+- **L'indicatore di robustezza è un'euristica**, non una stima dell'entropia, e
+  non blocca mai l'invio: NIST prescrive lunghezza, non composizione.
