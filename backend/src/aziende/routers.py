@@ -4,6 +4,7 @@ from typing import List
 from src.database import get_db 
 from src.aziende.models import Azienda  
 from src.aziende.schemas import AziendaCreate, AziendaResponse  
+from typing import Optional
 
 router = APIRouter(prefix="/aziende", tags=["Aziende"])
 
@@ -29,8 +30,16 @@ def crea_azienda(azienda_in: AziendaCreate, db: Session = Depends(get_db)):
 
 #GET ALL
 @router.get("/", response_model=List[AziendaResponse])
-def lista_aziende(skip: int = 0, limit: int = 40, db: Session = Depends(get_db)):
-    aziende = db.query(Azienda).offset(skip).limit(limit).all()
+def lista_aziende(
+    skip: int = 0, 
+    limit: int = 40, 
+    search: Optional[str] = None,
+    db: Session = Depends(get_db)):
+    query = db.query(Azienda)
+    if search:
+        query = query.filter(Azienda.azienda_ragione_sociale.ilike(f"{search}%"))
+        
+    aziende = query.offset(skip).limit(limit).all()
     return aziende
 
 #GET BY ID

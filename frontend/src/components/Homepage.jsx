@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import ElencoClienti from "./ElencoClienti";
+import ElencoAziende from "./ElencoAziende";
 
 export default function Homepage() {
   const [active, setActive] = useState("sottoscrittori");
@@ -22,6 +23,10 @@ export default function Homepage() {
 
         {active === "attuatori" && (
           <ElencoClienti key="attuatori" soloAttuatori={true} />
+        )}
+
+        {active === "aziende" && (
+          <ElencoAziende key="aziende" soloAttuatori={true} />
         )}
       </main>
     </div>
