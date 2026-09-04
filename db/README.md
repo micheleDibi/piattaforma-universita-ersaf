@@ -47,6 +47,89 @@ Le password si convertono una riga alla volta, al login del singolo utente:
 chi non accede resta intatto. L'avanzamento si segue con
 `db/diagnostica/010_stato_migrazione_password.sql`.
 
+## Se una migrazione fallisce
+
+Il client si ferma al primo errore, quindi il file che fallisce non lascia
+nulla applicato a metà: si corregge la causa e si rilancia lo stesso comando.
+Le migrazioni sono idempotenti, quindi rieseguire quelle già passate non fa
+danni.
+
+### 005 — `ERROR 1709: Index column size too large. The maximum column size is 767 bytes`
+
+Succede quando `clienti` ha `ROW_FORMAT=COMPACT`, il formato dei database più
+vecchi: lì il limite per una colonna indicizzata è 767 byte, e
+`cliente_email VARCHAR(255)` in utf8mb4 ne occupa 1020. Con `DYNAMIC`, il
+formato predefinito da MariaDB 10.2, il limite sale a 3072 e il problema
+sparisce. L'`ALTER` della 005 aggiunge i quattro indici in un colpo solo, quindi
+o passano tutti o non ne viene creato nessuno: lo stato resta pulito.
+
+```sql
+-- quali tabelle hanno ancora il formato vecchio
+SELECT TABLE_NAME, ROW_FORMAT FROM information_schema.TABLES
+ WHERE TABLE_SCHEMA = DATABASE() AND ENGINE = 'InnoDB'
+   AND ROW_FORMAT NOT IN ('Dynamic','Compressed');
+
+-- la correzione: riscrive la tabella, non cambia i dati
+ALTER TABLE `clienti` ROW_FORMAT=DYNAMIC;
+```
+
+Poi si rilancia la 005. **Non** si risolve accorciando l'indice a
+`cliente_email(191)`: significherebbe modificare la migrazione, e un indice su
+prefisso si comporta diversamente nelle ricerche.
+
+### 006 — `ERROR 1062: Duplicate entry '<codice>' for key 'uq_messaggi_email_codice'`
+
+`messaggi_email` contiene due o più righe con lo stesso
+`messaggio_email_codice`, e la UNIQUE non può essere creata. È il caso che il
+commento in testa alla 006 anticipa. Poiché il file si ferma lì, i due template
+del recupero password non vengono inseriti: nessuno stato intermedio.
+
+```sql
+-- 1. quali codici sono duplicati
+SELECT messaggio_email_codice, COUNT(*) AS quante,
+       GROUP_CONCAT(messaggio_email_id ORDER BY messaggio_email_id) AS id
+  FROM messaggi_email GROUP BY messaggio_email_codice HAVING COUNT(*) > 1;
+
+-- 2. guardare le righe PRIMA di decidere: i testi possono essere diversi
+SELECT messaggio_email_id, messaggio_email_codice, messaggio_email_oggetto
+  FROM messaggi_email WHERE messaggio_email_codice IN (...);
+```
+
+Quale riga sopravvive è una decisione di contenuto, non tecnica. Se non c'è un
+motivo per preferirne una, si tiene quella con l'id più basso e si **rinomina**
+le altre invece di cancellarle, così non si perde nessun testo:
+
+```sql
+UPDATE messaggi_email m
+  JOIN (SELECT messaggio_email_codice AS c, MIN(messaggio_email_id) AS tenere
+          FROM messaggi_email GROUP BY messaggio_email_codice HAVING COUNT(*) > 1) AS d
+    ON m.messaggio_email_codice = d.c AND m.messaggio_email_id <> d.tenere
+   SET m.messaggio_email_codice = CONCAT(m.messaggio_email_codice, '_dup', m.messaggio_email_id);
+```
+
+Poi si rilancia la 006. Attenzione: se un altro applicativo cerca quei template
+per codice, rinominarli lo rompe — in quel caso vanno cancellati i doppioni
+veri, non rinominati.
+
+### La 005 fallisce dicendo che l'indice esiste già
+
+Non dovrebbe: usa `ADD INDEX IF NOT EXISTS`. Se succede, un tentativo
+precedente ha creato un indice con lo stesso nome ma colonne diverse. Si
+controlla e, se non corrisponde, si elimina e si rilancia:
+
+```sql
+SELECT INDEX_NAME, GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX) AS colonne
+  FROM information_schema.STATISTICS
+ WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clienti'
+ GROUP BY INDEX_NAME;
+```
+
+### `ERROR 1064` con `IF NOT EXISTS` dentro `ALTER TABLE`
+
+Il database non è MariaDB. `ADD COLUMN IF NOT EXISTS` e `ADD INDEX IF NOT
+EXISTS` esistono solo in MariaDB: su MySQL 8 o 9 sono un errore di sintassi.
+Queste migrazioni richiedono MariaDB, come la produzione.
+
 ## Proprietà garantite
 
 | Proprietà | Stato |
