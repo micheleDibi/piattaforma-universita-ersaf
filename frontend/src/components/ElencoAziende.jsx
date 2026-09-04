@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
+import { apiFetch } from "../lib/api";
 
 function ElencoAziende() {
   const [aziende, setAziende] = useState([]);
@@ -38,8 +39,8 @@ function ElencoAziende() {
         setSkip(0);
         skipRef.current = 0;
 
-        const response = await fetch(
-          `http://localhost:8000/aziende/?skip=0&limit=${LIMIT}&search=${encodeURIComponent(searchTerm)}`,
+        const response = await apiFetch(
+          `/aziende/?skip=0&limit=${LIMIT}&search=${encodeURIComponent(searchTerm)}`,
         );
         if (!response.ok) {
           throw new Error("Errore durante il recupero dei dati delle aziende");
@@ -87,8 +88,8 @@ function ElencoAziende() {
         skipRef.current = nextSkip;
 
         try {
-          const response = await fetch(
-            `http://localhost:8000/aziende/?skip=${nextSkip}&limit=${LIMIT}&search=${encodeURIComponent(searchTermRef.current)}`,
+          const response = await apiFetch(
+            `/aziende/?skip=${nextSkip}&limit=${LIMIT}&search=${encodeURIComponent(searchTermRef.current)}`,
           );
           if (!response.ok) {
             throw new Error("Errore durante il recupero dei dati");

@@ -1,6 +1,10 @@
+import { leggiRuolo } from "../lib/sessione";
 function Sidebar({ active, setActive }) {
-  const ruoloCodice = localStorage.getItem("ruolo_codice");
-  const canSee = ruoloCodice === "Aderente";
+  // leggiRuolo() legge dalla sessione, dove il valore e' normalizzato in
+  // minuscolo alla scrittura. Il backend confronta ruolo_codice.lower(), quindi
+  // un confronto con "Aderente" maiuscolo dipenderebbe da come il database
+  // capitalizza il valore.
+  const canSee = leggiRuolo() === "aderente";
   const links = [
     { id: "dashboard", label: "Dashboard" },
     { id: "sottoscrittori", label: "Elenco Sottoscrittori" },
