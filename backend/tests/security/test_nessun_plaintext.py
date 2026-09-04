@@ -184,8 +184,12 @@ def test_scritture_su_utente_password_solo_dove_previsto():
 def test_nessuno_script_modifica_le_password_in_blocco():
     """Traduzione in test del divieto: nessuna operazione massiva, mai."""
     sospette: list[str] = []
-    radici = [DIR_BACKEND / "src", DIR_BACKEND.parent / "db"]
+    # scripts/ e' incluso: e' l'unico posto del repo dove qualcuno potrebbe
+    # essere tentato di scrivere un "aggiorniamo tutte le password".
+    radici = [DIR_BACKEND / "src", DIR_BACKEND / "scripts", DIR_BACKEND.parent / "db"]
     for radice in radici:
+        if not radice.exists():
+            continue
         for percorso in sorted(radice.rglob("*")):
             if percorso.suffix not in (".py", ".sql") or not percorso.is_file():
                 continue
