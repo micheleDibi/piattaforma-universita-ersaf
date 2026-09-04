@@ -1,0 +1,38 @@
+# Database di sviluppo e di test.
+#
+#   docker compose -f db/test/docker-compose.test.yml up -d
+#   docker compose -f db/test/docker-compose.test.yml down -v
+#
+# Serve MariaDB e non MySQL: le migrazioni 001-006 usano `ADD COLUMN IF NOT
+# EXISTS` e `ADD INDEX IF NOT EXISTS` dentro ALTER TABLE, sintassi che esiste
+# solo in MariaDB e che su MySQL 8/9 e' un errore di sintassi.
+#
+# La porta e' la 3307 per non collidere con un MariaDB gia' installato in
+# locale, e i dati stanno in tmpfs: il database e' usa e getta, veloce, e non
+# lascia volumi da ripulire. Nessun dato reale deve mai finire qui.
+
+services:
+  db:
+    image: mariadb:10.11          # stessa minor della produzione (10.11.14)
+    container_name: ersaf-db-test
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: ersaf_test
+      MARIADB_USER: ersaf
+      MARIADB_PASSWORD: ersaf
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --event-scheduler=ON
+      --innodb-lock-wait-timeout=5
+    ports:
+      - "3307:3306"
+    tmpfs:
+      - /var/lib/mysql
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 2s
+      timeout: 3s
+      retries: 40
