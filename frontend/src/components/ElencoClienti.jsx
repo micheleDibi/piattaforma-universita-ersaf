@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
+import { apiFetch } from "../lib/api";
+import { leggiRuolo } from "../lib/sessione";
 
 function ElencoClienti({ soloAttuatori = false }) {
   const [sottoscrittori, setSottoscrittori] = useState([]);
@@ -21,8 +23,11 @@ function ElencoClienti({ soloAttuatori = false }) {
   const navigate = useNavigate();
 
   // Visibilità
-  const ruoloCodice = localStorage.getItem("ruolo_codice");
-  const canSee = ruoloCodice === "Aderente";
+  // leggiRuolo() legge dalla sessione e il valore e' normalizzato in minuscolo
+  // alla scrittura: il backend confronta ruolo_codice.lower(), quindi un
+  // confronto con "Aderente" maiuscolo dipenderebbe da come il database
+  // capitalizza il valore.
+  const canSee = leggiRuolo() === "aderente";
   const canSeeAzienda = canSee && soloAttuatori;
 
   useEffect(() => {
@@ -56,8 +61,8 @@ function ElencoClienti({ soloAttuatori = false }) {
             ? `&ruolo_codice=${encodeURIComponent(selectedRuolo)}`
             : "";
 
-        const response = await fetch(
-          `http://localhost:8000/clienti/?skip=0&limit=${LIMIT}${attuatoriParam}${ruoloParam}&search=${encodeURIComponent(searchTerm)}`,
+        const response = await apiFetch(
+          `/clienti/?skip=0&limit=${LIMIT}${attuatoriParam}${ruoloParam}&search=${encodeURIComponent(searchTerm)}`,
         );
         if (!response.ok) {
           throw new Error("Errore durante il recupero dei dati");
@@ -112,8 +117,8 @@ function ElencoClienti({ soloAttuatori = false }) {
               ? `&ruolo_codice=${encodeURIComponent(selectedRuoloRef.current)}`
               : "";
 
-          const response = await fetch(
-            `http://localhost:8000/clienti/?skip=${nextSkip}&limit=${LIMIT}${attuatoriParam}${ruoloParam}&search=${encodeURIComponent(searchTermRef.current)}`,
+          const response = await apiFetch(
+            `/clienti/?skip=${nextSkip}&limit=${LIMIT}${attuatoriParam}${ruoloParam}&search=${encodeURIComponent(searchTermRef.current)}`,
           );
           if (!response.ok) {
             throw new Error("Errore durante il recupero dei dati");

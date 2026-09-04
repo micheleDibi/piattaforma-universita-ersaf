@@ -79,12 +79,12 @@ RADICI_VIETATE = frozenset(
 CODICI_POLICY = {
     "lunghezza_minima": "Deve avere almeno {min} caratteri",
     "lunghezza_massima_byte": (
-        "Non puo' superare 72 byte, il limite tecnico di bcrypt "
+        "Non può superare 72 byte, il limite tecnico di bcrypt "
         "(le lettere accentate ne occupano due)"
     ),
-    "uguale_username": "Non puo' coincidere con il nome utente",
-    "uguale_email": "Non puo' coincidere con l'indirizzo email",
-    "troppo_comune": "E' troppo comune o prevedibile",
+    "uguale_username": "Non può coincidere con il nome utente",
+    "uguale_email": "Non può coincidere con l'indirizzo email",
+    "troppo_comune": "È troppo comune o prevedibile",
 }
 
 

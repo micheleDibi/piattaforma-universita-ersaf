@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
+import { apiFetch } from "../lib/api";
+import { leggiUtenteId } from "../lib/sessione";
 
 function NuovoSottoscrittore() {
   const { id } = useParams();
@@ -38,7 +40,7 @@ function NuovoSottoscrittore() {
 
   useEffect(() => {
     if (isEditMode) {
-      fetch(`http://localhost:8000/clienti/${id}`)
+      apiFetch(`/clienti/${id}`)
         .then((res) => {
           if (!res.ok)
             throw new Error("Errore nel recupero del sottoscrittore");
@@ -107,7 +109,14 @@ function NuovoSottoscrittore() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const utenteId = Number(localStorage.getItem("utente_id"));
+    const utenteId = leggiUtenteId();
+    if (utenteId === null) {
+      // clienti.utente_id e' NOT NULL: senza questo controllo il salvataggio
+      // partiva con null e tornava un errore incomprensibile a meta' form.
+      alert("Sessione scaduta. Rifai il login prima di salvare.");
+      navigate("/");
+      return;
+    }
 
     const payload = {
       cliente_codice: formData.codiceFiscale,
@@ -150,17 +159,12 @@ function NuovoSottoscrittore() {
     };
 
     // URL in base al fatto se siamo in modifica o creazione
-    const url = isEditMode
-      ? `http://localhost:8000/clienti/${id}`
-      : "http://localhost:8000/clienti/";
+    const url = isEditMode ? `/clienti/${id}` : "/clienti/";
     const method = isEditMode ? "PUT" : "POST";
 
     try {
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: method,
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(payload),
       });
 
