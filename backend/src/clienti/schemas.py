@@ -54,4 +54,9 @@ class ClienteResponse(ClienteBase):
     azienda: Optional[AziendaResponse] = None
     ruolo: Optional[RuoloResponse] = None
 
+class ClienteConUtenteCreate(ClienteBase):
+    utente_id: Optional[int] = None
+    utente_username: Optional[str] = None  
+    utente_password: Optional[str] = None 
+
     model_config = ConfigDict(from_attributes=True)
