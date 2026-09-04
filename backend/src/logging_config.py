@@ -39,10 +39,25 @@ from pathlib import Path
 
 NOME_LOGGER = "ersaf"
 
-# L'ordine conta: l'hash bcrypt va redatto per primo, perche' la sua parte
-# finale puo' contenere una sequenza di 43 caratteri che il pattern del token
-# scambierebbe per un token.
+# L'ORDINE CONTA, per due motivi distinti.
+#   1. La regola chiave=valore viene per prima: se agisse dopo, si
+#      applicherebbe a un valore GIA' sostituito (per esempio
+#      "token=[TOKEN-REDATTO]") e produrrebbe output storpiato del tipo
+#      "token=[REDATTO]]]". Il valore sarebbe comunque rimosso, ma il log
+#      diventerebbe illeggibile proprio dove serve leggerlo.
+#   2. L'hash bcrypt viene prima del pattern del token, perche' la sua parte
+#      finale puo' contenere una sequenza di 43 caratteri che il pattern del
+#      token scambierebbe per un token.
 SOSTITUZIONI: list[tuple[re.Pattern[str], str]] = [
+    # chiave=valore / chiave: valore con un nome sensibile.
+    (
+        re.compile(
+            r"(?i)\b(password|passwd|pwd|utente_password|password_conferma"
+            r"|smtp_password|pepper|token)\b(\s*[:=]\s*)"
+            r"(\"[^\"]*\"|'[^']*'|[^\s,;)\}\]]+)"
+        ),
+        r"\1\2[REDATTO]",
+    ),
     # $2b$12$ + 53 caratteri: un hash bcrypt.
     (re.compile(r"\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}"), "[BCRYPT-REDATTO]"),
     # secrets.token_urlsafe(32) produce esattamente 43 caratteri urlsafe.
@@ -61,15 +76,6 @@ SOSTITUZIONI: list[tuple[re.Pattern[str], str]] = [
     (
         re.compile(r"[\w.!#$%&'*+/=?^`{|}~-]+@[\w-]+(?:\.[\w-]+)+"),
         "[EMAIL-REDATTA]",
-    ),
-    # chiave=valore / chiave: valore con un nome sensibile.
-    (
-        re.compile(
-            r"(?i)\b(password|passwd|pwd|utente_password|password_conferma"
-            r"|smtp_password|pepper|token)\b(\s*[:=]\s*)"
-            r"(\"[^\"]*\"|'[^']*'|[^\s,;)\}\]]+)"
-        ),
-        r"\1\2[REDATTO]",
     ),
 ]
 

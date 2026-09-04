@@ -251,3 +251,30 @@ def client_da(db_pulito):
     yield costruisci
     for istanza in aperti:
         istanza.__exit__(None, None, None)
+
+
+# =============================================================================
+# Email
+# =============================================================================
+@pytest.fixture(autouse=True)
+def mailer():
+    """Spia dell'invio, attiva grazie a EMAIL_BACKEND=memoria.
+
+    E' autouse perche' nessun test deve poter spedire davvero, nemmeno per
+    sbaglio: gli indirizzi delle fixture sono @example.org e l'host SMTP e'
+    smtp.invalid, ma il modo sicuro e' non avere proprio un backend che spedisce.
+    """
+    from src.notifiche.backend_invio import backend_memoria
+
+    spia = backend_memoria()
+    spia.svuota()
+    yield spia
+    spia.svuota()
+
+
+def corpo_html(messaggio) -> str:
+    """Il corpo HTML di un messaggio raccolto dalla spia."""
+    for parte in messaggio.walk():
+        if parte.get_content_type() == "text/html":
+            return parte.get_content()
+    return ""

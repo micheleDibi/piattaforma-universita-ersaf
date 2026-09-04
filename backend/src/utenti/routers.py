@@ -27,7 +27,7 @@ def crea_utente(utente: UtenteCreate,
     )
     if violate:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={
                 "codice": "policy_password",
                 "regole_violate": violate,
