@@ -1,0 +1,39 @@
+# Dipendenze del backend — piattaforma-universita-ersaf
+#
+# Installazione:
+#   python3 -m venv backend/.venv
+#   backend/.venv/bin/pip install -r backend/requirements.txt
+#
+# Prima di questo file il progetto non era installabile: in particolare
+# PyMySQL non era presente, quindi `import src.database` falliva e il backend
+# non riusciva nemmeno a connettersi a MariaDB.
+
+# --- runtime ----------------------------------------------------------------
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+sqlalchemy>=2.0,<3
+PyMySQL>=1.1,<2
+# Richiesta da PyMySQL per gli schemi di autenticazione sha256/caching_sha2 e
+# per il TLS verso il server. Senza, la connessione fallisce con un errore
+# poco leggibile su alcune configurazioni di MariaDB.
+cryptography>=42
+python-dotenv>=1.0,<2
+pydantic[email]>=2.9,<3
+pydantic-settings>=2.4,<3
+
+# Hashing delle password. Si usa bcrypt DIRETTAMENTE, senza passlib:
+#   - passlib e' fermo all'ultima release del 2020 e si rompe con bcrypt >= 4.1
+#     (AttributeError su __about__), quindi imporrebbe un pin `bcrypt<4.1`
+#     permanente;
+#   - servono tre funzioni in tutto, e CryptContext aggiunge uno strato proprio
+#     dove dobbiamo controllare dove avviene il troncamento a 72 byte.
+# Vedi backend/src/security/password.py.
+bcrypt>=4.0,<5
+
+# L'invio SMTP usa `smtplib` della standard library dentro BackgroundTasks:
+# tutte le route sono sync e i background task sincroni girano nel threadpool,
+# dove una chiamata bloccante non ferma l'event loop. Niente aiosmtplib.
+
+# --- test -------------------------------------------------------------------
+pytest>=8.0
+httpx>=0.27
