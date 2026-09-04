@@ -8,6 +8,9 @@ from typing import Optional
 from src.ruolo.models import Ruolo
 from src.aziende.models import Azienda
 from src.utenti.models import Utente
+import uuid
+from src.auth.dipendenze import get_current_utente
+from src.security.password import hash_password, messaggi_policy, verifica_policy_password
 
 
 router = APIRouter(prefix="/clienti", tags=["Clienti"])
@@ -21,8 +24,13 @@ def crea_cliente(cliente: ClienteCreate, db: Session = Depends(get_db)):
     db.refresh(db_cliente)
     return db_cliente
 
+#POST CON UTENTE
 @router.post("/con-utente", status_code=status.HTTP_201_CREATED)
-def crea_cliente_e_utente(dati: ClienteConUtenteCreate, db: Session = Depends(get_db)):
+def crea_cliente_e_utente(
+    dati: ClienteConUtenteCreate, 
+    db: Session = Depends(get_db),
+    current_utente = Depends(get_current_utente)
+):
 
     # Controlli su codice, email, telefono, cellulare, pec, documento
     if dati.cliente_codice and db.query(Cliente).filter(Cliente.cliente_codice == dati.cliente_codice).first():
@@ -62,10 +70,11 @@ def crea_cliente_e_utente(dati: ClienteConUtenteCreate, db: Session = Depends(ge
         )
 
     try:
-        #Crea prima l'Utente temporaneo per ottenere l'ID
+        # Crea prima l'Utente temporaneo per ottenere l'ID
         nuovo_utente = Utente(
             utente_username="temp",
-            utente_password="temp", 
+            utente_password="",
+            utente_password_hash="",
             utente_attivoSN=1
         )
         db.add(nuovo_utente)
@@ -76,10 +85,29 @@ def crea_cliente_e_utente(dati: ClienteConUtenteCreate, db: Session = Depends(ge
         cognome = dati.cliente_cognome.strip()
         
         username = f"{nome}{cognome}"
-        password = f"{nome[:3]}{cognome[:3]}{nuovo_utente.utente_id}"
+        password_inChiaro = f"{nome[:3]}{cognome[:3]}{nuovo_utente.utente_id}"
+
+        violate = verifica_policy_password(password_inChiaro, username=username)
+        if violate:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail={
+                    "codice": "policy_password",
+                    "regole_violate": violate,
+                    "messaggi": messaggi_policy(violate),
+                },
+            )
+        
+        id_corrente = current_utente.utente_id
 
         nuovo_utente.utente_username = username
-        nuovo_utente.utente_password = password
+        nuovo_utente.utente_created_by = id_corrente
+        nuovo_utente.utente_updated_by = id_corrente
+        nuovo_utente.utente_padre = id_corrente
+        nuovo_utente.utente_password_hash = hash_password(password_inChiaro)
+        nuovo_utente.utente_password_algo = "bcrypt"
+        nuovo_utente.utente_password = ""  # Mai in chiaro
+        nuovo_utente.utente_salt = str(uuid.uuid4())
 
         # Prepara i dati del cliente ESCLUDENDO i campi utente temporanei dello schema
         dati_dict = dati.model_dump(exclude={"utente_username", "utente_password"})
@@ -97,14 +125,17 @@ def crea_cliente_e_utente(dati: ClienteConUtenteCreate, db: Session = Depends(ge
             "cliente_id": nuovo_cliente.cliente_id,
             "utente_id": nuovo_utente.utente_id,
             "username_generato": username,
-            "password_generata": password
+            "password_generata": password_inChiaro
         }
 
     except HTTPException as he:
+        db.rollback()
         raise he
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Errore: {str(e)}")
+
+
 
 #GET ALL (paginazione a 50)
 @router.get("/", response_model=List[ClienteResponse])

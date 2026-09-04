@@ -85,7 +85,7 @@ class Impostazioni(BaseSettings):
 
     # --- password -----------------------------------------------------------
     bcrypt_cost: int = 12
-    password_min_length: int = 12
+    password_min_length: int = 8
 
     # --- rete ---------------------------------------------------------------
     cors_origins: str = "http://localhost:5173"
@@ -190,7 +190,7 @@ def verifica_configurazione(imp: Impostazioni | None = None) -> None:
 
     if not 4 <= imp.bcrypt_cost <= 16:
         problemi.append(f"BCRYPT_COST={imp.bcrypt_cost} fuori dall'intervallo 4..16")
-    if imp.password_min_length < 12:
+    if imp.password_min_length < 8:
         problemi.append(
             f"PASSWORD_MIN_LENGTH={imp.password_min_length}: NIST SP 800-63B "
             "raccomanda almeno 12 caratteri, non si scende sotto"
