@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { apiFetch } from "../lib/api";
 import { leggiRuolo } from "../lib/sessione";
 
-function ElencoClienti({ soloAttuatori = false }) {
+function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
   const [sottoscrittori, setSottoscrittori] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -55,6 +55,7 @@ function ElencoClienti({ soloAttuatori = false }) {
         setSkip(0);
         skipRef.current = 0;
 
+        const utentiParam = soloUtenti ? "&solo_utenti=true" : "";
         const attuatoriParam = soloAttuatori ? "&solo_attuatori=true" : "";
         const ruoloParam =
           soloAttuatori && selectedRuolo
@@ -62,7 +63,7 @@ function ElencoClienti({ soloAttuatori = false }) {
             : "";
 
         const response = await apiFetch(
-          `/clienti/?skip=0&limit=${LIMIT}${attuatoriParam}${ruoloParam}&search=${encodeURIComponent(searchTerm)}`,
+          `/clienti/?skip=0&limit=${LIMIT}${attuatoriParam}${utentiParam}${ruoloParam}&search=${encodeURIComponent(searchTerm)}`,
         );
         if (!response.ok) {
           throw new Error("Errore durante il recupero dei dati");
@@ -92,9 +93,9 @@ function ElencoClienti({ soloAttuatori = false }) {
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, selectedRuolo, soloAttuatori]);
+  }, [searchTerm, selectedRuolo, soloAttuatori, soloUtenti]); // <--- Aggiunto soloUtenti qui
 
-  // Funzione per caricare altri elementi allo scroll
+  // 2. Aggiungi soloUtenti anche nella chiamata dello scroll
   useEffect(() => {
     const handleScroll = async () => {
       if (
@@ -111,6 +112,7 @@ function ElencoClienti({ soloAttuatori = false }) {
         skipRef.current = nextSkip;
 
         try {
+          const utentiParam = soloUtenti ? "&solo_utenti=true" : ""; // <--- Incluso anche qui
           const attuatoriParam = soloAttuatori ? "&solo_attuatori=true" : "";
           const ruoloParam =
             soloAttuatori && selectedRuoloRef.current
@@ -118,7 +120,7 @@ function ElencoClienti({ soloAttuatori = false }) {
               : "";
 
           const response = await apiFetch(
-            `/clienti/?skip=${nextSkip}&limit=${LIMIT}${attuatoriParam}${ruoloParam}&search=${encodeURIComponent(searchTermRef.current)}`,
+            `/clienti/?skip=${nextSkip}&limit=${LIMIT}${attuatoriParam}${utentiParam}${ruoloParam}&search=${encodeURIComponent(searchTermRef.current)}`,
           );
           if (!response.ok) {
             throw new Error("Errore durante il recupero dei dati");
@@ -148,7 +150,7 @@ function ElencoClienti({ soloAttuatori = false }) {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [skip, soloAttuatori]);
+  }, [skip, soloAttuatori, soloUtenti]);
 
   if (initialLoading)
     return <div className="p-4 text-center text-gray-500">Caricamento...</div>;

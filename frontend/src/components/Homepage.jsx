@@ -18,7 +18,11 @@ export default function Homepage() {
         )}
 
         {active === "sottoscrittori" && (
-          <ElencoClienti key="sottoscrittori" soloAttuatori={false} />
+          <ElencoClienti
+            key="sottoscrittori"
+            soloAttuatori={false}
+            soloUtenti={true}
+          />
         )}
 
         {active === "attuatori" && (

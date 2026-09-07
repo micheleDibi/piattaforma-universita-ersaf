@@ -137,7 +137,7 @@ def crea_cliente_e_utente(
 
 
 
-#GET ALL (paginazione a 50)
+# GET ALL (paginazione a 50)
 @router.get("/", response_model=List[ClienteResponse])
 def leggi_clienti(
     skip: int = 0, 
@@ -145,19 +145,23 @@ def leggi_clienti(
     search: Optional[str] = None, 
     ruolo_codice: Optional[str] = None,
     solo_attuatori: bool = False,
+    solo_utenti: bool = False, 
     db: Session = Depends(get_db)
 ):
     query = db.query(Cliente).options(
         joinedload(Cliente.azienda),
         joinedload(Cliente.ruolo))
 
-    if ruolo_codice or solo_attuatori:
+    
+    if ruolo_codice or solo_attuatori or solo_utenti:
         query = query.join(Ruolo, Cliente.cliente_ruolo == Ruolo.ruolo_id)
         
     if ruolo_codice:
         query = query.filter(Ruolo.ruolo_codice == ruolo_codice)
     elif solo_attuatori:
         query = query.filter(Ruolo.ruolo_codice.in_(["Nazionale", "Regionale", "Provinciale", "Aderente"]))
+    elif solo_utenti: # <--- 3. Gestiamo il filtro per i soli utenti
+        query = query.filter(Ruolo.ruolo_codice == "Utente")
     
     if search:
         search_term = f"{search}%"
@@ -176,7 +180,6 @@ def leggi_clienti(
         
     clienti = query.order_by(Cliente.cliente_id.asc()).offset(skip).limit(limit).all()
     return clienti
-
 
 #GET BY ID
 @router.get("/{cliente_id}", response_model=ClienteResponse)

@@ -181,7 +181,7 @@ function NuovoSottoscrittore() {
           ? "Modifiche salvate con successo!"
           : "Sottoscrittore salvato correttamente!",
       );
-      navigate("/elenco"); // Torna alla lista dopo il salvataggio
+      navigate("/home"); // Torna alla lista dopo il salvataggio
     } catch (error) {
       console.error("Errore:", error);
       alert("Si è verificato un errore durante il salvataggio.");
@@ -641,7 +641,7 @@ function NuovoSottoscrittore() {
             <div className="flex justify-end gap-3 pt-6">
               <button
                 type="button"
-                onClick={() => navigate("/elenco")}
+                onClick={() => navigate("/home")}
                 className="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-2xl transition"
               >
                 Annulla
