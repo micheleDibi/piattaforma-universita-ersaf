@@ -113,6 +113,15 @@ def login(creds: LoginRequest, request: Request, db: Session = Depends(get_db)):
 
     ruolo = codice_ruolo(db, cliente.cliente_ruolo)
 
+    # BLOCCO RUOLI VIETATI (0, 4, 6)
+    if cliente.cliente_ruolo in [0, 4, 6]:
+        logger.warning(
+            "accesso negato: utente_id=%s ha un ruolo non consentito (ruolo_id=%s)",
+            utente.utente_id,
+            cliente.cliente_ruolo,
+        )
+        raise _credenziali_errate()
+
     if ruolo and ruolo.lower() == "nazionale":
         # Il flusso 2FA vero e' fuori perimetro. Non si emette sessione e non
         # si restituisce utente_id: il frontend deve fermarsi qui.
