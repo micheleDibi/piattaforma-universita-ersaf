@@ -67,7 +67,7 @@ def crea_cliente_e_utente(
             utente_username="temp",
             utente_password="",
             utente_password_hash="",
-            utente_attivoSN=-1
+            utente_attivoSN=1
         )
         db.add(nuovo_utente)
         db.flush() # Genera utente_id
@@ -195,10 +195,21 @@ def leggi_clienti(
 #GET BY ID
 @router.get("/{cliente_id}", response_model=ClienteResponse)
 def leggi_cliente(cliente_id: int, db: Session = Depends(get_db)):
-    db_cliente = db.query(Cliente).filter(Cliente.cliente_id == cliente_id).first()
+    db_cliente = (
+        db.query(Cliente)
+        .options(
+            joinedload(Cliente.azienda),
+            joinedload(Cliente.ruolo),
+            joinedload(Cliente.utente).joinedload(Utente.padre)
+        )
+        .filter(Cliente.cliente_id == cliente_id)
+        .first()
+    )
+    
     if not db_cliente:
         raise HTTPException(status_code=404, detail="Cliente non trovato")
     return db_cliente
+
 
 #PUT
 @router.put("/{cliente_id}", response_model=ClienteResponse)

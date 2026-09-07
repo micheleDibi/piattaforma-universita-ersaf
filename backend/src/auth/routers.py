@@ -1,5 +1,4 @@
 """Rotte di autenticazione."""
-
 from __future__ import annotations
 
 import contextlib
@@ -61,6 +60,7 @@ from src.security.rete import ip_client, user_agent
 from src.security.sessioni import crea_sessione, revoca_sessione
 from src.security.tempo import pavimento_temporale
 from src.security.tokens import forma_token_valida
+from src.utenti.models import Utente
 
 logger = logging.getLogger("ersaf.auth")
 
@@ -329,4 +329,42 @@ def conferma_reset(
     # L'utente NON viene autenticato: la risposta rimanda al login.
     return {
         "message": "Password aggiornata. Ora puoi accedere con le nuove credenziali."
+    }
+
+
+
+@router.post("/login-as/{utente_id}")
+def login_as(
+    utente_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    ip = ip_client(request)
+    ua = user_agent(request)
+
+    utente = db.get(Utente, utente_id)
+    if utente is None:
+        raise _credenziali_errate()
+
+    cliente = cliente_principale(db, utente.utente_id)
+    if cliente is None:
+        raise _credenziali_errate()
+
+    ruolo = codice_ruolo(db, cliente.cliente_ruolo)
+
+    if cliente.cliente_ruolo in [0, 4, 6]:
+        raise _credenziali_errate()
+
+    token, scadenza = crea_sessione(db, utente.utente_id, ip, ua)
+    db.commit()
+    logger.info("login-as riuscito per utente_id=%s", utente.utente_id)
+
+    return {
+        "message": "Login automatico effettuato con successo",
+        "utente_id": utente.utente_id,
+        "utente_username": utente.utente_username,
+        "ruolo_codice": ruolo,
+        "token": token,  
+        "token_type": "bearer",
+        "scadenza": scadenza.isoformat() if scadenza else None,
     }

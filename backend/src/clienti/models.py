@@ -92,6 +92,7 @@ class Cliente(Base):
     cliente_abilitazione_corsi_speciali: Mapped[int]= mapped_column(Integer, nullable=False, default=0)
     cliente_abilitazione_a4u: Mapped[int]= mapped_column(Integer, nullable=False, default=0)
 
-    utente: Mapped["Utente"] = relationship(back_populates="clienti")
+    utente: Mapped["Utente"] = relationship("Utente", foreign_keys=[utente_id], back_populates="clienti")
     ruolo: Mapped["Ruolo"] = relationship(back_populates="clienti")
     azienda: Mapped[Optional["Azienda"]]= relationship(back_populates="clienti")
+    utenti_aggiornati: Mapped[list["Utente"]] = relationship("Utente", foreign_keys="[Utente.utente_updated_by]", back_populates="aggiornato_da")

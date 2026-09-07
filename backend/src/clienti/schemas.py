@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, PositiveInt, field_validator
 from src.aziende.schemas import AziendaResponse
 from src.ruolo.schemas import RuoloResponse
+from src.utenti.schemas import UtenteResponse
 from src.clienti.models import SessoEnum, TipoDocumentoEnum
 
 class ClienteBase(BaseModel):
@@ -79,6 +80,7 @@ class ClienteResponse(ClienteBase):
     cliente_id: int
     azienda: Optional[AziendaResponse] = None
     ruolo: Optional[RuoloResponse] = None
+    utente: Optional[UtenteResponse] = None
 
 class ClienteConUtenteCreate(ClienteBase):
     utente_id: Optional[int] = None

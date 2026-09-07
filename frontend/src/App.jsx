@@ -8,6 +8,7 @@ import ElencoClienti from "./components/ElencoClienti";
 import ElencoAziende from "./components/ElencoAziende";
 import PasswordDimenticata from "./components/PasswordDimenticata";
 import ReimpostaPassword from "./components/ReimpostaPassword";
+import SchedaUtente from "./components/SchedaUtente";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/nuovo" element={<NuovoSottoscrittore />} />
         <Route path="/modifica/:id" element={<NuovoSottoscrittore />} />
         <Route path="/aziende" element={<ElencoAziende />} />
+        <Route path="/utente/:id" element={<SchedaUtente />} />
         {/* Il difetto che ha prodotto il bug di /nazionale non era la rotta
             mancante: era che una rotta assente non produce alcun segnale e
             lascia una pagina bianca. Vale anche per un refuso nel link della

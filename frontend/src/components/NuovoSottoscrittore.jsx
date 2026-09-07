@@ -2,12 +2,16 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
 import { apiFetch } from "../lib/api";
 import { leggiUtenteId } from "../lib/sessione";
+import SchedaUtente from "./SchedaUtente"; // Assicurati che il percorso di import sia corretto
 
 function NuovoSottoscrittore() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const isEditMode = Boolean(id);
+
+  // Stato per gestire la scheda attiva superiore
+  const [activeTab, setActiveTab] = useState("dati-principali");
 
   // Rileva se siamo su un attuatore (es. tramite URL o query param)
   const queryParams = new URLSearchParams(location.search);
@@ -194,12 +198,66 @@ function NuovoSottoscrittore() {
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="flex border-b border-slate-100 px-6 pt-6 gap-3 bg-slate-50/50 justify-between items-center">
-          <div className="flex gap-3">
-            <button className="px-5 py-2.5 text-sm font-semibold text-blue-600 bg-white rounded-2xl shadow-sm border border-slate-100">
-              Nuovo {labelTitolo} {isEditMode ? "(Modifica)" : ""}
+        {/* SEZIONE SUPERIORE: Schede / Tabs di navigazione */}
+        <div className="flex flex-wrap border-b border-slate-200 px-6 pt-4 gap-2 bg-slate-50/50 justify-between items-center">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("dati-principali")}
+              className={`px-5 py-2.5 text-sm font-semibold rounded-t-2xl border-t border-x transition cursor-pointer ${
+                activeTab === "dati-principali"
+                  ? "bg-white text-blue-600 border-slate-200 shadow-sm -mb-px z-10"
+                  : "bg-slate-100 text-slate-600 border-transparent hover:bg-slate-200"
+              }`}
+            >
+              Dati Principali
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("curriculum")}
+              className={`px-5 py-2.5 text-sm font-semibold rounded-t-2xl border-t border-x transition cursor-pointer ${
+                activeTab === "curriculum"
+                  ? "bg-white text-blue-600 border-slate-200 shadow-sm -mb-px z-10"
+                  : "bg-slate-100 text-slate-600 border-transparent hover:bg-slate-200"
+              }`}
+            >
+              Curriculum Formativo
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("utente")}
+              className={`px-5 py-2.5 text-sm font-semibold rounded-t-2xl border-t border-x transition cursor-pointer ${
+                activeTab === "utente"
+                  ? "bg-white text-blue-600 border-slate-200 shadow-sm -mb-px z-10"
+                  : "bg-slate-100 text-slate-600 border-transparent hover:bg-slate-200"
+              }`}
+            >
+              Utente
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("esami")}
+              className={`px-5 py-2.5 text-sm font-semibold rounded-t-2xl border-t border-x transition cursor-pointer ${
+                activeTab === "esami"
+                  ? "bg-white text-blue-600 border-slate-200 shadow-sm -mb-px z-10"
+                  : "bg-slate-100 text-slate-600 border-transparent hover:bg-slate-200"
+              }`}
+            >
+              Esami
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("prevalutazioni")}
+              className={`px-5 py-2.5 text-sm font-semibold rounded-t-2xl border-t border-x transition cursor-pointer ${
+                activeTab === "prevalutazioni"
+                  ? "bg-white text-blue-600 border-slate-200 shadow-sm -mb-px z-10"
+                  : "bg-slate-100 text-slate-600 border-transparent hover:bg-slate-200"
+              }`}
+            >
+              Prevalutazioni e-campus
             </button>
           </div>
+
           <button
             type="button"
             onClick={() => navigate("/home")}
@@ -209,439 +267,460 @@ function NuovoSottoscrittore() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <h3 className="text-base font-bold text-slate-800 mb-4">
-                Informazioni Personali
-              </h3>
+        {/* CONTENUTO SCHEDA ATTIVA */}
+        {activeTab === "dati-principali" ? (
+          <form onSubmit={handleSubmit} className="p-8 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-slate-800 mb-4">
+                  Informazioni Personali
+                </h3>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Codice Fiscale
-                </label>
-                <input
-                  type="text"
-                  name="codiceFiscale"
-                  value={formData.codiceFiscale}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Genere
-                </label>
-                <select
-                  name="genere"
-                  value={formData.genere}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                >
-                  <option value="">Seleziona il genere</option>
-                  <option value="uomo">uomo</option>
-                  <option value="donna">donna</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Nome
+                    Codice Fiscale
                   </label>
                   <input
                     type="text"
-                    name="nome"
-                    value={formData.nome}
+                    name="codiceFiscale"
+                    value={formData.codiceFiscale}
                     onChange={handleChange}
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Cognome
+                    Genere
+                  </label>
+                  <select
+                    name="genere"
+                    value={formData.genere}
+                    onChange={handleChange}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  >
+                    <option value="">Seleziona il genere</option>
+                    <option value="uomo">uomo</option>
+                    <option value="donna">donna</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Nome
+                    </label>
+                    <input
+                      type="text"
+                      name="nome"
+                      value={formData.nome}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Cognome
+                    </label>
+                    <input
+                      type="text"
+                      name="cognome"
+                      value={formData.cognome}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Cittadinanza
                   </label>
                   <input
                     type="text"
-                    name="cognome"
-                    value={formData.cognome}
+                    name="cittadinanza"
+                    value={formData.cittadinanza}
                     onChange={handleChange}
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Cittadinanza
-                </label>
-                <input
-                  type="text"
-                  name="cittadinanza"
-                  value={formData.cittadinanza}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Luogo di Nascita
-                  </label>
-                  <input
-                    type="text"
-                    name="luogoDiNascita"
-                    value={formData.luogoDiNascita}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  />
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Luogo di Nascita
+                    </label>
+                    <input
+                      type="text"
+                      name="luogoDiNascita"
+                      value={formData.luogoDiNascita}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Prov.
+                    </label>
+                    <input
+                      type="text"
+                      name="provDiNascita"
+                      value={formData.provDiNascita}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
                 </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Prov.
-                  </label>
-                  <input
-                    type="text"
-                    name="provDiNascita"
-                    value={formData.provDiNascita}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Data di Nascita
-                </label>
-                <input
-                  type="date"
-                  name="dataDiNascita"
-                  value={formData.dataDiNascita}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                />
-              </div>
-            </div>
-
-            {/* Documento */}
-            <div className="space-y-4">
-              <h3 className="text-base font-bold text-slate-800 mb-4">
-                Documento
-              </h3>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Tipo Documento
-                </label>
-                <select
-                  name="tipoDocumento"
-                  value={formData.tipoDocumento}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                >
-                  <option value="">Seleziona il tipo di documento</option>
-                  <option value="Carta d'identità">Carta d'identità</option>
-                  <option value="Passaporto">Passaporto</option>
-                  <option value="Patente">Patente</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  N° Documento
-                </label>
-                <input
-                  type="text"
-                  name="nDocumento"
-                  value={formData.nDocumento}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Comune di Rilascio
-                </label>
-                <input
-                  type="text"
-                  name="comuneDiRilascio"
-                  value={formData.comuneDiRilascio}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Data Rilascio
+                    Data di Nascita
                   </label>
                   <input
                     type="date"
-                    name="dataInizioRilascio"
-                    value={formData.dataInizioRilascio}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Data Scadenza
-                  </label>
-                  <input
-                    type="date"
-                    name="dataScadenza"
-                    value={formData.dataScadenza}
+                    name="dataDiNascita"
+                    value={formData.dataDiNascita}
                     onChange={handleChange}
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />
                 </div>
               </div>
+
+              {/* Documento */}
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-slate-800 mb-4">
+                  Documento
+                </h3>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Tipo Documento
+                  </label>
+                  <select
+                    name="tipoDocumento"
+                    value={formData.tipoDocumento}
+                    onChange={handleChange}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  >
+                    <option value="">Seleziona il tipo di documento</option>
+                    <option value="Carta d'identità">Carta d'identità</option>
+                    <option value="Passaporto">Passaporto</option>
+                    <option value="Patente">Patente</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    N° Documento
+                  </label>
+                  <input
+                    type="text"
+                    name="nDocumento"
+                    value={formData.nDocumento}
+                    onChange={handleChange}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Comune di Rilascio
+                  </label>
+                  <input
+                    type="text"
+                    name="comuneDiRilascio"
+                    value={formData.comuneDiRilascio}
+                    onChange={handleChange}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Data Rilascio
+                    </label>
+                    <input
+                      type="date"
+                      name="dataInizioRilascio"
+                      value={formData.dataInizioRilascio}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Data Scadenza
+                    </label>
+                    <input
+                      type="date"
+                      name="dataScadenza"
+                      value={formData.dataScadenza}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <hr className="border-slate-100 my-6" />
+            <hr className="border-slate-100 my-6" />
 
-          {/* Sezione: Residenza & Domicilio */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Residenza */}
+            {/* Sezione: Residenza & Domicilio */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Residenza */}
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-slate-800 mb-4">
+                  Residenza
+                </h3>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Indirizzo
+                    </label>
+                    <input
+                      type="text"
+                      name="residenzaIndirizzo"
+                      value={formData.residenzaIndirizzo}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Civico
+                    </label>
+                    <input
+                      type="text"
+                      name="residenzaCivico"
+                      value={formData.residenzaCivico}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Comune
+                  </label>
+                  <input
+                    type="text"
+                    name="residenzaComune"
+                    value={formData.residenzaComune}
+                    onChange={handleChange}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      CAP
+                    </label>
+                    <input
+                      type="text"
+                      name="residenzaCap"
+                      value={formData.residenzaCap}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Provincia
+                    </label>
+                    <input
+                      type="text"
+                      name="residenzaProvincia"
+                      value={formData.residenzaProvincia}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyResidenza}
+                    className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs uppercase tracking-wider rounded-2xl transition cursor-pointer"
+                  >
+                    Copia Residenza in Domicilio
+                  </button>
+                </div>
+              </div>
+
+              {/* Domicilio */}
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-slate-800 mb-4">
+                  Domicilio
+                </h3>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Indirizzo Domicilio
+                    </label>
+                    <input
+                      type="text"
+                      name="domicilioIndirizzo"
+                      value={formData.domicilioIndirizzo}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Civico
+                    </label>
+                    <input
+                      type="text"
+                      name="domicilioCivico"
+                      value={formData.domicilioCivico}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Comune
+                  </label>
+                  <input
+                    type="text"
+                    name="domicilioComune"
+                    value={formData.domicilioComune}
+                    onChange={handleChange}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      CAP
+                    </label>
+                    <input
+                      type="text"
+                      name="domicilioCap"
+                      value={formData.domicilioCap}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                      Provincia
+                    </label>
+                    <input
+                      type="text"
+                      name="domicilioProvincia"
+                      value={formData.domicilioProvincia}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <hr className="border-slate-100 my-6" />
+
+            {/* Contatti */}
             <div className="space-y-4">
               <h3 className="text-base font-bold text-slate-800 mb-4">
-                Residenza
+                Contatti
               </h3>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Indirizzo
+                    Email
                   </label>
                   <input
-                    type="text"
-                    name="residenzaIndirizzo"
-                    value={formData.residenzaIndirizzo}
+                    type="email"
+                    name="email"
+                    value={formData.email}
                     onChange={handleChange}
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Civico
+                    PEC
                   </label>
                   <input
-                    type="text"
-                    name="residenzaCivico"
-                    value={formData.residenzaCivico}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Comune
-                </label>
-                <input
-                  type="text"
-                  name="residenzaComune"
-                  value={formData.residenzaComune}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    CAP
-                  </label>
-                  <input
-                    type="text"
-                    name="residenzaCap"
-                    value={formData.residenzaCap}
+                    type="email"
+                    name="pec"
+                    value={formData.pec}
                     onChange={handleChange}
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Provincia
+                    Cellulare
                   </label>
                   <input
                     type="text"
-                    name="residenzaProvincia"
-                    value={formData.residenzaProvincia}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={handleCopyResidenza}
-                  className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs uppercase tracking-wider rounded-2xl transition cursor-pointer"
-                >
-                  Copia Residenza in Domicilio
-                </button>
-              </div>
-            </div>
-
-            {/* Domicilio */}
-            <div className="space-y-4">
-              <h3 className="text-base font-bold text-slate-800 mb-4">
-                Domicilio
-              </h3>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Indirizzo Domicilio
-                  </label>
-                  <input
-                    type="text"
-                    name="domicilioIndirizzo"
-                    value={formData.domicilioIndirizzo}
+                    name="cellulare"
+                    value={formData.cellulare}
                     onChange={handleChange}
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Civico
+                    Telefono
                   </label>
                   <input
                     type="text"
-                    name="domicilioCivico"
-                    value={formData.domicilioCivico}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Comune
-                </label>
-                <input
-                  type="text"
-                  name="domicilioComune"
-                  value={formData.domicilioComune}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    CAP
-                  </label>
-                  <input
-                    type="text"
-                    name="domicilioCap"
-                    value={formData.domicilioCap}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Provincia
-                  </label>
-                  <input
-                    type="text"
-                    name="domicilioProvincia"
-                    value={formData.domicilioProvincia}
+                    name="telefono"
+                    value={formData.telefono}
                     onChange={handleChange}
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />
                 </div>
               </div>
             </div>
+
+            <div className="flex justify-end gap-4 pt-4">
+              <button
+                type="button"
+                onClick={() => navigate("/home")}
+                className="px-6 py-3 border border-slate-200 text-slate-600 font-semibold text-sm rounded-2xl hover:bg-slate-50 transition cursor-pointer"
+              >
+                Annulla
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-2xl shadow-sm transition cursor-pointer"
+              >
+                {isEditMode ? "Salva Modifiche" : `Crea ${labelTitolo}`}
+              </button>
+            </div>
+          </form>
+        ) : activeTab === "utente" ? (
+          /* Sostituisce il form con il componente SchedaUtente */
+          <div className="p-8">
+            <SchedaUtente />
           </div>
-
-          <hr className="border-slate-100 my-6" />
-
-          {/* Contatti */}
-          <div className="space-y-4">
-            <h3 className="text-base font-bold text-slate-800 mb-4">
-              Contatti
+        ) : (
+          /* Segnaposto per le altre sezioni non ancora implementate */
+          <div className="p-12 text-center text-slate-500">
+            <h3 className="text-lg font-semibold mb-2">
+              Sezione in fase di sviluppo
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  PEC
-                </label>
-                <input
-                  type="email"
-                  name="pec"
-                  value={formData.pec}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Cellulare
-                </label>
-                <input
-                  type="text"
-                  name="cellulare"
-                  value={formData.cellulare}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                  Telefono
-                </label>
-                <input
-                  type="text"
-                  name="telefono"
-                  value={formData.telefono}
-                  onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                />
-              </div>
-            </div>
+            <p className="text-sm">
+              Stai visualizzando la scheda:{" "}
+              <span className="font-medium text-blue-600 capitalize">
+                {activeTab.replace("-", " ")}
+              </span>
+            </p>
           </div>
-
-          <div className="flex justify-end gap-4 pt-4">
-            <button
-              type="button"
-              onClick={() => navigate("/home")}
-              className="px-6 py-3 border border-slate-200 text-slate-600 font-semibold text-sm rounded-2xl hover:bg-slate-50 transition cursor-pointer"
-            >
-              Annulla
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-2xl shadow-sm transition cursor-pointer"
-            >
-              {isEditMode ? "Salva Modifiche" : `Crea ${labelTitolo}`}
-            </button>
-          </div>
-        </form>
+        )}
       </div>
     </div>
   );
