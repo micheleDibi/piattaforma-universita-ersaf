@@ -1,8 +1,36 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey, Date
+from sqlalchemy import String, Integer, ForeignKey, Date, Enum
 from datetime import  date
 from src.database import Base 
 from typing import Optional
+import enum
+import unicodedata
+
+class SessoEnum(str, enum.Enum):
+    UOMO = "uomo"
+    DONNA = "donna"
+
+    @classmethod
+    def _missing_(cls, value):
+        if value is None or str(value).strip() == "":
+            return None
+        return None
+
+class TipoDocumentoEnum(str, enum.Enum):
+    CARTA_IDENTITA = "Carta d'identità"
+    CARTA_IDENTITA_ALT = "Carta d'Identità"  # Per coprire il dato esistente nel DB
+    PASSAPORTO = "Passaporto"
+    PATENTE = "Patente"
+
+    @classmethod
+    def _missing_(cls, value):
+        if value is None or str(value).strip() == "":
+            return None
+        # Gestione case-insensitive per allineare eventuali varianti nel DB
+        for member in cls:
+            if member.value.lower() == str(value).strip().lower():
+                return member
+        return None
 
 class Cliente(Base):
     __tablename__= "clienti"
@@ -27,12 +55,18 @@ class Cliente(Base):
     cliente_provinciaNascita:Mapped[str] = mapped_column(String, nullable=False)
     cliente_dataNascita:Mapped[date] = mapped_column(Date, nullable=False)
     cliente_cittadinanza:Mapped[str] = mapped_column(String, nullable=False)
-    cliente_tipoDocumento:Mapped[str] = mapped_column(String, nullable=False)    
+
+    #Enum
+    cliente_tipoDocumento: Mapped[TipoDocumentoEnum] = mapped_column(String, nullable=False)
+
     cliente_documento:Mapped[str] = mapped_column(String, nullable=False)
     cliente_comuneRilascio:Mapped[str] = mapped_column(String, nullable=False)
     cliente_dataRilascio:Mapped[date] = mapped_column(Date, nullable=False)
     cliente_dataScadenzaDocumento:Mapped[date] = mapped_column(Date, nullable=False)
-    cliente_sesso:Mapped[str] = mapped_column(String, nullable=False)
+
+    #Enum   
+    cliente_sesso: Mapped[SessoEnum] = mapped_column(String, nullable=False)
+
     cliente_indirizzoDomicilio:Mapped[str] = mapped_column(String, nullable=True)
     cliente_civicoDomicilio:Mapped[str] = mapped_column(String, nullable=True)
     cliente_cittaDomicilio:Mapped[str] = mapped_column(String, nullable=True)
