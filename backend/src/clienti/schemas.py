@@ -38,17 +38,17 @@ class ClienteBase(BaseModel):
     cliente_cittaDomicilio: Optional[str] = None
     cliente_CAPDomicilio: Optional[str] = None
     cliente_provinciaDomicilio: Optional[str] = None
-    cliente_ruolo: int
+    cliente_ruolo: Optional[int] = 0
     cliente_gg: Optional[int] = None
     attuatore_id: Optional[int] = None
     azienda_id: Optional[int] = None
     tessera_id: Optional[int] = None
-    cliente_abilPraticheUniv: int
+    cliente_abilPraticheUniv: Optional[int] = None
     cliente_pathCertificato: Optional[str] = None
-    cliente_abilitazione_ecampus: int
-    cliente_abilitazione_link_campus: int
-    cliente_abilitazione_corsi_speciali: int
-    cliente_abilitazione_a4u: int
+    cliente_abilitazione_ecampus: Optional[int] = None
+    cliente_abilitazione_link_campus: Optional[int] = None
+    cliente_abilitazione_corsi_speciali: Optional[int] = None
+    cliente_abilitazione_a4u: Optional[int] = None
 
     @field_validator('cliente_tipoDocumento', 'cliente_sesso', mode='before')
     @classmethod

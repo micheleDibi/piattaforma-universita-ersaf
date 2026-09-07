@@ -1,10 +1,9 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey, Date, Enum
+from sqlalchemy import String, Integer, ForeignKey, Date
 from datetime import  date
 from src.database import Base 
 from typing import Optional
 import enum
-import unicodedata
 
 class SessoEnum(str, enum.Enum):
     UOMO = "uomo"
@@ -14,11 +13,16 @@ class SessoEnum(str, enum.Enum):
     def _missing_(cls, value):
         if value is None or str(value).strip() == "":
             return None
+        val_str = str(value).strip().lower()
+        if val_str in ["m", "uomo", "male"]:
+            return cls.UOMO
+        if val_str in ["f", "donna", "female"]:
+            return cls.DONNA
         return None
 
 class TipoDocumentoEnum(str, enum.Enum):
     CARTA_IDENTITA = "Carta d'identità"
-    CARTA_IDENTITA_ALT = "Carta d'Identità"  # Per coprire il dato esistente nel DB
+    CARTA_IDENTITA_ALT = "Carta d'Identità"
     PASSAPORTO = "Passaporto"
     PATENTE = "Patente"
 
@@ -83,10 +87,10 @@ class Cliente(Base):
     tessera_id: Mapped[int]= mapped_column(Integer, nullable=True)
     cliente_abilPraticheUniv: Mapped[int]= mapped_column(Integer, nullable=False, default=0)
     cliente_pathCertificato: Mapped[str]= mapped_column(String, nullable=True)
-    cliente_abilitazione_ecampus: Mapped[int]= mapped_column(Integer, nullable=False, default=-1)
-    cliente_abilitazione_link_campus: Mapped[int]= mapped_column(Integer, nullable=False, default=-1)
+    cliente_abilitazione_ecampus: Mapped[int]= mapped_column(Integer, nullable=False, default=0)
+    cliente_abilitazione_link_campus: Mapped[int]= mapped_column(Integer, nullable=False, default=0)
     cliente_abilitazione_corsi_speciali: Mapped[int]= mapped_column(Integer, nullable=False, default=0)
-    cliente_abilitazione_a4u: Mapped[int]= mapped_column(Integer, nullable=False, default=-1)
+    cliente_abilitazione_a4u: Mapped[int]= mapped_column(Integer, nullable=False, default=0)
 
     utente: Mapped["Utente"] = relationship(back_populates="clienti")
     ruolo: Mapped["Ruolo"] = relationship(back_populates="clienti")

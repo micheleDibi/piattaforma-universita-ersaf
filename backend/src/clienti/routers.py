@@ -16,18 +16,10 @@ from src.security.password import hash_password, messaggi_policy, verifica_polic
 router = APIRouter(prefix="/clienti", tags=["Clienti"])
 
 #POST
-@router.post("/", response_model=ClienteResponse, status_code=status.HTTP_201_CREATED)
-def crea_cliente(cliente: ClienteCreate, db: Session = Depends(get_db)):
-    db_cliente = Cliente(**cliente.model_dump())
-    db.add(db_cliente)
-    db.commit()
-    db.refresh(db_cliente)
-    return db_cliente
-
-#POST CON UTENTE
 @router.post("/con-utente", status_code=status.HTTP_201_CREATED)
 def crea_cliente_e_utente(
     dati: ClienteConUtenteCreate, 
+    tipo_utente: str = "sottoscrittore",
     db: Session = Depends(get_db),
     current_utente = Depends(get_current_utente)
 ):
@@ -80,11 +72,11 @@ def crea_cliente_e_utente(
         db.add(nuovo_utente)
         db.flush() # Genera utente_id
 
-        # Genera Username e Password definitivi
+        # Genera Username e Password definitivi (con iniziali maiuscole)
         nome = dati.cliente_nome.strip()
         cognome = dati.cliente_cognome.strip()
         
-        username = f"{nome}{cognome}"
+        username = f"{nome.capitalize()}{cognome.capitalize()}"
         password_inChiaro = f"{nome[:3]}{cognome[:3]}{nuovo_utente.utente_id}"
 
         violate = verifica_policy_password(password_inChiaro, username=username)
@@ -112,6 +104,25 @@ def crea_cliente_e_utente(
         # Prepara i dati del cliente ESCLUDENDO i campi utente temporanei dello schema
         dati_dict = dati.model_dump(exclude={"utente_username", "utente_password"})
         dati_dict["utente_id"] = nuovo_utente.utente_id
+
+        # Campi default in base al tipo di utente
+        base_abilitazioni = -1 if tipo_utente.lower() == "attuatore" else 0
+
+        campi_abilitazioni = [
+            "cliente_abilPraticheUniv",
+            "cliente_abilitazione_ecampus",
+            "cliente_abilitazione_link_campus",
+            "cliente_abilitazione_corsi_speciali",
+            "cliente_abilitazione_a4u"
+        ]
+        
+        for campo in campi_abilitazioni:
+            if dati_dict.get(campo) is None:
+                # Se il campo è cliente_abilitazione_corsi_speciali, forziamo il default a 0
+                if campo == "cliente_abilitazione_corsi_speciali":
+                    dati_dict[campo] = 0
+                else:
+                    dati_dict[campo] = base_abilitazioni
 
         # Crea il Cliente
         nuovo_cliente = Cliente(**dati_dict)

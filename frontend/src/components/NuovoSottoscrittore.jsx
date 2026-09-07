@@ -1,12 +1,22 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useLocation } from "react-router";
 import { apiFetch } from "../lib/api";
 import { leggiUtenteId } from "../lib/sessione";
 
 function NuovoSottoscrittore() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const isEditMode = Boolean(id);
+
+  // Rileva se siamo su un attuatore (es. tramite URL o query param)
+  const queryParams = new URLSearchParams(location.search);
+  const tipoUtente =
+    queryParams.get("tipo") ||
+    (location.pathname.includes("attuatore") ? "attuatore" : "sottoscrittore");
+
+  const labelTitolo =
+    tipoUtente === "attuatore" ? "Attuatore" : "Sottoscrittore";
 
   const [formData, setFormData] = useState({
     codiceFiscale: "",
@@ -42,8 +52,7 @@ function NuovoSottoscrittore() {
     if (isEditMode) {
       apiFetch(`/clienti/${id}`)
         .then((res) => {
-          if (!res.ok)
-            throw new Error("Errore nel recupero del sottoscrittore");
+          if (!res.ok) throw new Error("Errore nel recupero del cliente");
           return res.json();
         })
         .then((data) => {
@@ -85,7 +94,7 @@ function NuovoSottoscrittore() {
         })
         .catch((err) => {
           console.error("Errore:", err);
-          alert("Impossibile caricare i dati del sottoscrittore.");
+          alert("Impossibile caricare i dati.");
         });
     }
   }, [id, isEditMode]);
@@ -111,8 +120,6 @@ function NuovoSottoscrittore() {
 
     const utenteId = leggiUtenteId();
     if (utenteId === null) {
-      // clienti.utente_id e' NOT NULL: senza questo controllo il salvataggio
-      // partiva con null e tornava un errore incomprensibile a meta' form.
       alert("Sessione scaduta. Rifai il login prima di salvare.");
       navigate("/");
       return;
@@ -133,12 +140,7 @@ function NuovoSottoscrittore() {
       cliente_cellulare: formData.cellulare || null,
 
       utente_id: utenteId,
-      cliente_ruolo: 1,
-      cliente_abilPraticheUniv: 0,
-      cliente_abilitazione_ecampus: 0,
-      cliente_abilitazione_link_campus: 0,
-      cliente_abilitazione_corsi_speciali: 0,
-      cliente_abilitazione_a4u: 0,
+      cliente_ruolo: 0,
 
       cliente_luogoNascita: formData.luogoDiNascita,
       cliente_provinciaNascita: formData.provDiNascita,
@@ -149,7 +151,7 @@ function NuovoSottoscrittore() {
       cliente_comuneRilascio: formData.comuneDiRilascio,
       cliente_dataRilascio: formData.dataInizioRilascio,
       cliente_dataScadenzaDocumento: formData.dataScadenza,
-      cliente_sesso: formData.genere, // "M" o "F"
+      cliente_sesso: formData.genere,
 
       cliente_indirizzoDomicilio: formData.domicilioIndirizzo || null,
       cliente_civicoDomicilio: formData.domicilioCivico || null,
@@ -158,8 +160,9 @@ function NuovoSottoscrittore() {
       cliente_provinciaDomicilio: formData.domicilioProvincia || null,
     };
 
-    // URL in base al fatto se siamo in modifica o creazione
-    const url = isEditMode ? `/clienti/${id}` : "/clienti/";
+    const url = isEditMode
+      ? `/clienti/${id}`
+      : `/clienti/con-utente?tipo_utente=${tipoUtente}`;
     const method = isEditMode ? "PUT" : "POST";
 
     try {
@@ -179,9 +182,9 @@ function NuovoSottoscrittore() {
       alert(
         isEditMode
           ? "Modifiche salvate con successo!"
-          : "Sottoscrittore salvato correttamente!",
+          : `${labelTitolo} salvato correttamente!`,
       );
-      navigate("/home"); // Torna alla lista dopo il salvataggio
+      navigate("/home");
     } catch (error) {
       console.error("Errore:", error);
       alert("Si è verificato un errore durante il salvataggio.");
@@ -194,13 +197,7 @@ function NuovoSottoscrittore() {
         <div className="flex border-b border-slate-100 px-6 pt-6 gap-3 bg-slate-50/50 justify-between items-center">
           <div className="flex gap-3">
             <button className="px-5 py-2.5 text-sm font-semibold text-blue-600 bg-white rounded-2xl shadow-sm border border-slate-100">
-              Dati Principali {isEditMode ? "(Modifica)" : "(Nuovo)"}
-            </button>
-            <button className="px-5 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition">
-              Curriculum Formativo
-            </button>
-            <button className="px-5 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition">
-              Esami
+              Nuovo {labelTitolo} {isEditMode ? "(Modifica)" : ""}
             </button>
           </div>
           <button
@@ -488,15 +485,14 @@ function NuovoSottoscrittore() {
                 <button
                   type="button"
                   onClick={handleCopyResidenza}
-                  className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs uppercase tracking-wider rounded-2xl transition"
+                  className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs uppercase tracking-wider rounded-2xl transition cursor-pointer"
                 >
-                  Ricopia dati residenza in domicilio
+                  Copia Residenza in Domicilio
                 </button>
               </div>
             </div>
 
             {/* Domicilio */}
-
             <div className="space-y-4">
               <h3 className="text-base font-bold text-slate-800 mb-4">
                 Domicilio
@@ -505,7 +501,7 @@ function NuovoSottoscrittore() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
                   <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Indirizzo
+                    Indirizzo Domicilio
                   </label>
                   <input
                     type="text"
@@ -573,86 +569,77 @@ function NuovoSottoscrittore() {
 
           <hr className="border-slate-100 my-6" />
 
-          {/* Sezione Contatti  */}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
-            <div className="space-y-4">
-              <h3 className="text-base font-bold text-slate-800 mb-4">
-                Contatti
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Cellulare
-                  </label>
-                  <input
-                    type="text"
-                    name="cellulare"
-                    value={formData.cellulare}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  />
-                </div>
+          {/* Contatti */}
+          <div className="space-y-4">
+            <h3 className="text-base font-bold text-slate-800 mb-4">
+              Contatti
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                />
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Telefono
-                  </label>
-                  <input
-                    type="text"
-                    name="telefono"
-                    value={formData.telefono}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-                    PEC
-                  </label>
-                  <input
-                    type="email"
-                    name="pec"
-                    value={formData.pec}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                  PEC
+                </label>
+                <input
+                  type="email"
+                  name="pec"
+                  value={formData.pec}
+                  onChange={handleChange}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Cellulare
+                </label>
+                <input
+                  type="text"
+                  name="cellulare"
+                  value={formData.cellulare}
+                  onChange={handleChange}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Telefono
+                </label>
+                <input
+                  type="text"
+                  name="telefono"
+                  value={formData.telefono}
+                  onChange={handleChange}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                />
               </div>
             </div>
+          </div>
 
-            {/* Sezione Pulsanti */}
-
-            <div className="flex justify-end gap-3 pt-6">
-              <button
-                type="button"
-                onClick={() => navigate("/home")}
-                className="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-2xl transition"
-              >
-                Annulla
-              </button>
-              <button
-                type="submit"
-                className="px-8 py-3.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold text-sm rounded-2xl shadow-sm transition flex items-center gap-2"
-              >
-                {isEditMode ? "Aggiorna Modifiche" : "Salva"}
-              </button>
-            </div>
+          <div className="flex justify-end gap-4 pt-4">
+            <button
+              type="button"
+              onClick={() => navigate("/home")}
+              className="px-6 py-3 border border-slate-200 text-slate-600 font-semibold text-sm rounded-2xl hover:bg-slate-50 transition cursor-pointer"
+            >
+              Annulla
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-2xl shadow-sm transition cursor-pointer"
+            >
+              {isEditMode ? "Salva Modifiche" : `Crea ${labelTitolo}`}
+            </button>
           </div>
         </form>
       </div>

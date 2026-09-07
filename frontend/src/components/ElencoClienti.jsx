@@ -22,11 +22,6 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
 
   const navigate = useNavigate();
 
-  // Visibilità
-  // leggiRuolo() legge dalla sessione e il valore e' normalizzato in minuscolo
-  // alla scrittura: il backend confronta ruolo_codice.lower(), quindi un
-  // confronto con "Aderente" maiuscolo dipenderebbe da come il database
-  // capitalizza il valore.
   const canSee = leggiRuolo() === "aderente";
   const canSeeAzienda = canSee && soloAttuatori;
 
@@ -46,7 +41,6 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
     selectedRuoloRef.current = selectedRuolo;
   }, [selectedRuolo]);
 
-  // Gestione della ricerca iniziale e quando cambiano searchTerm, selectedRuolo o soloAttuatori con debounce
   useEffect(() => {
     const fetchClientiFiltrati = async () => {
       try {
@@ -93,9 +87,8 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, selectedRuolo, soloAttuatori, soloUtenti]); // <--- Aggiunto soloUtenti qui
+  }, [searchTerm, selectedRuolo, soloAttuatori, soloUtenti]);
 
-  // 2. Aggiungi soloUtenti anche nella chiamata dello scroll
   useEffect(() => {
     const handleScroll = async () => {
       if (
@@ -112,7 +105,7 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
         skipRef.current = nextSkip;
 
         try {
-          const utentiParam = soloUtenti ? "&solo_utenti=true" : ""; // <--- Incluso anche qui
+          const utentiParam = soloUtenti ? "&solo_utenti=true" : "";
           const attuatoriParam = soloAttuatori ? "&solo_attuatori=true" : "";
           const ruoloParam =
             soloAttuatori && selectedRuoloRef.current
@@ -186,10 +179,16 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
           </div>
 
           <button
-            onClick={() => navigate("/nuovo")}
+            onClick={() =>
+              navigate(
+                soloAttuatori
+                  ? "/nuovo?tipo=attuatore"
+                  : "/nuovo?tipo=sottoscrittore",
+              )
+            }
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors cursor-pointer whitespace-nowrap"
           >
-            Nuovo Sottoscrittore
+            {soloAttuatori ? "Nuovo Attuatore" : "Nuovo Sottoscrittore"}
           </button>
         </div>
         <div>
@@ -219,7 +218,6 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
                   Cognome
                 </th>
 
-                {/* Colonna Ruolo visibile solo per gli attuatori */}
                 {soloAttuatori && (
                   <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
                     Ruolo
@@ -250,7 +248,6 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
                     {item.cliente_cognome}
                   </td>
 
-                  {/* Stampiamo il ruolo prendendolo dalla relazione del backend */}
                   {soloAttuatori && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {item.ruolo?.ruolo_codice || "-"}
