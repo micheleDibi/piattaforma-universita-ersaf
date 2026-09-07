@@ -67,7 +67,7 @@ def crea_cliente_e_utente(
             utente_username="temp",
             utente_password="",
             utente_password_hash="",
-            utente_attivoSN=1
+            utente_attivoSN=-1
         )
         db.add(nuovo_utente)
         db.flush() # Genera utente_id
