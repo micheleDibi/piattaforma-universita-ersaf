@@ -51,3 +51,37 @@ export async function apiFetch(
 export async function leggiJson(risposta) {
   return risposta.json().catch(() => null);
 }
+
+/**
+ * Il testo da mostrare all'utente per una risposta di errore.
+ *
+ * Era una funzione locale di Login.jsx, ed era l'unico punto in cui i 422 di
+ * FastAPI venivano letti davvero: altrove un 422 con tredici voci di dettaglio
+ * diventava alert("Si è verificato un errore"), e l'operatore non aveva modo
+ * di sapere quale campo mancasse.
+ */
+export async function messaggioErrore(
+  risposta,
+  ripiego = "Si è verificato un errore.",
+) {
+  const dati = await leggiJson(risposta);
+
+  // 422: FastAPI manda un elenco {loc, msg, type}.
+  if (Array.isArray(dati?.detail)) {
+    return dati.detail
+      .map(
+        (errore) =>
+          `${errore.loc.filter((p) => p !== "body").join(".")}: ${errore.msg}`,
+      )
+      .join("\n");
+  }
+
+  if (typeof dati?.detail === "string") return dati.detail;
+
+  // La policy delle password manda un oggetto con i messaggi gia' pronti.
+  if (Array.isArray(dati?.detail?.messaggi))
+    return dati.detail.messaggi.join("\n");
+  if (typeof dati?.detail?.messaggio === "string") return dati.detail.messaggio;
+
+  return ripiego;
+}

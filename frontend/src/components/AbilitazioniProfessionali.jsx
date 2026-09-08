@@ -1,3 +1,4 @@
+import { eVero } from "../lib/flagLegacy";
 export default function AbilitazioniProfessionali({ formData, handleChange }) {
   return (
     <div className="space-y-10 text-slate-700 max-w-4xl">
@@ -141,9 +142,7 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
             <input
               type="checkbox"
               name="universita_attivita_professionalizzanti"
-              checked={
-                Number(formData.universita_attivita_professionalizzanti) === 1
-              }
+              checked={eVero(formData.universita_attivita_professionalizzanti)}
               onChange={handleChange}
               className="w-4 h-4 text-blue-600 bg-slate-50 border-slate-300 rounded focus:ring-blue-500"
             />
@@ -157,7 +156,7 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
             <input
               type="checkbox"
               name="universita_corsi_di_formazione"
-              checked={Number(formData.universita_corsi_di_formazione) === 1}
+              checked={eVero(formData.universita_corsi_di_formazione)}
               onChange={handleChange}
               className="w-4 h-4 text-blue-600 bg-slate-50 border-slate-300 rounded focus:ring-blue-500"
             />
@@ -171,9 +170,7 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
             <input
               type="checkbox"
               name="universita_altre_attivita_certificate"
-              checked={
-                Number(formData.universita_altre_attivita_certificate) === 1
-              }
+              checked={eVero(formData.universita_altre_attivita_certificate)}
               onChange={handleChange}
               className="w-4 h-4 text-blue-600 bg-slate-50 border-slate-300 rounded focus:ring-blue-500"
             />

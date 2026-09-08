@@ -19,6 +19,7 @@ function Sidebar({ active, setActive }) {
       <nav className="space-y-1 flex-1">
         {links.map((link) => (
           <button
+            type="button"
             key={link.id}
             onClick={() => setActive(link.id)}
             className={`w-full text-left px-3 py-2 rounded-lg font-medium transition-colors cursor-pointer ${

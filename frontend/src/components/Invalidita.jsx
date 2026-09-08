@@ -10,12 +10,17 @@ export default function Invalidita({ formData, handleChange }) {
           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
             Percentuale
           </label>
+          {/* La colonna e' un int. Era type="text" con placeholder "Es. 75%":
+              scrivendo davvero "75%" l'intera creazione del cliente falliva
+              con un 422, per un campo secondario in fondo al form. */}
           <input
-            type="text"
+            type="number"
+            min="0"
+            max="100"
             name="universita_percentualeInvalidita"
-            value={formData.universita_percentualeInvalidita || ""}
+            value={formData.universita_percentualeInvalidita ?? ""}
             onChange={handleChange}
-            placeholder="Es. 75%"
+            placeholder="Es. 75"
             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
           />
         </div>

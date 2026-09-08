@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
-import { apiFetch } from "../lib/api";
+import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
 import { leggiUtenteId } from "../lib/sessione";
 import SchedaUtente from "./SchedaUtente";
 import SchedaCurriculumFormativo from "./SchedaCurriculumFormativo";
@@ -16,6 +16,8 @@ function NuovoSottoscrittore() {
   const isEditMode = Boolean(id);
 
   const [activeTab, setActiveTab] = useState("dati-principali");
+  // Credenziali generate dal server, da mostrare una volta sola.
+  const [credenziali, setCredenziali] = useState(null);
 
   const queryParams = new URLSearchParams(location.search);
   const tipoUtente =
@@ -132,7 +134,11 @@ function NuovoSottoscrittore() {
           return res.json();
         })
         .then((data) => {
-          const uniData = data.universita || data;
+          // Il curriculum arriva in `curriculum`. Prima era
+          // `data.universita || data`: ClienteResponse non esponeva la
+          // relazione, quindi si leggeva l'oggetto cliente e la scheda restava
+          // sempre vuota.
+          const uniData = data.curriculum || {};
 
           setFormData((prev) => ({
             ...prev,
@@ -239,7 +245,10 @@ function NuovoSottoscrittore() {
       cliente_provincia: formData.residenzaProvincia || null,
       cliente_cellulare: formData.cellulare || null,
       utente_id: utenteId,
-      cliente_ruolo: 0,
+      // Solo in creazione, e solo 0: il ruolo lo assegna poi un
+      // amministratore dalla scheda utente. Mandarlo anche in modifica
+      // declassava a "Utente" chiunque si salvasse, attuatori compresi.
+      ...(isEditMode ? {} : { cliente_ruolo: 0 }),
       cliente_luogoNascita: formData.luogoDiNascita || null,
       cliente_provinciaNascita: formData.provDiNascita || null,
       cliente_dataNascita: formData.dataDiNascita || null,
@@ -262,21 +271,15 @@ function NuovoSottoscrittore() {
     );
     const curriculumPayload = {};
 
-    const booleanFields = [
-      "universita_immatricolato",
-      "universita_attivita_professionalizzanti",
-      "universita_corsi_di_formazione",
-      "universita_altre_attivita_certificate",
-      "universita_iscrizioneAltraUniversita",
-    ];
-
+    // I cinque flag si mandano cosi' come sono. Il Boolean() che stava qui
+    // distruggeva il -1 costruito da ImmatricolazioniIscrizioni: diventava
+    // true, il backend lo salvava 1, e la casella si rileggeva vuota. La
+    // conversione nella convenzione legacy (-1 per quattro colonne, 1 per
+    // universita_immatricolato) la fa ora il validatore di UniversitaBase, che
+    // vale per tutti i percorsi di scrittura e non solo per questo.
     curriculumKeys.forEach((key) => {
       const val = formData[key];
-      if (booleanFields.includes(key)) {
-        curriculumPayload[key] = Boolean(val);
-      } else {
-        curriculumPayload[key] = val === "" || val === undefined ? null : val;
-      }
+      curriculumPayload[key] = val === "" || val === undefined ? null : val;
     });
 
     const payload = {
@@ -295,18 +298,39 @@ function NuovoSottoscrittore() {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok)
-        throw new Error("Errore durante il salvataggio dei dati");
+      if (!response.ok) {
+        // Un 422 porta l'elenco dei campi mancanti: ridurlo a "si è
+        // verificato un errore" lasciava l'operatore senza modo di capire
+        // quale campo compilare.
+        throw new Error(await messaggioErrore(response));
+      }
 
-      alert(
-        isEditMode
-          ? "Modifiche salvate con successo!"
-          : `${labelTitolo} salvato correttamente!`,
+      if (isEditMode) {
+        alert("Modifiche salvate con successo!");
+        navigate("/home");
+        return;
+      }
+
+      // Le credenziali generate esistono in chiaro solo in questa risposta:
+      // nel database c'e' soltanto l'hash. Prima si controllava response.ok e
+      // si navigava via senza leggere il corpo, e l'utente appena creato
+      // restava senza modo di accedere.
+      const creato = await leggiJson(response);
+      setCredenziali(
+        creato?.username_generato
+          ? {
+              username: creato.username_generato,
+              password: creato.password_generata,
+            }
+          : null,
       );
-      navigate("/home");
+      if (!creato?.username_generato) {
+        alert(`${labelTitolo} salvato correttamente!`);
+        navigate("/home");
+      }
     } catch (error) {
       console.error("Errore:", error);
-      alert("Si è verificato un errore durante il salvataggio.");
+      alert(error.message);
     }
   };
 
@@ -328,6 +352,63 @@ function NuovoSottoscrittore() {
       domicilioProvincia: prev.residenzaProvincia,
     }));
   };
+
+  // Le credenziali generate dal server esistono in chiaro solo nella risposta
+  // di creazione: nel database c'e' l'hash. Si mostrano qui, e finche' non le
+  // si conferma non si naviga via.
+  if (credenziali) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-10 px-4 flex items-start justify-center">
+        <div className="max-w-lg w-full bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+          <h2 className="text-xl font-bold text-slate-800 mb-2">
+            {labelTitolo} creato
+          </h2>
+          <p className="text-sm text-slate-600 mb-6">
+            Annota queste credenziali e consegnale alla persona: la password non
+            sarà più recuperabile, nel database resta solo la sua impronta.
+          </p>
+
+          <dl className="rounded-2xl border border-amber-200 bg-amber-50 p-5 mb-6">
+            <dt className="text-[11px] font-bold tracking-wide text-amber-800">
+              USERNAME
+            </dt>
+            <dd className="font-mono text-base text-slate-900 mb-4 select-all break-all">
+              {credenziali.username}
+            </dd>
+            <dt className="text-[11px] font-bold tracking-wide text-amber-800">
+              PASSWORD
+            </dt>
+            <dd className="font-mono text-base text-slate-900 select-all break-all">
+              {credenziali.password}
+            </dd>
+          </dl>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                navigator.clipboard
+                  ?.writeText(
+                    `${credenziali.username}\n${credenziali.password}`,
+                  )
+                  .catch(() => {})
+              }
+              className="px-5 py-3 bg-slate-600 text-white rounded-lg text-sm font-bold cursor-pointer hover:bg-slate-700"
+            >
+              Copia
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/home")}
+              className="px-5 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold cursor-pointer hover:bg-blue-700"
+            >
+              Le ho annotate, continua
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">

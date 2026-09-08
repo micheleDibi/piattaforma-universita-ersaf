@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiFetch } from "../lib/api";
 
 export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
   const [attuatori, setAttuatori] = useState([]);
@@ -18,19 +19,15 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
 
   const fetchAttuatori = async (search = "", ruolo = "") => {
     setLoadingAttuatori(true);
-    const token = localStorage.getItem("sessione_token");
-    const headers = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-
     try {
       const ruoloParam = ruolo
         ? `&ruolo_codice=${encodeURIComponent(ruolo)}`
         : "";
-      const response = await fetch(
-        `http://localhost:8000/clienti/?skip=0&limit=50&solo_attuatori=true${ruoloParam}&search=${encodeURIComponent(search)}`,
-        { headers },
+      // Passa da apiFetch: l'indirizzo del backend era scritto a mano e il
+      // token letto da localStorage direttamente. Al primo deploy questa
+      // finestra avrebbe continuato a chiamare localhost.
+      const response = await apiFetch(
+        `/clienti/?skip=0&limit=50&solo_attuatori=true${ruoloParam}&search=${encodeURIComponent(search)}`,
       );
       if (!response.ok) throw new Error("Errore nel recupero degli attuatori");
       const data = await response.json();
@@ -63,6 +60,7 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
             Seleziona Nuovo Utente Padre
           </h3>
           <button
+            type="button"
             onClick={onClose}
             className="cursor-pointer text-2xl text-slate-500 hover:text-slate-800"
           >

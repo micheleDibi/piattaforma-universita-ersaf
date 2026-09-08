@@ -145,6 +145,7 @@ function ElencoAziende() {
           </div>
 
           <button
+            type="button"
             onClick={() => navigate("/nuova-azienda")}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors cursor-pointer whitespace-nowrap"
           >
@@ -193,6 +194,7 @@ function ElencoAziende() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
+                        type="button"
                         onClick={() =>
                           navigate(`/modifica-azienda/${item.azienda_id}`)
                         }

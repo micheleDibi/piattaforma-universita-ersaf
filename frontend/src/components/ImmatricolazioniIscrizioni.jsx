@@ -1,3 +1,4 @@
+import { daCasella, eVero } from "../lib/flagLegacy";
 export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
   return (
     <div className="space-y-10 text-slate-700 max-w-4xl">
@@ -163,15 +164,13 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
               type="checkbox"
               id="altroCorso"
               name="universita_iscrizioneAltraUniversita"
-              checked={
-                Number(formData.universita_iscrizioneAltraUniversita) === -1
-              }
+              checked={eVero(formData.universita_iscrizioneAltraUniversita)}
               onChange={(e) => {
                 // Gestione personalizzata per inviare -1 o 0 a seconda dello stato della checkbox
                 const syntheticEvent = {
                   target: {
                     name: "universita_iscrizioneAltraUniversita",
-                    value: e.target.checked ? -1 : 0,
+                    value: daCasella(e.target.checked),
                     type: "number",
                   },
                 };

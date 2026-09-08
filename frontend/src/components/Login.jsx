@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router";
 import { apiFetch, leggiJson } from "../lib/api";
 import { pulisciSessione, salvaSessione } from "../lib/sessione";
 
+// Il ripiego resta specifico della pagina: su /auth/login un errore senza
+// dettaglio significa credenziali sbagliate, non un guasto generico.
 function messaggioErrore(dati) {
   if (Array.isArray(dati?.detail)) {
     return dati.detail
