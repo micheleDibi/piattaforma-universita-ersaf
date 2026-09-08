@@ -30,6 +30,7 @@ from src.clienti.routers import router as cliente_router
 from src.ruolo.routers import router as ruolo_router
 from src.utenti.routers import router as utente_router
 from src.universita.routers import router as universita_router
+from src.listini_testa.routers import router as listini_testa_router
 
 logger = logging.getLogger(NOME_LOGGER)
 
@@ -74,6 +75,7 @@ app.include_router(cliente_router)
 app.include_router(auth_router)
 app.include_router(azienda_router)
 app.include_router(universita_router)
+app.include_router(listini_testa_router)
 
 
 @app.exception_handler(IntegrityError)

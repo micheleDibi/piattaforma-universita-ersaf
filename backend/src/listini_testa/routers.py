@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from datetime import datetime
 
 from src.listini_testa.models import ListinoTestaDB, ListinoTesta, ListinoTestaCreate, ListinoTestaUpdate
 from src.database import get_db 
+from src.listino_tipoCorso.models import ListinoTipoCorsoDB  
+from src.nome_universita.models import NomeUniversitaDB   
 
 router = APIRouter(
     prefix="/listini-testa",tags=["Listini Testa"])
@@ -24,7 +26,16 @@ def post(item: ListinoTestaCreate, db: Session = Depends(get_db)):
 #GET ALL
 @router.get("/", response_model=List[ListinoTesta])
 def get_all(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    items = db.query(ListinoTestaDB).offset(skip).limit(limit).all()
+    items = (
+        db.query(ListinoTestaDB)
+        .options(
+            joinedload(ListinoTestaDB.universita),
+            joinedload(ListinoTestaDB.tipo_corso)
+        )
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     return items
 
 #GET BY ID

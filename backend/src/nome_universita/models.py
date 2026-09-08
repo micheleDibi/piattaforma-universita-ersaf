@@ -1,9 +1,11 @@
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Integer, String
-from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
-from typing import List, Optional
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import List, Optional, TYPE_CHECKING
+from src.database import Base
 
-Base = declarative_base()
+if TYPE_CHECKING:
+    from src.listini_testa.models import ListinoTestaDB
 
 # --- Modello SQLAlchemy ---
 class NomeUniversitaDB(Base):
@@ -14,9 +16,6 @@ class NomeUniversitaDB(Base):
     nome_universita_descrizione: Mapped[str] = mapped_column(String(255), nullable=False)
 
     listini_testa: Mapped[List["ListinoTestaDB"]] = relationship("ListinoTestaDB", back_populates="universita")
-
-
-
 
 # --- Schemi Pydantic ---
 class NomeUniversitaBase(BaseModel):

@@ -10,6 +10,7 @@ import PasswordDimenticata from "./components/PasswordDimenticata";
 import ReimpostaPassword from "./components/ReimpostaPassword";
 import SchedaUtente from "./components/SchedaUtente";
 import SchedaAzienda from "./components/SchedaAzienda";
+import ElencoProdottiFormativi from "./components/ElencoProdottiFormativi";
 
 function App() {
   return (
@@ -18,7 +19,10 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/password-dimenticata" element={<PasswordDimenticata />} />
         <Route path="/reimposta-password" element={<ReimpostaPassword />} />
-
+        <Route
+          path="/prodotti-formativi"
+          element={<ElencoProdottiFormativi />}
+        />
         <Route path="/elenco" element={<ElencoClienti />} />
         <Route path="/home" element={<Homepage />} />
         <Route path="/nuovo" element={<NuovoSottoscrittore />} />

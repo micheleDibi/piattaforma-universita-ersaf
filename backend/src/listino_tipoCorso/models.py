@@ -1,9 +1,11 @@
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import declarative_base, Mapped, mapped_column, relationship
-from typing import List
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import List, TYPE_CHECKING
+from src.database import Base
 
-Base = declarative_base()
+if TYPE_CHECKING:
+    from src.listini_testa.models import ListinoTestaDB
 
 # Modello SQLAlchemy (Database)
 class ListinoTipoCorsoDB(Base):
@@ -13,8 +15,6 @@ class ListinoTipoCorsoDB(Base):
     listino_tipoCorso_descrizione: Mapped[str] = mapped_column(String(255), nullable=False)
 
     listini_testa: Mapped[List["ListinoTestaDB"]] = relationship("ListinoTestaDB", back_populates="tipo_corso")
-
-
 
 # Schemi Pydantic (FastAPI Validazione / Serializzazione)
 class ListinoTipoCorsoBase(BaseModel):
