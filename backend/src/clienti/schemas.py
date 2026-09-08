@@ -4,8 +4,9 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from src.aziende.schemas import AziendaResponse
 from src.ruolo.schemas import RuoloResponse
 from src.utenti.schemas import UtenteResponse
-from src.clienti.models import SessoEnum, TipoDocumentoEnum
 from src.universita.schemas import UniversitaBase
+import enum
+
 
 class ClienteBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -84,3 +85,35 @@ class ClienteConUtenteCreate(ClienteBase, UniversitaBase):
     # utente_id è già gestito come Optional in ClienteBase, non serve ridefinirlo
     utente_username: Optional[str] = None  
     utente_password: Optional[str] = None
+
+
+class SessoEnum(str, enum.Enum):
+    UOMO = "uomo"
+    DONNA = "donna"
+
+    @classmethod
+    def _missing_(cls, value):
+        if value is None or str(value).strip() == "":
+            return None
+        val_str = str(value).strip().lower()
+        if val_str in ["m", "uomo", "male"]:
+            return cls.UOMO
+        if val_str in ["f", "donna", "female"]:
+            return cls.DONNA
+        return None
+
+class TipoDocumentoEnum(str, enum.Enum):
+    CARTA_IDENTITA = "Carta d'identità"
+    CARTA_IDENTITA_ALT = "Carta d'Identità"
+    PASSAPORTO = "Passaporto"
+    PATENTE = "Patente"
+
+    @classmethod
+    def _missing_(cls, value):
+        if value is None or str(value).strip() == "":
+            return None
+        # Gestione case-insensitive per allineare eventuali varianti nel DB
+        for member in cls:
+            if member.value.lower() == str(value).strip().lower():
+                return member
+        return None

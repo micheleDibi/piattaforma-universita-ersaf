@@ -3,38 +3,17 @@ from sqlalchemy import String, Integer, ForeignKey, Date
 from datetime import  date
 from src.database import Base 
 from typing import Optional
-import enum
+from src.universita.schemas import UniversitaBase
+from src.clienti.schemas import ClienteBase, SessoEnum, TipoDocumentoEnum
 
-class SessoEnum(str, enum.Enum):
-    UOMO = "uomo"
-    DONNA = "donna"
 
-    @classmethod
-    def _missing_(cls, value):
-        if value is None or str(value).strip() == "":
-            return None
-        val_str = str(value).strip().lower()
-        if val_str in ["m", "uomo", "male"]:
-            return cls.UOMO
-        if val_str in ["f", "donna", "female"]:
-            return cls.DONNA
-        return None
 
-class TipoDocumentoEnum(str, enum.Enum):
-    CARTA_IDENTITA = "Carta d'identità"
-    CARTA_IDENTITA_ALT = "Carta d'Identità"
-    PASSAPORTO = "Passaporto"
-    PATENTE = "Patente"
+class ClienteConUtenteCreate(ClienteBase, UniversitaBase):
+    utente_id: Optional[int] = None
+    utente_username: Optional[str] = None  
+    utente_password: Optional[str] = None
 
-    @classmethod
-    def _missing_(cls, value):
-        if value is None or str(value).strip() == "":
-            return None
-        # Gestione case-insensitive per allineare eventuali varianti nel DB
-        for member in cls:
-            if member.value.lower() == str(value).strip().lower():
-                return member
-        return None
+
 
 class Cliente(Base):
     __tablename__= "clienti"

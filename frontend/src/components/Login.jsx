@@ -9,7 +9,9 @@ function messaggioErrore(dati) {
       .map((errore) => `${errore.loc.join(".")}: ${errore.msg}`)
       .join(", ");
   }
-  return typeof dati?.detail === "string" ? dati.detail : "Credenziali non valide";
+  return typeof dati?.detail === "string"
+    ? dati.detail
+    : "Credenziali non valide";
 }
 
 function Login() {
