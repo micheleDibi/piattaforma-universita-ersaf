@@ -89,11 +89,30 @@ Nessuna operazione massiva, mai. Le righe di chi non accede restano intatte e
 continuano a funzionare come prima. `utenti.utente_salt` resta dov'è, inutile e
 non usato: bcrypt genera e incorpora il proprio salt.
 
-**S2 · Autenticazione falsificabile — risolto.** `Authorization: Bearer` con
-validazione contro `auth_sessione` (query [B] della migrazione 004), che scarta
-anche le sessioni di utenti disattivati e quelle nate prima dell'ultimo cambio
-password. **Resta aperta l'autorizzazione per ruolo**: nessuna rotta la
-verifica, e `/clienti/` è ancora completamente non autenticato.
+**S2 · Autenticazione falsificabile — risolto, riaperto, richiuso.**
+`Authorization: Bearer` con validazione contro `auth_sessione` (query [B] della
+migrazione 004), che scarta anche le sessioni di utenti disattivati e quelle
+nate prima dell'ultimo cambio password.
+
+Questa voce ha detto il falso per qualche giorno, e vale la pena lasciarne
+traccia. `POST /auth/login-as/{utente_id}`, aggiunto insieme alla scheda utente,
+non aveva alcuna dipendenza di autenticazione: si passava un id e si riceveva un
+token di sessione valido. `curl -X POST http://host/auth/login-as/1` era
+l'exploit intero. Nel frattempo diciotto endpoint su ventisei erano privi di
+autenticazione, perché era dichiarata endpoint per endpoint e chi aggiungeva una
+rotta non aveva modo di sapere che doveva ricordarsene.
+
+Oggi l'autenticazione è una dipendenza **del router** in tutti i domini, e
+`tests/security/test_rotte_protette.py` si costruisce dall'elenco delle rotte:
+una rotta nuova non protetta fa fallire la suite il giorno in cui viene scritta.
+Le sole rotte pubbliche sono `/`, `/salute`, `/auth/login`, `/auth/logout` e le
+tre di recupero password.
+
+**S2-bis · Autorizzazione per ruolo — parziale.** `src/auth/autorizzazioni.py`
+tiene in un punto solo chi amministra gli altri (`RUOLI_AMMINISTRATIVI`), e la
+usano `login-as` e `PUT /utenti/{id}` — quest'ultimo era autenticato ma non
+autorizzato, quindi qualunque utente loggato poteva spegnere l'amministratore.
+Il resto delle rotte distingue solo fra autenticato e no.
 
 **S3 · Stato account al login — risolto.** `utente_attivoSN` viene controllato,
 con lo stesso 401 generico di una password sbagliata.
@@ -196,17 +215,37 @@ non era soddisfatto sistemando solo il PUT**
 3. `crea_utente` forza ancora `utente_padre = current_utente.utente_id`
    ignorando il valore dello schema. Se è voluto, il campo va tolto da
    `UtenteCreate`.
-6. `models.py::Utente` → `utente_ultimo_login`/`_logout` sono `Date` nel modello
-   e `date` nel DB, ma `UtenteResponse` li tipizza `datetime`.
 7. `Utente.clienti` → `cascade="all, delete-orphan"`: cancellare un utente
-   cancella il cliente. Con 4 utenti che hanno 2 righe, il comportamento è
-   imprevedibile. Le tabelle nuove evitano di proposito ogni `relationship`
-   verso `Utente` e si affidano ai vincoli del database.
+   cancella il cliente, e SQLAlchemy tenta poi `UPDATE universita SET
+   cliente_id = NULL` su una colonna `NOT NULL`. La cancellazione di un utente
+   è rotta per costruzione. Non esistendo alcuna rotta `DELETE`, non se ne
+   accorge nessuno: va sistemata prima che una `DELETE` venga scritta.
 8. Nessuna rotta `DELETE` da nessuna parte: coerente, ma la disattivazione
    logica via `utente_attivoSN` non è esposta da nessun endpoint.
-9. `POST /clienti/` accetta `utente_id` dal corpo **senza autenticazione**:
-   chiunque può creare un cliente attribuito a qualunque utente. Fuori dal
-   perimetro di questo lavoro, ma va sistemato.
+10. La password generata da `POST /clienti/con-utente` resta ricavabile dal nome
+   della persona (`Mar` + `Ros` + id). È una scelta consapevole: la mitigazione
+   prevista è l'obbligo di cambio al primo accesso, per cui le colonne
+   `utente_password_changed_at` / `_via` esistono già. Una strada migliore è non
+   generarla affatto e mandare un link di reset, riusando il flusso che esiste;
+   richiede però che `cliente_email` sia sempre valorizzata.
+11. `cliente_abilitazione_corsi_speciali` e `_a4u` hanno `DEFAULT -1` nel
+   database, ma il codice passa sempre `0` esplicito. È rimasto com'era:
+   cambiarlo accenderebbe due funzionalità a tutti, ed è una decisione di
+   prodotto, non una correzione.
+
+**Chiusi in questo passaggio**
+
+6. `UtenteResponse` non tipizza più `utente_ultimo_login`/`_logout`: quei campi
+   non ci sono. Il rilievo è superato.
+9. `POST /clienti/con-utente` e tutte le altre rotte di `clienti` sono ora
+   autenticate. `utente_id` non si accetta più dal corpo: lo assegna il server.
+12. Le due `ForeignKey` di `Utente` puntavano a `clienti.cliente_id` mentre il
+   database punta a `utenti.utente_id` e il codice ci scrive un `utente_id`. I
+   due id coincidono solo in 377 clienti su 3.906, quindi `padre` e
+   `aggiornato_da` mostravano un'altra persona in circa il 90% dei casi.
+13. La convenzione legacy `-1`/`0` era riscritta a mano in ogni punto di
+   scrittura e divergeva. Ora sta in `src/comune/flag_legacy.py`, applicata da
+   un validatore su `UniversitaBase`, quindi vale per tutti i percorsi.
 
 ---
 
