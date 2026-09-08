@@ -6,7 +6,16 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
   const [searchTermAttuatore, setSearchTermAttuatore] = useState("");
   const [selectedRuoloAttuatore, setSelectedRuoloAttuatore] = useState("");
 
-  // Funzione per scaricare gli attuatori nel modale
+  // Tracciamo l'ultimo stato di `isOpen` per resettare i filtri durante il render se il modale si apre
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen && !prevIsOpen) {
+    setSearchTermAttuatore("");
+    setSelectedRuoloAttuatore("");
+  }
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+  }
+
   const fetchAttuatori = async (search = "", ruolo = "") => {
     setLoadingAttuatori(true);
     const token = localStorage.getItem("sessione_token");
@@ -33,16 +42,7 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
     }
   };
 
-  // Quando si apre il modale, azzera i filtri e carica i dati iniziali
-  useEffect(() => {
-    if (isOpen) {
-      setSearchTermAttuatore("");
-      setSelectedRuoloAttuatore("");
-      fetchAttuatori("", "");
-    }
-  }, [isOpen]);
-
-  // Debounce effect per la ricerca fluida
+  // Debounce effect per la ricerca fluida e fetch iniziale all'apertura
   useEffect(() => {
     if (!isOpen) return;
 
@@ -56,28 +56,33 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
   if (!isOpen) return null;
 
   return (
-    <div style={styles.modalOverlay}>
-      <div style={styles.modalContent}>
-        <div style={styles.modalHeader}>
-          <h3>Seleziona Nuovo Utente Padre (Attuatore)</h3>
-          <button onClick={onClose} style={styles.closeButton}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="flex max-h-[85vh] w-[90%] max-w-[800px] flex-col rounded-xl bg-white p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-2.5">
+          <h3 className="text-lg font-semibold text-slate-800">
+            Seleziona Nuovo Utente Padre
+          </h3>
+          <button
+            onClick={onClose}
+            className="cursor-pointer text-2xl text-slate-500 hover:text-slate-800"
+          >
             &times;
           </button>
         </div>
 
-        <div style={styles.modalFilters}>
+        <div className="mb-4 flex gap-3">
           <input
             type="text"
             placeholder="Cerca per nome, cognome o azienda..."
             value={searchTermAttuatore}
             onChange={(e) => setSearchTermAttuatore(e.target.value)}
-            style={styles.inputModifiable}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none focus:border-blue-500"
             autoFocus
           />
           <select
             value={selectedRuoloAttuatore}
             onChange={(e) => setSelectedRuoloAttuatore(e.target.value)}
-            style={styles.select}
+            className="rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none focus:border-blue-500"
           >
             <option value="">Tutti i ruoli</option>
             <option value="Aderente">Aderente</option>
@@ -87,31 +92,46 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
           </select>
         </div>
 
-        <div style={styles.modalTableContainer}>
-          <table style={styles.table}>
+        <div className="h-[350px] overflow-y-auto rounded-lg border border-slate-200 bg-white">
+          <table className="w-full border-collapse text-left text-sm">
             <thead>
-              <tr style={styles.trHead}>
-                <th style={styles.th}>Nome</th>
-                <th style={styles.th}>Cognome</th>
-                <th style={styles.th}>Ruolo</th>
-                <th style={styles.th}>Azienda</th>
-                <th style={styles.th}>Azione</th>
+              <tr className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50">
+                <th className="p-3 text-xs font-semibold text-slate-600">
+                  Nome
+                </th>
+                <th className="p-3 text-xs font-semibold text-slate-600">
+                  Cognome
+                </th>
+                <th className="p-3 text-xs font-semibold text-slate-600">
+                  Ruolo
+                </th>
+                <th className="p-3 text-xs font-semibold text-slate-600">
+                  Azienda
+                </th>
+                <th className="p-3 text-xs font-semibold text-slate-600">
+                  Azione
+                </th>
               </tr>
             </thead>
             <tbody>
               {attuatori.map((att) => (
-                <tr key={att.cliente_id} style={styles.tr}>
-                  <td style={styles.td}>{att.cliente_nome}</td>
-                  <td style={styles.td}>{att.cliente_cognome}</td>
-                  <td style={styles.td}>{att.ruolo?.ruolo_codice || "-"}</td>
-                  <td style={styles.td}>
+                <tr
+                  key={att.cliente_id}
+                  className="border-b border-slate-200 hover:bg-slate-50/50"
+                >
+                  <td className="p-3 text-slate-800">{att.cliente_nome}</td>
+                  <td className="p-3 text-slate-800">{att.cliente_cognome}</td>
+                  <td className="p-3 text-slate-800">
+                    {att.ruolo?.ruolo_codice || "-"}
+                  </td>
+                  <td className="p-3 text-slate-800">
                     {att.azienda?.azienda_ragione_sociale || "-"}
                   </td>
-                  <td style={styles.td}>
+                  <td className="p-3">
                     <button
                       type="button"
                       onClick={() => onSelectPadre(att)}
-                      style={styles.selectRowButton}
+                      className="cursor-pointer rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
                     >
                       Seleziona
                     </button>
@@ -122,11 +142,7 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
                 <tr>
                   <td
                     colSpan="5"
-                    style={{
-                      textAlign: "center",
-                      padding: "30px",
-                      color: "#64748b",
-                    }}
+                    className="p-[30px] text-center text-slate-500"
                   >
                     Nessun attuatore trovato.
                   </td>
@@ -137,14 +153,7 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
         </div>
 
         {loadingAttuatori && (
-          <div
-            style={{
-              textAlign: "center",
-              fontSize: "12px",
-              color: "#64748b",
-              marginTop: "8px",
-            }}
-          >
+          <div className="mt-2 text-center text-xs text-slate-500">
             Aggiornamento in corso...
           </div>
         )}
@@ -152,112 +161,3 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
     </div>
   );
 }
-
-const styles = {
-  modalOverlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
-  },
-  modalContent: {
-    backgroundColor: "#ffffff",
-    padding: "24px",
-    borderRadius: "12px",
-    width: "90%",
-    maxWidth: "800px",
-    maxHeight: "85vh",
-    display: "flex",
-    flexDirection: "column",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-  },
-  modalHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "16px",
-    borderBottom: "1px solid #e2e8f0",
-    paddingBottom: "10px",
-  },
-  closeButton: {
-    background: "none",
-    border: "none",
-    fontSize: "24px",
-    cursor: "pointer",
-    color: "#64748b",
-  },
-  modalFilters: {
-    display: "flex",
-    gap: "12px",
-    marginBottom: "16px",
-  },
-  inputModifiable: {
-    padding: "12px 14px",
-    backgroundColor: "#ffffff",
-    border: "1px solid #cbd5e1",
-    borderRadius: "8px",
-    fontSize: "14px",
-    color: "#0f172a",
-    outline: "none",
-    width: "100%",
-  },
-  select: {
-    padding: "12px 14px",
-    backgroundColor: "#ffffff",
-    border: "1px solid #cbd5e1",
-    borderRadius: "8px",
-    fontSize: "14px",
-    color: "#0f172a",
-    outline: "none",
-  },
-  modalTableContainer: {
-    overflowY: "auto",
-    height: "350px",
-    border: "1px solid #e2e8f0",
-    borderRadius: "8px",
-    backgroundColor: "#ffffff",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    textAlign: "left",
-    fontSize: "14px",
-  },
-  trHead: {
-    backgroundColor: "#f8fafc",
-    borderBottom: "1px solid #e2e8f0",
-    position: "sticky",
-    top: 0,
-    zIndex: 1,
-  },
-  th: {
-    padding: "12px",
-    fontWeight: "600",
-    color: "#475569",
-    fontSize: "12px",
-    backgroundColor: "#f8fafc",
-  },
-  tr: {
-    borderBottom: "1px solid #e2e8f0",
-  },
-  td: {
-    padding: "12px",
-    color: "#1e293b",
-  },
-  selectRowButton: {
-    padding: "6px 12px",
-    backgroundColor: "#2563eb",
-    color: "#ffffff",
-    border: "none",
-    borderRadius: "6px",
-    fontSize: "12px",
-    cursor: "pointer",
-    fontWeight: "600",
-  },
-};

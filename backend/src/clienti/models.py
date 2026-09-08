@@ -96,3 +96,4 @@ class Cliente(Base):
     ruolo: Mapped["Ruolo"] = relationship(back_populates="clienti")
     azienda: Mapped[Optional["Azienda"]]= relationship(back_populates="clienti")
     utenti_aggiornati: Mapped[list["Utente"]] = relationship("Utente", foreign_keys="[Utente.utente_updated_by]", back_populates="aggiornato_da")
+    universita: Mapped[list["Universita"]] = relationship("Universita", back_populates="cliente")
