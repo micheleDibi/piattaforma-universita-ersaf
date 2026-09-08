@@ -4,7 +4,8 @@
 --
 --   ⚠️  NON ESEGUIRE QUESTO FILE SU UN DATABASE CON DEI DATI.  ⚠️
 --
---   Fa DROP TABLE su utenti, clienti, aziende, ruoli e messaggi_email.
+--   Fa DROP TABLE su utenti, clienti, universita, aziende, ruoli e
+--   messaggi_email.
 --   Serve a costruire da zero il database usa-e-getta della suite di test.
 --   Non e' una migrazione e non va mai eseguito su admin_entedb ne' su una
 --   copia di lavoro che contenga dati veri.
@@ -51,6 +52,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `password_reset_token`;
 DROP TABLE IF EXISTS `password_reset_richiesta`;
 DROP TABLE IF EXISTS `auth_sessione`;
+DROP TABLE IF EXISTS `universita`;
 DROP TABLE IF EXISTS `clienti`;
 DROP TABLE IF EXISTS `utenti`;
 DROP TABLE IF EXISTS `aziende`;
@@ -194,6 +196,94 @@ CREATE TABLE `messaggi_email` (
   `messaggio_email_testo` longtext DEFAULT NULL,
   `messaggio_email_oggetto` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`messaggio_email_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- Curriculum formativo. Mancava del tutto: qualunque test su /universita/ o su
+-- POST /clienti/con-utente falliva con "Table 'ersaf_test.universita' doesn't
+-- exist", ed e' il motivo per cui il dominio clienti aveva copertura zero.
+--
+-- NOTA: cliente_id e' NOT NULL ma non ha ne' FOREIGN KEY ne' indice, pur
+-- essendo l'unica colonna con cui si cerca. E' cosi' anche in produzione.
+CREATE TABLE `universita` (
+  `universita_id` int(11) NOT NULL AUTO_INCREMENT,
+  `universita_immatricolato` int(11) NOT NULL DEFAULT 0,
+  `universita_data_immatricolazione` date DEFAULT NULL,
+  `universita_riforma` varchar(255) DEFAULT NULL,
+  `universita_conclusione` varchar(255) DEFAULT NULL,
+  `universita_data_conclusione` date DEFAULT NULL,
+  `universita_iscrizioneAltraUniversita` int(11) NOT NULL DEFAULT 0,
+  `universita_diploma` varchar(255) DEFAULT NULL,
+  `universita_istituto` varchar(255) DEFAULT NULL,
+  `universita_via_istituto` varchar(255) DEFAULT NULL,
+  `universita_citta_istituto` varchar(255) DEFAULT NULL,
+  `universita_provincia_istituto` varchar(255) DEFAULT NULL,
+  `universita_anno_scolastico` varchar(45) DEFAULT NULL,
+  `universita_votoRicevuto_diploma` int(11) DEFAULT NULL,
+  `universita_votoMassimo_diploma` int(11) DEFAULT NULL,
+  `universita_istituto_ai` varchar(255) DEFAULT NULL,
+  `universita_citta_istituto_ai` varchar(255) DEFAULT NULL,
+  `universita_provincia_istituto_ai` varchar(255) DEFAULT NULL,
+  `universita_via_istituto_ai` varchar(255) DEFAULT NULL,
+  `universita_anno_scolastico_ai` varchar(45) DEFAULT NULL,
+  `universita_votoRicevuto_ai` int(11) DEFAULT NULL,
+  `universita_votoMassimo_ai` int(11) DEFAULT NULL,
+  `universita_titolo_universitario` varchar(255) DEFAULT NULL,
+  `universita_materia_titolo` varchar(255) DEFAULT NULL,
+  `universita_universita_titolo` varchar(255) DEFAULT NULL,
+  `universita_data_titolo` date DEFAULT NULL,
+  `universita_votoRicevuto_titolo` int(11) DEFAULT NULL,
+  `universita_votoMassimo_titolo` int(11) DEFAULT NULL,
+  `universita_materia_pl1` varchar(255) DEFAULT NULL,
+  `universita_istituto_pl1` varchar(255) DEFAULT NULL,
+  `universita_data_pl1` date DEFAULT NULL,
+  `universita_materia_pl2` varchar(255) DEFAULT NULL,
+  `universita_istituto_pl2` varchar(255) DEFAULT NULL,
+  `universita_data_pl2` date DEFAULT NULL,
+  `universita_materia_ats1` varchar(255) DEFAULT NULL,
+  `universita_istituto_ats1` varchar(255) DEFAULT NULL,
+  `universita_data_ats1` date DEFAULT NULL,
+  `universita_materia_ats2` varchar(255) DEFAULT NULL,
+  `universita_istituto_ats2` varchar(255) DEFAULT NULL,
+  `universita_data_ats2` date DEFAULT NULL,
+  `universita_attivita_professionalizzanti` int(11) NOT NULL DEFAULT 0,
+  `universita_corsi_di_formazione` int(11) NOT NULL DEFAULT 0,
+  `universita_altre_attivita_certificate` int(11) NOT NULL DEFAULT 0,
+  `cliente_id` int(11) NOT NULL,
+  `universita_ateneoNullaosta` varchar(255) DEFAULT NULL,
+  `universita_percentualeInvalidita` int(11) DEFAULT NULL,
+  `universita_tipoInvalidita` varchar(255) DEFAULT NULL,
+  `universita_professione` varchar(255) DEFAULT NULL,
+  `universita_data_professione` date DEFAULT NULL,
+  `universita_luogo_professione` varchar(255) DEFAULT NULL,
+  `universita_sessione_professione` varchar(255) DEFAULT NULL,
+  `universita_annoSessione_professione` int(11) DEFAULT NULL,
+  `universita_voto_professione` int(11) DEFAULT NULL,
+  `universita_qualifica_professionale` varchar(255) DEFAULT NULL,
+  `universita_data_qualifica` date DEFAULT NULL,
+  `universita_luogo` varchar(255) DEFAULT NULL,
+  `universita_corrispondenza` varchar(45) DEFAULT NULL,
+  `universita_albo` varchar(255) DEFAULT NULL,
+  `universita_forzeDellOrdine` varchar(255) DEFAULT NULL,
+  `universita_createBy` int(11) DEFAULT NULL,
+  `universita_createDate` date DEFAULT NULL,
+  `universita_updateBy` int(11) DEFAULT NULL,
+  `universita_updateDate` date DEFAULT NULL,
+  `universita_universitaConclusione` varchar(255) DEFAULT NULL,
+  `universita_cittaUniConclusione` varchar(255) DEFAULT NULL,
+  `universita_provinciaConclusione` varchar(255) DEFAULT NULL,
+  `universita_attIscritto_tipo` varchar(45) DEFAULT NULL,
+  `universita_attIscritto_altro` varchar(255) DEFAULT NULL,
+  `universita_attIscritto_classeLaurea` varchar(45) DEFAULT NULL,
+  `universita_attIscritto_denominazione` varchar(255) DEFAULT NULL,
+  `universita_attIscritto_universita` varchar(255) DEFAULT NULL,
+  `universita_attIscritto_citta` varchar(255) DEFAULT NULL,
+  `universita_attIscritto_provincia` varchar(45) DEFAULT NULL,
+  `universita_attIscritto_annoIscrizione` varchar(45) DEFAULT NULL,
+  `universita_attIscritto_modalita` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`universita_id`),
+  KEY `FK_universita_createBy_idx` (`universita_createBy`),
+  KEY `FK_universita_updateBy_idx` (`universita_updateBy`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -154,6 +154,10 @@ POSIZIONI_AMMESSE = {
     "src/auth/servizio_login.py",
     "src/auth/servizio_reset.py",
     "src/utenti/routers.py",
+    # Creazione di un cliente con il suo utente: scrive la stringa vuota, mai
+    # la password. Era in src/clienti/routers.py, che non era in elenco - e il
+    # test lo ha segnalato appena quel codice e' arrivato.
+    "src/clienti/servizio.py",
 }
 
 

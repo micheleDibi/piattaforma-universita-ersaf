@@ -9,7 +9,7 @@
 // Politica allineata a NIST SP 800-63B: lunghezza, non composizione. Nessun
 // obbligo di maiuscole, cifre o simboli, nessuna scadenza periodica.
 
-export const LUNGHEZZA_MINIMA = 12;
+export const LUNGHEZZA_MINIMA = 8;
 export const BYTE_MASSIMI = 72; // limite reale di bcrypt: oltre, TRONCA in silenzio
 
 export const BLOCKLIST_ESATTA = [

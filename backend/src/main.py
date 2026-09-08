@@ -1,8 +1,10 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from src.config import get_impostazioni, verifica_configurazione
 from src.logging_config import NOME_LOGGER, configura_logging
@@ -72,6 +74,38 @@ app.include_router(cliente_router)
 app.include_router(auth_router)
 app.include_router(azienda_router)
 app.include_router(universita_router)
+
+
+@app.exception_handler(IntegrityError)
+async def gestisci_integrity_error(request: Request, exc: IntegrityError):
+    """Un vincolo del database violato e' colpa della richiesta, non del server.
+
+    I modelli non rispecchiavano la DDL reale in dieci punti - colonne
+    dichiarate nullable e NOT NULL nel database, e viceversa - quindi ogni
+    richiesta sbagliata usciva come 500 con traceback. Un 409 dice al chiamante
+    che il dato non e' accettabile; il dettaglio resta nel log, dove non
+    descrive lo schema a chi non lo conosce.
+    """
+    logger.warning("vincolo violato su %s %s", request.method, request.url.path, exc_info=exc)
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": "I dati inviati violano un vincolo di integrità."},
+    )
+
+
+@app.exception_handler(SQLAlchemyError)
+async def gestisci_errore_database(request: Request, exc: SQLAlchemyError):
+    logger.exception("errore di database su %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "Errore interno. Riprova, e se persiste segnala l'errore."},
+    )
+
+
+@app.get("/salute", tags=["Servizio"])
+def salute():
+    """Sonda di liveness per il reverse proxy e per il deploy."""
+    return {"stato": "ok"}
 
 
 @app.get("/")

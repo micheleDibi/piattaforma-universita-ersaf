@@ -52,7 +52,11 @@ class Universita(Base):
     universita_corsi_di_formazione: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     universita_altre_attivita_certificate: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     
-    # Relazione (Foreign Key obbligatoria nel DB)
+    # cliente_id e' NOT NULL, ma NON esiste alcuna FOREIGN KEY nel database -
+    # e nemmeno un indice, pur essendo l'unica colonna con cui si cerca. La
+    # ForeignKey resta perche' e' quella che definisce il join della relazione
+    # lato ORM; non crea alcun vincolo e non verifica nulla, quindi
+    # l'esistenza del cliente va controllata in codice.
     cliente_id: Mapped[int] = mapped_column(Integer, ForeignKey("clienti.cliente_id"), nullable=False)
     
     universita_ateneoNullaosta: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -76,10 +80,13 @@ class Universita(Base):
     # CORRETTO: Nel DB è una stringa (varchar) e non un booleano
     universita_forzeDellOrdine: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     
+    # date DEFAULT NULL nel database, non CURRENT_DATE: dopo un db.refresh()
+    # il valore letto era NULL e non la data di oggi, contro quanto diceva
+    # il modello. Le due date le valorizza payload_universita.
     universita_createBy: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    universita_createDate: Mapped[Optional[date]] = mapped_column(Date, server_default=text("CURRENT_DATE"))
+    universita_createDate: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     universita_updateBy: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    universita_updateDate: Mapped[Optional[date]] = mapped_column(Date, server_default=text("CURRENT_DATE"))
+    universita_updateDate: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     universita_universitaConclusione: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_cittaUniConclusione: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_provinciaConclusione: Mapped[Optional[str]] = mapped_column(String, nullable=True)

@@ -1,6 +1,18 @@
 from datetime import date
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
+
+from src.comune.flag_legacy import a_flag_legacy, a_flag_legacy_uno
+
+# Le cinque colonne booleane del curriculum, con la convenzione di ciascuna.
+# Vedi src/comune/flag_legacy.py per i conteggi sui dati reali.
+CAMPI_FLAG_MENO_UNO = (
+    "universita_iscrizioneAltraUniversita",
+    "universita_attivita_professionalizzanti",
+    "universita_corsi_di_formazione",
+    "universita_altre_attivita_certificate",
+)
+CAMPO_FLAG_UNO = "universita_immatricolato"
 
 
 class UniversitaBase(BaseModel):
@@ -78,6 +90,22 @@ class UniversitaBase(BaseModel):
     universita_attIscritto_modalita: Optional[str] = None
 
 
+    # I validatori stanno qui e non nei router: UniversitaBase e' ereditata da
+    # UniversitaCreate, UniversitaUpdate, Universita e da
+    # ClienteConUtenteCreate, quindi ogni percorso di scrittura e di lettura
+    # passa di qui senza doversene ricordare. Prima la conversione viveva in
+    # clienti/routers.py, cioe' in uno solo dei tre percorsi, e sbagliava.
+    @field_validator(*CAMPI_FLAG_MENO_UNO, mode="before")
+    @classmethod
+    def _normalizza_flag(cls, v):
+        return a_flag_legacy(v)
+
+    @field_validator(CAMPO_FLAG_UNO, mode="before")
+    @classmethod
+    def _normalizza_flag_immatricolato(cls, v):
+        return a_flag_legacy_uno(v)
+
+
 class UniversitaCreate(UniversitaBase):
     pass
 
@@ -92,3 +120,10 @@ class Universita(UniversitaBase):
     universita_updateDate: Optional[date] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# Lo schema di risposta si chiama `Universita` come il modello SQLAlchemy, e
+# per questo universita/routers.py deve importare il modello con l'alias
+# UniversitaModel. Il nome giusto e' questo; l'altro resta per non rompere gli
+# import esistenti.
+UniversitaResponse = Universita

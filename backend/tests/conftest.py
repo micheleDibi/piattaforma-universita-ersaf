@@ -54,6 +54,7 @@ TABELLE_DA_SVUOTARE = [
     "password_reset_token",
     "password_reset_richiesta",
     "auth_sessione",
+    "universita",
     "clienti",
     "utenti",
     "aziende",

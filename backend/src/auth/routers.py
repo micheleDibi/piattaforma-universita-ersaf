@@ -23,7 +23,11 @@ from src.auth.dipendenze import (  # noqa: F401  (get_current_utente e' riesport
     get_sessione_corrente,
     schema_bearer,
 )
-from src.auth.models import Esito, MotivoRevoca
+from src.auth.autorizzazioni import (
+    RUOLI_SENZA_ACCESSO,
+    richiedi_ruolo_amministrativo,
+)
+from src.auth.models import ATTIVO, Esito, MotivoRevoca
 from src.auth.schemas import (
     CORPO_RISPOSTA_GENERICA,
     MESSAGGIO_CREDENZIALI,
@@ -113,8 +117,7 @@ def login(creds: LoginRequest, request: Request, db: Session = Depends(get_db)):
 
     ruolo = codice_ruolo(db, cliente.cliente_ruolo)
 
-    # BLOCCO RUOLI VIETATI (0, 4, 6)
-    if cliente.cliente_ruolo in [0, 4, 6]:
+    if cliente.cliente_ruolo in RUOLI_SENZA_ACCESSO:
         logger.warning(
             "accesso negato: utente_id=%s ha un ruolo non consentito (ruolo_id=%s)",
             utente.utente_id,
@@ -333,38 +336,91 @@ def conferma_reset(
 
 
 
+def _bersaglio_non_impersonabile() -> HTTPException:
+    """Un solo messaggio per tutti i motivi di rifiuto sul bersaglio.
+
+    Chi arriva qui e' gia' autenticato e ha comunque accesso a GET /clienti/,
+    quindi non c'e' enumerazione da impedire; l'uniformita' serve a non dire
+    quale controllo ha fallito.
+    """
+    return HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Utente non trovato o non impersonabile.",
+    )
+
+
 @router.post("/login-as/{utente_id}")
 def login_as(
     utente_id: int,
     request: Request,
     db: Session = Depends(get_db),
+    current_utente: Utente = Depends(get_current_utente),
 ):
+    """Emette una sessione a nome di un altro utente.
+
+    Prima non chiedeva nulla: un POST anonimo su un id qualsiasi restituiva un
+    token valido. Questo rendeva inutile ogni altra difesa - hashing, sessioni
+    revocabili, recupero password - perche' per entrare non serviva piu'
+    conoscere una password. Ora servono una sessione valida e un ruolo
+    ammesso, e l'operazione lascia una traccia con entrambi gli id.
+    """
     ip = ip_client(request)
     ua = user_agent(request)
 
+    # --- chi chiama ---------------------------------------------------------
+    ruolo_chiamante = richiedi_ruolo_amministrativo(
+        db, current_utente, "impersonificazione"
+    )
+
+    # --- chi viene impersonato ----------------------------------------------
     utente = db.get(Utente, utente_id)
     if utente is None:
-        raise _credenziali_errate()
+        raise _bersaglio_non_impersonabile()
+
+    # Il login normale passa da verifica_credenziali, che rifiuta gli utenti
+    # spenti. Qui non c'e' password da verificare, quindi il controllo va
+    # ripetuto: senza, si poteva impersonare un account disattivato.
+    if utente.utente_attivoSN != ATTIVO:
+        raise _bersaglio_non_impersonabile()
 
     cliente = cliente_principale(db, utente.utente_id)
     if cliente is None:
-        raise _credenziali_errate()
+        raise _bersaglio_non_impersonabile()
+
+    if cliente.cliente_ruolo in RUOLI_SENZA_ACCESSO:
+        raise _bersaglio_non_impersonabile()
 
     ruolo = codice_ruolo(db, cliente.cliente_ruolo)
-
-    if cliente.cliente_ruolo in [0, 4, 6]:
-        raise _credenziali_errate()
+    if (ruolo or "").lower() == "nazionale":
+        # Allineato al login: per il ruolo Nazionale non si emette sessione
+        # senza 2FA. Senza questo ramo, login-as era la strada per ottenere
+        # proprio la sessione che il login nega.
+        logger.warning(
+            "impersonificazione negata: il bersaglio utente_id=%s e' Nazionale",
+            utente.utente_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Il ruolo Nazionale richiede la verifica a due fattori.",
+        )
 
     token, scadenza = crea_sessione(db, utente.utente_id, ip, ua)
     db.commit()
-    logger.info("login-as riuscito per utente_id=%s", utente.utente_id)
+    # Traccia di audit: entrambi gli id sulla stessa riga, perche' da qui in
+    # poi i log della sessione emessa parlano solo del bersaglio.
+    logger.warning(
+        "impersonificazione: utente_id=%s (%s) assume l'identita' di utente_id=%s",
+        current_utente.utente_id,
+        ruolo_chiamante,
+        utente.utente_id,
+    )
 
     return {
         "message": "Login automatico effettuato con successo",
         "utente_id": utente.utente_id,
         "utente_username": utente.utente_username,
         "ruolo_codice": ruolo,
-        "token": token,  
+        "token": token,
         "token_type": "bearer",
         "scadenza": scadenza.isoformat() if scadenza else None,
     }

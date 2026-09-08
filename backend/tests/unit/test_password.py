@@ -117,7 +117,7 @@ def test_hash_fittizio_e_valido_e_al_costo_giusto():
 @pytest.mark.parametrize(
     "descrizione, password, codice_atteso",
     [
-        ("undici caratteri", "Undici12345", "lunghezza_minima"),
+        ("sette caratteri", "Sette12", "lunghezza_minima"),
         ("oltre 72 byte", "a" * 73, "lunghezza_massima_byte"),
         ("nella blocklist", "123456789012", "troppo_comune"),
         ("radice password", "Password1234!", "troppo_comune"),

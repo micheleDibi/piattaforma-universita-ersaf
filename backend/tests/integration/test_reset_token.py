@@ -215,7 +215,7 @@ def test_token_consumato_due_volte_cambia_la_password_una_volta_sola(client, db)
 @pytest.mark.parametrize(
     "descrizione, password, atteso",
     [
-        ("troppo corta", "Corta123", 422),
+        ("troppo corta", "Corta1", 422),
         ("oltre 72 byte", "a" * 73, 422),
         ("nella blocklist", "Password1234!", 422),
     ],

@@ -192,8 +192,11 @@ def verifica_configurazione(imp: Impostazioni | None = None) -> None:
         problemi.append(f"BCRYPT_COST={imp.bcrypt_cost} fuori dall'intervallo 4..16")
     if imp.password_min_length < 8:
         problemi.append(
-            f"PASSWORD_MIN_LENGTH={imp.password_min_length}: NIST SP 800-63B "
-            "raccomanda almeno 12 caratteri, non si scende sotto"
+            f"PASSWORD_MIN_LENGTH={imp.password_min_length}: il minimo e' 8, "
+            "che e' anche il minimo assoluto del NIST SP 800-63B. La stessa "
+            "raccomandazione ne consiglia 12 o piu' per le utenze "
+            "amministrative: alzarlo qui e' una scelta che si puo' fare in "
+            ".env, abbassarlo sotto 8 no."
         )
     if imp.password_reset_token_ttl_minutes < 1:
         problemi.append("PASSWORD_RESET_TOKEN_TTL_MINUTES deve essere almeno 1")
