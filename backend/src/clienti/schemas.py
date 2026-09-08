@@ -1,10 +1,11 @@
 from datetime import date
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, PositiveInt, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from src.aziende.schemas import AziendaResponse
 from src.ruolo.schemas import RuoloResponse
 from src.utenti.schemas import UtenteResponse
 from src.clienti.models import SessoEnum, TipoDocumentoEnum
+from src.universita.schemas import UniversitaBase
 
 class ClienteBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -22,7 +23,8 @@ class ClienteBase(BaseModel):
     cliente_provincia: Optional[str] = None
     cliente_cellulare: Optional[str] = None
     
-    utente_id: PositiveInt
+    # Reso opzionale alla base poiché viene generato programmaticamente nel backend
+    utente_id: Optional[int] = None
     cliente_luogoNascita: str
     cliente_provinciaNascita: Optional[str] = None
     cliente_dataNascita: date
@@ -57,20 +59,16 @@ class ClienteBase(BaseModel):
         if v is None or (isinstance(v, str) and v.strip() == ""):
             return None
         
-        # Se riceve già un'istanza di un Enum, la restituisce
         if isinstance(v, (TipoDocumentoEnum, SessoEnum)):
             return v
             
-        # Determina quale Enum mappare in base al campo in validazione
         target_enum = TipoDocumentoEnum if info.field_name == 'cliente_tipoDocumento' else SessoEnum
         
-        # Cerca il membro corrispondente ignorando maiuscole/minuscole e spazi
         val_str = str(v).strip()
         for member in target_enum:
             if member.value.lower() == val_str.lower():
                 return member
                 
-        # Fallback se non trova corrispondenza esatta
         return v
 
 class ClienteCreate(ClienteBase):
@@ -82,7 +80,7 @@ class ClienteResponse(ClienteBase):
     ruolo: Optional[RuoloResponse] = None
     utente: Optional[UtenteResponse] = None
 
-class ClienteConUtenteCreate(ClienteBase):
-    utente_id: Optional[int] = None
+class ClienteConUtenteCreate(ClienteBase, UniversitaBase):
+    # utente_id è già gestito come Optional in ClienteBase, non serve ridefinirlo
     utente_username: Optional[str] = None  
     utente_password: Optional[str] = None

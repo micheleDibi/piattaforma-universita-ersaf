@@ -141,19 +141,10 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
             <input
               type="checkbox"
               name="universita_attivita_professionalizzanti"
-              checked={Boolean(
-                formData.universita_attivita_professionalizzanti,
-              )}
-              onChange={(e) => {
-                const syntheticEvent = {
-                  target: {
-                    name: "universita_attivita_professionalizzanti",
-                    value: e.target.checked,
-                    type: "checkbox",
-                  },
-                };
-                handleChange(syntheticEvent);
-              }}
+              checked={
+                Number(formData.universita_attivita_professionalizzanti) === 1
+              }
+              onChange={handleChange}
               className="w-4 h-4 text-blue-600 bg-slate-50 border-slate-300 rounded focus:ring-blue-500"
             />
           </div>
@@ -166,17 +157,8 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
             <input
               type="checkbox"
               name="universita_corsi_di_formazione"
-              checked={Boolean(formData.universita_corsi_di_formazione)}
-              onChange={(e) => {
-                const syntheticEvent = {
-                  target: {
-                    name: "universita_corsi_di_formazione",
-                    value: e.target.checked,
-                    type: "checkbox",
-                  },
-                };
-                handleChange(syntheticEvent);
-              }}
+              checked={Number(formData.universita_corsi_di_formazione) === 1}
+              onChange={handleChange}
               className="w-4 h-4 text-blue-600 bg-slate-50 border-slate-300 rounded focus:ring-blue-500"
             />
           </div>
@@ -189,17 +171,10 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
             <input
               type="checkbox"
               name="universita_altre_attivita_certificate"
-              checked={Boolean(formData.universita_altre_attivita_certificate)}
-              onChange={(e) => {
-                const syntheticEvent = {
-                  target: {
-                    name: "universita_altre_attivita_certificate",
-                    value: e.target.checked,
-                    type: "checkbox",
-                  },
-                };
-                handleChange(syntheticEvent);
-              }}
+              checked={
+                Number(formData.universita_altre_attivita_certificate) === 1
+              }
+              onChange={handleChange}
               className="w-4 h-4 text-blue-600 bg-slate-50 border-slate-300 rounded focus:ring-blue-500"
             />
           </div>

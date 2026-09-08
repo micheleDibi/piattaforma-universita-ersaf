@@ -26,13 +26,15 @@ export default function SezioneTitoli({ formData, handleChange }) {
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
                 Anno di conseguimento
               </label>
-              <input
-                type="text"
-                name="universita_anno_scolastico"
-                value={formData.universita_anno_scolastico}
-                onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              />
+              <div className="relative">
+                <input
+                  type="date"
+                  name="universita_data_titolo"
+                  value={formData.universita_data_titolo}
+                  onChange={handleChange}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
+                />
+              </div>
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
@@ -164,13 +166,13 @@ export default function SezioneTitoli({ formData, handleChange }) {
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                Anno conseguimento
+                Anno di conseguimento
               </label>
               <div className="relative">
                 <input
-                  type="text"
-                  name="universita_anno_scolastico_ai"
-                  value={formData.universita_anno_scolastico_ai}
+                  type="date"
+                  name="universita_data_titolo"
+                  value={formData.universita_data_titolo}
                   onChange={handleChange}
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
                 />

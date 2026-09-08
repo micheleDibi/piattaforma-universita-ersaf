@@ -3,12 +3,15 @@ from sqlalchemy.orm import Session, joinedload
 from typing import List
 from src.clienti.models import Cliente
 from src.clienti.schemas import ClienteCreate, ClienteResponse, ClienteConUtenteCreate
+from src.universita.schemas import UniversitaBase
 from src.database import get_db
 from typing import Optional
 from src.ruolo.models import Ruolo
 from src.aziende.models import Azienda
+from src.universita.models import Universita
 from src.utenti.models import Utente
 import uuid
+from datetime import date
 from src.auth.dipendenze import get_current_utente
 from src.security.password import hash_password, messaggi_policy, verifica_policy_password
 
@@ -101,9 +104,12 @@ def crea_cliente_e_utente(
         nuovo_utente.utente_password = ""  # Mai in chiaro
         nuovo_utente.utente_salt = str(uuid.uuid4())
 
-        # Prepara i dati del cliente ESCLUDENDO i campi utente temporanei dello schema
-        dati_dict = dati.model_dump(exclude={"utente_username", "utente_password"})
-        dati_dict["utente_id"] = nuovo_utente.utente_id
+        # Isola i campi del cliente escludendo utente temporaneo e campi università
+        campi_universita_keys = set(UniversitaBase.model_fields.keys())
+        dati_cliente_dict = dati.model_dump(
+            exclude={"utente_username", "utente_password"}.union(campi_universita_keys)
+        )
+        dati_cliente_dict["utente_id"] = nuovo_utente.utente_id
 
         # Campi default in base al tipo di utente
         base_abilitazioni = -1 if tipo_utente.lower() == "attuatore" else 0
@@ -117,22 +123,79 @@ def crea_cliente_e_utente(
         ]
         
         for campo in campi_abilitazioni:
-            if dati_dict.get(campo) is None:
-                # Se il campo è cliente_abilitazione_corsi_speciali, forziamo il default a 0
+            if dati_cliente_dict.get(campo) is None:
                 if campo == "cliente_abilitazione_corsi_speciali":
-                    dati_dict[campo] = 0
+                    dati_cliente_dict[campo] = 0
                 else:
-                    dati_dict[campo] = base_abilitazioni
+                    dati_cliente_dict[campo] = base_abilitazioni
 
         # Crea il Cliente
-        nuovo_cliente = Cliente(**dati_dict)
+        nuovo_cliente = Cliente(**dati_cliente_dict)
         db.add(nuovo_cliente)
+        db.flush() # Genera cliente_id indispensabile per l'università
+
+        # Estrai e crea il record dell'Università collegata
+        dati_universita_dict = dati.model_dump(include=campi_universita_keys)
+        dati_universita_dict["cliente_id"] = nuovo_cliente.cliente_id
+        dati_universita_dict["universita_createBy"] = current_utente.utente_id
+
+        # Elenco esatto delle sole colonne TINYINT/INT obbligatorie nel DB (Null: "NO")[cite: 1]
+        campi_obbligatori_tinyint = [
+            "universita_immatricolato",
+            "universita_iscrizioneAltraUniversita",
+            "universita_attivita_professionalizzanti",
+            "universita_corsi_di_formazione",
+            "universita_altre_attivita_certificate"
+        ]
+
+        # Forziamo il valore a 0 per i tinyint obbligatori
+        for chiave in campi_obbligatori_tinyint:
+            valore = dati_universita_dict.get(chiave)
+            if valore is None or valore == "" or valore is False or valore == "false":
+                dati_universita_dict[chiave] = 0
+            elif valore is True or valore == "true" or valore == 1 or valore == "1":
+                dati_universita_dict[chiave] = 1
+            else:
+                dati_universita_dict[chiave] = 0
+
+        # Campi numerici interi aggiornati (inclusi i voti e l'anno sessione professione)[cite: 1]
+        campi_numerici_interi = {
+            "universita_votoRicevuto_diploma", "universita_votoMassimo_diploma",
+            "universita_votoRicevuto_ai", "universita_votoMassimo_ai",
+            "universita_votoRicevuto_titolo", "universita_votoMassimo_titolo",
+            "universita_percentualeInvalidita", "universita_voto_professione",
+            "universita_annoSessione_professione"
+        }
+
+        # Campi data
+        campi_data = {
+            k for k in dati_universita_dict.keys() 
+            if "data" in k.lower() or k.endswith("_data")
+        }
+
+        # Pulizia mirata per tutti gli altri campi opzionali
+        for chiave, valore in dati_universita_dict.items():
+            if chiave in campi_obbligatori_tinyint:
+                continue
+            if valore is None or valore == "":
+                if chiave in campi_numerici_interi:
+                    dati_universita_dict[chiave] = None # Oppure 0 se preferisci default a zero
+                elif chiave in campi_data:
+                    dati_universita_dict[chiave] = None
+                else:
+                    dati_universita_dict[chiave] = None # Per le stringhe opzionali nel DB è meglio salvare NULL anziché stringa vuota
+
+        dati_universita_dict["universita_createDate"] = date.today()
+        dati_universita_dict["universita_updateDate"] = date.today()
+
+        nuova_universita = Universita(**dati_universita_dict)
+        db.add(nuova_universita)
         
         db.commit()
         db.refresh(nuovo_cliente)
         
         return {
-            "message": "Cliente e utente creati con successo!", 
+            "message": "Cliente, utente e dati università creati con successo!", 
             "cliente_id": nuovo_cliente.cliente_id,
             "utente_id": nuovo_utente.utente_id,
             "username_generato": username,

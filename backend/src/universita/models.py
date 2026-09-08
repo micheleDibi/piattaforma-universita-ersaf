@@ -9,12 +9,12 @@ class Universita(Base):
     __tablename__ = "universita"
 
     universita_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
-    universita_immatricolato: Mapped[[bool]] = mapped_column(Boolean, default= False, server_default=text("0"))
+    universita_immatricolato: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     universita_data_immatricolazione: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     universita_riforma: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_conclusione: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_data_conclusione: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
-    universita_iscrizioneAltraUniversita: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    universita_iscrizioneAltraUniversita: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     universita_diploma: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_istituto: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_via_istituto: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -48,11 +48,13 @@ class Universita(Base):
     universita_materia_ats2: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_istituto_ats2: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_data_ats2: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
-    universita_attivita_professionalizzanti: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
-    universita_corsi_di_formazione: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
-    universita_altre_attivita_certificate: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
-    #Relazione
-    cliente_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("clienti.cliente_id"), nullable=True)
+    universita_attivita_professionalizzanti: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    universita_corsi_di_formazione: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    universita_altre_attivita_certificate: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    
+    # Relazione (Foreign Key obbligatoria nel DB)
+    cliente_id: Mapped[int] = mapped_column(Integer, ForeignKey("clienti.cliente_id"), nullable=False)
+    
     universita_ateneoNullaosta: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_percentualeInvalidita: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     universita_tipoInvalidita: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -60,18 +62,24 @@ class Universita(Base):
     universita_data_professione: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     universita_luogo_professione: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_sessione_professione: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    universita_annoSessione_professione: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    
+    # CORRETTO: Nel DB è un intero (int), non stringa
+    universita_annoSessione_professione: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    
     universita_voto_professione: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     universita_qualifica_professionale: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_data_qualifica: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     universita_luogo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_corrispondenza: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_albo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    
+    # CORRETTO: Nel DB è una stringa (varchar) e non un booleano
     universita_forzeDellOrdine: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    
     universita_createBy: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     universita_createDate: Mapped[Optional[date]] = mapped_column(Date, server_default=text("CURRENT_DATE"))
     universita_updateBy: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    universita_updateDate: Mapped[Optional[date]]= mapped_column(Date, server_default=text("CURRENT_DATE"))
+    universita_updateDate: Mapped[Optional[date]] = mapped_column(Date, server_default=text("CURRENT_DATE"))
     universita_universitaConclusione: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_cittaUniConclusione: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_provinciaConclusione: Mapped[Optional[str]] = mapped_column(String, nullable=True)

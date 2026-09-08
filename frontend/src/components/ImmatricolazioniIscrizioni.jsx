@@ -16,13 +16,17 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
               </label>
               <select
                 name="universita_immatricolato"
-                value={formData.universita_immatricolato || ""}
+                value={
+                  formData.universita_immatricolato !== undefined
+                    ? formData.universita_immatricolato
+                    : ""
+                }
                 onChange={handleChange}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
               >
                 <option value="">Seleziona status</option>
-                <option value="non_immatricolato">non immatricolato</option>
-                <option value="immatricolato">immatricolato</option>
+                <option value={0}>Non immatricolato</option>
+                <option value={1}>Immatricolato</option>
               </select>
             </div>
             <div>
@@ -33,7 +37,6 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 name="universita_riforma"
                 value={formData.universita_riforma || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
               >
                 <option value="">Seleziona tipo corso</option>
                 <option value="pre_riforma_dm_509_99">
@@ -67,7 +70,6 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 name="universita_ateneoNullaosta"
                 value={formData.universita_ateneoNullaosta || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
             </div>
           </div>
@@ -119,7 +121,6 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                   name="universita_conclusione"
                   value={formData.universita_conclusione || ""}
                   onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
                 >
                   <option value="">Seleziona</option>
                   <option value="conseguimento_titolo_finale">

@@ -4,12 +4,12 @@ from pydantic import BaseModel, ConfigDict
 
 
 class UniversitaBase(BaseModel):
-    universita_immatricolato: Optional[int] = None
+    universita_immatricolato: Optional[int] = 0
     universita_data_immatricolazione: Optional[date] = None
     universita_riforma: Optional[str] = None
     universita_conclusione: Optional[str] = None
     universita_data_conclusione: Optional[date] = None
-    universita_iscrizioneAltraUniversita: Optional[bool] = False
+    universita_iscrizioneAltraUniversita: Optional[int] = 0
     universita_diploma: Optional[str] = None
     universita_istituto: Optional[str] = None
     universita_via_istituto: Optional[str] = None
@@ -43,9 +43,9 @@ class UniversitaBase(BaseModel):
     universita_materia_ats2: Optional[str] = None
     universita_istituto_ats2: Optional[str] = None
     universita_data_ats2: Optional[date] = None
-    universita_attivita_professionalizzanti: Optional[bool] = False
-    universita_corsi_di_formazione: Optional[bool] = False
-    universita_altre_attivita_certificate: Optional[bool] = False
+    universita_attivita_professionalizzanti: Optional[int] = 0
+    universita_corsi_di_formazione: Optional[int] = 0
+    universita_altre_attivita_certificate: Optional[int] = 0
     cliente_id: Optional[int] = None
     universita_ateneoNullaosta: Optional[str] = None
     universita_percentualeInvalidita: Optional[int] = None
@@ -54,7 +54,7 @@ class UniversitaBase(BaseModel):
     universita_data_professione: Optional[date] = None
     universita_luogo_professione: Optional[str] = None
     universita_sessione_professione: Optional[str] = None
-    universita_annoSessione_professione: Optional[str] = None
+    universita_annoSessione_professione: Optional[int] = None  # Corretto a int come nel DB
     universita_voto_professione: Optional[int] = None
     universita_qualifica_professionale: Optional[str] = None
     universita_data_qualifica: Optional[date] = None
@@ -79,7 +79,6 @@ class UniversitaBase(BaseModel):
 
 
 class UniversitaCreate(UniversitaBase):
-    # NON includere qui createDate e updateDate, così non arriveranno mai come None dal frontend
     pass
 
 
