@@ -11,6 +11,7 @@ import ReimpostaPassword from "./components/ReimpostaPassword";
 import SchedaUtente from "./components/SchedaUtente";
 import SchedaAzienda from "./components/SchedaAzienda";
 import ElencoProdottiFormativi from "./components/ElencoProdottiFormativi";
+import InserimentoProdotto from "./components/InserimentoProdotto";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           element={<ElencoProdottiFormativi />}
         />
         <Route path="/elenco" element={<ElencoClienti />} />
+        <Route path="/inserimentoprodotto" element={<InserimentoProdotto />} />
         <Route path="/home" element={<Homepage />} />
         <Route path="/nuovo" element={<NuovoSottoscrittore />} />
         <Route path="/modifica/:id" element={<NuovoSottoscrittore />} />

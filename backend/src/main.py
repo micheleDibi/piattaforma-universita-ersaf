@@ -76,6 +76,7 @@ app.include_router(auth_router)
 app.include_router(azienda_router)
 app.include_router(universita_router)
 app.include_router(listini_testa_router)
+app.include_router(listini_testa_router, prefix="/listini-testa")
 
 
 @app.exception_handler(IntegrityError)

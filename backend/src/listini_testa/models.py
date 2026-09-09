@@ -1,13 +1,11 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, ConfigDict, model_validator
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import DateTime, Integer, String, text, ForeignKey
 from src.database import Base 
-from src.listino_tipoCorso.models import ListinoTipoCorsoDB  
-from src.nome_universita.models import NomeUniversitaDB   
+from src.listini_dettagli.models import ListinoDettaglioCreate
 
-# Modello SQLAlchemy 
 class ListinoTestaDB(Base):
     __tablename__ = "listini_testa"
 
@@ -15,16 +13,15 @@ class ListinoTestaDB(Base):
     listTesta_codice: Mapped[str] = mapped_column(String(45), nullable=False)
     listTesta_descrizione: Mapped[str] = mapped_column(String(255), nullable=False)
     listTesta_livello: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    listino_tipo_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    listino_modalita_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-
-    # Relazioni
+    
+    listino_tipo_id: Mapped[int] = mapped_column(Integer, ForeignKey("listini_tipi.listino_tipo_id"), nullable=False)
+    listino_modalita_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("listini_modalita.listino_modalita_id"), nullable=True)
     listino_tipoCorso_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("listini_tipicorsi.listino_tipoCorso_id"), nullable=True)
-    listino_durataLaurea_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    listino_facolta_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    listino_corsoLaurea_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-
+    listino_durataLaurea_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("listini_duratalauree.listino_durataLaurea_id"), nullable=True)
+    listino_facolta_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("listini_facolta.listino_facolta_id"), nullable=True)
+    listino_corsoLaurea_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("listini_corsilauree.listino_corsoLaurea_id"), nullable=True)
     nome_universita_id: Mapped[int] = mapped_column(Integer, ForeignKey("nome_universita.nome_universita_id"), nullable=False, default=1)
+    
     listino_attivoSN: Mapped[int] = mapped_column(Integer, nullable=False, default=-1)
     
     listTesta_created_by: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
@@ -32,10 +29,19 @@ class ListinoTestaDB(Base):
     listTesta_updated_by: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     listTesta_updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))
 
-    tipo_corso: Mapped[Optional["ListinoTipoCorsoDB"]] = relationship("ListinoTipoCorsoDB", back_populates="listini_testa")
-    universita: Mapped[Optional["NomeUniversitaDB"]] = relationship("NomeUniversitaDB", back_populates="listini_testa")
+    # Relazioni mappate con stringhe
+    tipo: Mapped["ListinoTipoDB"] = relationship("ListinoTipoDB")
+    modalita: Mapped[Optional["ListinoModalitaDB"]] = relationship("ListinoModalitaDB")
+    tipo_corso: Mapped[Optional["ListinoTipoCorsoDB"]] = relationship("ListinoTipoCorsoDB")
+    durata_laurea: Mapped[Optional["ListinoDurataLaureaDB"]] = relationship("ListinoDurataLaureaDB")
+    facolta: Mapped[Optional["ListinoFacoltaDB"]] = relationship("ListinoFacoltaDB")
+    universita: Mapped[Optional["NomeUniversitaDB"]] = relationship("NomeUniversitaDB")
+    corso_laurea: Mapped[Optional["ListinoCorsoLaureaDB"]] = relationship("ListinoCorsoLaureaDB", back_populates="listini_testa")
+    
+    # ── AGGIUNTO: Relazione con i dettagli del listino ──
+    dettagli: Mapped[List["ListinoDettaglio"]] = relationship("ListinoDettaglio", back_populates="testa", cascade="all, delete-orphan")
 
-# Schemi Pydantic 
+# Schemi Pydantic per Listino Testa
 class ListinoTestaBase(BaseModel):
     listTesta_codice: str
     listTesta_descrizione: str
@@ -51,6 +57,7 @@ class ListinoTestaBase(BaseModel):
 
 class ListinoTestaCreate(ListinoTestaBase):
     listTesta_created_by: Optional[int] = None
+    dettagli: Optional[List["ListinoDettaglioCreate"]] = []
 
 class ListinoTestaUpdate(BaseModel):
     listTesta_codice: Optional[str] = None
@@ -73,14 +80,12 @@ class ListinoTesta(ListinoTestaBase):
     listTesta_updated_by: Optional[int] = None
     listTesta_updated_at: Optional[datetime] = None
 
-    # Campi testuali per il frontend (corretto il typo in tipoCorso)
     nome_universita: Optional[str] = None
     listino_tipoCorso_descrizione: Optional[str] = None
 
     @model_validator(mode='before')
     @classmethod
     def extract_relations(cls, data):
-        # Se stiamo ricevendo un'istanza SQLAlchemy, convertiamola in dict estraendo anche le relazioni
         if not isinstance(data, dict):
             item_dict = {}
             for key in data.__table__.columns.keys():
@@ -102,3 +107,14 @@ class ListinoTesta(ListinoTestaBase):
         return data
 
     model_config = ConfigDict(from_attributes=True)
+
+ListinoTestaCreate.model_rebuild()
+ListinoTesta.model_rebuild()
+
+import src.listini_tipi.models
+import src.listino_tipoCorso.models
+import src.nome_universita.models
+import src.listini_corsilaurea.models
+import src.listini_modalita.models
+import src.listini_duratalauree.models
+import src.listini_facolta.models

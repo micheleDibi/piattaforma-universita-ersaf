@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router";
 
 export default function ElencoProdottiFormativi() {
+  const navigate = useNavigate();
+
   const [prodotti, setProdotti] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -50,8 +53,9 @@ export default function ElencoProdottiFormativi() {
     console.log("Modifica prodotto con id:", id);
   };
 
+  // Funzione aggiornata per reindirizzare alla rotta inserimentoprodotto
   const handleNuovo = () => {
-    console.log("Crea nuovo prodotto");
+    navigate("/inserimentoprodotto");
   };
 
   useEffect(() => {
