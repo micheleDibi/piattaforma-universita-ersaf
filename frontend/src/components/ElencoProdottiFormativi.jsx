@@ -8,6 +8,10 @@ export default function ElencoProdottiFormativi() {
   const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const [universitaList, setUniversitaList] = useState([]);
+  const [tipiList, setTipiList] = useState([]);
+
   const [filtroUniversita, setFiltroUniversita] = useState(
     "Tutte le università",
   );
@@ -26,23 +30,18 @@ export default function ElencoProdottiFormativi() {
   useEffect(() => {
     loadingRef.current = loading;
   }, [loading]);
-
   useEffect(() => {
     hasMoreRef.current = hasMore;
   }, [hasMore]);
-
   useEffect(() => {
     searchTermRef.current = searchTerm;
   }, [searchTerm]);
-
   useEffect(() => {
     filtroUniversitaRef.current = filtroUniversita;
   }, [filtroUniversita]);
-
   useEffect(() => {
     filtroTipoRef.current = filtroTipo;
   }, [filtroTipo]);
-
   useEffect(() => {
     filtroAttivoRef.current = filtroAttivo;
   }, [filtroAttivo]);
@@ -50,6 +49,33 @@ export default function ElencoProdottiFormativi() {
   const handleModifica = (id) => {
     console.log("Modifica prodotto con id:", id);
   };
+
+  const handleNuovo = () => {
+    console.log("Crea nuovo prodotto");
+  };
+
+  useEffect(() => {
+    const fetchFiltriOpzioni = async () => {
+      try {
+        const [uniRes, tipiRes] = await Promise.all([
+          fetch("http://localhost:8000/listini-testa/opzioni/universita"),
+          fetch("http://localhost:8000/listini-testa/opzioni/tipi-corso"),
+        ]);
+
+        if (uniRes.ok) {
+          const uniData = await uniRes.json();
+          setUniversitaList(uniData);
+        }
+        if (tipiRes.ok) {
+          const tipiData = await tipiRes.json();
+          setTipiList(tipiData);
+        }
+      } catch (err) {
+        console.error("Errore caricamento opzioni filtri:", err);
+      }
+    };
+    fetchFiltriOpzioni();
+  }, []);
 
   const fetchProdottiFiltrati = async (
     searchVal,
@@ -73,7 +99,6 @@ export default function ElencoProdottiFormativi() {
           : "";
       const attivoParam =
         attivoVal !== "Tutti" ? `&attivo=${attivoVal === "Sì" ? -1 : 0}` : "";
-
       const searchParam =
         searchVal && searchVal.trim()
           ? `&search=${encodeURIComponent(searchVal.trim())}`
@@ -82,19 +107,10 @@ export default function ElencoProdottiFormativi() {
       const response = await fetch(
         `http://localhost:8000/listini-testa/?skip=0&limit=${LIMIT}${searchParam}${uniParam}${tipoParam}${attivoParam}`,
       );
-      if (!response.ok) {
-        throw new Error("Errore durante il recupero dei dati");
-      }
+      if (!response.ok) throw new Error("Errore durante il recupero dei dati");
       const data = await response.json();
 
-      if (data.length < LIMIT) {
-        setHasMore(false);
-        hasMoreRef.current = false;
-      } else {
-        setHasMore(true);
-        hasMoreRef.current = true;
-      }
-
+      setHasMore(data.length >= LIMIT);
       setProdotti(data);
     } catch (err) {
       setError(err.message);
@@ -114,7 +130,6 @@ export default function ElencoProdottiFormativi() {
         filtroAttivo,
       );
     }, 300);
-
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm, filtroUniversita, filtroTipo, filtroAttivo]);
 
@@ -122,7 +137,7 @@ export default function ElencoProdottiFormativi() {
     const handleScroll = async () => {
       if (
         window.innerHeight + window.scrollY >=
-          document.documentElement.scrollHeight - 100 &&
+          document.documentElement.scrollHeight - 200 &&
         !loadingRef.current &&
         hasMoreRef.current
       ) {
@@ -153,15 +168,11 @@ export default function ElencoProdottiFormativi() {
           const response = await fetch(
             `http://localhost:8000/listini-testa/?skip=${nextSkip}&limit=${LIMIT}${searchParam}${uniParam}${tipoParam}${attivoParam}`,
           );
-          if (!response.ok) {
+          if (!response.ok)
             throw new Error("Errore durante il recupero dei dati");
-          }
           const data = await response.json();
 
-          if (data.length < LIMIT) {
-            setHasMore(false);
-            hasMoreRef.current = false;
-          }
+          if (data.length < LIMIT) setHasMore(false);
 
           setProdotti((prev) => {
             const existingIds = new Set(prev.map((item) => item.listTesta_id));
@@ -188,17 +199,6 @@ export default function ElencoProdottiFormativi() {
   if (error)
     return <div className="p-4 text-center text-red-500">Errore: {error}</div>;
 
-  const universitaList = [
-    "Tutte le università",
-    ...new Set(prodotti.map((p) => p.nome_universita).filter(Boolean)),
-  ];
-  const tipiList = [
-    "Tutti i tipi",
-    ...new Set(
-      prodotti.map((p) => p.listino_tipoCorso_descrizione).filter(Boolean),
-    ),
-  ];
-
   return (
     <div className="w-full p-6">
       <div className="w-full my-6 flex flex-col sm:flex-row justify-between items-center gap-4 px-2">
@@ -206,36 +206,37 @@ export default function ElencoProdottiFormativi() {
           Elenco Prodotti Formativi:
         </h3>
 
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto items-center">
           <div className="w-full sm:w-72">
             <input
               type="text"
               placeholder="Cerca per titolo o codice..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-gray-700"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm text-gray-700"
             />
           </div>
+          <button
+            type="button"
+            onClick={handleNuovo}
+            className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors whitespace-nowrap cursor-pointer"
+          >
+            Nuovo Prodotto
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={() => console.log("Nuovo prodotto")}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors cursor-pointer whitespace-nowrap"
-        >
-          Nuovo Prodotto
-        </button>
       </div>
 
+      {/* Filtri a tendina */}
       <div className="flex flex-wrap gap-3 mb-6 px-2">
         <select
           value={filtroUniversita}
           onChange={(e) => setFiltroUniversita(e.target.value)}
-          className="w-full sm:w-60 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white text-gray-700"
+          className="w-full sm:w-60 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm bg-white text-gray-700"
         >
-          {universitaList.map((uni, idx) => (
-            <option key={idx} value={uni}>
-              {uni}
+          <option value="Tutte le università">Tutte le università</option>
+          {universitaList.map((uni) => (
+            <option key={uni.id} value={uni.descrizione}>
+              {uni.descrizione}
             </option>
           ))}
         </select>
@@ -243,11 +244,12 @@ export default function ElencoProdottiFormativi() {
         <select
           value={filtroTipo}
           onChange={(e) => setFiltroTipo(e.target.value)}
-          className="w-full sm:w-60 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white text-gray-700"
+          className="w-full sm:w-60 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm bg-white text-gray-700"
         >
-          {tipiList.map((tipo, idx) => (
-            <option key={idx} value={tipo}>
-              {tipo}
+          <option value="Tutti i tipi">Tutti i tipi</option>
+          {tipiList.map((tipo) => (
+            <option key={tipo.id} value={tipo.descrizione}>
+              {tipo.descrizione}
             </option>
           ))}
         </select>
@@ -255,7 +257,7 @@ export default function ElencoProdottiFormativi() {
         <select
           value={filtroAttivo}
           onChange={(e) => setFiltroAttivo(e.target.value)}
-          className="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white text-gray-700"
+          className="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm bg-white text-gray-700"
         >
           <option value="Tutti">Attivo: Tutti</option>
           <option value="Sì">Attivo: Sì</option>
@@ -263,102 +265,92 @@ export default function ElencoProdottiFormativi() {
         </select>
       </div>
 
-      <div className="w-full bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 my-6">
-        <table className="min-w-full divide-y divide-gray-200 text-left">
-          <thead className="bg-gray-100 sticky top-0 z-10">
-            <tr>
-              <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Università
-              </th>
-              <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Codice / SSID
-              </th>
-              <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Titolo
-              </th>
-              <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Tipo Prodotto
-              </th>
-              <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Attivo
-              </th>
-              <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider text-right">
-                Modifica
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {prodotti.map((item, index) => {
-              const isAttivo = item.listino_attivoSN === -1;
-              return (
-                <tr
-                  key={item.listTesta_id || index}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {item.nome_universita || "-"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {item.listTesta_codice}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-800">
-                    {item.listTesta_descrizione}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {item.listino_tipoCorso_descrizione || "-"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-semibold ${
-                        isAttivo
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {isAltivoSino(isAttivo)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      type="button"
-                      onClick={() => handleModifica(item.listTesta_id)}
-                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors cursor-pointer"
-                    >
-                      Modifica
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {prodotti.length === 0 && !loading && (
+      {/* Tabella o messaggio nessun risultato */}
+      {prodotti.length === 0 && !loading ? (
+        <div className="w-full bg-white shadow-md rounded-lg p-8 text-center text-gray-500 text-sm border border-gray-200">
+          Nessun risultato trovato per i filtri di ricerca selezionati.
+        </div>
+      ) : (
+        <div className="w-full bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 my-6">
+          <table className="min-w-full divide-y divide-gray-200 text-left">
+            <thead className="bg-gray-100">
               <tr>
-                <td
-                  colSpan="6"
-                  className="px-6 py-8 text-center text-sm text-gray-500"
-                >
-                  Nessun prodotto trovato.
-                </td>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase">
+                  Università
+                </th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase">
+                  Codice
+                </th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase">
+                  Titolo
+                </th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase">
+                  Tipo Prodotto
+                </th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase">
+                  Attivo
+                </th>
+                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase text-right">
+                  Modifica
+                </th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {prodotti.map((item, index) => {
+                const isAttivo = item.listino_attivoSN === -1;
+                return (
+                  <tr
+                    key={item.listTesta_id || index}
+                    className="hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                      {item.nome_universita || "-"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {item.listTesta_codice}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-800">
+                      {item.listTesta_descrizione}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {item.listino_tipoCorso_descrizione || "-"}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-semibold ${isAttivo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                      >
+                        {isAttivo ? "Sì" : "No"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        type="button"
+                        onClick={() => handleModifica(item.listTesta_id)}
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors cursor-pointer"
+                      >
+                        Modifica
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-        {loading && (
-          <div className="py-4 text-center text-sm text-gray-500 bg-gray-50">
-            Caricamento altri elementi...
-          </div>
-        )}
+      {/* Indicatore di caricamento o fine lista */}
+      {loading && (
+        <div className="text-center py-4 text-gray-500 text-sm">
+          Caricamento altri elementi...
+        </div>
+      )}
 
-        {!hasMore && prodotti.length > 0 && (
-          <div className="py-4 text-center text-xs text-gray-400 bg-gray-50">
-            Hai raggiunto la fine dell'elenco
-          </div>
-        )}
-      </div>
+      {!hasMore && prodotti.length > 0 && (
+        <div className="text-center py-6 text-gray-400 text-xs italic">
+          Hai raggiunto la fine della lista. Non ci sono altri risultati.
+        </div>
+      )}
     </div>
   );
-}
-
-function isAltivoSino(isAttivo) {
-  return isAttivo ? "Sì" : "No";
 }

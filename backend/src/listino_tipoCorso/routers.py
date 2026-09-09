@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from src.listino_tipoCorso.models import ListinoTipoCorsoDB, ListinoTipoCorso, ListinoTipoCorsoCreate
+from src.nome_universita.models import NomeUniversitaDB
 from src.database import get_db
 
 router = APIRouter(

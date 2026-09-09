@@ -8,6 +8,8 @@ from src.database import get_db
 from src.listino_tipoCorso.models import ListinoTipoCorsoDB  
 from src.nome_universita.models import NomeUniversitaDB   
 from src.universita.models import Universita
+from src.nome_universita.models import NomeUniversitaDB
+from src.listino_tipoCorso.models import ListinoTipoCorsoDB
 from sqlalchemy import or_
 
 router = APIRouter(
@@ -24,6 +26,16 @@ def post(item: ListinoTestaCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_item)
     return db_item
+
+@router.get("/opzioni/universita")
+def get_opzioni_universita(db: Session = Depends(get_db)):
+    universita = db.query(NomeUniversitaDB).all()
+    return [{"id": u.nome_universita_id, "codice": u.nome_universita_codice, "descrizione": u.nome_universita_descrizione} for u in universita]
+
+@router.get("/opzioni/tipi-corso")
+def get_opzioni_tipi_corso(db: Session = Depends(get_db)):
+    tipi = db.query(ListinoTipoCorsoDB).all()
+    return [{"id": t.listino_tipoCorso_id, "descrizione": t.listino_tipoCorso_descrizione} for t in tipi]
 
 #GET ALL
 @router.get("/", response_model=List[ListinoTesta])
@@ -50,11 +62,15 @@ def get_all(
             )
         )
 
-    if universita:
-        query = query.join(ListinoTestaDB.universita).filter(Universita.nome == universita)
+    if universita and universita != "Tutte le università":
+        query = query.join(ListinoTestaDB.universita).filter(
+            NomeUniversitaDB.nome_universita_descrizione == universita
+        )
 
-    if tipo_corso:
-        query = query.join(ListinoTestaDB.tipo_corso).filter(ListinoTipoCorsoDB.descrizione == tipo_corso)
+    if tipo_corso and tipo_corso != "Tutti i tipi":
+        query = query.join(ListinoTestaDB.tipo_corso).filter(
+            ListinoTipoCorsoDB.listino_tipoCorso_descrizione == tipo_corso
+        )
 
     if attivo is not None:
         query = query.filter(ListinoTestaDB.listino_attivoSN == attivo)
