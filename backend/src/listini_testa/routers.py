@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 from src.listini_testa.models import ListinoTestaDB, ListinoTesta, ListinoTestaCreate, ListinoTestaUpdate
 from src.database import get_db 
 from src.listino_tipoCorso.models import ListinoTipoCorsoDB  
 from src.nome_universita.models import NomeUniversitaDB   
+from src.universita.models import Universita
+from sqlalchemy import or_
 
 router = APIRouter(
     prefix="/listini-testa",tags=["Listini Testa"])
@@ -25,17 +27,39 @@ def post(item: ListinoTestaCreate, db: Session = Depends(get_db)):
 
 #GET ALL
 @router.get("/", response_model=List[ListinoTesta])
-def get_all(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    items = (
-        db.query(ListinoTestaDB)
-        .options(
-            joinedload(ListinoTestaDB.universita),
-            joinedload(ListinoTestaDB.tipo_corso)
-        )
-        .offset(skip)
-        .limit(limit)
-        .all()
+def get_all(
+    skip: int = 0,
+    limit: int = 100,
+    search: Optional[str] = None,
+    universita: Optional[str] = None,
+    tipo_corso: Optional[str] = None,
+    attivo: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(ListinoTestaDB).options(
+        joinedload(ListinoTestaDB.universita),
+        joinedload(ListinoTestaDB.tipo_corso)
     )
+
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                ListinoTestaDB.listTesta_descrizione.ilike(search_term),
+                ListinoTestaDB.listTesta_codice.ilike(search_term)
+            )
+        )
+
+    if universita:
+        query = query.join(ListinoTestaDB.universita).filter(Universita.nome == universita)
+
+    if tipo_corso:
+        query = query.join(ListinoTestaDB.tipo_corso).filter(ListinoTipoCorsoDB.descrizione == tipo_corso)
+
+    if attivo is not None:
+        query = query.filter(ListinoTestaDB.listino_attivoSN == attivo)
+
+    items = query.offset(skip).limit(limit).all()
     return items
 
 #GET BY ID
