@@ -1,11 +1,22 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import AlertMessage from "./ALertMessage";
 import ProdottoFormInfo from "./ProdottoFormInfo";
 import ProdottoDettagliTabella from "./ProdottoDettagliTabella";
 
+// Converte una stringa numerica "italiana" (con virgola o punto) in Number.
+// Restituisce null se non è un numero valido.
+const parseNumeroItaliano = (valore) => {
+  if (valore === "" || valore === null || valore === undefined) return null;
+  const normalizzato = String(valore).replace(",", ".");
+  const num = Number(normalizzato);
+  return isNaN(num) ? null : num;
+};
+
 export default function InserimentoProdotto() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isModifica = Boolean(id);
 
   const [formData, setFormData] = useState({
     listTesta_codice: "",
@@ -24,7 +35,9 @@ export default function InserimentoProdotto() {
 
   const [dettagli, setDettagli] = useState([
     {
-      listDettaglio_dataInizioValidazione: "",
+      listDettaglio_dataInizioValidazione: new Date()
+        .toISOString()
+        .split("T")[0],
       listDettaglio_dataFineValidazione: "9999-12-31",
       listDettaglio_prezzo: "",
       listDettaglio_durata: "",
@@ -35,6 +48,12 @@ export default function InserimentoProdotto() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+
+  const getIeri = (dataString) => {
+    const data = new Date(dataString);
+    data.setDate(data.getDate() - 1);
+    return data.toISOString().split("T")[0];
+  };
 
   const fetchNextCode = async () => {
     try {
@@ -63,8 +82,52 @@ export default function InserimentoProdotto() {
         listTesta_created_by: Number(utenteId),
       }));
     }
-    fetchNextCode();
-  }, []);
+
+    if (isModifica) {
+      fetch(`http://localhost:8000/listini-testa/${id}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Errore nel recupero del prodotto");
+          return res.json();
+        })
+        .then((data) => {
+          setFormData({
+            listTesta_codice: data.listTesta_codice || "",
+            listTesta_descrizione: data.listTesta_descrizione || "",
+            listTesta_livello: data.listTesta_livello ?? "",
+            listino_tipo_id: data.listino_tipo_id ?? 2,
+            listino_modalita_id: data.listino_modalita_id ?? "",
+            listino_tipoCorso_id: data.listino_tipoCorso_id ?? 8,
+            listino_durataLaurea_id: data.listino_durataLaurea_id ?? "",
+            listino_facolta_id: data.listino_facolta_id ?? "",
+            listino_corsoLaurea_id: data.listino_corsoLaurea_id ?? "",
+            nome_universita_id: data.nome_universita_id ?? "",
+            listino_attivoSN: data.listino_attivoSN ?? -1,
+            listTesta_created_by: data.listTesta_created_by || 1,
+          });
+
+          if (data.dettagli && data.dettagli.length > 0) {
+            setDettagli(
+              data.dettagli.map((d) => ({
+                listDettaglio_dataInizioValidazione:
+                  d.listDettaglio_dataInizioValidazione || "",
+                listDettaglio_dataFineValidazione:
+                  d.listDettaglio_dataFineValidazione || "9999-12-31",
+                // Il prezzo/tasse dal DB restano numeri: la tabella li formatterà a 2 decimali in visualizzazione
+                listDettaglio_prezzo: d.listDettaglio_prezzo ?? "",
+                listDettaglio_durata: d.listDettaglio_durata ?? "",
+                listDettaglio_CFU: d.listDettaglio_CFU ?? "",
+                listDettaglio_tasse: d.listDettaglio_tasse ?? "",
+              })),
+            );
+          }
+        })
+        .catch((err) => {
+          setMessage({ type: "error", text: err.message });
+        });
+    } else {
+      fetchNextCode();
+    }
+  }, [id, isModifica]);
 
   const handleGeneraCodice = async () => {
     await fetchNextCode();
@@ -93,35 +156,68 @@ export default function InserimentoProdotto() {
     });
   };
 
+  // Durante la digitazione: prezzo/tasse restano stringa libera (niente parseFloat qui!),
+  // durata/CFU restano interi come prima.
   const handleDettaglioChange = (index, e) => {
     const { name, value } = e.target;
     const newDettagli = [...dettagli];
 
     let val = value;
-    if (value === "") {
-      val = null;
+
+    if (["listDettaglio_durata", "listDettaglio_CFU"].includes(name)) {
+      val = value === "" ? null : parseInt(value, 10);
     } else if (["listDettaglio_prezzo", "listDettaglio_tasse"].includes(name)) {
-      val = parseFloat(value);
-    } else if (["listDettaglio_durata", "listDettaglio_CFU"].includes(name)) {
-      val = parseInt(value, 10);
+      // Manteniamo esattamente ciò che l'utente sta scrivendo (anche con la virgola).
+      // La conversione a numero avviene solo al blur, vedi handleDettaglioBlur.
+      val = value;
+    } else if (value === "") {
+      val = null;
     }
 
     newDettagli[index][name] = val;
     setDettagli(newDettagli);
   };
 
+  // Al blur di prezzo/tasse: convertiamo la stringa (con virgola o punto) in numero arrotondato a 2 decimali.
+  const handleDettaglioBlur = (index, e) => {
+    const { name, value } = e.target;
+    if (!["listDettaglio_prezzo", "listDettaglio_tasse"].includes(name)) return;
+
+    const numero = parseNumeroItaliano(value);
+    const newDettagli = [...dettagli];
+    newDettagli[index][name] =
+      numero === null ? null : Number(numero.toFixed(2));
+    setDettagli(newDettagli);
+  };
+
   const handleAggiungiRiga = () => {
-    setDettagli([
-      ...dettagli,
-      {
-        listDettaglio_dataInizioValidazione: "",
-        listDettaglio_dataFineValidazione: "9999-12-31",
-        listDettaglio_prezzo: "",
-        listDettaglio_durata: "",
-        listDettaglio_CFU: "",
-        listDettaglio_tasse: "",
-      },
-    ]);
+    const oggi = new Date().toISOString().split("T")[0];
+    const dataIeri = getIeri(oggi);
+
+    setDettagli((prevDettagli) => {
+      const dettagliAggiornati = prevDettagli.map((det, index) => {
+        if (index === prevDettagli.length - 1) {
+          return {
+            ...det,
+            listDettaglio_dataFineValidazione: dataIeri,
+          };
+        }
+        return det;
+      });
+
+      return [
+        ...dettagliAggiornati,
+        {
+          listDettaglio_dataInizioValidazione: oggi,
+          listDettaglio_dataFineValidazione: "9999-12-31",
+          listDettaglio_prezzo: "",
+          listDettaglio_durata: "",
+          listDettaglio_CFU: "",
+          listDettaglio_tasse: "",
+          isNew: true,
+        },
+      ];
+    });
   };
 
   const handleRimuoviRiga = (index) => {
@@ -143,7 +239,52 @@ export default function InserimentoProdotto() {
       return;
     }
 
-    // Costruzione del payload convertendo in null i campi opzionali vuoti
+    let dettagliDaInviare = [...dettagli];
+
+    // VALIDAZIONE PREZZO E TASSE (uso parseNumeroItaliano per gestire eventuale virgola residua)
+    for (let i = 0; i < dettagliDaInviare.length; i++) {
+      const det = dettagliDaInviare[i];
+      const prezzo = parseNumeroItaliano(det.listDettaglio_prezzo);
+      const tasse = parseNumeroItaliano(det.listDettaglio_tasse);
+
+      if (prezzo === null || prezzo <= 0) {
+        setMessage({
+          type: "error",
+          text: `Errore nella riga ${i + 1}: Il prezzo è obbligatorio e deve essere maggiore di zero.`,
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (
+        det.listDettaglio_tasse !== "" &&
+        det.listDettaglio_tasse !== null &&
+        det.listDettaglio_tasse !== undefined &&
+        tasse !== null &&
+        tasse <= 0
+      ) {
+        setMessage({
+          type: "error",
+          text: `Errore nella riga ${i + 1}: Le tasse non possono essere uguali a zero o negative.`,
+        });
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (dettagliDaInviare.length > 1) {
+      const ultimaRiga = dettagliDaInviare[dettagliDaInviare.length - 1];
+      if (ultimaRiga.listDettaglio_dataInizioValidazione) {
+        const indicePrecedente = dettagliDaInviare.length - 2;
+        dettagliDaInviare[indicePrecedente] = {
+          ...dettagliDaInviare[indicePrecedente],
+          listDettaglio_dataFineValidazione: getIeri(
+            ultimaRiga.listDettaglio_dataInizioValidazione,
+          ),
+        };
+      }
+    }
+
     const payload = {
       ...formData,
       listTesta_livello:
@@ -174,15 +315,12 @@ export default function InserimentoProdotto() {
         formData.nome_universita_id !== ""
           ? Number(formData.nome_universita_id)
           : null,
-      dettagli: dettagli.map((d) => ({
+      dettagli: dettagliDaInviare.map((d) => ({
         listDettaglio_dataInizioValidazione:
           d.listDettaglio_dataInizioValidazione || null,
         listDettaglio_dataFineValidazione:
           d.listDettaglio_dataFineValidazione || "9999-12-31",
-        listDettaglio_prezzo:
-          d.listDettaglio_prezzo !== "" && d.listDettaglio_prezzo !== null
-            ? parseFloat(d.listDettaglio_prezzo)
-            : null,
+        listDettaglio_prezzo: parseNumeroItaliano(d.listDettaglio_prezzo),
         listDettaglio_durata:
           d.listDettaglio_durata !== "" && d.listDettaglio_durata !== null
             ? parseInt(d.listDettaglio_durata, 10)
@@ -191,16 +329,19 @@ export default function InserimentoProdotto() {
           d.listDettaglio_CFU !== "" && d.listDettaglio_CFU !== null
             ? parseInt(d.listDettaglio_CFU, 10)
             : null,
-        listDettaglio_tasse:
-          d.listDettaglio_tasse !== "" && d.listDettaglio_tasse !== null
-            ? parseFloat(d.listDettaglio_tasse)
-            : null,
+        listDettaglio_tasse: parseNumeroItaliano(d.listDettaglio_tasse),
       })),
     };
 
     try {
-      const response = await fetch("http://localhost:8000/listini-testa/", {
-        method: "POST",
+      const url = isModifica
+        ? `http://localhost:8000/listini-testa/${id}`
+        : "http://localhost:8000/listini-testa/";
+
+      const method = isModifica ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -214,14 +355,12 @@ export default function InserimentoProdotto() {
       } catch {}
 
       if (!response.ok) {
-        if (response.status === 400 || response.status === 409) {
+        if (
+          !isModifica &&
+          (response.status === 400 || response.status === 409)
+        ) {
           await fetchNextCode();
-          throw new Error(
-            result.detail ||
-              "Il codice esiste già o si è verificato un conflitto. È stato generato un nuovo codice.",
-          );
         }
-
         throw new Error(
           result.detail
             ? typeof result.detail === "object"
@@ -233,7 +372,9 @@ export default function InserimentoProdotto() {
 
       setMessage({
         type: "success",
-        text: "Prodotto salvato con successo! Reindirizzamento in corso...",
+        text: isModifica
+          ? "Prodotto aggiornato con successo! Reindirizzamento in corso..."
+          : "Prodotto salvato con successo! Reindirizzamento in corso...",
       });
 
       setTimeout(() => {
@@ -250,7 +391,7 @@ export default function InserimentoProdotto() {
       <div className="flex justify-between items-center border-b border-slate-200 pb-4 mb-6">
         <div>
           <h2 className="text-xl font-bold text-slate-800">
-            Inserimento Prodotto
+            {isModifica ? "Modifica Prodotto" : "Inserimento Prodotto"}
           </h2>
         </div>
         <button
@@ -274,8 +415,10 @@ export default function InserimentoProdotto() {
         <ProdottoDettagliTabella
           dettagli={dettagli}
           handleDettaglioChange={handleDettaglioChange}
+          handleDettaglioBlur={handleDettaglioBlur}
           handleAggiungiRiga={handleAggiungiRiga}
           handleRimuoviRiga={handleRimuoviRiga}
+          isModifica={isModifica}
         />
 
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
@@ -291,7 +434,11 @@ export default function InserimentoProdotto() {
             disabled={loading}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
           >
-            {loading ? "Salvataggio in corso..." : "Salva Prodotto"}
+            {loading
+              ? "Salvataggio in corso..."
+              : isModifica
+                ? "Aggiorna Prodotto"
+                : "Salva Prodotto"}
           </button>
         </div>
       </form>

@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, model_validator
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import DateTime, Integer, String, text, ForeignKey
 from src.database import Base 
-from src.listini_dettagli.models import ListinoDettaglioCreate
+from src.listini_dettagli.models import ListinoDettaglioCreate, ListinoDettaglioResponse
 
 class ListinoTestaDB(Base):
     __tablename__ = "listini_testa"
@@ -72,6 +72,7 @@ class ListinoTestaUpdate(BaseModel):
     nome_universita_id: Optional[int] = None
     listino_attivoSN: Optional[int] = None
     listTesta_updated_by: Optional[int] = None
+    dettagli: Optional[List[ListinoDettaglioCreate]] = None
 
 class ListinoTesta(ListinoTestaBase):
     listTesta_id: int
@@ -83,6 +84,8 @@ class ListinoTesta(ListinoTestaBase):
     nome_universita: Optional[str] = None
     listino_tipoCorso_descrizione: Optional[str] = None
 
+    dettagli: List["ListinoDettaglioResponse"] = []
+
     @model_validator(mode='before')
     @classmethod
     def extract_relations(cls, data):
@@ -90,6 +93,8 @@ class ListinoTesta(ListinoTestaBase):
             item_dict = {}
             for key in data.__table__.columns.keys():
                 item_dict[key] = getattr(data, key, None)
+
+            item_dict["dettagli"] = getattr(data, "dettagli", [])
             
             universita_obj = getattr(data, "universita", None)
             if universita_obj:

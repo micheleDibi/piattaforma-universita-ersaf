@@ -5,12 +5,12 @@ from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
-
 from src.listini_testa.models import ListinoTestaDB, ListinoTesta, ListinoTestaCreate, ListinoTestaUpdate
 from src.database import get_db 
 from src.listino_tipoCorso.models import ListinoTipoCorsoDB  
 from src.nome_universita.models import NomeUniversitaDB   
 from src.listini_dettagli.models import ListinoDettaglio
+from sqlalchemy.orm import joinedload, selectinload
 
 router = APIRouter(
     prefix="/listini-testa", tags=["Listini Testa"]
@@ -40,6 +40,8 @@ def get_next_code(db: Session = Depends(get_db)):
     code = generate_next_code(db)
     return {"codice": code, "next_code": code}
 
+
+#POST
 @router.post("/", response_model=ListinoTesta, status_code=status.HTTP_201_CREATED)
 def create_listino_testa(item: ListinoTestaCreate, db: Session = Depends(get_db)):
     codice = item.listTesta_codice
@@ -105,6 +107,7 @@ def get_opzioni_tipi_corso(db: Session = Depends(get_db)):
     tipi = db.query(ListinoTipoCorsoDB).all()
     return [{"id": t.listino_tipoCorso_id, "descrizione": t.listino_tipoCorso_descrizione} for t in tipi]
 
+#GET
 @router.get("/", response_model=List[ListinoTesta])
 def get_all(
     skip: int = 0,
@@ -144,46 +147,87 @@ def get_all(
 
     return query.offset(skip).limit(limit).all()
 
+
+# GET BY ID
 @router.get("/{listTesta_id}", response_model=ListinoTesta)
 def get_by_id(listTesta_id: int, db: Session = Depends(get_db)):
-    db_item = db.query(ListinoTestaDB).filter(ListinoTestaDB.listTesta_id == listTesta_id).first()
+    db_item = (
+        db.query(ListinoTestaDB)
+        .options(
+            joinedload(ListinoTestaDB.universita),
+            joinedload(ListinoTestaDB.tipo_corso),
+            selectinload(ListinoTestaDB.dettagli) # <-- Carica i dettagli associati
+        )
+        .filter(ListinoTestaDB.listTesta_id == listTesta_id)
+        .first()
+    )
     if db_item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Listino testa non trovato")
     return db_item
 
+
+# PUT
 @router.put("/{listTesta_id}", response_model=ListinoTesta)
 def update(listTesta_id: int, item: ListinoTestaUpdate, db: Session = Depends(get_db)):
-    db_item = db.query(ListinoTestaDB).filter(ListinoTestaDB.listTesta_id == listTesta_id).first()
+    db_item = (
+        db.query(ListinoTestaDB)
+        .options(
+            joinedload(ListinoTestaDB.universita),
+            joinedload(ListinoTestaDB.tipo_corso),
+            selectinload(ListinoTestaDB.dettagli)
+        )
+        .filter(ListinoTestaDB.listTesta_id == listTesta_id)
+        .first()
+    )
     if db_item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Listino testa non trovato")
     
-    update_data = item.model_dump(exclude_unset=True)
+    update_data = item.model_dump(exclude_unset=True, exclude={"dettagli"})
     old_codice = db_item.listTesta_codice
     new_codice = update_data.get("listTesta_codice")
 
-    # Controllo e tracciamento audit log in caso di modifica del codice
     if new_codice and new_codice != old_codice:
-        existing = db.query(ListinoTestaDB).filter(ListinoTestaDB.listTesta_codice == new_codice).first()
+        existing = db.query(ListinoTestaDB).filter(
+            ListinoTestaDB.listTesta_codice == new_codice,
+            ListinoTestaDB.listTesta_id != listTesta_id
+        ).first()
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Il codice '{new_codice}' è già occupato da un altro prodotto."
             )
-        # Registrazione su audit/log di sistema
         print(f"[AUDIT LOG] Prodotto ID {listTesta_id} - Codice modificato da '{old_codice}' a '{new_codice}' in data {datetime.now()}")
 
     for key, value in update_data.items():
         setattr(db_item, key, value)
         
-    db_item.listTesta_updated_at = datetime.now()
-    
+    # Gestione e sincronizzazione dei dettagli
+    if item.dettagli is not None:
+        db.query(ListinoDettaglio).filter(ListinoDettaglio.listTesta_id == listTesta_id).delete()
+        for det in item.dettagli:
+            db_det = ListinoDettaglio(
+                listTesta_id=listTesta_id,
+                **det.model_dump()
+            )
+            db.add(db_det)
+
     try:
         db.commit()
-        db.refresh(db_item)
+        db_item = (
+            db.query(ListinoTestaDB)
+            .options(
+                joinedload(ListinoTestaDB.universita),
+                joinedload(ListinoTestaDB.tipo_corso),
+                selectinload(ListinoTestaDB.dettagli)
+            )
+            .filter(ListinoTestaDB.listTesta_id == listTesta_id)
+            .first()
+        )
     except IntegrityError as e:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Errore di unicità sul codice: {e.orig}"
         )
+        
     return db_item
