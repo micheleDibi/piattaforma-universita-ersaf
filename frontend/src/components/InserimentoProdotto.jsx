@@ -5,7 +5,7 @@ import AlertMessage from "./AlertMessage";
 import ProdottoFormInfo from "./ProdottoFormInfo";
 import ProdottoDettagliTabella from "./ProdottoDettagliTabella";
 
-// Converte una stringa numerica "italiana" (con virgola o punto) in Number.
+// Converte una stringa numerica (con virgola o punto) in Number.
 // Restituisce null se non è un numero valido.
 const parseNumeroItaliano = (valore) => {
   if (valore === "" || valore === null || valore === undefined) return null;
@@ -416,7 +416,7 @@ export default function InserimentoProdotto() {
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
           <button
             type="button"
-            onClick={() => navigate("/prodotti-formativi")}
+            onClick={() => navigate("/home")}
             className="px-5 py-2.5 border border-slate-300 text-slate-700 hover:bg-slate-100 font-medium rounded-lg text-sm transition-colors cursor-pointer"
           >
             Annulla
