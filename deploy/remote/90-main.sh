@@ -16,6 +16,8 @@ main() {
         migrate)      require_installed; acquire_lock; db_up; cmd_migrate;;
         backup)       cmd_backup;;
         restore)      cmd_restore "$@";;
+        expose)       cmd_esponi "$@";;
+        unexpose)     cmd_disesponi;;
         verify)       require_installed; cmd_verify;;
         rollback)     require_installed; acquire_lock; cmd_rollback;;
         status)       cmd_status;;

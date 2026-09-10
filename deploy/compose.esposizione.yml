@@ -1,0 +1,14 @@
+# Override attivo solo quando il collaudo e' pubblicato su un dominio.
+# Lo aggiunge il bundle remoto quando shared/compose.env contiene ESPOSIZIONE=si.
+#
+# Due pubblicazioni della stessa porta del container:
+#   127.0.0.1  resta per il tunnel SSH, come prima;
+#   WEB_LAN_IP e' l'indirizzo LAN raggiunto dal reverse proxy, protetto dalle
+#              regole DOCKER-USER che ammettono il solo host del proxy.
+# Nessun altro servizio dello stack cambia: api e db restano senza porte.
+
+services:
+  web:
+    ports: !override
+      - "127.0.0.1:${WEB_PORT:-18082}:8080"
+      - "${WEB_LAN_IP:?WEB_LAN_IP richiesta quando ESPOSIZIONE=si}:${WEB_PORT:-18082}:8080"

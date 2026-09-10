@@ -20,6 +20,8 @@ Azioni (-Action):
   rollback          torna alla release precedente
   backup-db         snapshot del clone in snapshots/
   restore-db        ripristina il clone da uno snapshot (-Snapshot nome), chiede conferma
+  publish-domain    pubblica il collaudo sul dominio servito dal reverse proxy della LAN
+  unpublish-domain  toglie la pubblicazione e torna al solo tunnel SSH
   status, logs, verify, stop, start
   tunnel            apre il tunnel SSH verso il collaudo: http://localhost:18082
 
@@ -36,7 +38,8 @@ powershell -NoProfile -File scripts\deploy.ps1 -Action deploy -Ref ''   # albero
 param(
     [Parameter(Position = 0)]
     [ValidateSet('preflight', 'install', 'deploy', 'build', 'refresh-clone', 'configure-source', 'rollback',
-        'backup-db', 'restore-db', 'status', 'logs', 'verify', 'stop', 'start', 'tunnel')]
+        'backup-db', 'restore-db', 'status', 'logs', 'verify', 'stop', 'start', 'tunnel',
+        'publish-domain', 'unpublish-domain')]
     [string] $Action = 'deploy',
     [string] $SshHost = 'ersaf-12',
     [string] $ServerIp = '192.168.40.12',
@@ -51,7 +54,10 @@ param(
     [int] $WebPort = 18082,
     [string] $SourceHost = '192.168.40.11',
     [int] $SourcePort = 3306,
-    [string] $SourceDb = 'admin_entedb'
+    [string] $SourceDb = 'admin_entedb',
+    # Pubblicazione sul dominio: il reverse proxy della LAN raggiunge la porta web del server.
+    [string] $Domain = 'unistaging.ersaf.it',
+    [string] $ProxyIp = '192.168.40.10'
 )
 
 Set-StrictMode -Version Latest
@@ -301,6 +307,17 @@ switch ($Action) {
         Test-ConnessioneCompleta
         Confirm-Typed 'RIPRISTINA' "Il clone verra' sostituito con lo snapshot $Snapshot; l'applicazione resta ferma durante l'operazione."
         Invoke-Remote @('restore', $Snapshot, '--confermato') | Out-Null
+    }
+    'publish-domain' {
+        Test-ConnessioneCompleta
+        Write-Step "Pubblicazione su https://$Domain tramite il reverse proxy $ProxyIp"
+        Write-Note 'La porta del web viene aperta sulla LAN al solo host del proxy, con regole firewall dedicate.'
+        Invoke-Remote @('expose', $Domain, $ProxyIp) | Out-Null
+        Write-Host "`nSul reverse proxy creare il proxy host per $Domain verso l'indirizzo indicato sopra." -ForegroundColor Green
+    }
+    'unpublish-domain' {
+        Test-ConnessioneCompleta
+        Invoke-Remote @('unexpose') | Out-Null
     }
     'status' { Test-Vpn; Invoke-Remote @('status') | Out-Null }
     'logs'   { Test-Vpn; Invoke-Remote @('logs', $Service, $Tail) | Out-Null }

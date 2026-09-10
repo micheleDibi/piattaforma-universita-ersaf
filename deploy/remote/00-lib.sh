@@ -85,9 +85,15 @@ current_release_id() {
 # release nuova senza toccare compose.env finche' la verifica non passa.
 compose_rel() {
     local id="$1"; shift
+    local file=(-f "$RELEASES/$id/deploy/compose.yml")
+    # Quando il collaudo e' pubblicato su un dominio si aggiunge la seconda
+    # pubblicazione della porta web sull'indirizzo LAN (25-esposizione.sh).
+    if [ -f "$SHARED/compose.env" ] && [ "$(compose_env_get ESPOSIZIONE)" = "si" ]; then
+        file+=(-f "$RELEASES/$id/deploy/compose.esposizione.yml")
+    fi
     RELEASE_TAG="$id" RELEASE_DIR="$RELEASES/$id" docker compose \
         -p "$PROJECT" --project-directory "$BASE" --env-file "$SHARED/compose.env" \
-        -f "$RELEASES/$id/deploy/compose.yml" "$@"
+        "${file[@]}" "$@"
 }
 
 compose_active() { compose_rel "${ACTIVE_ID:-$(current_release_id)}" "$@"; }
