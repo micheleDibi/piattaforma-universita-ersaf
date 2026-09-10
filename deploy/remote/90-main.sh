@@ -11,7 +11,7 @@ main() {
         install)      cmd_install "$@";;
         source-check) cmd_source_check;;
         deploy)       cmd_deploy "$@";;
-        build)        require_installed; acquire_lock; cmd_release "$@";;
+        build)        require_installed; acquire_lock; cmd_preflight --deploy; cmd_release "$@";;
         clone)        cmd_clone "$@";;
         migrate)      require_installed; acquire_lock; db_up; cmd_migrate;;
         backup)       cmd_backup;;

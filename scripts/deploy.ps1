@@ -90,38 +90,22 @@ function Test-LocalTools {
 
 function Test-Vpn {
     Write-Step "Raggiungibilita' del server $ServerIp (VPN aziendale)"
-    $client = New-Object System.Net.Sockets.TcpClient
-    try {
-        $attesa = $client.BeginConnect($ServerIp, $SshPort, $null, $null)
-        if (-not $attesa.AsyncWaitHandle.WaitOne(4000)) { throw 'timeout' }
-        $client.EndConnect($attesa)
-        Write-Note "porta $SshPort raggiungibile"
+    # Ping e non una connessione TCP alla porta 22: un handshake aperto e chiuso a meta' viene letto
+    # dai sistemi di sicurezza del server come una scansione e puo' far bloccare l'accesso.
+    $ping = New-Object System.Net.NetworkInformation.Ping
+    $risponde = $false
+    foreach ($tentativo in 1..3) {
+        try { if ($ping.Send($ServerIp, 2500).Status -eq 'Success') { $risponde = $true; break } } catch { }
     }
-    catch {
-        Stop-WithError "il server $ServerIp non risponde sulla porta $SshPort. La VPN aziendale non e' connessa oppure il server non e' raggiungibile: collegare la VPN e riprovare."
+    if (-not $risponde) {
+        Stop-WithError "il server $ServerIp non risponde al ping. La VPN aziendale non e' connessa oppure il server non e' raggiungibile: collegare la VPN e riprovare."
     }
-    finally { $client.Close() }
-}
-
-function Test-Ssh {
-    Write-Step "Accesso SSH con l'alias '$SshHost'"
-    $precedente = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    $esito = @(& ssh @SshOptions $SshHost 'echo ERSAF_SSH_OK; id -un; hostname' 2>&1 | ForEach-Object { "$_" })
-    $codice = $LASTEXITCODE
-    $ErrorActionPreference = $precedente
-    if ($codice -ne 0 -or -not ($esito -contains 'ERSAF_SSH_OK')) {
-        Write-Host ($esito -join "`n")
-        Stop-WithError "accesso SSH non riuscito con '$SshHost'. Verificare l'alias in ~/.ssh/config e che la chiave pubblica sia autorizzata su root@$ServerIp (docs/deploy.md, sezione Accesso)."
-    }
-    $dettaglio = @($esito | Where-Object { $_ -ne 'ERSAF_SSH_OK' }) -join ' su '
-    Write-Note "connesso come $dettaglio"
+    Write-Note 'il server risponde al ping'
 }
 
 function Test-ConnessioneCompleta {
     Test-LocalTools
     Test-Vpn
-    Test-Ssh
 }
 
 # ---------------------------------------------------------------- esecuzione remota
@@ -141,6 +125,9 @@ function Invoke-Remote {
     $comando = "$RemoteSanitizer | bash -s -- " + ($Arguments -join ' ')
     $bundle | & ssh @SshOptions $SshHost $comando | Out-Host
     $codice = $LASTEXITCODE
+    if ($codice -eq 255) {
+        Stop-WithError "connessione SSH a '$SshHost' non riuscita. Verificare l'alias in ~/.ssh/config e che la chiave pubblica sia autorizzata su root@$ServerIp (docs/deploy.md, sezione Accesso)."
+    }
     if ($codice -ne 0 -and -not $AllowFailure) {
         Stop-WithError "comando remoto '$($Arguments[0])' terminato con codice $codice."
     }
@@ -240,11 +227,6 @@ function Format-CnfValue([string] $Valore) {
     return '"' + $Valore.Replace('\', '\\').Replace('"', '\"') + '"'
 }
 
-function Send-RemoteSecretFile([string] $PercorsoRemoto, [string] $Contenuto) {
-    $Contenuto | & ssh @SshOptions $SshHost "umask 077; $RemoteSanitizer > '$PercorsoRemoto'" | Out-Host
-    if ($LASTEXITCODE -ne 0) { Stop-WithError "scrittura di $PercorsoRemoto fallita" }
-}
-
 function Set-SourceCredentials {
     Write-Step "Credenziali di lettura del database originale ${SourceHost}:$SourcePort/$SourceDb"
     Write-Note 'Vengono inviate via SSH e salvate solo sul server (shared/source-db.cnf, permessi 600).'
@@ -256,11 +238,16 @@ function Set-SourceCredentials {
     if (-not $password) { Stop-WithError 'password mancante' }
     $cnf = "[client]`nhost=$SourceHost`nport=$SourcePort`nuser=$(Format-CnfValue $utente)`npassword=$(Format-CnfValue $password)`n"
     $meta = "SOURCE_DB_HOST=$SourceHost`nSOURCE_DB_PORT=$SourcePort`nSOURCE_DB_NAME=$SourceDb`n"
-    Send-RemoteSecretFile "$RemoteBase/shared/source-db.cnf" $cnf
-    Send-RemoteSecretFile "$RemoteBase/shared/source-db.env" $meta
+    $cnfRemoto = "$RemoteBase/shared/source-db.cnf"
+    $metaRemoto = "$RemoteBase/shared/source-db.env"
+    # Un solo collegamento: il flusso porta entrambi i file, separati da una riga marcatore.
+    $remoto = "umask 077; $RemoteSanitizer | awk -v c='$cnfRemoto' -v e='$metaRemoto' 'BEGIN{f=c} /^#---ERSAF-SPLIT---$/{f=e; next} {print > f}' && test -s '$cnfRemoto' && test -s '$metaRemoto'"
+    ($cnf + "#---ERSAF-SPLIT---`n" + $meta) | & ssh @SshOptions $SshHost $remoto | Out-Host
+    $codice = $LASTEXITCODE
     $password = $null
     $cnf = $null
-    Invoke-Remote @('source-check') | Out-Null
+    if ($codice -ne 0) { Stop-WithError "registrazione delle credenziali fallita (codice $codice)" }
+    Write-Note "sorgente registrata sul server: ${SourceHost}:$SourcePort schema $SourceDb"
 }
 
 # ---------------------------------------------------------------- azioni
@@ -272,10 +259,10 @@ switch ($Action) {
     }
     'install' {
         Test-ConnessioneCompleta
-        Invoke-Preflight '--install'
-        Write-Step 'Installazione base: directory e segreti generati sul server'
-        Invoke-Remote @('install', $WebPort) | Out-Null
-        if ((Invoke-Remote @('source-check') -AllowFailure) -ne 0) { Set-SourceCredentials }
+        Write-Step 'Preflight, directory e segreti sul server'
+        $esito = Invoke-Remote @('install', $WebPort) -AllowFailure
+        if ($esito -eq 10) { Set-SourceCredentials }
+        elseif ($esito -ne 0) { Stop-WithError "installazione remota terminata con codice $esito." }
         Confirm-Typed 'CLONA' ("L'installazione legge il database originale ${SourceHost}/$SourceDb con mariadb-dump in sola " +
             "lettura (snapshot consistente, nessun lock e nessuna scrittura) e lo importa nel clone sul server. " +
             "Se il clone esiste gia' non viene toccato. Durata indicativa: 10-30 minuti.")
@@ -284,13 +271,11 @@ switch ($Action) {
     }
     'deploy' {
         Test-ConnessioneCompleta
-        Invoke-Preflight '--deploy'
         Publish-Release 'deploy' @() | Out-Null
         Show-Access
     }
     'build' {
         Test-ConnessioneCompleta
-        Invoke-Preflight '--auto'
         Publish-Release 'build' @() | Out-Null
     }
     'refresh-clone' {
@@ -317,11 +302,11 @@ switch ($Action) {
         Confirm-Typed 'RIPRISTINA' "Il clone verra' sostituito con lo snapshot $Snapshot; l'applicazione resta ferma durante l'operazione."
         Invoke-Remote @('restore', $Snapshot, '--confermato') | Out-Null
     }
-    'status' { Test-Vpn; Test-Ssh; Invoke-Remote @('status') | Out-Null }
-    'logs'   { Test-Vpn; Test-Ssh; Invoke-Remote @('logs', $Service, $Tail) | Out-Null }
-    'verify' { Test-Vpn; Test-Ssh; Invoke-Remote @('verify') | Out-Null }
-    'stop'   { Test-Vpn; Test-Ssh; Invoke-Remote @('stop') | Out-Null }
-    'start'  { Test-Vpn; Test-Ssh; Invoke-Remote @('start') | Out-Null }
+    'status' { Test-Vpn; Invoke-Remote @('status') | Out-Null }
+    'logs'   { Test-Vpn; Invoke-Remote @('logs', $Service, $Tail) | Out-Null }
+    'verify' { Test-Vpn; Invoke-Remote @('verify') | Out-Null }
+    'stop'   { Test-Vpn; Invoke-Remote @('stop') | Out-Null }
+    'start'  { Test-Vpn; Invoke-Remote @('start') | Out-Null }
     'tunnel' {
         Test-Vpn
         Write-Host "`nTunnel attivo: aprire http://localhost:$LocalPort (Ctrl+C per chiudere)" -ForegroundColor Green
