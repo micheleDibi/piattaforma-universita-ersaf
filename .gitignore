@@ -1,0 +1,145 @@
+# =============================================================================
+# SEGRETI E DATI PERSONALI — la sezione che conta davvero
+# =============================================================================
+# Un file finito qui una volta resta nella storia di git per sempre: va tolto
+# riscrivendo la history, non con un commit successivo.
+
+# Dump ed export del database. dump.sql pesa 5,3 GB e contiene password in
+# chiaro, codici fiscali, numeri di documento e date di nascita di ~3.900
+# persone. Si ignora *ogni* .sql e si riammette solo db/, dove stanno le
+# migrazioni versionate.
+*.sql
+*.sql.gz
+*.sql.bz2
+*.sql.zip
+*.dump
+*.bak
+!db/**/*.sql
+
+# Variabili d'ambiente: DATABASE_URL, credenziali SMTP, i pepper dei token.
+.env
+.env.*
+!.env.example
+
+# Chiavi e certificati
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+!**/fixtures/**/*.pem
+
+# Email di sviluppo (EMAIL_BACKEND=file): i .eml contengono il link di reset
+# con il token in chiaro. Non devono finire in git.
+backend/var/
+
+# Database locali
+*.db
+*.sqlite
+*.sqlite3
+backend/ersaf.db
+
+# =============================================================================
+# PYTHON / BACKEND
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Ambienti virtuali (qualsiasi nome, a qualsiasi livello)
+venv/
+.venv/
+env/
+ENV/
+backend/venv/
+
+# Build e packaging
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+sdist/
+wheels/
+*.egg-info/
+*.egg
+.installed.cfg
+MANIFEST
+
+# Test e qualità del codice
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.cover
+.hypothesis/
+
+# =============================================================================
+# NODE / FRONTEND
+# =============================================================================
+node_modules/
+dist/
+dist-ssr/
+build/
+.vite/
+*.local
+
+# Log
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Cache degli strumenti
+.eslintcache
+.parcel-cache/
+
+# =============================================================================
+# EDITOR E SISTEMA OPERATIVO
+# =============================================================================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*.sw?
+*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+.directory
+.Trash-*
+
+# =============================================================================
+# VARIE
+# =============================================================================
+tmp/
+temp/
+*.tmp
+*.orig
+*.rej

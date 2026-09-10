@@ -1,0 +1,12 @@
+-- Rollback della migrazione 009.
+--
+-- NON FA NULLA, deliberatamente.
+--
+-- La 009 porta a -1 le righe che valevano 1. Invertirla significherebbe
+-- riportare a 1 delle righe indistinguibili da quelle che valevano
+-- legittimamente -1 gia' da prima: si spegnerebbero utenti che non c'entrano
+-- nulla. Un rollback che fa danni e' peggio di un rollback che non c'e'.
+--
+-- Se serve davvero tornare indietro, la strada e' un ripristino dal backup
+-- precedente all'applicazione, non questo file.
+SELECT 'La 009 non e\' reversibile: vedi il commento in testa al file.' AS avviso;

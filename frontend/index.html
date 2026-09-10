@@ -1,10 +1,25 @@
 <!doctype html>
-<html lang="en">
+<html lang="it">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!--
+      Il token di reset viaggia nella query string. Senza questa direttiva ogni
+      richiesta partita da /reimposta-password?token=... porterebbe il token
+      nell'header Referer verso qualunque risorsa esterna.
+
+      Va nel documento e NON iniettata da React: le sottorisorse dell'HTML
+      partono durante il parsing dell'head, prima che React monti, e una
+      referrer policy non e' retroattiva.
+
+      Vale per tutta l'applicazione. Oggi non costa nulla — non ci sono font da
+      CDN, analytics, iframe o reindirizzamenti verso identity provider — e il
+      backend non guarda il Referer. Se un domani servisse, la mossa e' passare
+      a strict-origin-when-cross-origin, che protegge comunque la query string
+      verso altri domini.
+    -->
+    <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <title>Piattaforma ERSAF</title>
   </head>
   <body>
     <div id="root"></div>

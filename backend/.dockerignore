@@ -1,0 +1,19 @@
+# Mai nell'immagine: segreti, ambienti locali, dati, log, email di sviluppo.
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+logs/
+var/
+*.db
+*.log
+# Non servono a runtime.
+tests/
+scripts/
+Dockerfile
+.dockerignore
