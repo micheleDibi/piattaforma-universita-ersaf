@@ -1,5 +1,5 @@
 import re
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from datetime import datetime
@@ -11,9 +11,10 @@ from src.listino_tipoCorso.models import ListinoTipoCorsoDB
 from src.nome_universita.models import NomeUniversitaDB   
 from src.listini_dettagli.models import ListinoDettaglio
 from sqlalchemy.orm import joinedload, selectinload
+from src.auth.dipendenze import get_current_utente
 
 router = APIRouter(
-    prefix="/listini-testa", tags=["Listini Testa"]
+    prefix="/listini-testa", tags=["Listini Testa"],dependencies=[Depends(get_current_utente)],
 )
 
 # Funzione centralizzata per il calcolo del prossimo codice canonico
@@ -107,11 +108,11 @@ def get_opzioni_tipi_corso(db: Session = Depends(get_db)):
     tipi = db.query(ListinoTipoCorsoDB).all()
     return [{"id": t.listino_tipoCorso_id, "descrizione": t.listino_tipoCorso_descrizione} for t in tipi]
 
-#GET
+#GET ALL
 @router.get("/", response_model=List[ListinoTesta])
 def get_all(
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(40, ge=1, le=200),
     search: Optional[str] = None,
     universita: Optional[str] = None,
     tipo_corso: Optional[str] = None,
@@ -145,7 +146,7 @@ def get_all(
     if attivo is not None:
         query = query.filter(ListinoTestaDB.listino_attivoSN == attivo)
 
-    return query.offset(skip).limit(limit).all()
+    return query.order_by(ListinoTestaDB.listTesta_id.asc()).offset(skip).limit(limit).all()
 
 
 # GET BY ID
