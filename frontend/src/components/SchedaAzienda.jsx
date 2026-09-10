@@ -138,9 +138,18 @@ export default function SchedaAzienda() {
         onSubmit={invia}
         className="mx-auto max-w-4xl rounded-3xl border border-slate-100 bg-white p-8 shadow-sm"
       >
-        <h2 className="mb-6 border-b-2 border-slate-100 pb-2.5 text-xl font-bold text-slate-800">
-          {inModifica ? "Modifica azienda" : "Nuova azienda"}
-        </h2>
+        <div className="mb-6 flex items-center justify-between border-b-2 border-slate-100 pb-2.5">
+          <h2 className="text-xl font-bold text-slate-800">
+            {inModifica ? "Modifica azienda" : "Nuova azienda"}
+          </h2>
+          <button
+            type="button"
+            onClick={() => navigate("/home")}
+            className="cursor-pointer text-sm font-medium text-slate-500 transition-colors hover:text-blue-600"
+          >
+            ← Torna all'elenco
+          </button>
+        </div>
 
         {errore && (
           <div className="mb-6 whitespace-pre-line rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -163,7 +172,7 @@ export default function SchedaAzienda() {
           </button>
           <button
             type="button"
-            onClick={() => navigate("/aziende")}
+            onClick={() => navigate("/home")}
             className="cursor-pointer rounded-lg px-5 py-3 text-sm font-medium text-slate-500 hover:text-slate-800"
           >
             Annulla

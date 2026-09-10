@@ -11,7 +11,7 @@ export default function ProdottoDettagliTabella({
         <button
           type="button"
           onClick={handleAggiungiRiga}
-          className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors shadow-sm"
+          className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors shadow-sm cursor-pointer"
         >
           + Aggiungi nuova riga
         </button>
@@ -40,18 +40,18 @@ export default function ProdottoDettagliTabella({
                   <input
                     type="date"
                     name="listDettaglio_dataInizioValidazione"
-                    value={det.listDettaglio_dataInizioValidazione || ""}
+                    value={det.listDettaglio_dataInizioValidazione ?? ""}
                     onChange={(e) => handleDettaglioChange(index, e)}
-                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs"
+                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </td>
                 <td className="p-2">
                   <input
                     type="date"
                     name="listDettaglio_dataFineValidazione"
-                    value={det.listDettaglio_dataFineValidazione || ""}
+                    value={det.listDettaglio_dataFineValidazione ?? ""}
                     onChange={(e) => handleDettaglioChange(index, e)}
-                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs"
+                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </td>
                 <td className="p-2">
@@ -62,7 +62,7 @@ export default function ProdottoDettagliTabella({
                     placeholder="0.00"
                     value={det.listDettaglio_prezzo ?? ""}
                     onChange={(e) => handleDettaglioChange(index, e)}
-                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs"
+                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </td>
                 <td className="p-2">
@@ -72,7 +72,7 @@ export default function ProdottoDettagliTabella({
                     placeholder="Mesi"
                     value={det.listDettaglio_durata ?? ""}
                     onChange={(e) => handleDettaglioChange(index, e)}
-                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs"
+                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </td>
                 <td className="p-2">
@@ -82,7 +82,7 @@ export default function ProdottoDettagliTabella({
                     placeholder="CFU"
                     value={det.listDettaglio_CFU ?? ""}
                     onChange={(e) => handleDettaglioChange(index, e)}
-                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs"
+                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </td>
                 <td className="p-2">
@@ -93,7 +93,7 @@ export default function ProdottoDettagliTabella({
                     placeholder="Tasse"
                     value={det.listDettaglio_tasse ?? ""}
                     onChange={(e) => handleDettaglioChange(index, e)}
-                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs"
+                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </td>
                 <td className="p-2 text-center">
@@ -101,7 +101,7 @@ export default function ProdottoDettagliTabella({
                     <button
                       type="button"
                       onClick={() => handleRimuoviRiga(index)}
-                      className="text-rose-600 hover:text-rose-800 font-bold px-2 py-1 text-xs"
+                      className="text-rose-600 hover:text-rose-800 font-bold px-2 py-1 text-xs cursor-pointer"
                       title="Rimuovi riga"
                     >
                       ✕

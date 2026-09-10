@@ -1,8 +1,4 @@
-export default function ProdottoFormInfo({
-  formData,
-  handleChange,
-  handleGeneraCodice,
-}) {
+export default function ProdottoFormInfo({ formData, handleChange }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -15,9 +11,9 @@ export default function ProdottoFormInfo({
             <input
               type="text"
               name="listTesta_codice"
-              value={formData.listTesta_codice}
+              value={formData.listTesta_codice ?? ""}
               onChange={handleChange}
-              placeholder="Lascia vuoto o genera automatico"
+              placeholder="Inserisci o genera codice"
               className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
           </div>
@@ -48,11 +44,11 @@ export default function ProdottoFormInfo({
             name="listino_attivoSN"
             checked={formData.listino_attivoSN === -1}
             onChange={handleChange}
-            className="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+            className="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
           />
           <label
             htmlFor="listino_attivoSN"
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-slate-700 cursor-pointer"
           >
             Attivo
           </label>
@@ -67,7 +63,7 @@ export default function ProdottoFormInfo({
             name="nome_universita_id"
             value={formData.nome_universita_id ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
           >
             <option value="">-- Seleziona Università --</option>
             <option value={1}>Università Telematica eCampus</option>
@@ -89,7 +85,7 @@ export default function ProdottoFormInfo({
         <textarea
           name="listTesta_descrizione"
           rows="3"
-          value={formData.listTesta_descrizione}
+          value={formData.listTesta_descrizione ?? ""}
           onChange={handleChange}
           required
           className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -102,13 +98,16 @@ export default function ProdottoFormInfo({
           <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
             Livello
           </label>
-          <input
-            type="number"
+          <select
             name="listTesta_livello"
-            value={formData.listTesta_livello}
+            value={formData.listTesta_livello ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          />
+            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+          >
+            <option value="">-- Seleziona Livello --</option>
+            <option value={1}>1</option>
+            <option value={2}>2</option>
+          </select>
         </div>
 
         {/* Modalità di Erogazione */}
@@ -120,7 +119,7 @@ export default function ProdottoFormInfo({
             name="listino_modalita_id"
             value={formData.listino_modalita_id ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
           >
             <option value="">-- Seleziona Modalità --</option>
             <option value={1}>FULL ONLINE</option>
@@ -138,7 +137,7 @@ export default function ProdottoFormInfo({
             name="listino_facolta_id"
             value={formData.listino_facolta_id ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
           >
             <option value="">-- Seleziona Facoltà --</option>
             <option value={1}>ECONOMIA</option>
@@ -157,10 +156,11 @@ export default function ProdottoFormInfo({
           </label>
           <select
             name="listino_tipoCorso_id"
-            value={formData.listino_tipoCorso_id}
+            value={formData.listino_tipoCorso_id ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
           >
+            <option value="">-- Seleziona Tipo Corso --</option>
             <option value={1}>MASTER</option>
             <option value={2}>MASTER AREA SCUOLA</option>
             <option value={3}>MASTER CLASSI DI CONCORSO</option>
@@ -183,7 +183,7 @@ export default function ProdottoFormInfo({
             name="listino_corsoLaurea_id"
             value={formData.listino_corsoLaurea_id ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
           >
             <option value="">-- Seleziona Corso di Laurea --</option>
             <option value={1}>L33 - ECONOMIA E COMMERCIO</option>
@@ -248,7 +248,7 @@ export default function ProdottoFormInfo({
             name="listino_durataLaurea_id"
             value={formData.listino_durataLaurea_id ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
           >
             <option value="">-- Seleziona Durata --</option>
             <option value={1}>TRIENNALE</option>
