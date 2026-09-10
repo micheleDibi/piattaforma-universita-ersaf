@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
+import { API_BASE_URL } from "../lib/api";
 
 export default function ElencoProdottiFormativi() {
   const navigate = useNavigate();
@@ -62,8 +63,8 @@ export default function ElencoProdottiFormativi() {
     const fetchFiltriOpzioni = async () => {
       try {
         const [uniRes, tipiRes] = await Promise.all([
-          fetch("http://localhost:8000/listini-testa/opzioni/universita"),
-          fetch("http://localhost:8000/listini-testa/opzioni/tipi-corso"),
+          fetch(`${API_BASE_URL}/listini-testa/opzioni/universita`),
+          fetch(`${API_BASE_URL}/listini-testa/opzioni/tipi-corso`),
         ]);
 
         if (uniRes.ok) {
@@ -109,7 +110,7 @@ export default function ElencoProdottiFormativi() {
           : "";
 
       const response = await fetch(
-        `http://localhost:8000/listini-testa/?skip=0&limit=${LIMIT}${searchParam}${uniParam}${tipoParam}${attivoParam}`,
+        `${API_BASE_URL}/listini-testa/?skip=0&limit=${LIMIT}${searchParam}${uniParam}${tipoParam}${attivoParam}`,
       );
       if (!response.ok) throw new Error("Errore durante il recupero dei dati");
       const data = await response.json();
@@ -170,7 +171,7 @@ export default function ElencoProdottiFormativi() {
             : "";
 
           const response = await fetch(
-            `http://localhost:8000/listini-testa/?skip=${nextSkip}&limit=${LIMIT}${searchParam}${uniParam}${tipoParam}${attivoParam}`,
+            `${API_BASE_URL}/listini-testa/?skip=${nextSkip}&limit=${LIMIT}${searchParam}${uniParam}${tipoParam}${attivoParam}`,
           );
           if (!response.ok)
             throw new Error("Errore durante il recupero dei dati");

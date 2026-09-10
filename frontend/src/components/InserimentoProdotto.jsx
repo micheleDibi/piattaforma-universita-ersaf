@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
+import { API_BASE_URL } from "../lib/api";
 import AlertMessage from "./ALertMessage";
 import ProdottoFormInfo from "./ProdottoFormInfo";
 import ProdottoDettagliTabella from "./ProdottoDettagliTabella";
@@ -39,7 +40,7 @@ export default function InserimentoProdotto() {
   const fetchNextCode = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8000/listini-testa/next-code",
+        `${API_BASE_URL}/listini-testa/next-code`,
       );
       if (response.ok) {
         const data = await response.json();
@@ -199,7 +200,7 @@ export default function InserimentoProdotto() {
     };
 
     try {
-      const response = await fetch("http://localhost:8000/listini-testa/", {
+      const response = await fetch(`${API_BASE_URL}/listini-testa/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
