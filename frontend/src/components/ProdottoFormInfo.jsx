@@ -19,21 +19,29 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
           </div>
         </div>
 
-        {/* Tipo Prodotto */}
+        {/* Tipo di Corso / Laurea (Spostato al posto di Tipo Prodotto) */}
         <div>
           <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-            Tipo Prodotto (Derivato)
+            Tipo di Corso / Laurea
           </label>
-          <input
-            type="text"
-            disabled
-            value={
-              formData.listino_tipo_id === 2
-                ? "LAUREE (ID: 2)"
-                : "CORSI (ID: 1)"
-            }
-            className="w-full bg-slate-100 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-500 cursor-not-allowed"
-          />
+          <select
+            name="listino_tipoCorso_id"
+            value={formData.listino_tipoCorso_id ?? ""}
+            onChange={handleChange}
+            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+          >
+            <option value="">-- Seleziona Tipo Corso --</option>
+            <option value={1}>MASTER</option>
+            <option value={2}>MASTER AREA SCUOLA</option>
+            <option value={3}>MASTER CLASSI DI CONCORSO</option>
+            <option value={4}>CORSI DI PERFEZIONAMENTO</option>
+            <option value={5}>PERCORSO DOCENTI</option>
+            <option value={6}>CORSI DI FORMAZIONE</option>
+            <option value={7}>CORSI DI ALTA FORMAZIONE</option>
+            <option value={8}>LAUREE</option>
+            <option value={9}>CORSI SINGOLI</option>
+            <option value={10}>CORSI SPECIALI</option>
+          </select>
         </div>
 
         {/* Checkbox Attivo */}
@@ -146,31 +154,6 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             <option value={4}>LETTERE</option>
             <option value={5}>PSICOLOGIA</option>
             <option value={6}>MEDIAZIONE LINGUISTICA</option>
-          </select>
-        </div>
-
-        {/* Tipo di Corso / Laurea */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-            Tipo di Corso / Laurea
-          </label>
-          <select
-            name="listino_tipoCorso_id"
-            value={formData.listino_tipoCorso_id ?? ""}
-            onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
-          >
-            <option value="">-- Seleziona Tipo Corso --</option>
-            <option value={1}>MASTER</option>
-            <option value={2}>MASTER AREA SCUOLA</option>
-            <option value={3}>MASTER CLASSI DI CONCORSO</option>
-            <option value={4}>CORSI DI PERFEZIONAMENTO</option>
-            <option value={5}>PERCORSO DOCENTI</option>
-            <option value={6}>CORSI DI FORMAZIONE</option>
-            <option value={7}>CORSI DI ALTA FORMAZIONE</option>
-            <option value={8}>LAUREE</option>
-            <option value={9}>CORSI SINGOLI</option>
-            <option value={10}>CORSI SPECIALI</option>
           </select>
         </div>
 
