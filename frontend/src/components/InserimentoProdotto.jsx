@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { API_BASE_URL } from "../lib/api";
-import AlertMessage from "./ALertMessage";
+import AlertMessage from "./AlertMessage";
 import ProdottoFormInfo from "./ProdottoFormInfo";
 import ProdottoDettagliTabella from "./ProdottoDettagliTabella";
 
