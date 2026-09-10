@@ -96,7 +96,7 @@ export default function SchedaAzienda() {
         { method: inModifica ? "PUT" : "POST", body: JSON.stringify(corpo) },
       );
       if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
-      navigate("/aziende");
+      navigate("/home");
     } catch (err) {
       setErrore(err.message);
     } finally {

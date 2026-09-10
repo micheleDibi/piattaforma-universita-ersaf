@@ -51,10 +51,9 @@ export default function ElencoProdottiFormativi() {
   }, [filtroAttivo]);
 
   const handleModifica = (id) => {
-    console.log("Modifica prodotto con id:", id);
+    navigate(`/inserimentoprodotto/${id}`);
   };
 
-  // Funzione aggiornata per reindirizzare alla rotta inserimentoprodotto
   const handleNuovo = () => {
     navigate("/inserimentoprodotto");
   };
