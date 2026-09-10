@@ -393,7 +393,7 @@ export default function InserimentoProdotto() {
         </div>
         <button
           type="button"
-          onClick={() => navigate("/prodotti-formativi")}
+          onClick={() => navigate("/home")}
           className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 text-sm font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
         >
           ← Torna all'elenco

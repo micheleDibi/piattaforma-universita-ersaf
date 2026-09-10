@@ -29,6 +29,7 @@ class TipoDocumentoEnum(str, enum.Enum):
     CARTA_IDENTITA_ALT = "Carta d'Identità"
     PASSAPORTO = "Passaporto"
     PATENTE = "Patente"
+    ALTRO = "Altro"
 
     @classmethod
     def _missing_(cls, value):
@@ -38,7 +39,7 @@ class TipoDocumentoEnum(str, enum.Enum):
         for member in cls:
             if member.value.lower() == str(value).strip().lower():
                 return member
-        return None
+        return cls.ALTRO
 
 
 def _normalizza_enum(v, info):
