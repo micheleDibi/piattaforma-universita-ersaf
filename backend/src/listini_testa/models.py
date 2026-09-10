@@ -19,7 +19,7 @@ class ListinoTestaDB(Base):
     listino_tipoCorso_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("listini_tipicorsi.listino_tipoCorso_id"), nullable=True)
     listino_durataLaurea_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("listini_duratalauree.listino_durataLaurea_id"), nullable=True)
     listino_facolta_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("listini_facolta.listino_facolta_id"), nullable=True)
-    listino_corsoLaurea_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("listini_corsilauree.listino_corsoLaurea_id"), nullable=True)
+    listino_corsoLaurea_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("listini_corsilaurea.listino_corsoLaurea_id"), nullable=True)
     nome_universita_id: Mapped[int] = mapped_column(Integer, ForeignKey("nome_universita.nome_universita_id"), nullable=False, default=1)
     
     listino_attivoSN: Mapped[int] = mapped_column(Integer, nullable=False, default=-1)

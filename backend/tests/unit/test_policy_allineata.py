@@ -128,7 +128,7 @@ def test_il_comportamento_coincide(tmp_path: Path):
     sole costanti non si accorgerebbe, per esempio, di un `>=` diventato `>`.
     """
     script = tmp_path / "confronto.mjs"
-    script.write_text(SCRIPT % {"modulo": json.dumps(str(MODULO_JS))}, encoding="utf-8")
+    script.write_text(SCRIPT % {"modulo": json.dumps(MODULO_JS.as_uri())}, encoding="utf-8")
 
     esito = subprocess.run(
         ["node", str(script), json.dumps(CASI)],

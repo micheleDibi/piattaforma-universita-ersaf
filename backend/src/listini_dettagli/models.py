@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Optional
 from sqlalchemy import Date, DECIMAL, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from src.database import Base
 
 # SQLALCHEMY MODEL
@@ -57,5 +57,4 @@ class ListinoDettaglioResponse(ListinoDettaglioBase):
     listDettaglio_id: int
     listTesta_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

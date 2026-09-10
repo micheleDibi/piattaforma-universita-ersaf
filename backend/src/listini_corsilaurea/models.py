@@ -5,7 +5,7 @@ from sqlalchemy import Integer, String
 from src.database import Base 
 
 class ListinoCorsoLaureaDB(Base):
-    __tablename__ = "listini_corsilauree"
+    __tablename__ = "listini_corsilaurea"
 
     listino_corsoLaurea_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
     listino_corsoLaurea_codice: Mapped[str] = mapped_column(String(45), nullable=False)

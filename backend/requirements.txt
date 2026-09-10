@@ -20,6 +20,8 @@ cryptography>=42
 python-dotenv>=1.0,<2
 pydantic[email]>=2.9,<3
 pydantic-settings>=2.4,<3
+# ZoneInfo("Europe/Rome") usa il database IANA: Windows non lo fornisce.
+tzdata; sys_platform == "win32"
 
 # Hashing delle password. Si usa bcrypt DIRETTAMENTE, senza passlib:
 #   - passlib e' fermo all'ultima release del 2020 e si rompe con bcrypt >= 4.1

@@ -1,0 +1,9 @@
+# I file eseguiti o interpretati su Linux restano con fine riga LF anche nei
+# checkout Windows con core.autocrlf=true.
+*.sh          text eol=lf
+Dockerfile    text eol=lf
+.dockerignore text eol=lf
+*.conf        text eol=lf
+*.yml         text eol=lf
+*.yaml        text eol=lf
+*.ps1         text eol=crlf

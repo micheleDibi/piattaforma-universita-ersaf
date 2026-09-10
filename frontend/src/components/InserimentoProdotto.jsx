@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
-import AlertMessage from "./ALertMessage";
+import { API_BASE_URL } from "../lib/api";
+import AlertMessage from "./AlertMessage";
 import ProdottoFormInfo from "./ProdottoFormInfo";
 import ProdottoDettagliTabella from "./ProdottoDettagliTabella";
 
@@ -57,9 +58,7 @@ export default function InserimentoProdotto() {
 
   const fetchNextCode = async () => {
     try {
-      const response = await fetch(
-        "http://localhost:8000/listini-testa/next-code",
-      );
+      const response = await fetch(`${API_BASE_URL}/listini-testa/next-code`);
       if (response.ok) {
         const data = await response.json();
         if (data.codice) {
@@ -84,7 +83,7 @@ export default function InserimentoProdotto() {
     }
 
     if (isModifica) {
-      fetch(`http://localhost:8000/listini-testa/${id}`)
+      fetch(`${API_BASE_URL}/listini-testa/${id}`)
         .then((res) => {
           if (!res.ok) throw new Error("Errore nel recupero del prodotto");
           return res.json();
@@ -112,7 +111,6 @@ export default function InserimentoProdotto() {
                   d.listDettaglio_dataInizioValidazione || "",
                 listDettaglio_dataFineValidazione:
                   d.listDettaglio_dataFineValidazione || "9999-12-31",
-                // Il prezzo/tasse dal DB restano numeri: la tabella li formatterà a 2 decimali in visualizzazione
                 listDettaglio_prezzo: d.listDettaglio_prezzo ?? "",
                 listDettaglio_durata: d.listDettaglio_durata ?? "",
                 listDettaglio_CFU: d.listDettaglio_CFU ?? "",
@@ -156,8 +154,6 @@ export default function InserimentoProdotto() {
     });
   };
 
-  // Durante la digitazione: prezzo/tasse restano stringa libera (niente parseFloat qui!),
-  // durata/CFU restano interi come prima.
   const handleDettaglioChange = (index, e) => {
     const { name, value } = e.target;
     const newDettagli = [...dettagli];
@@ -167,8 +163,6 @@ export default function InserimentoProdotto() {
     if (["listDettaglio_durata", "listDettaglio_CFU"].includes(name)) {
       val = value === "" ? null : parseInt(value, 10);
     } else if (["listDettaglio_prezzo", "listDettaglio_tasse"].includes(name)) {
-      // Manteniamo esattamente ciò che l'utente sta scrivendo (anche con la virgola).
-      // La conversione a numero avviene solo al blur, vedi handleDettaglioBlur.
       val = value;
     } else if (value === "") {
       val = null;
@@ -178,7 +172,6 @@ export default function InserimentoProdotto() {
     setDettagli(newDettagli);
   };
 
-  // Al blur di prezzo/tasse: convertiamo la stringa (con virgola o punto) in numero arrotondato a 2 decimali.
   const handleDettaglioBlur = (index, e) => {
     const { name, value } = e.target;
     if (!["listDettaglio_prezzo", "listDettaglio_tasse"].includes(name)) return;
@@ -241,7 +234,6 @@ export default function InserimentoProdotto() {
 
     let dettagliDaInviare = [...dettagli];
 
-    // VALIDAZIONE PREZZO E TASSE (uso parseNumeroItaliano per gestire eventuale virgola residua)
     for (let i = 0; i < dettagliDaInviare.length; i++) {
       const det = dettagliDaInviare[i];
       const prezzo = parseNumeroItaliano(det.listDettaglio_prezzo);
@@ -335,13 +327,13 @@ export default function InserimentoProdotto() {
 
     try {
       const url = isModifica
-        ? `http://localhost:8000/listini-testa/${id}`
-        : "http://localhost:8000/listini-testa/";
+        ? `${API_BASE_URL}/listini-testa/${id}`
+        : `${API_BASE_URL}/listini-testa/`;
 
       const method = isModifica ? "PUT" : "POST";
 
       const response = await fetch(url, {
-        method: method,
+        method,
         headers: {
           "Content-Type": "application/json",
         },

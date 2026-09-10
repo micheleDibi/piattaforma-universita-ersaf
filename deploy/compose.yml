@@ -1,0 +1,135 @@
+# Stack di collaudo "Universita ERSAF" su 192.168.40.12 (Tomcat1).
+#
+# Viene invocato dal bundle deploy/remote con
+#   --project-directory /srv/ersaf-universita --env-file shared/compose.env
+# quindi i percorsi relativi (./shared, ./state) partono da quella directory.
+#
+# Isolamento: solo web pubblica una porta, e soltanto su 127.0.0.1 (accesso via
+# tunnel SSH). api e db stanno su reti interne senza uscita verso LAN o
+# Internet: l'API non puo' raggiungere il database originale nemmeno per
+# errore. L'unico servizio con uscita verso la LAN e' dbclone, usato dal solo
+# comando esplicito di clonazione e mai in esecuzione continua.
+
+name: ersaf-universita-collaudo
+
+x-log: &log
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  db:
+    image: mariadb:10.11.14
+    env_file: ./shared/db.env
+    environment:
+      TZ: ${TZ:-Europe/Rome}
+    # sql_mode identico alla sorgente: i dati clonati devono comportarsi come
+    # in produzione. Event scheduler acceso per gli eventi di purge introdotti
+    # dalle migrazioni 003 e 004.
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --sql-mode=ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION
+      - --event-scheduler=ON
+      - --max-allowed-packet=256M
+      - --innodb-buffer-pool-size=1G
+      - --skip-name-resolve
+    volumes:
+      - ./state/mariadb:/var/lib/mysql
+    networks: [data]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    restart: unless-stopped
+    logging: *log
+
+  api:
+    image: ersaf-universita/api:${RELEASE_TAG:-dev}
+    build:
+      context: ${RELEASE_DIR:-..}/backend
+    env_file: ./shared/api.env
+    environment:
+      TZ: ${TZ:-Europe/Rome}
+    volumes:
+      - ./state/email:/app/var/email
+    networks: [app, data]
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+    restart: unless-stopped
+    logging: *log
+
+  web:
+    image: ersaf-universita/web:${RELEASE_TAG:-dev}
+    build:
+      context: ${RELEASE_DIR:-..}/frontend
+      args:
+        VITE_API_BASE_URL: /api
+    ports:
+      - "127.0.0.1:${WEB_PORT:-18082}:8080"
+    networks: [edge, app]
+    depends_on:
+      api:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+    restart: unless-stopped
+    logging: *log
+
+  # Client MariaDB per migrazioni, backup e ripristino del clone. Solo rete
+  # interna. Credenziali da file montato in sola lettura, mai in argomenti.
+  dbtools:
+    image: mariadb:10.11.14
+    profiles: [tools]
+    environment:
+      TZ: ${TZ:-Europe/Rome}
+    volumes:
+      - ./shared/db.cnf:/run/secrets/db.cnf:ro
+      - ${RELEASE_DIR:-..}/db:/lavoro/db:ro
+    networks: [data]
+    logging: *log
+
+  # Client con uscita verso la LAN: esclusivamente per l'export dalla sorgente
+  # con mariadb-dump (sola lettura). Non ha accesso alla rete dati del clone.
+  dbclone:
+    image: mariadb:10.11.14
+    profiles: [clone]
+    environment:
+      TZ: ${TZ:-Europe/Rome}
+    volumes:
+      - ./shared/source-db.cnf:/run/secrets/source-db.cnf:ro
+    networks: [egress]
+    logging: *log
+
+networks:
+  edge: {}
+  app:
+    internal: true
+  data:
+    internal: true
+  egress: {}

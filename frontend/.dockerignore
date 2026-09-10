@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.vite/
+.eslintcache
+*.log
+# La configurazione locale non deve entrare nel bundle: l'URL dell'API arriva
+# dal build-arg VITE_API_BASE_URL.
+.env
+.env.*
+!.env.example
+Dockerfile
+.dockerignore
