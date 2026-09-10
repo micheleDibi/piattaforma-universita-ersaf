@@ -38,6 +38,7 @@ cmd_deploy() {
     mkdir -p "$LOGS"
     exec > >(tee -a "$LOGS/deploy-$id.log") 2>&1
     log "deploy della release $id"
+    cmd_preflight --deploy
     require_free_gib "$BASE" "$MIN_FREE_GIB_DEPLOY"
     precedente="$(compose_env_get RELEASE_TAG)"
     ACTIVE_ID="$id"

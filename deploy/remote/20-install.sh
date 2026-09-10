@@ -72,9 +72,10 @@ EOT
     log "creato compose.env (porta web $porta)"
 }
 
-# cmd_install [porta_web]
+# cmd_install [porta_web]: esce con 10 se la sorgente non e' ancora configurata.
 cmd_install() {
     local porta="${1:-18082}"
+    cmd_preflight --install
     log "installazione in $BASE"
     install -d -m 750 "$BASE" "$RELEASES" "$STATE" "$LOGS" "$INCOMING"
     install -d -m 700 "$SHARED" "$SNAPSHOTS" "$STATE/mariadb"
@@ -85,6 +86,8 @@ cmd_install() {
     genera_compose_env "$porta"
     chmod 600 "$SHARED"/*.env "$SHARED"/*.cnf 2>/dev/null || true
     log "installazione base completata; segreti in $SHARED (solo root)"
+    if [ -f "$SHARED/source-db.cnf" ] && [ -f "$SHARED/source-db.env" ]; then cmd_source_check; else
+        warn "sorgente non configurata: servono le credenziali di lettura del database originale"; exit 10; fi
 }
 
 # cmd_source_check: verifica che la sorgente sia configurata, senza leggerne i segreti.
