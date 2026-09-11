@@ -1,144 +1,116 @@
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func
-from sqlalchemy.orm import Session
-
 from src.auth.dipendenze import get_current_utente
-
-# Importa la dipendenza della sessione DB (modifica il percorso se necessario)
 from src.database import get_db
-
-# Importa i modelli e gli schemi forniti
-# assumendo che siano nello stesso file o in moduli specifici
 from src.pratiche.models import Pratica, PraticaCreate, PraticaResponse, PraticaUpdate
 
-# Le pratiche contengono dati personali dei sottoscrittori: il router e' chiuso
-# come gli altri moduli, con la verifica della sessione su ogni operazione.
+# Stessa scelta di aziende/routers.py: autenticazione a livello di router,
+# non di singolo endpoint, cosi' una rotta nuova la trova gia' protetta.
 router = APIRouter(
     prefix="/pratiche",
     tags=["Pratiche"],
     dependencies=[Depends(get_current_utente)],
 )
 
-
-@router.post(
-    "/",
-    response_model=PraticaResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Crea una nuova pratica",
-    description="Crea un nuovo record della pratica nel database."
+# joinedload sulle relazioni che PraticaResponse.estrai_relazioni legge per
+# popolare cliente_nome_completo / pratica_stato_descrizione / listTesta_descrizione.
+# Senza, quei tre campi restano None in risposta (niente errori, ma la tabella
+# del frontend mostrerebbe solo id).
+_RELAZIONI_ELENCO = (
+    joinedload(Pratica.cliente),
+    joinedload(Pratica.stato),
+    joinedload(Pratica.listino_testa),
 )
-def create_pratica(
-    pratica_in: PraticaCreate,
-    db: Session = Depends(get_db)
-):
-    """
-    Crea una nuova pratica.
-    Imposta automaticamente 'pratica_created_at' all'ora corrente UTC.
-    """
-    # Convertiamo lo schema Pydantic in un dizionario per istanziare il modello ORM
-    pratica_data = pratica_in.model_dump(exclude_unset=True)
-    
-    # Crea l'istanza SQLAlchemy
-    db_pratica = Pratica(**pratica_data)
-    
-    # func.now() e non l'orologio di Python: le righe esistenti sono scritte
-    # con l'ora del database, e mescolare i due orologi sposterebbe ogni
-    # pratica nuova di due ore rispetto a tutte le altre.
-    db_pratica.pratica_created_at = func.now()
 
-    db.add(db_pratica)
+
+def _pratica_o_404(db: Session, pratica_id: int) -> Pratica:
+    pratica = (
+        db.query(Pratica)
+        .options(*_RELAZIONI_ELENCO)
+        .filter(Pratica.pratica_id == pratica_id)
+        .first()
+    )
+    if not pratica:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pratica non trovata.",
+        )
+    return pratica
+
+
+# POST
+@router.post("/", response_model=PraticaResponse, status_code=status.HTTP_201_CREATED)
+def crea_pratica(pratica_in: PraticaCreate, db: Session = Depends(get_db)):
+    # exclude_unset=True e' OBBLIGATORIO qui, a differenza di crea_azienda:
+    # molti campi di PraticaCreate (listTesta_id, cliente_id, pratica_stato_id,
+    # nome_universita_id, cliente_emittente_aderente_id, pratica_prezzo, tutti
+    # i missFlag/rinn...) sono Optional=None nello schema perche' a database
+    # hanno un server_default. Un model_dump() completo passerebbe None
+    # esplicito per i campi non inviati, e SQLAlchemy scriverebbe NULL invece
+    # di lasciar agire il DEFAULT del database - lo stesso bug descritto nei
+    # commenti di Cliente/Azienda sui server_default.
+    dati = pratica_in.model_dump(exclude_unset=True)
+
+    nuova_pratica = Pratica(**dati)
+    db.add(nuova_pratica)
     db.commit()
-    db.refresh(db_pratica)
-    
-    return db_pratica
+    db.refresh(nuova_pratica)
+    return _pratica_o_404(db, nuova_pratica.pratica_id)
 
 
-@router.get(
-    "/",
-    response_model=List[PraticaResponse],
-    status_code=status.HTTP_200_OK,
-    summary="Lista pratiche con paginazione e filtri opzionali"
-)
-def read_pratiche(
-    skip: int = Query(0, ge=0, description="Numero di elementi da saltare"),
-    limit: int = Query(100, ge=1, le=500, description="Numero massimo di elementi da restituire"),
-    cliente_id: Optional[int] = Query(None, description="Filtra per ID cliente"),
-    pratica_stato_id: Optional[int] = Query(None, description="Filtra per ID stato pratica"),
-    db: Session = Depends(get_db)
+# GET ALL
+@router.get("/", response_model=List[PraticaResponse])
+def lista_pratiche(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(40, ge=1, le=200),
+    search: Optional[str] = None,
+    cliente_id: Optional[int] = None,
+    pratica_stato_id: Optional[int] = None,
+    db: Session = Depends(get_db),
 ):
-    """
-    Recupera una lista di pratiche applicando paginazione ed eventuali filtri per cliente o stato.
-    """
-    query = db.query(Pratica)
+    query = db.query(Pratica).options(*_RELAZIONI_ELENCO)
 
-    # Filtri opzionali
+    # Ricerca per numero pratica: e' l'unico campo testuale "identificativo"
+    # su Pratica stessa. Se serve anche cercare per nome/cognome cliente,
+    # va aggiunto un join esplicito su Cliente qui.
+    if search:
+        query = query.filter(Pratica.pratica_numero.ilike(f"%{search}%"))
     if cliente_id is not None:
         query = query.filter(Pratica.cliente_id == cliente_id)
     if pratica_stato_id is not None:
         query = query.filter(Pratica.pratica_stato_id == pratica_stato_id)
 
-    pratiche = query.offset(skip).limit(limit).all()
-    return pratiche
+    # Piu' recenti prima: a differenza di ElencoAziende (ordine alfabetico
+    # naturale sulla ragione sociale), per un elenco di pratiche ha piu' senso
+    # vedere prima quelle create per ultime. Se preferisci l'ordine per id
+    # crescente come in aziende, cambia .desc() in .asc().
+    return (
+        query.order_by(Pratica.pratica_id.desc()).offset(skip).limit(limit).all()
+    )
 
 
-@router.get(
-    "/{pratica_id}",
-    response_model=PraticaResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Recupera una singola pratica tramite ID"
-)
-def read_pratica_by_id(
-    pratica_id: int,
-    db: Session = Depends(get_db)
+# GET BY ID
+@router.get("/{pratica_id}", response_model=PraticaResponse)
+def dettaglio_pratica(pratica_id: int, db: Session = Depends(get_db)):
+    return _pratica_o_404(db, pratica_id)
+
+
+# PUT
+@router.put("/{pratica_id}", response_model=PraticaResponse)
+def aggiorna_pratica(
+    pratica_id: int, pratica_in: PraticaUpdate, db: Session = Depends(get_db)
 ):
-    """
-    Restituisce i dettagli di una pratica specifica cercando per ID.
-    """
-    db_pratica = db.query(Pratica).filter(Pratica.pratica_id == pratica_id).first()
-    if not db_pratica:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Pratica con ID {pratica_id} non trovata."
-        )
-    return db_pratica
+    pratica = _pratica_o_404(db, pratica_id)
 
+    # exclude_unset=True: stesso motivo di aggiorna_azienda, un campo non
+    # inviato non deve essere riscritto con un default dello schema.
+    modifiche = pratica_in.model_dump(exclude_unset=True)
 
-@router.patch(
-    "/{pratica_id}",
-    response_model=PraticaResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Aggiorna una pratica (modifica parziale)"
-)
-def update_pratica(
-    pratica_id: int,
-    pratica_in: PraticaUpdate,
-    db: Session = Depends(get_db)
-):
-    """
-    Aggiorna parzialmente i dati di una pratica. 
-    Imposta automaticamente 'pratica_updated_at' con il timestamp di modifica.
-    """
-    db_pratica = db.query(Pratica).filter(Pratica.pratica_id == pratica_id).first()
-    if not db_pratica:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Pratica con ID {pratica_id} non trovata."
-        )
+    for chiave, valore in modifiche.items():
+        setattr(pratica, chiave, valore)
 
-    # Estrae soltanto i campi inviati nel payload della richiesta
-    update_data = pratica_in.model_dump(exclude_unset=True)
-
-    # Applica le modifiche all'oggetto ORM
-    for field, value in update_data.items():
-        setattr(db_pratica, field, value)
-
-    # Stesso orologio della creazione: quello del database.
-    db_pratica.pratica_updated_at = func.now()
-
-    db.add(db_pratica)
     db.commit()
-    db.refresh(db_pratica)
-
-    return db_pratica
+    db.refresh(pratica)
+    return _pratica_o_404(db, pratica_id)

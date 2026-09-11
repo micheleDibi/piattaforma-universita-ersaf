@@ -11,6 +11,7 @@ function Sidebar({ active, setActive }) {
     { id: "sottoscrittori", label: "Elenco Sottoscrittori" },
     { id: "attuatori", label: "Elenco Attuatori", visible: canSee },
     { id: "aziende", label: "Elenco Aziende", visible: canSee },
+    { id: "pratiche", label: "Elenco Pratiche", visible: canSee },
     { id: "prodotti", label: "Elenco prodotti", visible: canSee },
   ].filter((link) => link.visible != false);
 

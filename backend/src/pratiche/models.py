@@ -5,7 +5,7 @@ from typing import List, Optional
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, text
 from sqlalchemy.dialects.mysql import LONGBLOB, LONGTEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.database import Base
 from src.clienti.models import Cliente
@@ -306,4 +306,35 @@ class PraticaResponse(PraticaBase):
     pratica_created_at: Optional[datetime] = None
     pratica_updated_at: Optional[datetime] = None
 
+    # Campi piatti estratti dalle relazioni, per non costringere il frontend
+    # a fare N+1 fetch solo per mostrare un nome invece di un id in tabella.
+    # Popolati SOLO se il chiamante ha fatto joinedload/selectinload sulla
+    # relazione corrispondente (altrimenti restano None, non sollevano errori:
+    # niente lazy-load in un contesto async/di risposta gia' fuori sessione).
+    cliente_nome_completo: Optional[str] = None
+    pratica_stato_descrizione: Optional[str] = None
+    listTesta_descrizione: Optional[str] = None
+
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def estrai_relazioni(cls, data):
+        if isinstance(data, dict):
+            return data
+
+        item_dict = {campo: getattr(data, campo, None) for campo in data.__table__.columns.keys()}
+
+        cliente_obj = getattr(data, "cliente", None)
+        if cliente_obj:
+            item_dict["cliente_nome_completo"] = f"{cliente_obj.cliente_nome} {cliente_obj.cliente_cognome}"
+
+        stato_obj = getattr(data, "stato", None)
+        if stato_obj:
+            item_dict["pratica_stato_descrizione"] = stato_obj.pratica_stato_descrizione
+
+        listino_obj = getattr(data, "listino_testa", None)
+        if listino_obj:
+            item_dict["listTesta_descrizione"] = listino_obj.listTesta_descrizione
+
+        return item_dict
