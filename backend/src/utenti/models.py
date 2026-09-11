@@ -94,7 +94,9 @@ class Utente(Base):
         uselist=False,
     )
 
-    pratiche: Mapped[List["Pratica"]] = relationship("Pratica", back_populates="utente")
+    pratiche: Mapped[List["Pratica"]] = relationship(
+    "Pratica", foreign_keys="Pratica.utente_id", back_populates="utente"
+)
 
     @property
     def cliente(self) -> Optional["Cliente"]:

@@ -1,232 +1,309 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional
+from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy import (
-    DECIMAL,
-    Date,
-    DateTime,
-    Integer,
-    LargeBinary,
-    String,
-    Text,
-    text,
-    ForeignKey
-)
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, text
+from sqlalchemy.dialects.mysql import LONGBLOB, LONGTEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from pydantic import BaseModel, ConfigDict, Field
+
 from src.database import Base
+from src.clienti.models import Cliente
+# ATTENZIONE percorsi da confermare: dedotti per analogia con src.clienti.models
+# (clienti); src.listino_tipoCorso.models e src.nome_universita.models sono
+# confermati perche' compaiono nei bottom-import del tuo listini_testa/models.py.
+from src.utenti.models import Utente
+from src.aziende.models import Azienda
+from src.listini_testa.models import ListinoTestaDB
+from src.listino_tipoCorso.models import ListinoTipoCorsoDB
+from src.nome_universita.models import NomeUniversitaDB
+from src.pratiche_stati.models import PraticaStato
 
 
-
-# SQLALCHEMY MODELS
 class Pratica(Base):
+    """Tabella centrale pratiche."""
+
     __tablename__ = "pratiche"
 
     pratica_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    pratica_dataCreazione: Mapped[date] = mapped_column(Date, nullable=False, server_default=text("'1999-12-31'"))
-    pratica_annoAccademico: Mapped[Optional[str]] = mapped_column(String(45))
-    pratica_corso1_24CFU: Mapped[Optional[int]] = mapped_column(Integer)
-    pratica_corso2_24CFU: Mapped[Optional[int]] = mapped_column(Integer)
-    pratica_corso3_24CFU: Mapped[Optional[int]] = mapped_column(Integer)
-    pratica_corso4_24CFU: Mapped[Optional[int]] = mapped_column(Integer)
-    pratica_sedeErogazione: Mapped[Optional[str]] = mapped_column(String(255))
-    #Relazione
-    listTesta_id: Mapped[int] = mapped_column(Integer, ForeignKey("listini_testa.listTesta_id"), nullable=False, server_default=text("1"))
-    #Relazione
-    cliente_id: Mapped[int] = mapped_column(Integer, ForeignKey("clienti.cliente_id"), nullable=False, server_default=text("1"))
-    pratica_numero: Mapped[Optional[str]] = mapped_column(String(45))
-    #Relazione
+
+    # DEFAULT '1999-12-31' nel database, come le date-placeholder di Cliente/PraticaRegistroMise.
+    pratica_dataCreazione: Mapped[date] = mapped_column(
+        Date, nullable=False, server_default=text("'1999-12-31'")
+    )
+    pratica_annoAccademico: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
+    pratica_corso1_24CFU: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    pratica_corso2_24CFU: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    pratica_corso3_24CFU: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    pratica_corso4_24CFU: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    pratica_sedeErogazione: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
+    # --- Relazione "principale" col corso (listini_testa) ---------------------
+    listTesta_id: Mapped[int] = mapped_column(
+        ForeignKey("listini_testa.listTesta_id"), nullable=False, server_default=text("1")
+    )
+    listTesta_corso2_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("listini_testa.listTesta_id"), nullable=True
+    )
+    listTesta_corso3_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("listini_testa.listTesta_id"), nullable=True
+    )
+
+    # --- Relazioni con clienti (3 ruoli diversi, stessa tabella) --------------
+    cliente_id: Mapped[int] = mapped_column(
+        ForeignKey("clienti.cliente_id"), nullable=False, server_default=text("1")
+    )
+    cliente_emittente_aderente_id: Mapped[int] = mapped_column(
+        ForeignKey("clienti.cliente_id"), nullable=False, server_default=text("1")
+    )
+    cliente_consulente_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("clienti.cliente_id"), nullable=True
+    )
+
+    pratica_numero: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
     pratica_stato_id: Mapped[int] = mapped_column(
-        Integer, 
-        ForeignKey("pratiche_stati.pratica_stato_id"), 
-        nullable=False, 
-        server_default=text("1")
+        ForeignKey("pratiche_stati.pratica_stato_id"), nullable=False, server_default=text("1")
     )
-    cliente_emittente_aderente_id: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("1"))
-    pratica_firma: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
-    pratica_upload_1: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
-    pratica_upload_2: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
-    pratica_upload_3: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
-    pratica_upload_4: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
 
-    #Relazione
+    pratica_firma: Mapped[Optional[bytes]] = mapped_column(LONGBLOB, nullable=True)
+    pratica_upload_1: Mapped[Optional[bytes]] = mapped_column(LONGBLOB, nullable=True)
+    pratica_upload_2: Mapped[Optional[bytes]] = mapped_column(LONGBLOB, nullable=True)
+    pratica_upload_3: Mapped[Optional[bytes]] = mapped_column(LONGBLOB, nullable=True)
+    pratica_upload_4: Mapped[Optional[bytes]] = mapped_column(LONGBLOB, nullable=True)
+    pratica_upload_5: Mapped[Optional[bytes]] = mapped_column(LONGBLOB, nullable=True)
+
     nome_universita_id: Mapped[int] = mapped_column(
-        Integer, 
-        ForeignKey("nome_universita.nome_universita_id"), 
-        nullable=False, 
-        server_default=text("1")
+        ForeignKey("nome_universita.nome_universita_id"), nullable=False, server_default=text("1")
     )
-    listTesta_corso2_id: Mapped[Optional[int]] = mapped_column(Integer, index=True)
-    listTesta_corso3_id: Mapped[Optional[int]] = mapped_column(Integer, index=True)
+    azienda_id: Mapped[Optional[int]] = mapped_column(ForeignKey("aziende.azienda_id"), nullable=True)
 
-    #Relazione
-    azienda_id: Mapped[Optional[int]] = mapped_column(
-        Integer, 
-        ForeignKey("aziende.azienda_id"), 
-        index=True, 
-        nullable=True
+    pratica_prezzo: Mapped[Decimal] = mapped_column(
+        Numeric(20, 8), nullable=False, server_default=text("0.00000000")
     )
-    pratica_prezzo: Mapped[Decimal] = mapped_column(DECIMAL(20, 8), nullable=False, server_default=text("'0.00000000'"))
     pratica_forzeDellOrdine: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+
     pratica_missFlag_upload_1: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     pratica_missFlag_upload_2: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     pratica_missFlag_upload_3: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     pratica_missFlag_upload_4: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    pratica_missFlag_upload_5: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     pratica_missFlag_dilazioni: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     pratica_missFlag_firma: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
-    pratica_codiceASG: Mapped[Optional[str]] = mapped_column(String(45))
-    pratica_missFlag_upload1_cliente: Mapped[Optional[int]] = mapped_column(Integer)
+    pratica_codiceASG: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
+    # Questo, a differenza dei fratelli 2-5, e' DEFAULT NULL nel database (non 0).
+    pratica_missFlag_upload1_cliente: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     pratica_missFlag_upload2_cliente: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     pratica_missFlag_upload3_cliente: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     pratica_missFlag_upload4_cliente: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    pratica_missFlag_upload5_cliente: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     pratica_missFlag_firma_cliente: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
-    cliente_consulente_id: Mapped[Optional[int]] = mapped_column(Integer, index=True)
-    pratica_pathFile: Mapped[Optional[str]] = mapped_column(String(255))
+
+    pratica_pathFile: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     pratica_rinnPrimoAnno: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     pratica_rinnSecondoAnno: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     pratica_rinnTerzoAnno: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
-    pratica_upload_5: Mapped[Optional[bytes]] = mapped_column(LargeBinary)
-    pratica_missFlag_upload_5: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
-    pratica_missFlag_upload5_cliente: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
-    #Relazione
-    utente_id: Mapped[Optional[int]] = mapped_column(
-        Integer, 
-        ForeignKey("utenti.utente_id"), 
-        index=True, 
-        nullable=True
+
+    # --- Relazioni con utenti (4 ruoli diversi, stessa tabella) ---------------
+    utente_id: Mapped[Optional[int]] = mapped_column(ForeignKey("utenti.utente_id"), nullable=True)
+    utente_consulente_id: Mapped[Optional[int]] = mapped_column(ForeignKey("utenti.utente_id"), nullable=True)
+    pratica_created_by: Mapped[Optional[int]] = mapped_column(ForeignKey("utenti.utente_id"), nullable=True)
+    pratica_updated_by: Mapped[Optional[int]] = mapped_column(ForeignKey("utenti.utente_id"), nullable=True)
+
+    # DEFAULT NULL nel database: qui, come in Utente, valorizziamo comunque
+    # lato applicazione per avere sempre data+ora di creazione/modifica.
+    pratica_created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    pratica_updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=text("CURRENT_TIMESTAMP")
     )
-    utente_consulente_id: Mapped[Optional[int]] = mapped_column(Integer, index=True)
-    pratica_created_by: Mapped[Optional[int]] = mapped_column(Integer, index=True)
-    pratica_created_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    pratica_updated_by: Mapped[Optional[int]] = mapped_column(Integer, index=True)
-    pratica_updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    #Relazione
+
     listino_tipo_corso_id: Mapped[Optional[int]] = mapped_column(
-        Integer, 
-        ForeignKey("listini_tipicorsi.listino_tipoCorso_id"), 
-        index=True, 
-        nullable=True
+        ForeignKey("listini_tipicorsi.listino_tipoCorso_id"), nullable=True
     )
-    pratica_note: Mapped[Optional[str]] = mapped_column(Text)
-    pratica_pathFile_rateizzazione: Mapped[Optional[str]] = mapped_column(String(255))
+    pratica_note: Mapped[Optional[str]] = mapped_column(LONGTEXT, nullable=True)
+    pratica_pathFile_rateizzazione: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
-    #Relazioni
-    listino_testa: Mapped["ListinoTestaDB"] = relationship("ListinoTestaDB", back_populates="pratiche")
-    cliente: Mapped["Cliente"] = relationship("Cliente", back_populates="pratiche")
+    # ---------------------------------------------------------------------
+    # Relazioni "principali" (back_populates verso l'unica collezione gia'
+    # dichiarata nei modelli esistenti: Cliente.pratiche, Utente.pratiche,
+    # ListinoTestaDB.pratiche, Azienda.pratiche, PraticaStato.pratiche).
+    # foreign_keys esplicito qui e' OBBLIGATORIO: essendoci piu' FK verso la
+    # stessa tabella, senza specificarlo SQLAlchemy solleva
+    # AmbiguousForeignKeysError in fase di configurazione dei mapper.
+    # ---------------------------------------------------------------------
+    cliente: Mapped["Cliente"] = relationship(
+        "Cliente", foreign_keys=[cliente_id], back_populates="pratiche"
+    )
+    utente: Mapped[Optional["Utente"]] = relationship(
+        "Utente", foreign_keys=[utente_id], back_populates="pratiche"
+    )
+    listino_testa: Mapped["ListinoTestaDB"] = relationship(
+        "ListinoTestaDB", foreign_keys=[listTesta_id], back_populates="pratiche"
+    )
+    azienda: Mapped[Optional["Azienda"]] = relationship(
+        "Azienda", foreign_keys=[azienda_id], back_populates="pratiche"
+    )
     stato: Mapped["PraticaStato"] = relationship("PraticaStato", back_populates="pratiche")
-    universita: Mapped["NomeUniversitaDB"] = relationship("NomeUniversitaDB", back_populates="pratiche")
-    azienda: Mapped[Optional["Azienda"]] = relationship("Azienda", back_populates="pratiche")
-    utente: Mapped[Optional["Utente"]] = relationship("Utente", back_populates="pratiche")
-    tipo_corso: Mapped[Optional["ListinoTipoCorsoDB"]] = relationship("ListinoTipoCorsoDB", back_populates="pratiche")
+
+    # ---------------------------------------------------------------------
+    # Relazioni "secondarie": stessa tabella target, ma senza una collezione
+    # dedicata dall'altra parte -> mono-direzionali (nessun back_populates).
+    # ---------------------------------------------------------------------
+    cliente_emittente_aderente: Mapped["Cliente"] = relationship(
+        "Cliente", foreign_keys=[cliente_emittente_aderente_id]
+    )
+    cliente_consulente: Mapped[Optional["Cliente"]] = relationship(
+        "Cliente", foreign_keys=[cliente_consulente_id]
+    )
+    corso2: Mapped[Optional["ListinoTestaDB"]] = relationship(
+        "ListinoTestaDB", foreign_keys=[listTesta_corso2_id]
+    )
+    corso3: Mapped[Optional["ListinoTestaDB"]] = relationship(
+        "ListinoTestaDB", foreign_keys=[listTesta_corso3_id]
+    )
+    utente_consulente: Mapped[Optional["Utente"]] = relationship(
+        "Utente", foreign_keys=[utente_consulente_id]
+    )
+    creata_da: Mapped[Optional["Utente"]] = relationship("Utente", foreign_keys=[pratica_created_by])
+    modificata_da: Mapped[Optional["Utente"]] = relationship("Utente", foreign_keys=[pratica_updated_by])
+    universita: Mapped["NomeUniversitaDB"] = relationship(
+        "NomeUniversitaDB", foreign_keys=[nome_universita_id], back_populates="pratiche"
+    )
+    tipo_corso: Mapped[Optional["ListinoTipoCorsoDB"]] = relationship(
+        "ListinoTipoCorsoDB", foreign_keys=[listino_tipo_corso_id], back_populates="pratiche"
+    )
+
+    # --- Figlie dirette (una per cartella, back_populates definito su entrambi i lati) ---
+    allegati: Mapped[List["PraticaAllegato"]] = relationship("PraticaAllegato", back_populates="pratica")
+    corsi_studenti: Mapped[List["PraticaCorsoStudente"]] = relationship(
+        "PraticaCorsoStudente", back_populates="pratica"
+    )
+    corsi_singoli: Mapped[List["PraticaCorsoSingolo"]] = relationship(
+        "PraticaCorsoSingolo", back_populates="pratica"
+    )
+    listini: Mapped[List["PraticaListino"]] = relationship("PraticaListino", back_populates="pratica")
+    storico_stati: Mapped[List["PraticaStatoStorico"]] = relationship(
+        "PraticaStatoStorico", back_populates="pratica"
+    )
+    registro_mise: Mapped[Optional["PraticaRegistroMise"]] = relationship(
+        "PraticaRegistroMise", back_populates="pratica", uselist=False
+    )
 
 
-# PYDANTIC SCHEMAS
+# Bottom-import per registrare le classi figlie referenziate solo per stringa
+# sopra (stesso pattern usato in src/listini_testa/models.py per "Pratica").
+import src.pratiche_allegati.models  # noqa: E402,F401
+import src.pratiche_corsi_studenti.models  # noqa: E402,F401
+import src.pratiche_corsisingoli.models  # noqa: E402,F401
+import src.pratiche_listini.models  # noqa: E402,F401
+import src.pratiche_stati_storico.models  # noqa: E402,F401
+import src.pratiche_registri_mise.models  # noqa: E402,F401
+
+
+# ---------------------------------------------------------------------------
+# Schemi Pydantic
+# ---------------------------------------------------------------------------
+
+# Pratica
+#
+# NOTA rispetto allo stile di PraticaStatoBase: li' tutti i campi erano
+# Optional anche se NOT NULL a db. Su pratiche ci sono pero' molte piu' colonne
+# NOT NULL SENZA un default applicabile lato Pydantic (es. pratica_allegato_
+# descrizione, corso_studente_id, ecc.): renderle tutte Optional lascerebbe
+# passare la validazione per poi rompersi sull'insert con un IntegrityError,
+# lo stesso problema gia' visto nei commenti di Cliente/Azienda. Qui quindi i
+# campi NOT NULL senza default (ne' Python ne' server_default) restano
+# obbligatori; Optional solo per le colonne davvero nullable o con default.
+
 class PraticaBase(BaseModel):
-    """Campi comuni a tutte le operazioni sui dati di Pratica."""
-    pratica_dataCreazione: Optional[date] = None
-    pratica_annoAccademico: Optional[str] = None
+    pratica_dataCreazione: Optional[date] = None  # ha server_default, ok Optional
+    pratica_annoAccademico: Optional[str] = Field(default=None, max_length=45)
     pratica_corso1_24CFU: Optional[int] = None
     pratica_corso2_24CFU: Optional[int] = None
     pratica_corso3_24CFU: Optional[int] = None
     pratica_corso4_24CFU: Optional[int] = None
-    pratica_sedeErogazione: Optional[str] = None
-    listTesta_id: int = 1
-    cliente_id: int = 1
-    pratica_numero: Optional[str] = None
-    pratica_stato_id: int = 1
-    cliente_emittente_aderente_id: int = 1
-    nome_universita_id: int = 1
+    pratica_sedeErogazione: Optional[str] = Field(default=None, max_length=255)
+
+    listTesta_id: Optional[int] = None  # ha server_default=1
     listTesta_corso2_id: Optional[int] = None
     listTesta_corso3_id: Optional[int] = None
-    azienda_id: Optional[int] = None
-    pratica_prezzo: Decimal = Decimal("0.00000000")
-    pratica_forzeDellOrdine: int = 0
-    pratica_missFlag_upload_1: int = 0
-    pratica_missFlag_upload_2: int = 0
-    pratica_missFlag_upload_3: int = 0
-    pratica_missFlag_upload_4: int = 0
-    pratica_missFlag_dilazioni: int = 0
-    pratica_missFlag_firma: int = 0
-    pratica_codiceASG: Optional[str] = None
-    pratica_missFlag_upload1_cliente: Optional[int] = None
-    pratica_missFlag_upload2_cliente: int = 0
-    pratica_missFlag_upload3_cliente: int = 0
-    pratica_missFlag_upload4_cliente: int = 0
-    pratica_missFlag_firma_cliente: int = 0
+
+    cliente_id: Optional[int] = None  # ha server_default=1
+    cliente_emittente_aderente_id: Optional[int] = None  # ha server_default=1
     cliente_consulente_id: Optional[int] = None
-    pratica_pathFile: Optional[str] = None
-    pratica_rinnPrimoAnno: int = 0
-    pratica_rinnSecondoAnno: int = 0
-    pratica_rinnTerzoAnno: int = 0
-    pratica_missFlag_upload_5: int = 0
-    pratica_missFlag_upload5_cliente: int = 0
-    utente_id: Optional[int] = None
-    utente_consulente_id: Optional[int] = None
-    listino_tipo_corso_id: Optional[int] = None
-    pratica_note: Optional[str] = None
-    pratica_pathFile_rateizzazione: Optional[str] = None
 
+    pratica_numero: Optional[str] = Field(default=None, max_length=45)
+    pratica_stato_id: Optional[int] = None  # ha server_default=1
 
-class PraticaCreate(PraticaBase):
-    """Schema per la creazione di una nuova pratica."""
-    pratica_created_by: Optional[int] = None
-
-
-class PraticaUpdate(BaseModel):
-    """Schema per la modifica parziale di una pratica (tutti i campi opzionali)."""
-    pratica_dataCreazione: Optional[date] = None
-    pratica_annoAccademico: Optional[str] = None
-    pratica_corso1_24CFU: Optional[int] = None
-    pratica_corso2_24CFU: Optional[int] = None
-    pratica_corso3_24CFU: Optional[int] = None
-    pratica_corso4_24CFU: Optional[int] = None
-    pratica_sedeErogazione: Optional[str] = None
-    listTesta_id: Optional[int] = None
-    cliente_id: Optional[int] = None
-    pratica_numero: Optional[str] = None
-    pratica_stato_id: Optional[int] = None
-    cliente_emittente_aderente_id: Optional[int] = None
-    nome_universita_id: Optional[int] = None
-    listTesta_corso2_id: Optional[int] = None
-    listTesta_corso3_id: Optional[int] = None
+    nome_universita_id: Optional[int] = None  # ha server_default=1
     azienda_id: Optional[int] = None
-    pratica_prezzo: Optional[Decimal] = None
+
+    pratica_prezzo: Optional[Decimal] = None  # ha server_default=0
     pratica_forzeDellOrdine: Optional[int] = None
+
     pratica_missFlag_upload_1: Optional[int] = None
     pratica_missFlag_upload_2: Optional[int] = None
     pratica_missFlag_upload_3: Optional[int] = None
     pratica_missFlag_upload_4: Optional[int] = None
+    pratica_missFlag_upload_5: Optional[int] = None
     pratica_missFlag_dilazioni: Optional[int] = None
     pratica_missFlag_firma: Optional[int] = None
-    pratica_codiceASG: Optional[str] = None
+    pratica_codiceASG: Optional[str] = Field(default=None, max_length=45)
     pratica_missFlag_upload1_cliente: Optional[int] = None
     pratica_missFlag_upload2_cliente: Optional[int] = None
     pratica_missFlag_upload3_cliente: Optional[int] = None
     pratica_missFlag_upload4_cliente: Optional[int] = None
+    pratica_missFlag_upload5_cliente: Optional[int] = None
     pratica_missFlag_firma_cliente: Optional[int] = None
-    cliente_consulente_id: Optional[int] = None
-    pratica_pathFile: Optional[str] = None
+
+    pratica_pathFile: Optional[str] = Field(default=None, max_length=255)
     pratica_rinnPrimoAnno: Optional[int] = None
     pratica_rinnSecondoAnno: Optional[int] = None
     pratica_rinnTerzoAnno: Optional[int] = None
-    pratica_missFlag_upload_5: Optional[int] = None
-    pratica_missFlag_upload5_cliente: Optional[int] = None
+
     utente_id: Optional[int] = None
     utente_consulente_id: Optional[int] = None
-    pratica_updated_by: Optional[int] = None
+
     listino_tipo_corso_id: Optional[int] = None
     pratica_note: Optional[str] = None
-    pratica_pathFile_rateizzazione: Optional[str] = None
+    pratica_pathFile_rateizzazione: Optional[str] = Field(default=None, max_length=255)
+
+
+class PraticaCreate(PraticaBase):
+    """I campi qui sotto NON hanno default a db ne' server_default: vanno sempre forniti.
+
+    Upload/firma (blob) si gestiscono via endpoint dedicati, non in questo payload.
+    """
+
+    pass
+
+
+class PraticaUpdate(BaseModel):
+    """Tutti opzionali: PATCH parziale."""
+
+    pratica_annoAccademico: Optional[str] = Field(default=None, max_length=45)
+    pratica_corso1_24CFU: Optional[int] = None
+    pratica_corso2_24CFU: Optional[int] = None
+    pratica_corso3_24CFU: Optional[int] = None
+    pratica_corso4_24CFU: Optional[int] = None
+    pratica_sedeErogazione: Optional[str] = Field(default=None, max_length=255)
+    pratica_numero: Optional[str] = Field(default=None, max_length=45)
+    pratica_stato_id: Optional[int] = None
+    listTesta_corso2_id: Optional[int] = None
+    listTesta_corso3_id: Optional[int] = None
+    azienda_id: Optional[int] = None
+    pratica_prezzo: Optional[Decimal] = None
+    cliente_consulente_id: Optional[int] = None
+    pratica_pathFile: Optional[str] = Field(default=None, max_length=255)
+    utente_id: Optional[int] = None
+    utente_consulente_id: Optional[int] = None
+    listino_tipo_corso_id: Optional[int] = None
+    pratica_note: Optional[str] = None
+    pratica_pathFile_rateizzazione: Optional[str] = Field(default=None, max_length=255)
 
 
 class PraticaResponse(PraticaBase):
-    
     pratica_id: int
-    pratica_created_by: Optional[int] = None
     pratica_created_at: Optional[datetime] = None
-    pratica_updated_by: Optional[int] = None
     pratica_updated_at: Optional[datetime] = None
 
-    # Abilita la conversione automatica da oggetti SQLAlchemy ORM
     model_config = ConfigDict(from_attributes=True)
