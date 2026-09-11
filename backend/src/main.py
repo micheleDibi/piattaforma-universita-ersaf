@@ -18,6 +18,7 @@ from src.clienti.models import Cliente  # noqa: F401
 from src.ruolo.models import Ruolo  # noqa: F401
 from src.utenti.models import Utente  # noqa: F401
 from src.universita.models import Universita  # noqa: F401
+from src.pratiche_registri_mise.models import PraticaRegistroMise
 from src.listino_tipoCorso.models import ListinoTipoCorsoDB
 from src.pratiche_stati.models import PraticaStato
 from src.listini_testa.models import ListinoTestaDB

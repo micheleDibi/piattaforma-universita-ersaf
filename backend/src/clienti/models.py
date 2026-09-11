@@ -88,7 +88,9 @@ class Cliente(Base):
     ruolo: Mapped["Ruolo"] = relationship(back_populates="clienti")
     azienda: Mapped[Optional["Azienda"]]= relationship(back_populates="clienti")
     universita: Mapped[List["Universita"]] = relationship("Universita", back_populates="cliente")
-    pratiche: Mapped[List["Pratica"]] = relationship("Pratica", back_populates="cliente")
+    pratiche: Mapped[List["Pratica"]] = relationship(
+    "Pratica", foreign_keys="Pratica.cliente_id", back_populates="cliente"
+)
 
     @property
     def curriculum(self) -> Optional["Universita"]:

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import ElencoClienti from "./ElencoClienti";
 import ElencoAziende from "./ElencoAziende";
+import ElencoPratiche from "./ElencoPratiche";
 import ElencoProdottiFormativi from "./ElencoProdottiFormativi";
 
 export default function Homepage() {
@@ -41,6 +42,8 @@ export default function Homepage() {
         {active === "aziende" && (
           <ElencoAziende key="aziende" soloAttuatori={true} />
         )}
+
+        {active === "pratiche" && <ElencoPratiche key="pratiche" />}
 
         {active === "prodotti" && (
           <ElencoProdottiFormativi key="prodotti" soloAttuatori={true} />

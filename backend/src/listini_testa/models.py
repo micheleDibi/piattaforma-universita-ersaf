@@ -37,7 +37,9 @@ class ListinoTestaDB(Base):
     facolta: Mapped[Optional["ListinoFacoltaDB"]] = relationship("ListinoFacoltaDB")
     universita: Mapped[Optional["NomeUniversitaDB"]] = relationship("NomeUniversitaDB")
     corso_laurea: Mapped[Optional["ListinoCorsoLaureaDB"]] = relationship("ListinoCorsoLaureaDB", back_populates="listini_testa")
-    pratiche: Mapped[List["Pratica"]] = relationship("Pratica", back_populates="listino_testa")
+    pratiche: Mapped[List["Pratica"]] = relationship(
+    "Pratica", foreign_keys="Pratica.listTesta_id", back_populates="listino_testa"
+)
     dettagli: Mapped[List["ListinoDettaglio"]] = relationship("ListinoDettaglio", back_populates="testa", cascade="all, delete-orphan")
 
 # Schemi Pydantic per Listino Testa
