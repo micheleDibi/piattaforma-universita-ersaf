@@ -1,17 +1,19 @@
 import { eVero } from "../lib/flagLegacy";
+import { campo, etichetta, spunta } from "../config/styles/campo";
+import { titoloSezione } from "../config/styles/superficie";
 export default function AbilitazioniProfessionali({ formData, handleChange }) {
   return (
-    <div className="space-y-10 text-slate-700 max-w-4xl">
+    <div className="space-y-10 text-testo max-w-4xl">
       {/* SEZIONE 1: Abilitazione Professionale */}
       <div>
-        <h3 className="text-base font-bold text-slate-800 mb-6 border-b pb-2">
+        <h3 className={titoloSezione("separato")}>
           Abilitazione Professionale
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Abilitazione Professionale
               </label>
               <input
@@ -19,11 +21,11 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
                 name="universita_professione"
                 value={formData.universita_professione || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className={campo()}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 DATA
               </label>
               <div className="relative">
@@ -32,12 +34,12 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
                   name="universita_data_professione"
                   value={formData.universita_data_professione || ""}
                   onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
+                  className={campo()}
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Luogo
               </label>
               <input
@@ -45,14 +47,14 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
                 name="universita_luogo_professione"
                 value={formData.universita_luogo_professione || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className={campo()}
               />
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Qualifica Professionale
               </label>
               <input
@@ -60,11 +62,11 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
                 name="universita_qualifica_professionale"
                 value={formData.universita_qualifica_professionale || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className={campo()}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 DATA
               </label>
               <div className="relative">
@@ -73,12 +75,12 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
                   name="universita_data_qualifica"
                   value={formData.universita_data_qualifica || ""}
                   onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
+                  className={campo()}
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Luogo
               </label>
               <input
@@ -86,7 +88,7 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
                 name="universita_luogo"
                 value={formData.universita_luogo || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className={campo()}
               />
             </div>
           </div>
@@ -95,13 +97,13 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
 
       {/* SEZIONE 2: Albo o Elenco */}
       <div>
-        <h3 className="text-base font-bold text-slate-800 mb-6 border-b pb-2">
+        <h3 className={titoloSezione("separato")}>
           Albo o Elenco
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+            <label className={etichetta()}>
               Albo / Elenco
             </label>
             <input
@@ -109,11 +111,11 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
               name="universita_albo"
               value={formData.universita_albo || ""}
               onChange={handleChange}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className={campo()}
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+            <label className={etichetta()}>
               Forze dell'Ordine
             </label>
             <input
@@ -121,7 +123,7 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
               name="universita_forzeDellOrdine"
               value={formData.universita_forzeDellOrdine || ""}
               onChange={handleChange}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className={campo()}
             />
           </div>
         </div>
@@ -129,14 +131,14 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
 
       {/* SEZIONE 3: Richiesta di convalida delle esperienze */}
       <div>
-        <h3 className="text-base font-bold text-slate-800 mb-6 border-b pb-2">
+        <h3 className={titoloSezione("separato")}>
           Richiesta di convalida delle esperienze
         </h3>
 
         <div className="space-y-4 max-w-xl">
           {/* Attività Professionalizzanti */}
-          <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-slate-100">
-            <span className="text-sm font-medium text-slate-700">
+          <div className="flex items-center justify-between p-3 bg-superficie-tenue/50 rounded-superficie border border-bordo">
+            <span className="text-sm font-medium text-testo">
               Attività Professionalizzanti
             </span>
             <input
@@ -144,13 +146,13 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
               name="universita_attivita_professionalizzanti"
               checked={eVero(formData.universita_attivita_professionalizzanti)}
               onChange={handleChange}
-              className="w-4 h-4 text-blue-600 bg-slate-50 border-slate-300 rounded focus:ring-blue-500"
+              className={spunta()}
             />
           </div>
 
           {/* Corsi di Formazione */}
-          <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-slate-100">
-            <span className="text-sm font-medium text-slate-700">
+          <div className="flex items-center justify-between p-3 bg-superficie-tenue/50 rounded-superficie border border-bordo">
+            <span className="text-sm font-medium text-testo">
               Corsi di Formazione
             </span>
             <input
@@ -158,13 +160,13 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
               name="universita_corsi_di_formazione"
               checked={eVero(formData.universita_corsi_di_formazione)}
               onChange={handleChange}
-              className="w-4 h-4 text-blue-600 bg-slate-50 border-slate-300 rounded focus:ring-blue-500"
+              className={spunta()}
             />
           </div>
 
           {/* Altre Attività Certificate */}
-          <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-slate-100">
-            <span className="text-sm font-medium text-slate-700">
+          <div className="flex items-center justify-between p-3 bg-superficie-tenue/50 rounded-superficie border border-bordo">
+            <span className="text-sm font-medium text-testo">
               Altre Attività Certificate
             </span>
             <input
@@ -172,7 +174,7 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
               name="universita_altre_attivita_certificate"
               checked={eVero(formData.universita_altre_attivita_certificate)}
               onChange={handleChange}
-              className="w-4 h-4 text-blue-600 bg-slate-50 border-slate-300 rounded focus:ring-blue-500"
+              className={spunta()}
             />
           </div>
         </div>

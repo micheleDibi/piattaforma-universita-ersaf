@@ -19,7 +19,9 @@
 
 const BASE =
   "inline-flex items-center justify-center gap-2 font-medium " +
-  "rounded-controllo transition-colors cursor-pointer " +
+  // Il bordo trasparente tiene la stessa altezza fra primario e secondario, ed
+  // e' anche la misura che i pulsanti avevano prima della centralizzazione.
+  "rounded-controllo border border-transparent transition-colors cursor-pointer " +
   "focus:outline-none focus:ring-2 focus:ring-offset-2 " +
   "disabled:opacity-50";
 
@@ -27,7 +29,7 @@ const VARIANTI = {
   primario:
     "bg-primario text-su-primario shadow-sm hover:bg-primario-scuro focus:ring-primario",
   secondario:
-    "bg-superficie text-testo border border-bordo-forte hover:bg-superficie-tenue focus:ring-fuoco",
+    "bg-superficie text-testo border-bordo-forte hover:bg-superficie-tenue focus:ring-fuoco",
   pericolo: "bg-negativo text-su-primario shadow-sm hover:opacity-90 focus:ring-negativo",
   discreto: "bg-transparent text-testo-tenue hover:bg-superficie-tenue focus:ring-fuoco",
 };

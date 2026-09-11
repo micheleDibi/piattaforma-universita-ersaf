@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { apiFetch, leggiJson } from "../lib/api";
 import { pulisciSessione, salvaSessione } from "../lib/sessione";
+import { campo, etichetta } from "../config/styles/campo";
+import { pulsante } from "../config/styles/pulsante";
+import { scheda } from "../config/styles/superficie";
 
 // Il ripiego resta specifico della pagina: su /auth/login un errore senza
 // dettaglio significa credenziali sbagliate, non un guasto generico.
@@ -113,15 +116,17 @@ function Login() {
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-        <div className="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white px-14 py-5 text-left shadow-xl transition-all border-2 border-blue-900">
+        <div
+          className={`${scheda()} relative w-full max-w-md transform overflow-hidden px-14 py-5 text-left transition-all`}
+        >
           <div className="mb-6 text-center">
-            <h5 className="text-2xl  tracking-tight text-blue-900">Accedi</h5>
+            <h5 className="text-2xl  tracking-tight text-testo-forte">Accedi</h5>
           </div>
 
           {passwordAggiornata && (
             <div
               role="status"
-              className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700 border border-green-200"
+              className="mb-4 rounded-controllo bg-positivo/10 p-3 text-sm text-positivo border border-positivo/20"
             >
               Password aggiornata. Accedi con le nuove credenziali.
             </div>
@@ -130,7 +135,7 @@ function Login() {
           {avviso && (
             <div
               role="status"
-              className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 border border-amber-200"
+              className="mb-4 rounded-controllo bg-attenzione/10 p-3 text-sm text-testo border border-attenzione/20"
             >
               {avviso}
             </div>
@@ -139,7 +144,7 @@ function Login() {
           {error && (
             <div
               role="alert"
-              className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 border border-red-200"
+              className="mb-4 rounded-controllo bg-negativo-tenue p-3 text-sm text-negativo border border-negativo/20"
             >
               {error}
             </div>
@@ -149,7 +154,7 @@ function Login() {
             <div>
               <label
                 htmlFor="username"
-                className="block text-sm  text-blue-900"
+                className={etichetta()}
               >
                 Username
               </label>
@@ -162,14 +167,14 @@ function Login() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="janesmith"
-                className="mt-1 block w-full rounded-full border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                className={`${campo()} block`}
               />
             </div>
 
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm  text-blue-900"
+                className={etichetta()}
               >
                 Password
               </label>
@@ -182,21 +187,21 @@ function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="mt-1 block w-full rounded-full border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                className={`${campo()} block`}
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 rounded-full bg-indigo-600 py-2.5 px-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 transition-colors disabled:opacity-50"
+              className={`${pulsante("primario", "grande", { larghezzaPiena: true })} mt-2`}
             >
               {loading ? "Accesso in corso..." : "Entra"}
             </button>
             <div className="flex items-center justify-center text-sm pt-1">
               <Link
                 to="/password-dimenticata"
-                className="rounded-full px-1 text-blue-900 underline underline-offset-2 transition-colors hover:text-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="rounded-controllo px-1 text-testo underline underline-offset-2 transition-colors hover:text-primario focus:outline-none focus:ring-1 focus:ring-fuoco"
               >
                 Hai dimenticato la password?
               </Link>

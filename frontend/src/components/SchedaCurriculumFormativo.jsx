@@ -45,7 +45,7 @@ export default function SchedaCurriculumFormativo({ formData, handleChange }) {
   return (
     <div className="w-full">
       {/* Container della barra delle tab interne */}
-      <div className="flex items-end space-x-2 border-b border-gray-200 px-2 pt-2">
+      <div className="flex items-end space-x-2 border-b border-bordo px-2 pt-2">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -53,10 +53,10 @@ export default function SchedaCurriculumFormativo({ formData, handleChange }) {
               type="button"
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`relative px-5 py-3 text-sm font-medium transition-all duration-200 rounded-t-xl focus:outline-none cursor-pointer ${
+              className={`relative px-5 py-3 text-sm font-medium transition-all duration-200 rounded-t-superficie focus:outline-none cursor-pointer ${
                 isActive
-                  ? "bg-white text-blue-600 shadow-sm border-t border-x border-gray-200 z-10 -mb-[1px]"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 border-t border-x border-transparent"
+                  ? "bg-superficie text-primario shadow-sm border-t border-x border-bordo z-10 -mb-[1px]"
+                  : "bg-superficie-tenue text-testo-tenue hover:bg-superficie-alta hover:text-testo-forte border-t border-x border-transparent"
               }`}
             >
               {tab.label}
@@ -66,7 +66,7 @@ export default function SchedaCurriculumFormativo({ formData, handleChange }) {
       </div>
 
       {/* Contenuto del form attivo (senza pulsante di salvataggio interno) */}
-      <div className="bg-white border-x border-b border-gray-200 rounded-b-xl p-6 shadow-sm">
+      <div className="bg-superficie border-x border-b border-bordo rounded-b-superficie p-6 shadow-sm">
         {tabs.find((tab) => tab.id === activeTab)?.component}
       </div>
     </div>

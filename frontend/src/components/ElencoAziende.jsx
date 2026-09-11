@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { apiFetch } from "../lib/api";
+import { campo } from "../config/styles/campo";
+import { pulsante } from "../config/styles/pulsante";
+import {
+  contenitoreTabella,
+  intestazioneTabella,
+  rigaTabella,
+} from "../config/styles/superficie";
 
 function ElencoAziende() {
   const [aziende, setAziende] = useState([]);
@@ -122,15 +129,15 @@ function ElencoAziende() {
   }, [skip]);
 
   if (initialLoading)
-    return <div className="p-4 text-center text-gray-500">Caricamento...</div>;
+    return <div className="p-4 text-center text-testo-tenue">Caricamento...</div>;
   if (error)
-    return <div className="p-4 text-center text-red-500">Errore: {error}</div>;
+    return <div className="p-4 text-center text-negativo">Errore: {error}</div>;
 
   return (
     <>
       <div className="w-full p-6">
         <div className="w-full my-6 flex flex-col sm:flex-row justify-between items-center gap-4 px-2">
-          <h3 className="text-xl font-bold text-gray-800">Elenco Aziende:</h3>
+          <h3 className="text-xl font-bold text-testo">Elenco Aziende:</h3>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <div className="w-full sm:w-72">
@@ -139,7 +146,7 @@ function ElencoAziende() {
                 placeholder="Cerca per ragione sociale..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                className={campo()}
               />
             </div>
           </div>
@@ -147,28 +154,28 @@ function ElencoAziende() {
           <button
             type="button"
             onClick={() => navigate("/nuova-azienda")}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors cursor-pointer whitespace-nowrap"
+            className={`${pulsante()} whitespace-nowrap`}
           >
             Nuova Azienda
           </button>
         </div>
 
-        <div className="w-full bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 my-6">
-          <table className="min-w-full divide-y divide-gray-200 text-left">
-            <thead className="bg-gray-100 sticky top-0 z-10">
+        <div className={`${contenitoreTabella()} my-6`}>
+          <table className="min-w-full text-left">
+            <thead className={`${intestazioneTabella()} sticky top-0 z-10`}>
               <tr>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider">
                   Ragione Sociale
                 </th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider">
                   Sede
                 </th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider text-right">
+                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider text-right">
                   Modifica
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-superficie">
               {aziende.map((item, index) => {
                 const sede = [
                   item.azienda_via,
@@ -184,12 +191,12 @@ function ElencoAziende() {
                 return (
                   <tr
                     key={item.azienda_id || index}
-                    className="hover:bg-gray-50 transition-colors"
+                    className={rigaTabella()}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-testo-forte">
                       {item.azienda_ragione_sociale}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-testo-tenue">
                       {sede || "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -198,7 +205,7 @@ function ElencoAziende() {
                         onClick={() =>
                           navigate(`/modifica-azienda/${item.azienda_id}`)
                         }
-                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none transition-colors cursor-pointer"
+                        className={pulsante("primario", "piccolo")}
                       >
                         Modifica
                       </button>
@@ -207,10 +214,10 @@ function ElencoAziende() {
                 );
               })}
               {aziende.length === 0 && !loading && (
-                <tr>
+                <tr className="border-t border-bordo">
                   <td
                     colSpan={3}
-                    className="px-6 py-8 text-center text-sm text-gray-500"
+                    className="px-6 py-8 text-center text-sm text-testo-tenue"
                   >
                     Nessuna azienda trovata.
                   </td>
@@ -220,13 +227,13 @@ function ElencoAziende() {
           </table>
 
           {loading && (
-            <div className="py-4 text-center text-sm text-gray-500 bg-gray-50">
+            <div className="py-4 text-center text-sm text-testo-tenue bg-superficie-tenue">
               Caricamento altri elementi...
             </div>
           )}
 
           {!hasMore && (
-            <div className="py-4 text-center text-xs text-gray-400 bg-gray-50">
+            <div className="py-4 text-center text-nota text-testo-tenue bg-superficie-tenue">
               Hai raggiunto la fine dell'elenco
             </div>
           )}

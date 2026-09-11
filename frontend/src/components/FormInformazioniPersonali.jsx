@@ -1,12 +1,15 @@
+import { campo, etichetta } from "../config/styles/campo";
+import { titoloSezione } from "../config/styles/superficie";
+
 export default function FormInformazioniPersonali({ formData, handleChange }) {
   return (
     <div className="space-y-4">
-      <h3 className="text-base font-bold text-slate-800 mb-4">
+      <h3 className={titoloSezione()}>
         Informazioni Personali
       </h3>
 
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+        <label className={etichetta()}>
           Codice Fiscale
         </label>
         <input
@@ -14,19 +17,19 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
           name="codiceFiscale"
           value={formData.codiceFiscale}
           onChange={handleChange}
-          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+          className={`${campo("comodo")} transition`}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+        <label className={etichetta()}>
           Genere
         </label>
         <select
           name="genere"
           value={formData.genere}
           onChange={handleChange}
-          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+          className={`${campo("comodo")} transition`}
         >
           <option value="">Seleziona il genere</option>
           <option value="uomo">uomo</option>
@@ -36,7 +39,7 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+          <label className={etichetta()}>
             Nome
           </label>
           <input
@@ -44,11 +47,11 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
             name="nome"
             value={formData.nome}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+            className={`${campo("comodo")} transition`}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+          <label className={etichetta()}>
             Cognome
           </label>
           <input
@@ -56,13 +59,13 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
             name="cognome"
             value={formData.cognome}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+            className={`${campo("comodo")} transition`}
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+        <label className={etichetta()}>
           Cittadinanza
         </label>
         <input
@@ -70,13 +73,13 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
           name="cittadinanza"
           value={formData.cittadinanza}
           onChange={handleChange}
-          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+          className={`${campo("comodo")} transition`}
         />
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div className="col-span-2">
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+          <label className={etichetta()}>
             Luogo di Nascita
           </label>
           <input
@@ -84,11 +87,11 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
             name="luogoDiNascita"
             value={formData.luogoDiNascita}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+            className={`${campo("comodo")} transition`}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+          <label className={etichetta()}>
             Prov.
           </label>
           <input
@@ -96,13 +99,13 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
             name="provDiNascita"
             value={formData.provDiNascita}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+            className={`${campo("comodo")} transition`}
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+        <label className={etichetta()}>
           Data di Nascita
         </label>
         <input
@@ -110,7 +113,7 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
           name="dataDiNascita"
           value={formData.dataDiNascita}
           onChange={handleChange}
-          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+          className={`${campo("comodo")} transition`}
         />
       </div>
     </div>

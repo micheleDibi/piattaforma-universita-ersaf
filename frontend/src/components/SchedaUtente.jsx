@@ -3,6 +3,9 @@ import { useParams } from "react-router";
 import ModalCambiaPadre from "./ModalCambiaPadre";
 import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
 import { salvaSessione } from "../lib/sessione";
+import { campo, etichetta } from "../config/styles/campo";
+import { pulsante } from "../config/styles/pulsante";
+import { titoloSezione } from "../config/styles/superficie";
 
 export default function SchedaUtente() {
   const { id } = useParams();
@@ -165,19 +168,19 @@ export default function SchedaUtente() {
 
   if (!id)
     return (
-      <div className="text-center p-12 text-slate-500 text-base">
+      <div className="text-center p-12 text-testo-tenue text-base">
         Nessun utente selezionato.
       </div>
     );
   if (loading)
     return (
-      <div className="text-center p-12 text-slate-500 text-base">
+      <div className="text-center p-12 text-testo-tenue text-base">
         Caricamento in corso...
       </div>
     );
   if (error)
     return (
-      <div className="text-center p-12 text-red-500 text-base">
+      <div className="text-center p-12 text-negativo text-base">
         Errore: {error}
       </div>
     );
@@ -211,34 +214,34 @@ export default function SchedaUtente() {
     isAttivo && ruoliAttuatori.includes(String(ruoloId));
 
   return (
-    <div className="max-w-[850px] mx-auto my-10 p-5 bg-white text-slate-800 font-sans">
-      <h2 className="text-xl font-bold text-slate-800 mb-5 pb-2.5 border-b-2 border-slate-100">
+    <div className="max-w-[850px] mx-auto my-10 p-5 bg-superficie text-testo font-sans">
+      <h2 className={titoloSezione("separato")}>
         Dettagli Utente e Ruolo
       </h2>
       <div className="mb-8">
         <div className="grid grid-cols-2 gap-5 mb-4">
           <div className="flex flex-col">
-            <label className="text-[11px] font-bold text-slate-500 mb-1.5 tracking-wide">
+            <label className={etichetta()}>
               UTENTE USERNAME
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="p-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 outline-none w-full focus:border-blue-600"
+              className={campo("comodo")}
             />
           </div>
 
           <div className="flex flex-col justify-end">
-            <div className="flex items-center h-[46px] px-3.5 text-sm text-slate-900">
+            <div className="flex items-center h-[46px] px-3.5 text-sm text-testo-forte">
               Stato Utente:{" "}
               <button
                 type="button"
                 onClick={() => setAttivoSN(isAttivo ? 0 : -1)}
-                className={`ml-3 px-4 py-1.5 rounded-full text-xs font-bold text-white transition-colors cursor-pointer ${
+                className={`ml-3 px-4 py-1.5 rounded-full text-xs font-bold text-su-primario transition-colors cursor-pointer ${
                   isAttivo
-                    ? "bg-green-600 hover:bg-green-700"
-                    : "bg-red-600 hover:bg-red-700"
+                    ? "bg-positivo hover:opacity-90"
+                    : "bg-negativo hover:opacity-90"
                 }`}
               >
                 {isAttivo ? "Attivo" : "Disattivo"}
@@ -249,13 +252,13 @@ export default function SchedaUtente() {
 
         <div className="grid grid-cols-2 gap-5 mb-4">
           <div className="flex flex-col">
-            <label className="text-[11px] font-bold text-slate-500 mb-1.5 tracking-wide">
+            <label className={etichetta()}>
               RUOLO
             </label>
             <select
               value={ruoloId}
               onChange={(e) => setRuoloId(e.target.value)}
-              className="p-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 outline-none focus:border-blue-600"
+              className={campo("comodo")}
             >
               <option value="">Seleziona ruolo...</option>
               <option value="0">Utente</option>
@@ -269,7 +272,7 @@ export default function SchedaUtente() {
           </div>
 
           <div className="flex flex-col">
-            <label className="text-[11px] font-bold text-slate-500 mb-1.5 tracking-wide">
+            <label className={etichetta()}>
               UTENTE PADRE
             </label>
             <div className="flex gap-2">
@@ -277,12 +280,12 @@ export default function SchedaUtente() {
                 type="text"
                 readOnly
                 value={testoPadre}
-                className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 outline-none flex-1"
+                className={`${campo("comodo")} flex-1`}
               />
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
-                className="px-3.5 bg-slate-600 text-white border-none rounded-lg text-[13px] font-bold cursor-pointer whitespace-nowrap hover:bg-slate-700"
+                className={`${pulsante("secondario")} whitespace-nowrap`}
               >
                 Cambia Padre
               </button>
@@ -292,7 +295,7 @@ export default function SchedaUtente() {
 
         <div className="grid grid-cols-2 gap-5 mb-4">
           <div className="flex flex-col">
-            <label className="text-[11px] font-bold text-slate-500 mb-1.5 tracking-wide">
+            <label className={etichetta()}>
               DATA CREAZIONE
             </label>
             <input
@@ -303,12 +306,12 @@ export default function SchedaUtente() {
                   ? new Date(cliente.utente.utente_created_at).toLocaleString()
                   : ""
               }
-              className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 outline-none"
+              className={campo("comodo")}
             />
           </div>
 
           <div className="flex flex-col">
-            <label className="text-[11px] font-bold text-slate-500 mb-1.5 tracking-wide">
+            <label className={etichetta()}>
               ULTIMO AGGIORNAMENTO
             </label>
             <input
@@ -319,21 +322,21 @@ export default function SchedaUtente() {
                   ? new Date(cliente.utente.utente_updated_at).toLocaleString()
                   : ""
               }
-              className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 outline-none"
+              className={campo("comodo")}
             />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-5 mb-4">
           <div className="flex flex-col">
-            <label className="text-[11px] font-bold text-slate-500 mb-1.5 tracking-wide">
+            <label className={etichetta()}>
               AGGIORNATO DA
             </label>
             <input
               type="text"
               readOnly
               value={testoAggiornatoDa}
-              className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 outline-none"
+              className={campo("comodo")}
             />
           </div>
         </div>
@@ -343,7 +346,7 @@ export default function SchedaUtente() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-5 py-3 bg-blue-600 text-white border-none rounded-lg text-sm font-bold cursor-pointer hover:bg-blue-700 disabled:opacity-50"
+            className={pulsante("primario", "grande")}
           >
             {saving ? "Salvataggio..." : "Salva Modifiche"}
           </button>
@@ -352,7 +355,7 @@ export default function SchedaUtente() {
             <button
               onClick={handleLoginAutomatico}
               type="button"
-              className="px-5 py-3 bg-emerald-600 text-white border-none rounded-lg text-sm font-bold cursor-pointer hover:bg-emerald-700"
+              className="px-5 py-3 bg-positivo text-su-primario border-none rounded-controllo text-sm font-bold cursor-pointer hover:opacity-90"
             >
               Accedi con questo utente
             </button>

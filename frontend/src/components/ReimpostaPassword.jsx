@@ -3,13 +3,16 @@ import { Link, useNavigate } from "react-router";
 import { apiFetch, leggiJson } from "../lib/api";
 import { leggiTokenDallUrl, ripulisciUrlDalToken } from "../lib/resetToken";
 import { regoleDaCodiciServer, robustezza, valutaPassword } from "../lib/passwordPolicy";
+import { campo, etichetta } from "../config/styles/campo";
+import { pulsante } from "../config/styles/pulsante";
+import { scheda } from "../config/styles/superficie";
 
 const SIMBOLO = { ok: "✓", ko: "✕", neutro: "•", non_verificabile: "•" };
 const COLORE = {
-  ok: "text-green-600",
-  ko: "text-red-600",
-  neutro: "text-gray-300",
-  non_verificabile: "text-gray-300",
+  ok: "text-positivo",
+  ko: "text-negativo",
+  neutro: "text-testo-tenue",
+  non_verificabile: "text-testo-tenue",
 };
 const LETTURA = {
   ok: "requisito soddisfatto",
@@ -29,6 +32,9 @@ const MOTIVI = {
   rete: "Non è stato possibile verificare il link. Controlla la connessione e riprova.",
 };
 
+// Scala a cinque gradini della robustezza: non e' un colore del tema ma una
+// progressione di dominio, dove la tinta intermedia serve a distinguere i
+// gradini fra loro. Resta qui, accanto a chi la usa.
 const COLORI_BARRA = [
   "bg-red-500",
   "bg-red-400",
@@ -43,9 +49,9 @@ const COLORI_BARRA = [
 function Guscio({ titolo, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-      <div className="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white px-14 py-5 text-left shadow-xl transition-all border-2 border-blue-900">
+      <div className={`${scheda()} relative w-full max-w-md transform overflow-hidden px-14 py-5 text-left transition-all`}>
         <div className="mb-6 text-center">
-          <h5 className="text-2xl tracking-tight text-blue-900">{titolo}</h5>
+          <h5 className="text-2xl tracking-tight text-testo-forte">{titolo}</h5>
         </div>
         {children}
       </div>
@@ -187,7 +193,7 @@ function ReimpostaPassword() {
   if (stato === "verifica") {
     return (
       <Guscio titolo="Reimposta la password">
-        <p role="status" aria-live="polite" className="text-sm text-gray-600">
+        <p role="status" aria-live="polite" className="text-sm text-testo-tenue">
           Verifica del link in corso...
         </p>
       </Guscio>
@@ -202,11 +208,11 @@ function ReimpostaPassword() {
       <Guscio titolo="Link non valido">
         <div
           role="alert"
-          className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 border border-red-200"
+          className="mb-4 rounded-controllo bg-negativo-tenue p-3 text-sm text-negativo border border-negativo/20"
         >
           {MOTIVI[motivo] ?? MOTIVI.non_valido}
         </div>
-        <p className="mb-4 text-sm text-gray-600">
+        <p className="mb-4 text-sm text-testo-tenue">
           Puoi richiedere un nuovo link: quello precedente verrà annullato. Se
           hai ricaricato questa pagina, riapri il link dalla mail — per
           sicurezza non viene conservato.
@@ -214,13 +220,13 @@ function ReimpostaPassword() {
         <div className="flex flex-col items-center gap-2 text-sm">
           <Link
             to="/password-dimenticata"
-            className="w-full text-center rounded-full bg-indigo-600 py-2.5 px-4 font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
+            className={`${pulsante("primario", "grande", { larghezzaPiena: true })} text-center`}
           >
             Richiedi un nuovo link
           </Link>
           <Link
             to="/"
-            className="text-blue-900 underline underline-offset-2 hover:text-indigo-600"
+            className="text-testo underline underline-offset-2 hover:text-primario"
           >
             Torna al login
           </Link>
@@ -234,7 +240,7 @@ function ReimpostaPassword() {
       {errore && (
         <div
           role="alert"
-          className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 border border-red-200"
+          className="mb-4 rounded-controllo bg-negativo-tenue p-3 text-sm text-negativo border border-negativo/20"
         >
           {errore}
         </div>
@@ -242,7 +248,7 @@ function ReimpostaPassword() {
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div>
-          <label htmlFor="nuova-password" className="block text-sm text-blue-900">
+          <label htmlFor="nuova-password" className={etichetta()}>
             Nuova password
           </label>
           <input
@@ -254,17 +260,17 @@ function ReimpostaPassword() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             aria-describedby="regole-password"
-            className="mt-1 block w-full rounded-full border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+            className={`${campo()} mt-1 block`}
           />
         </div>
 
         {/* Indicatore indicativo: non blocca mai l'invio. */}
         <div>
-          <div className="flex items-center justify-between text-xs text-gray-500">
+          <div className="flex items-center justify-between text-nota text-testo-tenue">
             <span>Robustezza</span>
             <span>{forza.etichetta}</span>
           </div>
-          <div className="mt-1 h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
+          <div className="mt-1 h-1.5 w-full rounded-full bg-superficie-alta overflow-hidden">
             <div
               className={`h-full transition-all duration-300 ${COLORI_BARRA[forza.livello]}`}
               style={{ width: `${(forza.livello / 4) * 100}%` }}
@@ -283,10 +289,10 @@ function ReimpostaPassword() {
                 <span aria-hidden="true" className={`leading-5 ${COLORE[stato]}`}>
                   {SIMBOLO[stato]}
                 </span>
-                <span className={stato === "ko" ? "text-red-600" : "text-gray-600"}>
+                <span className={stato === "ko" ? "text-negativo" : "text-testo-tenue"}>
                   {regola.testo}
                   {stato === "non_verificabile" && (
-                    <span className="text-gray-400"> — verificata al salvataggio</span>
+                    <span className="text-testo-tenue"> — verificata al salvataggio</span>
                   )}
                   <span className="sr-only">: {LETTURA[stato]}</span>
                 </span>
@@ -296,7 +302,7 @@ function ReimpostaPassword() {
         </ul>
 
         <div>
-          <label htmlFor="conferma-password" className="block text-sm text-blue-900">
+          <label htmlFor="conferma-password" className={etichetta()}>
             Conferma password
           </label>
           <input
@@ -309,17 +315,15 @@ function ReimpostaPassword() {
             onChange={(e) => setConferma(e.target.value)}
             aria-invalid={conferma !== "" && !coincidono}
             aria-describedby="esito-conferma"
-            className={`mt-1 block w-full rounded-full border px-3 py-2 text-gray-900 shadow-sm focus:outline-none focus:ring-1 sm:text-sm ${
-              conferma !== "" && !coincidono
-                ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-                : "border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-            }`}
+            className={`${campo("compatto", {
+              errore: conferma !== "" && !coincidono,
+            })} mt-1 block`}
           />
           {/* Lo spazio unificatore tiene l'altezza costante: senza, il pulsante
               saltella mentre si digita. */}
           <p
             id="esito-conferma"
-            className={`mt-1 text-sm ${coincidono ? "text-green-600" : "text-red-600"}`}
+            className={`mt-1 text-sm ${coincidono ? "text-positivo" : "text-negativo"}`}
           >
             {conferma === ""
               ? " "
@@ -332,7 +336,7 @@ function ReimpostaPassword() {
         <button
           type="submit"
           disabled={!puoInviare}
-          className="w-full mt-2 rounded-full bg-indigo-600 py-2.5 px-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 transition-colors disabled:opacity-50"
+          className={`${pulsante("primario", "grande", { larghezzaPiena: true })} mt-2`}
         >
           {invioInCorso ? "Salvataggio..." : "Salva la nuova password"}
         </button>
@@ -340,7 +344,7 @@ function ReimpostaPassword() {
         <div className="flex items-center justify-center text-sm pt-1">
           <Link
             to="/"
-            className="text-blue-900 underline underline-offset-2 hover:text-indigo-600"
+            className="text-testo underline underline-offset-2 hover:text-primario"
           >
             Torna al login
           </Link>

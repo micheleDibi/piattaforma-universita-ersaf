@@ -1,13 +1,16 @@
+import { campo, etichetta } from "../config/styles/campo";
+import { titoloSezione } from "../config/styles/superficie";
+
 export default function Invalidita({ formData, handleChange }) {
   return (
-    <div className="space-y-6 text-slate-700 max-w-2xl">
-      <h3 className="text-base font-bold text-slate-800 mb-6 border-b pb-2">
+    <div className="space-y-6 text-testo max-w-2xl">
+      <h3 className={titoloSezione("separato")}>
         Dati Invalidità
       </h3>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+          <label className={etichetta()}>
             Percentuale
           </label>
           {/* La colonna e' un int. Era type="text" con placeholder "Es. 75%":
@@ -21,12 +24,12 @@ export default function Invalidita({ formData, handleChange }) {
             value={formData.universita_percentualeInvalidita ?? ""}
             onChange={handleChange}
             placeholder="Es. 75"
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className={campo()}
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+          <label className={etichetta()}>
             Tipo di Invalidità
           </label>
           <input
@@ -34,7 +37,7 @@ export default function Invalidita({ formData, handleChange }) {
             name="universita_tipoInvalidita"
             value={formData.universita_tipoInvalidita || ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className={campo()}
           />
         </div>
       </div>

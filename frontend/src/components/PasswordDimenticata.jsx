@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { apiFetch } from "../lib/api";
+import { campo, etichetta } from "../config/styles/campo";
+import { pulsante } from "../config/styles/pulsante";
+import { scheda } from "../config/styles/superficie";
 
 // Identico al messaggio del backend. Se il server e' irraggiungibile l'utente
 // deve leggere ESATTAMENTE la stessa frase: prenderla dalla risposta
@@ -42,9 +45,9 @@ function PasswordDimenticata() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-      <div className="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white px-14 py-5 text-left shadow-xl transition-all border-2 border-blue-900">
+      <div className={`${scheda()} relative w-full max-w-md transform overflow-hidden px-14 py-5 text-left transition-all`}>
         <div className="mb-6 text-center">
-          <h5 className="text-2xl tracking-tight text-blue-900">
+          <h5 className="text-2xl tracking-tight text-testo-forte">
             Password dimenticata
           </h5>
         </div>
@@ -53,12 +56,12 @@ function PasswordDimenticata() {
           <div
             role="status"
             aria-live="polite"
-            className="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-800 border border-blue-200"
+            className="mb-4 rounded-controllo bg-primario-tenue p-3 text-sm text-testo border border-bordo"
           >
             {MESSAGGIO_GENERICO}
           </div>
         ) : (
-          <p className="mb-4 text-sm text-gray-600">
+          <p className="mb-4 text-sm text-testo-tenue">
             Inserisci l'indirizzo email associato al tuo account: riceverai un
             link per reimpostare la password. Il link scade dopo 60 minuti e
             può essere usato una sola volta.
@@ -74,7 +77,7 @@ function PasswordDimenticata() {
           <div>
             <label
               htmlFor="email-recupero"
-              className="block text-sm text-blue-900"
+              className={etichetta()}
             >
               Email
             </label>
@@ -87,14 +90,14 @@ function PasswordDimenticata() {
               disabled={inviato}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="nome@esempio.it"
-              className="mt-1 block w-full rounded-full border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
+              className={`${campo()} mt-1 block disabled:bg-superficie-alta disabled:text-testo-tenue`}
             />
           </div>
 
           <button
             type="submit"
             disabled={invioInCorso || inviato}
-            className="w-full mt-2 rounded-full bg-indigo-600 py-2.5 px-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 transition-colors disabled:opacity-50"
+            className={`${pulsante("primario", "grande", { larghezzaPiena: true })} mt-2`}
           >
             {invioInCorso
               ? "Invio in corso..."
@@ -106,7 +109,7 @@ function PasswordDimenticata() {
           <div className="flex items-center justify-center text-sm pt-1">
             <Link
               to="/"
-              className="text-blue-900 underline underline-offset-2 hover:text-indigo-600"
+              className="text-testo underline underline-offset-2 hover:text-primario"
             >
               Torna al login
             </Link>

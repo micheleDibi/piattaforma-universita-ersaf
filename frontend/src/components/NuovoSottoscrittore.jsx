@@ -8,6 +8,8 @@ import FormInformazioniPersonali from "./FormInformazioniPersonali";
 import FormDocumento from "./FormDocumento";
 import FormResidenzaDomicilio from "./FormResidenzaDomicilio";
 import FormContatti from "./FormContatti";
+import { pulsante } from "../config/styles/pulsante";
+import { scheda } from "../config/styles/superficie";
 
 function NuovoSottoscrittore() {
   const { id } = useParams();
@@ -358,27 +360,27 @@ function NuovoSottoscrittore() {
   // si conferma non si naviga via.
   if (credenziali) {
     return (
-      <div className="min-h-screen bg-slate-50 py-10 px-4 flex items-start justify-center">
-        <div className="max-w-lg w-full bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
-          <h2 className="text-xl font-bold text-slate-800 mb-2">
+      <div className="min-h-screen bg-superficie-tenue py-10 px-4 flex items-start justify-center">
+        <div className={`${scheda()} max-w-lg w-full p-8`}>
+          <h2 className="text-xl font-bold text-testo mb-2">
             {labelTitolo} creato
           </h2>
-          <p className="text-sm text-slate-600 mb-6">
+          <p className="text-sm text-testo-tenue mb-6">
             Annota queste credenziali e consegnale alla persona: la password non
             sarà più recuperabile, nel database resta solo la sua impronta.
           </p>
 
-          <dl className="rounded-2xl border border-amber-200 bg-amber-50 p-5 mb-6">
-            <dt className="text-[11px] font-bold tracking-wide text-amber-800">
+          <dl className="rounded-superficie border border-attenzione-bordo bg-attenzione-tenue p-5 mb-6">
+            <dt className="text-nota font-bold tracking-wide text-attenzione-forte">
               USERNAME
             </dt>
-            <dd className="font-mono text-base text-slate-900 mb-4 select-all break-all">
+            <dd className="font-mono text-base text-testo-forte mb-4 select-all break-all">
               {credenziali.username}
             </dd>
-            <dt className="text-[11px] font-bold tracking-wide text-amber-800">
+            <dt className="text-nota font-bold tracking-wide text-attenzione-forte">
               PASSWORD
             </dt>
-            <dd className="font-mono text-base text-slate-900 select-all break-all">
+            <dd className="font-mono text-base text-testo-forte select-all break-all">
               {credenziali.password}
             </dd>
           </dl>
@@ -393,14 +395,14 @@ function NuovoSottoscrittore() {
                   )
                   .catch(() => {})
               }
-              className="px-5 py-3 bg-slate-600 text-white rounded-lg text-sm font-bold cursor-pointer hover:bg-slate-700"
+              className={pulsante("secondario", "grande")}
             >
               Copia
             </button>
             <button
               type="button"
               onClick={() => navigate("/home")}
-              className="px-5 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold cursor-pointer hover:bg-blue-700"
+              className={pulsante("primario", "grande")}
             >
               Le ho annotate, continua
             </button>
@@ -411,20 +413,20 @@ function NuovoSottoscrittore() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+    <div className="min-h-screen bg-superficie-tenue py-10 px-4 sm:px-6 lg:px-8">
+      <div className={`${scheda()} max-w-5xl mx-auto overflow-hidden`}>
         <form onSubmit={handleSubmit}>
-          <div className="flex flex-wrap border-b border-slate-200 px-6 pt-4 gap-2 bg-slate-50/50 justify-between items-center">
+          <div className="flex flex-wrap border-b border-bordo px-6 pt-4 gap-2 bg-superficie-tenue/50 justify-between items-center">
             <div className="flex flex-wrap gap-2">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-5 py-2.5 text-sm font-semibold rounded-t-2xl border-t border-x transition cursor-pointer ${
+                  className={`px-5 py-2.5 text-sm font-semibold rounded-t-controllo border-t border-x transition cursor-pointer ${
                     activeTab === tab.id
-                      ? "bg-white text-blue-600 border-slate-200 shadow-sm -mb-px z-10"
-                      : "bg-slate-100 text-slate-600 border-transparent hover:bg-slate-200"
+                      ? "bg-superficie text-primario border-bordo shadow-sm -mb-px z-10"
+                      : "bg-superficie-tenue text-testo-tenue border-transparent hover:bg-superficie-alta"
                   }`}
                 >
                   {tab.label}
@@ -434,7 +436,7 @@ function NuovoSottoscrittore() {
             <button
               type="button"
               onClick={() => navigate("/home")}
-              className="text-sm font-medium text-slate-500 hover:text-slate-800 mb-2 px-3 py-1"
+              className={`${pulsante("discreto")} mb-2`}
             >
               ← Torna all'elenco
             </button>
@@ -453,13 +455,13 @@ function NuovoSottoscrittore() {
                     handleChange={handleChange}
                   />
                 </div>
-                <hr className="border-slate-100 my-6" />
+                <hr className="border-bordo my-6" />
                 <FormResidenzaDomicilio
                   formData={formData}
                   handleChange={handleChange}
                   handleCopyResidenza={handleCopyResidenza}
                 />
-                <hr className="border-slate-100 my-6" />
+                <hr className="border-bordo my-6" />
                 <FormContatti formData={formData} handleChange={handleChange} />
               </div>
             ) : activeTab === "utente" ? (
@@ -470,30 +472,30 @@ function NuovoSottoscrittore() {
                 handleChange={handleChange}
               />
             ) : (
-              <div className="py-12 text-center text-slate-500">
+              <div className="py-12 text-center text-testo-tenue">
                 <h3 className="text-lg font-semibold mb-2">
                   Sezione in fase di sviluppo
                 </h3>
                 <p className="text-sm">
                   Stai visualizzando la scheda:{" "}
-                  <span className="font-medium text-blue-600 capitalize">
+                  <span className="font-medium text-primario capitalize">
                     {activeTab.replace("-", " ")}
                   </span>
                 </p>
               </div>
             )}
 
-            <div className="flex justify-end gap-4 pt-8 mt-10 border-t border-slate-100">
+            <div className="flex justify-end gap-4 pt-8 mt-10 border-t border-bordo">
               <button
                 type="button"
                 onClick={() => navigate("/home")}
-                className="px-6 py-3 border border-slate-200 text-slate-600 font-semibold text-sm rounded-2xl hover:bg-slate-50 transition cursor-pointer"
+                className={pulsante("secondario", "grande")}
               >
                 Annulla
               </button>
               <button
                 type="submit"
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-2xl shadow-sm transition cursor-pointer"
+                className={pulsante("primario", "grande")}
               >
                 {isEditMode ? "Salva Modifiche" : `Crea ${labelTitolo}`}
               </button>

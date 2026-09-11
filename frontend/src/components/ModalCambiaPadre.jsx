@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../lib/api";
+import { campo } from "../config/styles/campo";
+import { pulsante } from "../config/styles/pulsante";
+import { intestazioneTabella, rigaTabella } from "../config/styles/superficie";
 
 export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
   const [attuatori, setAttuatori] = useState([]);
@@ -54,15 +57,15 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="flex max-h-[85vh] w-[90%] max-w-[800px] flex-col rounded-xl bg-white p-6 shadow-2xl">
-        <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-2.5">
-          <h3 className="text-lg font-semibold text-slate-800">
+      <div className="flex max-h-[85vh] w-[90%] max-w-[800px] flex-col rounded-superficie bg-superficie p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between border-b border-bordo pb-2.5">
+          <h3 className="text-lg font-semibold text-testo">
             Seleziona Nuovo Utente Padre
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer text-2xl text-slate-500 hover:text-slate-800"
+            className="cursor-pointer text-2xl text-testo-tenue hover:text-testo"
           >
             &times;
           </button>
@@ -74,13 +77,13 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
             placeholder="Cerca per nome, cognome o azienda..."
             value={searchTermAttuatore}
             onChange={(e) => setSearchTermAttuatore(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none focus:border-blue-500"
+            className={campo("comodo")}
             autoFocus
           />
           <select
             value={selectedRuoloAttuatore}
             onChange={(e) => setSelectedRuoloAttuatore(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-sm text-slate-900 outline-none focus:border-blue-500"
+            className={`${campo("comodo")} w-auto!`}
           >
             <option value="">Tutti i ruoli</option>
             <option value="Aderente">Aderente</option>
@@ -90,23 +93,25 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
           </select>
         </div>
 
-        <div className="h-[350px] overflow-y-auto rounded-lg border border-slate-200 bg-white">
+        <div className="h-[350px] overflow-y-auto rounded-superficie border border-bordo bg-superficie">
           <table className="w-full border-collapse text-left text-sm">
             <thead>
-              <tr className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50">
-                <th className="p-3 text-xs font-semibold text-slate-600">
+              <tr
+                className={`${intestazioneTabella()} sticky top-0 z-10 border-b border-bordo`}
+              >
+                <th className="p-3 font-semibold">
                   Nome
                 </th>
-                <th className="p-3 text-xs font-semibold text-slate-600">
+                <th className="p-3 font-semibold">
                   Cognome
                 </th>
-                <th className="p-3 text-xs font-semibold text-slate-600">
+                <th className="p-3 font-semibold">
                   Ruolo
                 </th>
-                <th className="p-3 text-xs font-semibold text-slate-600">
+                <th className="p-3 font-semibold">
                   Azienda
                 </th>
-                <th className="p-3 text-xs font-semibold text-slate-600">
+                <th className="p-3 font-semibold">
                   Azione
                 </th>
               </tr>
@@ -115,21 +120,21 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
               {attuatori.map((att) => (
                 <tr
                   key={att.cliente_id}
-                  className="border-b border-slate-200 hover:bg-slate-50/50"
+                  className={rigaTabella()}
                 >
-                  <td className="p-3 text-slate-800">{att.cliente_nome}</td>
-                  <td className="p-3 text-slate-800">{att.cliente_cognome}</td>
-                  <td className="p-3 text-slate-800">
+                  <td className="p-3 text-testo">{att.cliente_nome}</td>
+                  <td className="p-3 text-testo">{att.cliente_cognome}</td>
+                  <td className="p-3 text-testo">
                     {att.ruolo?.ruolo_codice || "-"}
                   </td>
-                  <td className="p-3 text-slate-800">
+                  <td className="p-3 text-testo">
                     {att.azienda?.azienda_ragione_sociale || "-"}
                   </td>
                   <td className="p-3">
                     <button
                       type="button"
                       onClick={() => onSelectPadre(att)}
-                      className="cursor-pointer rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                      className={pulsante("primario", "piccolo")}
                     >
                       Seleziona
                     </button>
@@ -140,7 +145,7 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
                 <tr>
                   <td
                     colSpan="5"
-                    className="p-[30px] text-center text-slate-500"
+                    className="p-[30px] text-center text-testo-tenue"
                   >
                     Nessun attuatore trovato.
                   </td>
@@ -151,7 +156,7 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
         </div>
 
         {loadingAttuatori && (
-          <div className="mt-2 text-center text-xs text-slate-500">
+          <div className="mt-2 text-center text-nota text-testo-tenue">
             Aggiornamento in corso...
           </div>
         )}

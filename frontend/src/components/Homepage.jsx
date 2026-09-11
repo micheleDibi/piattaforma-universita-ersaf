@@ -17,12 +17,12 @@ export default function Homepage() {
   }, [active]);
 
   return (
-    <div className="flex min-h-screen w-screen bg-gray-100 font-sans">
+    <div className="flex min-h-screen w-screen bg-superficie-alta font-sans">
       <Sidebar active={active} setActive={setActive} />
 
       <main className="flex-1 w-full">
         {active === "dashboard" && (
-          <div className="p-6 text-xl font-semibold text-gray-800">
+          <div className="p-6 text-xl font-semibold text-testo">
             Benvenuto nella Dashboard
           </div>
         )}

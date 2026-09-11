@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { apiFetch, messaggioErrore } from "../lib/api";
+// Alias: in questo file `campo` ed `etichetta` sono gia' un helper di rendering
+// e un parametro destrutturato, quindi le varianti arrivano con altro nome.
+import {
+  campo as classiCampo,
+  etichetta as classiEtichetta,
+} from "../config/styles/campo";
+import { pulsante } from "../config/styles/pulsante";
+import { scheda } from "../config/styles/superficie";
 
 // I due bottoni di ElencoAziende navigavano a /nuova-azienda e
 // /modifica-azienda/:id, che non erano registrate in App.jsx: cadevano nel
@@ -106,7 +114,7 @@ export default function SchedaAzienda() {
 
   if (caricamento)
     return (
-      <div className="p-12 text-center text-slate-500">
+      <div className="p-12 text-center text-testo-tenue">
         Caricamento in corso...
       </div>
     );
@@ -115,10 +123,10 @@ export default function SchedaAzienda() {
     <div key={nome} className="flex flex-col">
       <label
         htmlFor={nome}
-        className="mb-1.5 text-[11px] font-bold tracking-wide text-slate-500"
+        className={classiEtichetta()}
       >
         {etichetta.toUpperCase()}
-        {obbligatorio && <span className="text-red-500"> *</span>}
+        {obbligatorio && <span className="text-negativo"> *</span>}
       </label>
       <input
         id={nome}
@@ -127,32 +135,32 @@ export default function SchedaAzienda() {
         required={obbligatorio}
         value={dati[nome]}
         onChange={aggiorna}
-        className="rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 outline-none focus:border-blue-600"
+        className={classiCampo("comodo")}
       />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10">
+    <div className="min-h-screen bg-superficie-tenue px-4 py-10">
       <form
         onSubmit={invia}
-        className="mx-auto max-w-4xl rounded-3xl border border-slate-100 bg-white p-8 shadow-sm"
+        className={`${scheda()} mx-auto max-w-4xl p-8`}
       >
-        <div className="mb-6 flex items-center justify-between border-b-2 border-slate-100 pb-2.5">
-          <h2 className="text-xl font-bold text-slate-800">
+        <div className="mb-6 flex items-center justify-between border-b-2 border-bordo pb-2.5">
+          <h2 className="text-xl font-bold text-testo">
             {inModifica ? "Modifica azienda" : "Nuova azienda"}
           </h2>
           <button
             type="button"
             onClick={() => navigate("/home")}
-            className="cursor-pointer text-sm font-medium text-slate-500 transition-colors hover:text-blue-600"
+            className={pulsante("discreto")}
           >
             ← Torna all'elenco
           </button>
         </div>
 
         {errore && (
-          <div className="mb-6 whitespace-pre-line rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="mb-6 whitespace-pre-line rounded-controllo border border-negativo/30 bg-negativo-tenue p-4 text-sm text-negativo">
             {errore}
           </div>
         )}
@@ -166,14 +174,14 @@ export default function SchedaAzienda() {
           <button
             type="submit"
             disabled={salvataggio}
-            className="cursor-pointer rounded-lg bg-blue-600 px-5 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50"
+            className={pulsante("primario", "grande")}
           >
             {salvataggio ? "Salvataggio..." : "Salva"}
           </button>
           <button
             type="button"
             onClick={() => navigate("/home")}
-            className="cursor-pointer rounded-lg px-5 py-3 text-sm font-medium text-slate-500 hover:text-slate-800"
+            className={pulsante("discreto", "grande")}
           >
             Annulla
           </button>

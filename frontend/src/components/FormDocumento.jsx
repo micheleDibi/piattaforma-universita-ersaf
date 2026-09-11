@@ -1,17 +1,20 @@
+import { campo, etichetta } from "../config/styles/campo";
+import { titoloSezione } from "../config/styles/superficie";
+
 export default function FormDocumento({ formData, handleChange }) {
   return (
     <div className="space-y-4">
-      <h3 className="text-base font-bold text-slate-800 mb-4">Documento</h3>
+      <h3 className={titoloSezione()}>Documento</h3>
 
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+        <label className={etichetta()}>
           Tipo Documento
         </label>
         <select
           name="tipoDocumento"
           value={formData.tipoDocumento}
           onChange={handleChange}
-          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+          className={`${campo("comodo")} transition`}
         >
           <option value="">Seleziona il tipo di documento</option>
           <option value="Carta d'identità">Carta d'identità</option>
@@ -21,7 +24,7 @@ export default function FormDocumento({ formData, handleChange }) {
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+        <label className={etichetta()}>
           N° Documento
         </label>
         <input
@@ -29,12 +32,12 @@ export default function FormDocumento({ formData, handleChange }) {
           name="nDocumento"
           value={formData.nDocumento}
           onChange={handleChange}
-          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+          className={`${campo("comodo")} transition`}
         />
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+        <label className={etichetta()}>
           Comune di Rilascio
         </label>
         <input
@@ -42,13 +45,13 @@ export default function FormDocumento({ formData, handleChange }) {
           name="comuneDiRilascio"
           value={formData.comuneDiRilascio}
           onChange={handleChange}
-          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+          className={`${campo("comodo")} transition`}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+          <label className={etichetta()}>
             Data Rilascio
           </label>
           <input
@@ -56,11 +59,11 @@ export default function FormDocumento({ formData, handleChange }) {
             name="dataInizioRilascio"
             value={formData.dataInizioRilascio}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+            className={`${campo("comodo")} transition`}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+          <label className={etichetta()}>
             Data Scadenza
           </label>
           <input
@@ -68,7 +71,7 @@ export default function FormDocumento({ formData, handleChange }) {
             name="dataScadenza"
             value={formData.dataScadenza}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+            className={`${campo("comodo")} transition`}
           />
         </div>
       </div>

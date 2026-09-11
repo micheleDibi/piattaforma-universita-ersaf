@@ -37,6 +37,9 @@
    * gia' presenti, sparsi tra green ed emerald: qui ne resta uno solo. */
   --color-positivo: var(--color-emerald-600);
   --color-attenzione: var(--color-amber-500);
+  --color-attenzione-tenue: var(--color-amber-50);
+  --color-attenzione-bordo: var(--color-amber-200);
+  --color-attenzione-forte: var(--color-amber-800);
   --color-negativo: var(--color-red-600);
   --color-negativo-tenue: var(--color-red-50);
 

@@ -1,10 +1,12 @@
 import { daCasella, eVero } from "../lib/flagLegacy";
+import { campo, etichetta, spunta } from "../config/styles/campo";
+import { titoloSezione } from "../config/styles/superficie";
 export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
   return (
-    <div className="space-y-10 text-slate-700 max-w-4xl">
+    <div className="space-y-10 text-testo max-w-4xl">
       {/* SEZIONE 1: Anagrafe Nazionale Studenti */}
       <div>
-        <h3 className="text-base font-bold text-slate-800 mb-6 border-b pb-2">
+        <h3 className={titoloSezione("separato")}>
           Anagrafe Nazionale Studenti
         </h3>
 
@@ -12,7 +14,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
           {/* Colonna Sinistra */}
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Status Accademico Attuale
               </label>
               <select
@@ -23,7 +25,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                     : ""
                 }
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
+                className={campo()}
               >
                 <option value="">Seleziona status</option>
                 <option value={0}>Non immatricolato</option>
@@ -31,7 +33,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Tipo di Corso
               </label>
               <select
@@ -49,7 +51,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Data di immatricolazione
               </label>
               <div className="relative">
@@ -58,12 +60,12 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                   name="universita_data_immatricolazione"
                   value={formData.universita_data_immatricolazione || ""}
                   onChange={handleChange}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
+                  className={campo()}
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Ateneo di iscrizione
               </label>
               <input
@@ -78,7 +80,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
           {/* Colonna Destra */}
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Università
               </label>
               <input
@@ -86,11 +88,11 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 name="universita_universitaConclusione"
                 value={formData.universita_universitaConclusione || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className={campo()}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Città
               </label>
               <input
@@ -98,11 +100,11 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 name="universita_cittaUniConclusione"
                 value={formData.universita_cittaUniConclusione || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className={campo()}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Provincia
               </label>
               <input
@@ -110,12 +112,12 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 name="universita_provinciaConclusione"
                 value={formData.universita_provinciaConclusione || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className={campo()}
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                <label className={etichetta()}>
                   Conclusione carriera con
                 </label>
                 <select
@@ -133,7 +135,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                <label className={etichetta()}>
                   Data di conclusione
                 </label>
                 <div className="relative">
@@ -142,7 +144,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                     name="universita_data_conclusione"
                     value={formData.universita_data_conclusione || ""}
                     onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
+                    className={campo()}
                   />
                 </div>
               </div>
@@ -153,7 +155,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
 
       {/* SEZIONE 2: Attualmente iscritto al seguente corso */}
       <div>
-        <h3 className="text-base font-bold text-slate-800 mb-6 border-b pb-2">
+        <h3 className={titoloSezione("separato")}>
           ATTUALMENTE iscritto al seguente corso:
         </h3>
 
@@ -176,11 +178,11 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 };
                 handleChange(syntheticEvent);
               }}
-              className="w-4 h-4 text-blue-600 bg-slate-50 border-slate-300 rounded focus:ring-blue-500"
+              className={`${spunta()} bg-superficie-tenue`}
             />
             <label
               htmlFor="altroCorso"
-              className="text-sm font-medium text-slate-700 cursor-pointer"
+              className="text-sm font-medium text-testo cursor-pointer"
             >
               Iscritto ad altro corso di studi di altre Università
             </label>
@@ -188,14 +190,14 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Tipo
               </label>
               <select
                 name="universita_attIscritto_tipo"
                 value={formData.universita_attIscritto_tipo || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
+                className={campo()}
               >
                 <option value="">Seleziona tipo</option>
                 <option value="laurea_i_livello">Laurea I Livello</option>
@@ -207,7 +209,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 In caso di 'Altro'
               </label>
               <input
@@ -215,13 +217,13 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 name="universita_attIscritto_altro"
                 value={formData.universita_attIscritto_altro || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className={campo()}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+            <label className={etichetta()}>
               Classe di laurea
             </label>
             <input
@@ -229,12 +231,12 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
               name="universita_attIscritto_classeLaurea"
               value={formData.universita_attIscritto_classeLaurea || ""}
               onChange={handleChange}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className={campo()}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+            <label className={etichetta()}>
               Denominazione
             </label>
             <input
@@ -242,12 +244,12 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
               name="universita_attIscritto_denominazione"
               value={formData.universita_attIscritto_denominazione || ""}
               onChange={handleChange}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className={campo()}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+            <label className={etichetta()}>
               Università
             </label>
             <input
@@ -255,13 +257,13 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
               name="universita_attIscritto_universita"
               value={formData.universita_attIscritto_universita || ""}
               onChange={handleChange}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className={campo()}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Anno di iscrizione
               </label>
               <input
@@ -269,18 +271,18 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 name="universita_attIscritto_annoIscrizione"
                 value={formData.universita_attIscritto_annoIscrizione || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className={campo()}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Modalità
               </label>
               <select
                 name="universita_attIscritto_modalita"
                 value={formData.universita_attIscritto_modalita || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-700"
+                className={campo()}
               >
                 <option value="">Seleziona modalità</option>
                 <option value="full_time">Full-Time</option>
@@ -291,7 +293,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
 
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Città
               </label>
               <input
@@ -299,11 +301,11 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 name="universita_attIscritto_citta"
                 value={formData.universita_attIscritto_citta || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className={campo()}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={etichetta()}>
                 Provincia
               </label>
               <input
@@ -311,7 +313,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 name="universita_attIscritto_provincia"
                 value={formData.universita_attIscritto_provincia || ""}
                 onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className={campo()}
               />
             </div>
           </div>
