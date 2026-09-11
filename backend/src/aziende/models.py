@@ -48,3 +48,4 @@ class Azienda(Base):
     # FOREIGN KEY che lo impedisca. Il default (save-update, merge) e' quello
     # giusto per una relazione anagrafica.
     clienti: Mapped[List["Cliente"]] = relationship(back_populates="azienda")
+    pratiche: Mapped[List["Pratica"]] = relationship("Pratica", back_populates="azienda")

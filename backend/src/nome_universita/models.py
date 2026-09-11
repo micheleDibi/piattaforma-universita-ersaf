@@ -16,6 +16,7 @@ class NomeUniversitaDB(Base):
     nome_universita_descrizione: Mapped[str] = mapped_column(String(255), nullable=False)
 
     listini_testa: Mapped[List["ListinoTestaDB"]] = relationship("ListinoTestaDB", back_populates="universita")
+    pratiche: Mapped[List["Pratica"]] = relationship("Pratica", back_populates="universita")
 
 # --- Schemi Pydantic ---
 class NomeUniversitaBase(BaseModel):

@@ -100,4 +100,4 @@ class Universita(Base):
     universita_attIscritto_annoIscrizione: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     universita_attIscritto_modalita: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
-    cliente = relationship("Cliente", back_populates="universita")
+    cliente: Mapped["Cliente"] = relationship("Cliente", back_populates="universita")

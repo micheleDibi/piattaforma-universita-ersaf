@@ -2,7 +2,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, Date, text
 from datetime import  date
 from src.database import Base 
-from typing import Optional
+from typing import Optional, List
 from src.clienti.schemas import SessoEnum, TipoDocumentoEnum
 
 
@@ -87,7 +87,8 @@ class Cliente(Base):
     utente: Mapped["Utente"] = relationship("Utente", foreign_keys=[utente_id], back_populates="clienti")
     ruolo: Mapped["Ruolo"] = relationship(back_populates="clienti")
     azienda: Mapped[Optional["Azienda"]]= relationship(back_populates="clienti")
-    universita: Mapped[list["Universita"]] = relationship("Universita", back_populates="cliente")
+    universita: Mapped[List["Universita"]] = relationship("Universita", back_populates="cliente")
+    pratiche: Mapped[List["Pratica"]] = relationship("Pratica", back_populates="cliente")
 
     @property
     def curriculum(self) -> Optional["Universita"]:

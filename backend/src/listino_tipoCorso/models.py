@@ -15,6 +15,7 @@ class ListinoTipoCorsoDB(Base):
     listino_tipoCorso_descrizione: Mapped[str] = mapped_column(String(255), nullable=False)
 
     listini_testa: Mapped[List["ListinoTestaDB"]] = relationship("ListinoTestaDB", back_populates="tipo_corso")
+    pratiche: Mapped[List["Pratica"]] = relationship("Pratica", back_populates="tipo_corso")
 
 # Schemi Pydantic (FastAPI Validazione / Serializzazione)
 class ListinoTipoCorsoBase(BaseModel):

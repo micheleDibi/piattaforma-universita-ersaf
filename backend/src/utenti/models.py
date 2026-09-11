@@ -5,6 +5,7 @@ from src.database import Base
 from src.clienti.models import Cliente
 from typing import Optional
 import uuid
+from typing import List
 
 class Utente(Base):
     __tablename__ = "utenti"
@@ -92,6 +93,8 @@ class Utente(Base):
         remote_side=[utente_id],
         uselist=False,
     )
+
+    pratiche: Mapped[List["Pratica"]] = relationship("Pratica", back_populates="utente")
 
     @property
     def cliente(self) -> Optional["Cliente"]:
