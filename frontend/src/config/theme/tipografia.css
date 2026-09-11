@@ -1,0 +1,24 @@
+/* Scala tipografica: dimensioni e pesi con un nome che dice a cosa servono.
+ *
+ * La scala di Tailwind (text-sm, text-base...) resta valida e non viene
+ * duplicata: qui si nominano i tre ruoli ricorrenti nelle pagine, che oggi
+ * sono ripetuti a mano con combinazioni leggermente diverse di dimensione e
+ * peso.
+ */
+
+@theme {
+  /* Titolo di una sezione dentro una scheda: "Contatti", "Dati anagrafici". */
+  --text-titolo-sezione: var(--text-base);
+  --text-titolo-sezione--line-height: var(--text-base--line-height);
+  --text-titolo-sezione--font-weight: 700;
+
+  /* Etichetta di un campo. Va usata con uppercase e tracking-wider: la forma
+   * completa sta nella variante `etichetta()` di config/styles/campo.js. */
+  --text-etichetta: var(--text-xs);
+  --text-etichetta--line-height: var(--text-xs--line-height);
+  --text-etichetta--font-weight: 600;
+
+  /* Testo di servizio: note sotto un campo, conteggi, messaggi di stato. */
+  --text-nota: var(--text-xs);
+  --text-nota--line-height: var(--text-xs--line-height);
+}

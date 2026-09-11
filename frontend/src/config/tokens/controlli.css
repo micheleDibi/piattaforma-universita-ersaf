@@ -1,0 +1,17 @@
+/* Token di forma dei controlli e delle superfici.
+ *
+ * Non si ridichiara quello che Tailwind gia' esprime: spaziature, spessori e
+ * anello di messa a fuoco restano i suoi. Qui si nominano soltanto i raggi,
+ * che oggi compaiono in quattro misure diverse per lo stesso tipo di controllo
+ * (lg, xl, 2xl e full) e sono la principale fonte di disordine visivo.
+ *
+ * Scelta: due raggi in tutto. Sobri, non arrotondati.
+ */
+
+@theme {
+  /* Qualsiasi controllo: campi, select, pulsanti. */
+  --radius-controllo: var(--radius-lg);
+
+  /* Superficie che contiene i controlli: schede, pannelli, riquadri. */
+  --radius-superficie: var(--radius-xl);
+}

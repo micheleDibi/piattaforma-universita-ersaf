@@ -1,1 +1,8 @@
 @import "tailwindcss";
+
+/* Tema e token: unica sorgente di verita' dell'aspetto.
+ * Le pagine usano queste utilita' semantiche, non i colori grezzi della palette.
+ * Le varianti dei controlli stanno in src/config/styles/. */
+@import "./config/theme/colori.css";
+@import "./config/theme/tipografia.css";
+@import "./config/tokens/controlli.css";
