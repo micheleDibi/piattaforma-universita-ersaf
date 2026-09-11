@@ -1,8 +1,10 @@
-from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
+
+from src.auth.dipendenze import get_current_utente
 
 # Importa la dipendenza della sessione DB (modifica il percorso se necessario)
 from src.database import get_db
@@ -11,9 +13,12 @@ from src.database import get_db
 # assumendo che siano nello stesso file o in moduli specifici
 from src.pratiche.models import Pratica, PraticaCreate, PraticaResponse, PraticaUpdate
 
+# Le pratiche contengono dati personali dei sottoscrittori: il router e' chiuso
+# come gli altri moduli, con la verifica della sessione su ogni operazione.
 router = APIRouter(
     prefix="/pratiche",
-    tags=["Pratiche"]
+    tags=["Pratiche"],
+    dependencies=[Depends(get_current_utente)],
 )
 
 
@@ -38,8 +43,10 @@ def create_pratica(
     # Crea l'istanza SQLAlchemy
     db_pratica = Pratica(**pratica_data)
     
-    # Assegna il timestamp di creazione se non già fornito
-    db_pratica.pratica_created_at = datetime.now(timezone.utc)
+    # func.now() e non l'orologio di Python: le righe esistenti sono scritte
+    # con l'ora del database, e mescolare i due orologi sposterebbe ogni
+    # pratica nuova di due ore rispetto a tutte le altre.
+    db_pratica.pratica_created_at = func.now()
 
     db.add(db_pratica)
     db.commit()
@@ -127,8 +134,8 @@ def update_pratica(
     for field, value in update_data.items():
         setattr(db_pratica, field, value)
 
-    # Aggiorna automaticamente il timestamp di modifica
-    db_pratica.pratica_updated_at = datetime.now(timezone.utc)
+    # Stesso orologio della creazione: quello del database.
+    db_pratica.pratica_updated_at = func.now()
 
     db.add(db_pratica)
     db.commit()

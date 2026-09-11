@@ -14,12 +14,10 @@ class PraticaStato(Base):
     pratica_stato_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, autoincrement=True
     )
-    pratica_stato_codice: Mapped[Optional[str]] = mapped_column(
-        String(45), nullable=True
-    )
-    pratica_stato_descrizione: Mapped[Optional[str]] = mapped_column(
-        String(255), nullable=True
-    )
+    # NOT NULL nel database reale: dichiararle facoltative farebbe fallire una
+    # scrittura con un vincolo violato invece che con un errore di validazione.
+    pratica_stato_codice: Mapped[str] = mapped_column(String(45), nullable=False)
+    pratica_stato_descrizione: Mapped[str] = mapped_column(String(255), nullable=False)
 
     pratiche: Mapped[List["Pratica"]] = relationship("Pratica", back_populates="stato")
 
