@@ -220,6 +220,12 @@ function Publish-Release([string] $Comando, [string[]] $Opzioni) {
         $sporco = 'true'
         Write-Note "ATTENZIONE: si pubblica l'albero di lavoro con modifiche non committate."
     }
+    # Pubblicare un ramo diverso da main e' legittimo, serve a provare il proprio lavoro
+    # prima della revisione, ma deve restare evidente: l'ambiente e' uno solo e condiviso.
+    if ($Ref -and $Ref -ne 'origin/main') {
+        Write-Host "    ATTENZIONE: stai pubblicando $Ref, non main. Il collaudo restera' su questo" -ForegroundColor Yellow
+        Write-Host '    codice finche'' qualcuno non ripubblica. Avvisa in chat.' -ForegroundColor Yellow
+    }
     $id = (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + $sha.Substring(0, 7)
     $archivio = New-ReleaseArchive $id
     $dimensione = [math]::Round((Get-Item -LiteralPath $archivio).Length / 1KB)
