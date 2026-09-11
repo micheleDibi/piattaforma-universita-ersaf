@@ -362,26 +362,38 @@ function Invoke-AuthorizeKey {
     if (-not $KeyFile) { Stop-WithError 'indicare -KeyFile <percorso del file .pub del collega>' }
     if (-not (Test-Path -LiteralPath $KeyFile)) { Stop-WithError "file non trovato: $KeyFile" }
     $chiave = (Get-Content -LiteralPath $KeyFile -Raw).Trim()
+    if ($chiave -match 'PRIVATE KEY') { Stop-WithError 'questa e'' una chiave PRIVATA: va usata solo quella .pub' }
     if ($chiave -notmatch '^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/=]+') {
         Stop-WithError 'il file non contiene una chiave pubblica SSH valida'
     }
-    if ($chiave -match 'PRIVATE KEY') { Stop-WithError 'questa e'' una chiave PRIVATA: va usata solo quella .pub' }
+    if ($chiave -match "['`"``$\\]" -or $chiave -match "[`r`n]") {
+        Stop-WithError 'la chiave contiene caratteri non ammessi nel commento: correggerlo e riprovare'
+    }
     Write-Step 'Autorizzazione di una chiave sul server'
     & ssh-keygen -l -f $KeyFile | Out-Host
     Confirm-Typed 'AUTORIZZA' ("La chiave qui sopra potra' accedere come root a $ServerIp. " +
         'Le chiavi gia'' presenti restano invariate.')
-    $remoto = @'
-umask 077
-mkdir -p /root/.ssh && chmod 700 /root/.ssh
-touch /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys
-tmp=$(mktemp)
-sed -e '1s/^\xEF\xBB\xBF//' -e 's/\r$//' > "$tmp"
-if grep -qxF -f "$tmp" /root/.ssh/authorized_keys; then echo "chiave gia' presente, nulla da modificare"
-else cat "$tmp" >> /root/.ssh/authorized_keys; echo "chiave aggiunta"; fi
-rm -f "$tmp"
-echo "chiavi autorizzate ora: $(grep -c . /root/.ssh/authorized_keys)"
-'@
-    $chiave | & ssh @SshOptions $SshHost $remoto | Out-Host
+
+    # Lo script remoto viaggia in base64: e'' l''unico modo per attraversare PowerShell, ssh e la
+    # shell remota senza che virgolette e fine riga vengano reinterpretati lungo il percorso.
+    $righe = @(
+        'set -e',
+        'umask 077',
+        'mkdir -p /root/.ssh',
+        'chmod 700 /root/.ssh',
+        'touch /root/.ssh/authorized_keys',
+        'chmod 600 /root/.ssh/authorized_keys',
+        "chiave='$chiave'",
+        'if grep -qxF "$chiave" /root/.ssh/authorized_keys; then',
+        '  echo "chiave gia presente, nulla da modificare"',
+        'else',
+        '  printf "%s\n" "$chiave" >> /root/.ssh/authorized_keys',
+        '  echo "chiave aggiunta"',
+        'fi',
+        'echo "chiavi autorizzate ora: $(grep -c . /root/.ssh/authorized_keys)"'
+    )
+    $codificato = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($righe -join "`n") + "`n"))
+    & ssh @SshOptions $SshHost "echo $codificato | base64 -d | bash" | Out-Host
     if ($LASTEXITCODE -ne 0) { Stop-WithError "autorizzazione non riuscita (codice $LASTEXITCODE)" }
 }
 
