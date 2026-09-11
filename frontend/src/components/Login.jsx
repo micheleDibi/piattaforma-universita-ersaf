@@ -4,7 +4,7 @@ import { apiFetch, leggiJson } from "../lib/api";
 import { pulisciSessione, salvaSessione } from "../lib/sessione";
 import { campo, etichetta } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
-import { scheda } from "../config/styles/superficie";
+import { paginaCentrata, scheda } from "../config/styles/superficie";
 
 // Il ripiego resta specifico della pagina: su /auth/login un errore senza
 // dettaglio significa credenziali sbagliate, non un guasto generico.
@@ -115,7 +115,7 @@ function Login() {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+      <div className={paginaCentrata()}>
         <div
           className={`${scheda()} relative w-full max-w-md transform overflow-hidden px-14 py-5 text-left transition-all`}
         >

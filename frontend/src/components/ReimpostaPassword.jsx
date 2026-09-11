@@ -5,7 +5,7 @@ import { leggiTokenDallUrl, ripulisciUrlDalToken } from "../lib/resetToken";
 import { regoleDaCodiciServer, robustezza, valutaPassword } from "../lib/passwordPolicy";
 import { campo, etichetta } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
-import { scheda } from "../config/styles/superficie";
+import { paginaCentrata, scheda } from "../config/styles/superficie";
 
 const SIMBOLO = { ok: "✓", ko: "✕", neutro: "•", non_verificabile: "•" };
 const COLORE = {
@@ -48,7 +48,7 @@ const COLORI_BARRA = [
 // giustifica un modulo separato.
 function Guscio({ titolo, children }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+    <div className={paginaCentrata()}>
       <div className={`${scheda()} relative w-full max-w-md transform overflow-hidden px-14 py-5 text-left transition-all`}>
         <div className="mb-6 text-center">
           <h5 className="text-2xl tracking-tight text-testo-forte">{titolo}</h5>

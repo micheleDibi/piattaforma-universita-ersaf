@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { apiFetch } from "../lib/api";
 import { campo, etichetta } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
-import { scheda } from "../config/styles/superficie";
+import { paginaCentrata, scheda } from "../config/styles/superficie";
 
 // Identico al messaggio del backend. Se il server e' irraggiungibile l'utente
 // deve leggere ESATTAMENTE la stessa frase: prenderla dalla risposta
@@ -44,7 +44,7 @@ function PasswordDimenticata() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+    <div className={paginaCentrata()}>
       <div className={`${scheda()} relative w-full max-w-md transform overflow-hidden px-14 py-5 text-left transition-all`}>
         <div className="mb-6 text-center">
           <h5 className="text-2xl tracking-tight text-testo-forte">

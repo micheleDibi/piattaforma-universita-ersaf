@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../lib/api";
 import { campo } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
-import { intestazioneTabella, rigaTabella } from "../config/styles/superficie";
+import { intestazioneTabella, rigaTabella, velo } from "../config/styles/superficie";
 
 export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
   const [attuatori, setAttuatori] = useState([]);
@@ -56,7 +56,7 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className={velo()}>
       <div className="flex max-h-[85vh] w-[90%] max-w-[800px] flex-col rounded-superficie bg-superficie p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-between border-b border-bordo pb-2.5">
           <h3 className="text-lg font-semibold text-testo">
