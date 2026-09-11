@@ -35,8 +35,8 @@ router = APIRouter(
 _CARICAMENTO_ELENCO = (
     joinedload(Cliente.azienda),
     joinedload(Cliente.ruolo),
-    joinedload(Cliente.utente).joinedload(Utente.padre).joinedload(Utente.clienti),
-    joinedload(Cliente.utente).joinedload(Utente.aggiornato_da).joinedload(Utente.clienti),
+    joinedload(Cliente.utente).joinedload(Utente.padre).selectinload(Utente.clienti),
+    joinedload(Cliente.utente).joinedload(Utente.aggiornato_da).selectinload(Utente.clienti),
 )
 
 

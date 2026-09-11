@@ -10,6 +10,10 @@ sul server restano soltanto le release. I segreti vengono generati o richiesti u
 restano sul server (shared/, solo root): questo script non li stampa e non li salva sul PC.
 
 Azioni (-Action):
+  setup             prima configurazione del PC: chiave SSH, alias e chiave host del server.
+                    Da eseguire una sola volta da chi entra nel team.
+  authorize-key     autorizza sul server la chiave pubblica di un collega (-KeyFile <file.pub>).
+                    La esegue chi ha gia' accesso.
   preflight         controlli in sola lettura, locali e remoti
   install           prima installazione: directory, segreti, build, clone del database (dump in
                     sola lettura dalla sorgente), migrazioni sul clone, avvio e verifica
@@ -37,9 +41,9 @@ powershell -NoProfile -File scripts\deploy.ps1 -Action deploy -Ref ''   # albero
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('preflight', 'install', 'deploy', 'build', 'refresh-clone', 'configure-source', 'rollback',
-        'backup-db', 'restore-db', 'status', 'logs', 'verify', 'stop', 'start', 'tunnel',
-        'publish-domain', 'unpublish-domain')]
+    [ValidateSet('setup', 'authorize-key', 'preflight', 'install', 'deploy', 'build', 'refresh-clone',
+        'configure-source', 'rollback', 'backup-db', 'restore-db', 'status', 'logs', 'verify',
+        'stop', 'start', 'tunnel', 'publish-domain', 'unpublish-domain')]
     [string] $Action = 'deploy',
     [string] $SshHost = 'ersaf-12',
     [string] $ServerIp = '192.168.40.12',
@@ -57,7 +61,9 @@ param(
     [string] $SourceDb = 'admin_entedb',
     # Pubblicazione sul dominio: il reverse proxy della LAN raggiunge la porta web del server.
     [string] $Domain = 'unistaging.ersaf.it',
-    [string] $ProxyIp = '192.168.40.10'
+    [string] $ProxyIp = '192.168.40.10',
+    # File .pub del collega da autorizzare sul server (azione authorize-key).
+    [string] $KeyFile = ''
 )
 
 Set-StrictMode -Version Latest
@@ -65,6 +71,11 @@ $ErrorActionPreference = 'Stop'
 $OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 
 $RemoteBase = '/srv/ersaf-universita'
+$NomeChiave = 'id_ed25519_ersaf_12'
+# Chiave pubblica host del server, presa da una postazione gia' autorizzata. Serve a scrivere
+# known_hosts in anticipo: il primo collegamento non chiede nulla e non si accetta alla cieca
+# un'identita' mai vista. Se il server venisse reinstallato, questa riga va aggiornata.
+$ChiaveHostServer = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFjwh8bLL2j9/5T9ok8NzI0OpsQmgerNO0sNfpPuacdQ'
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $RemoteScripts = Join-Path $ProjectRoot 'deploy\remote'
 $SshOptions = @('-o', 'BatchMode=yes', '-o', 'ConnectTimeout=15',
@@ -132,7 +143,7 @@ function Invoke-Remote {
     $bundle | & ssh @SshOptions $SshHost $comando | Out-Host
     $codice = $LASTEXITCODE
     if ($codice -eq 255) {
-        Stop-WithError "connessione SSH a '$SshHost' non riuscita. Verificare l'alias in ~/.ssh/config e che la chiave pubblica sia autorizzata su root@$ServerIp (docs/deploy.md, sezione Accesso)."
+        Stop-WithError "connessione SSH a '$SshHost' non riuscita. Se e' la prima volta su questo PC, eseguire: scripts\deploy.ps1 -Action setup, poi far autorizzare la chiave mostrata."
     }
     if ($codice -ne 0 -and -not $AllowFailure) {
         Stop-WithError "comando remoto '$($Arguments[0])' terminato con codice $codice."
@@ -256,9 +267,129 @@ function Set-SourceCredentials {
     Write-Note "sorgente registrata sul server: ${SourceHost}:$SourcePort schema $SourceDb"
 }
 
+# ---------------------------------------------------------------- prima configurazione
+
+function Get-CartellaSsh {
+    $cartella = Join-Path $env:USERPROFILE '.ssh'
+    if (-not (Test-Path -LiteralPath $cartella)) {
+        New-Item -ItemType Directory -Path $cartella | Out-Null
+    }
+    return $cartella
+}
+
+function New-IdentitaSsh([string] $Percorso) {
+    if (Test-Path -LiteralPath $Percorso) {
+        Write-Note 'chiave SSH gia'' presente, la conservo'
+        return
+    }
+    Write-Note 'genero una chiave SSH dedicata a questo progetto'
+    # Senza passphrase: lo script si collega da solo e una richiesta interattiva lo bloccherebbe.
+    # La chiave vale solo per questo server e resta sul PC.
+    & ssh-keygen -t ed25519 -f $Percorso -N '""' -C "$env:USERNAME@ersaf-universita" | Out-Null
+    if ($LASTEXITCODE -ne 0) { Stop-WithError 'generazione della chiave SSH non riuscita' }
+}
+
+function Add-ChiaveHostConosciuta([string] $Cartella) {
+    $percorso = Join-Path $Cartella 'known_hosts'
+    if (-not (Test-Path -LiteralPath $percorso)) { New-Item -ItemType File -Path $percorso | Out-Null }
+    $righe = @(Get-Content -LiteralPath $percorso -ErrorAction SilentlyContinue)
+    if ($righe | Where-Object { $_ -like "$ServerIp *" }) {
+        Write-Note 'chiave host del server gia'' registrata'
+        return
+    }
+    Add-Content -LiteralPath $percorso -Value "$ServerIp $ChiaveHostServer"
+    Write-Note 'registrata la chiave host del server: il primo collegamento non chiedera'' conferme'
+}
+
+function Add-AliasSsh([string] $Cartella, [string] $Chiave) {
+    $percorso = Join-Path $Cartella 'config'
+    if (-not (Test-Path -LiteralPath $percorso)) { New-Item -ItemType File -Path $percorso | Out-Null }
+    $contenuto = Get-Content -LiteralPath $percorso -Raw -ErrorAction SilentlyContinue
+    if ($contenuto -and $contenuto -match "(?m)^Host\s+.*\b$([regex]::Escape($SshHost))\b") {
+        Write-Note "alias '$SshHost' gia' presente in ~/.ssh/config"
+        return
+    }
+    $blocco = @"
+
+Host $SshHost $ServerIp
+  HostName $ServerIp
+  User root
+  Port $SshPort
+  IdentityFile $($Chiave -replace '\\', '/')
+  IdentitiesOnly yes
+  StrictHostKeyChecking yes
+"@
+    Add-Content -LiteralPath $percorso -Value $blocco
+    Write-Note "aggiunto l'alias '$SshHost' a ~/.ssh/config"
+}
+
+function Test-AccessoRemoto {
+    $precedente = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $esito = @(& ssh @SshOptions $SshHost 'echo ERSAF_OK' 2>&1 | ForEach-Object { "$_" })
+    $codice = $LASTEXITCODE
+    $ErrorActionPreference = $precedente
+    return ($codice -eq 0 -and ($esito -contains 'ERSAF_OK'))
+}
+
+function Invoke-Setup {
+    Test-LocalTools
+    $cartella = Get-CartellaSsh
+    $chiave = Join-Path $cartella $NomeChiave
+    Write-Step 'Configurazione dell''accesso al server'
+    New-IdentitaSsh $chiave
+    Add-ChiaveHostConosciuta $cartella
+    Add-AliasSsh $cartella $chiave
+    Test-Vpn
+    if (Test-AccessoRemoto) {
+        Write-Host "`nTutto pronto: l'accesso al server funziona." -ForegroundColor Green
+        Write-Host 'Da ora il deploy e'' un solo comando:'
+        Write-Host '  powershell -NoProfile -ExecutionPolicy Bypass -File scripts\deploy.ps1'
+        return
+    }
+    Write-Host "`nManca solo un passo: la tua chiave deve essere autorizzata sul server." -ForegroundColor Yellow
+    Write-Host 'Invia a chi gestisce il server il contenuto di questo file (e'' una chiave pubblica,'
+    Write-Host 'si puo'' mandare tranquillamente in chat):'
+    Write-Host "  $chiave.pub" -ForegroundColor Cyan
+    Write-Host ''
+    Write-Host (Get-Content -LiteralPath "$chiave.pub" -Raw).Trim()
+    Write-Host ''
+    Write-Host 'Quando ti dicono che e'' fatto, ricontrolla con:'
+    Write-Host '  powershell -NoProfile -ExecutionPolicy Bypass -File scripts\deploy.ps1 -Action preflight'
+}
+
+function Invoke-AuthorizeKey {
+    if (-not $KeyFile) { Stop-WithError 'indicare -KeyFile <percorso del file .pub del collega>' }
+    if (-not (Test-Path -LiteralPath $KeyFile)) { Stop-WithError "file non trovato: $KeyFile" }
+    $chiave = (Get-Content -LiteralPath $KeyFile -Raw).Trim()
+    if ($chiave -notmatch '^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/=]+') {
+        Stop-WithError 'il file non contiene una chiave pubblica SSH valida'
+    }
+    if ($chiave -match 'PRIVATE KEY') { Stop-WithError 'questa e'' una chiave PRIVATA: va usata solo quella .pub' }
+    Write-Step 'Autorizzazione di una chiave sul server'
+    & ssh-keygen -l -f $KeyFile | Out-Host
+    Confirm-Typed 'AUTORIZZA' ("La chiave qui sopra potra' accedere come root a $ServerIp. " +
+        'Le chiavi gia'' presenti restano invariate.')
+    $remoto = @'
+umask 077
+mkdir -p /root/.ssh && chmod 700 /root/.ssh
+touch /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys
+tmp=$(mktemp)
+sed -e '1s/^\xEF\xBB\xBF//' -e 's/\r$//' > "$tmp"
+if grep -qxF -f "$tmp" /root/.ssh/authorized_keys; then echo "chiave gia' presente, nulla da modificare"
+else cat "$tmp" >> /root/.ssh/authorized_keys; echo "chiave aggiunta"; fi
+rm -f "$tmp"
+echo "chiavi autorizzate ora: $(grep -c . /root/.ssh/authorized_keys)"
+'@
+    $chiave | & ssh @SshOptions $SshHost $remoto | Out-Host
+    if ($LASTEXITCODE -ne 0) { Stop-WithError "autorizzazione non riuscita (codice $LASTEXITCODE)" }
+}
+
 # ---------------------------------------------------------------- azioni
 
 switch ($Action) {
+    'setup' { Invoke-Setup }
+    'authorize-key' { Test-LocalTools; Test-Vpn; Invoke-AuthorizeKey }
     'preflight' {
         Test-ConnessioneCompleta
         Invoke-Preflight '--auto'

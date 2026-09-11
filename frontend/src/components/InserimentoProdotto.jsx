@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
-import { API_BASE_URL } from "../lib/api";
+import { apiFetch, messaggioErrore } from "../lib/api";
 import AlertMessage from "./AlertMessage";
 import ProdottoFormInfo from "./ProdottoFormInfo";
 import ProdottoDettagliTabella from "./ProdottoDettagliTabella";
@@ -39,7 +39,7 @@ export default function InserimentoProdotto() {
       listDettaglio_dataInizioValidazione: new Date()
         .toISOString()
         .split("T")[0],
-      listDettaglio_dataFineValidazione: "9999-12-31",
+      listDettaglio_dataFineValidazionoe: "9999-12-31",
       listDettaglio_prezzo: "",
       listDettaglio_durata: "",
       listDettaglio_CFU: "",
@@ -58,7 +58,7 @@ export default function InserimentoProdotto() {
 
   const fetchNextCode = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/listini-testa/next-code`);
+      const response = await apiFetch(`/listini-testa/next-code`);
       if (response.ok) {
         const data = await response.json();
         if (data.codice) {
@@ -82,49 +82,60 @@ export default function InserimentoProdotto() {
       }));
     }
 
-    if (isModifica) {
-      fetch(`${API_BASE_URL}/listini-testa/${id}`)
-        .then((res) => {
-          if (!res.ok) throw new Error("Errore nel recupero del prodotto");
-          return res.json();
-        })
-        .then((data) => {
-          setFormData({
-            listTesta_codice: data.listTesta_codice || "",
-            listTesta_descrizione: data.listTesta_descrizione || "",
-            listTesta_livello: data.listTesta_livello ?? "",
-            listino_tipo_id: data.listino_tipo_id ?? 2,
-            listino_modalita_id: data.listino_modalita_id ?? "",
-            listino_tipoCorso_id: data.listino_tipoCorso_id ?? 8,
-            listino_durataLaurea_id: data.listino_durataLaurea_id ?? "",
-            listino_facolta_id: data.listino_facolta_id ?? "",
-            listino_corsoLaurea_id: data.listino_corsoLaurea_id ?? "",
-            nome_universita_id: data.nome_universita_id ?? "",
-            listino_attivoSN: data.listino_attivoSN ?? -1,
-            listTesta_created_by: data.listTesta_created_by || 1,
-          });
+    async function caricaDatiProdotto() {
+      if (!isModifica) {
+        await fetchNextCode();
+        return;
+      }
 
-          if (data.dettagli && data.dettagli.length > 0) {
-            setDettagli(
-              data.dettagli.map((d) => ({
-                listDettaglio_dataInizioValidazione:
-                  d.listDettaglio_dataInizioValidazione || "",
-                listDettaglio_dataFineValidazione:
-                  d.listDettaglio_dataFineValidazione || "9999-12-31",
-                listDettaglio_prezzo: d.listDettaglio_prezzo ?? "",
-                listDettaglio_durata: d.listDettaglio_durata ?? "",
-                listDettaglio_CFU: d.listDettaglio_CFU ?? "",
-                listDettaglio_tasse: d.listDettaglio_tasse ?? "",
-              })),
-            );
-          }
-        })
-        .catch((err) => {
-          setMessage({ type: "error", text: err.message });
+      try {
+        const res = await apiFetch(`/listini-testa/${id}`);
+
+        if (!res.ok) {
+          const testoErrore = await messaggioErrore(
+            res,
+            "Errore nel recupero del prodotto",
+          );
+          throw new Error(testoErrore);
+        }
+
+        const data = await res.json();
+
+        setFormData({
+          listTesta_codice: data.listTesta_codice || "",
+          listTesta_descrizione: data.listTesta_descrizione || "",
+          listTesta_livello: data.listTesta_livello ?? "",
+          listino_tipo_id: data.listino_tipo_id ?? 2,
+          listino_modalita_id: data.listino_modalita_id ?? "",
+          listino_tipoCorso_id: data.listino_tipoCorso_id ?? 8,
+          listino_durataLaurea_id: data.listino_durataLaurea_id ?? "",
+          listino_facolta_id: data.listino_facolta_id ?? "",
+          listino_corsoLaurea_id: data.listino_corsoLaurea_id ?? "",
+          nome_universita_id: data.nome_universita_id ?? "",
+          listino_attivoSN: data.listino_attivoSN ?? -1,
+          listTesta_created_by: data.listTesta_created_by || 1,
         });
-    } else {
-      fetchNextCode();
+
+        if (data.dettagli && data.dettagli.length > 0) {
+          setDettagli(
+            data.dettagli.map((d) => ({
+              listDettaglio_dataInizioValidazione:
+                d.listDettaglio_dataInizioValidazione || "",
+              listDettaglio_dataFineValidazionoe:
+                d.listDettaglio_dataFineValidazionoe || "9999-12-31",
+              listDettaglio_prezzo: d.listDettaglio_prezzo ?? "",
+              listDettaglio_durata: d.listDettaglio_durata ?? "",
+              listDettaglio_CFU: d.listDettaglio_CFU ?? "",
+              listDettaglio_tasse: d.listDettaglio_tasse ?? "",
+            })),
+          );
+        }
+      } catch (err) {
+        setMessage({ type: "error", text: err.message });
+      }
     }
+
+    caricaDatiProdotto();
   }, [id, isModifica]);
 
   const handleGeneraCodice = async () => {
@@ -192,7 +203,7 @@ export default function InserimentoProdotto() {
         if (index === prevDettagli.length - 1) {
           return {
             ...det,
-            listDettaglio_dataFineValidazione: dataIeri,
+            listDettaglio_dataFineValidazionoe: dataIeri,
           };
         }
         return det;
@@ -202,7 +213,7 @@ export default function InserimentoProdotto() {
         ...dettagliAggiornati,
         {
           listDettaglio_dataInizioValidazione: oggi,
-          listDettaglio_dataFineValidazione: "9999-12-31",
+          listDettaglio_dataFineValidazionoe: "9999-12-31",
           listDettaglio_prezzo: "",
           listDettaglio_durata: "",
           listDettaglio_CFU: "",
@@ -232,7 +243,7 @@ export default function InserimentoProdotto() {
       return;
     }
 
-    let dettagliDaInviare = [...dettagli];
+    let dettagliDaInviare = dettagli.map((det) => ({ ...det }));
 
     for (let i = 0; i < dettagliDaInviare.length; i++) {
       const det = dettagliDaInviare[i];
@@ -265,16 +276,24 @@ export default function InserimentoProdotto() {
     }
 
     if (dettagliDaInviare.length > 1) {
-      const ultimaRiga = dettagliDaInviare[dettagliDaInviare.length - 1];
-      if (ultimaRiga.listDettaglio_dataInizioValidazione) {
-        const indicePrecedente = dettagliDaInviare.length - 2;
-        dettagliDaInviare[indicePrecedente] = {
-          ...dettagliDaInviare[indicePrecedente],
-          listDettaglio_dataFineValidazione: getIeri(
-            ultimaRiga.listDettaglio_dataInizioValidazione,
-          ),
-        };
+      for (let i = 0; i < dettagliDaInviare.length - 1; i++) {
+        const dataInizioSuccessiva =
+          dettagliDaInviare[i + 1].listDettaglio_dataInizioValidazione;
+        if (dataInizioSuccessiva && dataInizioSuccessiva.trim() !== "") {
+          dettagliDaInviare[i].listDettaglio_dataFineValidazionoe =
+            getIeri(dataInizioSuccessiva);
+        } else {
+          const oggi = new Date().toISOString().split("T")[0];
+          dettagliDaInviare[i].listDettaglio_dataFineValidazionoe =
+            getIeri(oggi);
+        }
       }
+    }
+
+    if (dettagliDaInviare.length > 0) {
+      dettagliDaInviare[
+        dettagliDaInviare.length - 1
+      ].listDettaglio_dataFineValidazionoe = "9999-12-31";
     }
 
     const payload = {
@@ -310,8 +329,8 @@ export default function InserimentoProdotto() {
       dettagli: dettagliDaInviare.map((d) => ({
         listDettaglio_dataInizioValidazione:
           d.listDettaglio_dataInizioValidazione || null,
-        listDettaglio_dataFineValidazione:
-          d.listDettaglio_dataFineValidazione || "9999-12-31",
+        listDettaglio_dataFineValidazionoe:
+          d.listDettaglio_dataFineValidazionoe || "9999-12-31",
         listDettaglio_prezzo: parseNumeroItaliano(d.listDettaglio_prezzo),
         listDettaglio_durata:
           d.listDettaglio_durata !== "" && d.listDettaglio_durata !== null
@@ -326,25 +345,13 @@ export default function InserimentoProdotto() {
     };
 
     try {
-      const url = isModifica
-        ? `${API_BASE_URL}/listini-testa/${id}`
-        : `${API_BASE_URL}/listini-testa/`;
-
+      const url = isModifica ? `/listini-testa/${id}` : `/listini-testa`;
       const method = isModifica ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(payload),
       });
-
-      const responseText = await response.text();
-      let result = {};
-      try {
-        result = responseText ? JSON.parse(responseText) : {};
-      } catch {}
 
       if (!response.ok) {
         if (
@@ -353,13 +360,11 @@ export default function InserimentoProdotto() {
         ) {
           await fetchNextCode();
         }
-        throw new Error(
-          result.detail
-            ? typeof result.detail === "object"
-              ? JSON.stringify(result.detail, null, 2)
-              : result.detail
-            : `Errore del server (Codice: ${response.status})`,
+        const testoErrore = await messaggioErrore(
+          response,
+          `Errore del server (Codice: ${response.status})`,
         );
+        throw new Error(testoErrore);
       }
 
       setMessage({
@@ -416,7 +421,7 @@ export default function InserimentoProdotto() {
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
           <button
             type="button"
-            onClick={() => navigate("/home")}
+            onClick={() => navigate("/prodotti-formativi")}
             className="px-5 py-2.5 border border-slate-300 text-slate-700 hover:bg-slate-100 font-medium rounded-lg text-sm transition-colors cursor-pointer"
           >
             Annulla

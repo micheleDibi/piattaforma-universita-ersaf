@@ -133,8 +133,8 @@ export default function ProdottoDettagliTabella({
                 <td className="p-2">
                   <input
                     type="date"
-                    name="listDettaglio_dataFineValidazione"
-                    value={det.listDettaglio_dataFineValidazione ?? ""}
+                    name="listDettaglio_dataFineValidazionoe"
+                    value={det.listDettaglio_dataFineValidazionoe ?? ""}
                     onChange={(e) => handleDettaglioChange(index, e)}
                     className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />

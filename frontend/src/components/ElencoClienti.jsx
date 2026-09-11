@@ -89,18 +89,27 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm, selectedRuolo, soloAttuatori, soloUtenti]);
 
+  // Modifica principale: Evento scroll ottimizzato e corretto
   useEffect(() => {
     const handleScroll = async () => {
+      // Calcolo più robusto per l'altezza dello scroll su vari browser
+      const scrollTop =
+        document.documentElement.scrollTop || document.body.scrollTop;
+      const scrollHeight =
+        document.documentElement.scrollHeight || document.body.scrollHeight;
+      const clientHeight =
+        document.documentElement.clientHeight || window.innerHeight;
+
       if (
-        window.innerHeight + window.scrollY >=
-          document.documentElement.scrollHeight - 100 &&
+        scrollTop + clientHeight >= scrollHeight - 100 &&
         !loadingRef.current &&
         hasMoreRef.current
       ) {
         setLoading(true);
         loadingRef.current = true;
 
-        const nextSkip = skip + LIMIT;
+        // Usa skipRef al posto dello state skip per evitare loop
+        const nextSkip = skipRef.current + LIMIT;
         setSkip(nextSkip);
         skipRef.current = nextSkip;
 
@@ -143,7 +152,7 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [skip, soloAttuatori, soloUtenti]);
+  }, [soloAttuatori, soloUtenti]); // Rimossa la dipendenza "skip"
 
   if (initialLoading)
     return <div className="p-4 text-center text-gray-500">Caricamento...</div>;

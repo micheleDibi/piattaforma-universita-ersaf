@@ -12,11 +12,15 @@ from src.logging_config import NOME_LOGGER, configura_logging
 # Gli import dei modelli servono a registrare i mapper prima che i router
 # risolvano le relazioni dichiarate per nome. Rimuoverli rompe la
 # configurazione di SQLAlchemy.
+from src.pratiche.models import Pratica  # noqa: F401
 from src.aziende.models import Azienda  # noqa: F401
 from src.clienti.models import Cliente  # noqa: F401
 from src.ruolo.models import Ruolo  # noqa: F401
 from src.utenti.models import Utente  # noqa: F401
 from src.universita.models import Universita  # noqa: F401
+from src.listino_tipoCorso.models import ListinoTipoCorsoDB
+from src.pratiche_stati.models import PraticaStato
+from src.listini_testa.models import ListinoTestaDB
 from src.auth.models import (  # noqa: F401
     AuthSessione,
     PasswordResetRichiesta,
@@ -31,6 +35,7 @@ from src.ruolo.routers import router as ruolo_router
 from src.utenti.routers import router as utente_router
 from src.universita.routers import router as universita_router
 from src.listini_testa.routers import router as listini_testa_router
+from src.pratiche.routers import router as pratiche_router
 
 logger = logging.getLogger(NOME_LOGGER)
 
@@ -76,6 +81,7 @@ app.include_router(auth_router)
 app.include_router(azienda_router)
 app.include_router(universita_router)
 app.include_router(listini_testa_router)
+app.include_router(pratiche_router)
 
 
 @app.exception_handler(IntegrityError)

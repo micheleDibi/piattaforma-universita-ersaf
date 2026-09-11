@@ -5,16 +5,19 @@ from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
+from src.auth.dipendenze import get_current_utente
 from src.listini_testa.models import ListinoTestaDB, ListinoTesta, ListinoTestaCreate, ListinoTestaUpdate
 from src.database import get_db 
 from src.listino_tipoCorso.models import ListinoTipoCorsoDB  
 from src.nome_universita.models import NomeUniversitaDB   
 from src.listini_dettagli.models import ListinoDettaglio
 from sqlalchemy.orm import joinedload, selectinload
-from src.auth.dipendenze import get_current_utente
+
 
 router = APIRouter(
-    prefix="/listini-testa", tags=["Listini Testa"],dependencies=[Depends(get_current_utente)],
+    prefix="/listini-testa",
+    tags=["Listini Testa"],
+    dependencies=[Depends(get_current_utente)],
 )
 
 # Funzione centralizzata per il calcolo del prossimo codice canonico
