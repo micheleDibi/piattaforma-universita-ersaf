@@ -288,7 +288,7 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
                 </tr>
               ))}
               {sottoscrittori.length === 0 && !loading && (
-                <tr>
+                <tr className="border-t border-bordo">
                   <td
                     colSpan={colSpanCount}
                     className="px-6 py-8 text-center text-sm text-testo-tenue"

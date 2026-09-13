@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { campo } from "../config/styles/campo";
+import { pulsante } from "../config/styles/pulsante";
+import { intestazioneTabella, rigaTabella } from "../config/styles/superficie";
 
 export default function ProdottoDettagliTabella({
   dettagli,
@@ -87,24 +90,24 @@ export default function ProdottoDettagliTabella({
   };
 
   return (
-    <div className="pt-6 border-t border-slate-200">
+    <div className="pt-6 border-t border-bordo">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-md font-bold text-slate-700">Dettaglio prodotto</h3>
+        <h3 className="text-titolo-sezione text-testo">Dettaglio prodotto</h3>
         {isModifica && (
           <button
             type="button"
             onClick={handleAggiungiRiga}
             disabled={haRigaNuova}
-            className="bg-slate-800 hover:bg-slate-900 disabled:opacity-55 disabled:cursor-not-allowed text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors shadow-sm cursor-pointer"
+            className={`${pulsante("secondario", "piccolo")} disabled:cursor-not-allowed`}
           >
             + Aggiungi nuova riga
           </button>
         )}
       </div>
 
-      <div className="overflow-x-auto border border-slate-200 rounded-lg">
-        <table className="w-full text-left text-sm text-slate-600">
-          <thead className="bg-slate-100 text-xs uppercase text-slate-700 border-b border-slate-200">
+      <div className="overflow-x-auto border border-bordo rounded-superficie">
+        <table className="w-full text-left text-sm text-testo">
+          <thead className={`${intestazioneTabella()} uppercase border-b border-bordo`}>
             <tr>
               <th className="p-2.5">Inizio Validità</th>
               <th className="p-2.5">Fine Validità</th>
@@ -119,7 +122,7 @@ export default function ProdottoDettagliTabella({
             {dettagli.map((det, index) => (
               <tr
                 key={index}
-                className="border-b border-slate-200 hover:bg-slate-50"
+                className={rigaTabella()}
               >
                 <td className="p-2">
                   <input
@@ -127,7 +130,7 @@ export default function ProdottoDettagliTabella({
                     name="listDettaglio_dataInizioValidazione"
                     value={det.listDettaglio_dataInizioValidazione ?? ""}
                     onChange={(e) => handleDettaglioChange(index, e)}
-                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className={campo("minimo")}
                   />
                 </td>
                 <td className="p-2">
@@ -136,7 +139,7 @@ export default function ProdottoDettagliTabella({
                     name="listDettaglio_dataFineValidazionoe"
                     value={det.listDettaglio_dataFineValidazionoe ?? ""}
                     onChange={(e) => handleDettaglioChange(index, e)}
-                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className={campo("minimo")}
                   />
                 </td>
                 <td className="p-2">
@@ -167,7 +170,7 @@ export default function ProdottoDettagliTabella({
                     onBlur={(e) =>
                       handleValoreDecimaleBlur(index, "listDettaglio_prezzo", e)
                     }
-                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className={campo("minimo")}
                   />
                 </td>
                 <td className="p-2">
@@ -177,7 +180,7 @@ export default function ProdottoDettagliTabella({
                     placeholder="Mesi"
                     value={det.listDettaglio_durata ?? ""}
                     onChange={(e) => handleDettaglioChange(index, e)}
-                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className={campo("minimo")}
                   />
                 </td>
                 <td className="p-2">
@@ -187,7 +190,7 @@ export default function ProdottoDettagliTabella({
                     placeholder="CFU"
                     value={det.listDettaglio_CFU ?? ""}
                     onChange={(e) => handleDettaglioChange(index, e)}
-                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className={campo("minimo")}
                   />
                 </td>
                 <td className="p-2">
@@ -218,7 +221,7 @@ export default function ProdottoDettagliTabella({
                     onBlur={(e) =>
                       handleValoreDecimaleBlur(index, "listDettaglio_tasse", e)
                     }
-                    className="w-full bg-white border border-slate-300 rounded p-1.5 text-xs text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className={campo("minimo")}
                   />
                 </td>
                 <td className="p-2 text-center">
@@ -226,7 +229,7 @@ export default function ProdottoDettagliTabella({
                     <button
                       type="button"
                       onClick={() => handleRimuoviRiga(index)}
-                      className="text-rose-600 hover:text-rose-800 font-bold px-2 py-1 text-xs cursor-pointer"
+                      className="text-negativo hover:opacity-90 font-bold px-2 py-1 text-xs cursor-pointer"
                       title="Rimuovi riga"
                     >
                       ✕

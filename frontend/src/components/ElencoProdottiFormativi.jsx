@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { apiFetch } from "../lib/api";
+import { campo } from "../config/styles/campo";
+import { pulsante } from "../config/styles/pulsante";
+import {
+  contenitoreTabella,
+  intestazioneTabella,
+  rigaTabella,
+  scheda,
+} from "../config/styles/superficie";
 
 export default function ElencoProdottiFormativi() {
   const navigate = useNavigate();
@@ -199,14 +207,14 @@ export default function ElencoProdottiFormativi() {
   }, []);
 
   if (initialLoading)
-    return <div className="p-4 text-center text-gray-500">Caricamento...</div>;
+    return <div className="p-4 text-center text-testo-tenue">Caricamento...</div>;
   if (error)
-    return <div className="p-4 text-center text-red-500">Errore: {error}</div>;
+    return <div className="p-4 text-center text-negativo">Errore: {error}</div>;
 
   return (
     <div className="w-full p-6">
       <div className="w-full my-6 flex flex-col sm:flex-row justify-between items-center gap-4 px-2">
-        <h3 className="text-xl font-bold text-gray-800">
+        <h3 className="text-xl font-bold text-testo">
           Elenco Prodotti Formativi:
         </h3>
 
@@ -217,13 +225,13 @@ export default function ElencoProdottiFormativi() {
               placeholder="Cerca per titolo o codice..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm text-gray-700"
+              className={campo()}
             />
           </div>
           <button
             type="button"
             onClick={handleNuovo}
-            className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors whitespace-nowrap cursor-pointer"
+            className={`${pulsante()} w-full sm:w-auto whitespace-nowrap`}
           >
             Nuovo Prodotto
           </button>
@@ -235,7 +243,7 @@ export default function ElencoProdottiFormativi() {
         <select
           value={filtroUniversita}
           onChange={(e) => setFiltroUniversita(e.target.value)}
-          className="w-full sm:w-60 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm bg-white text-gray-700"
+          className={`${campo()} sm:w-60`}
         >
           <option value="Tutte le università">Tutte le università</option>
           {universitaList.map((uni) => (
@@ -248,7 +256,7 @@ export default function ElencoProdottiFormativi() {
         <select
           value={filtroTipo}
           onChange={(e) => setFiltroTipo(e.target.value)}
-          className="w-full sm:w-60 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm bg-white text-gray-700"
+          className={`${campo()} sm:w-60`}
         >
           <option value="Tutti i tipi">Tutti i tipi</option>
           {tipiList.map((tipo) => (
@@ -261,7 +269,7 @@ export default function ElencoProdottiFormativi() {
         <select
           value={filtroAttivo}
           onChange={(e) => setFiltroAttivo(e.target.value)}
-          className="w-full sm:w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm bg-white text-gray-700"
+          className={`${campo()} sm:w-40`}
         >
           <option value="Tutti">Attivo: Tutti</option>
           <option value="Sì">Attivo: Sì</option>
@@ -271,57 +279,57 @@ export default function ElencoProdottiFormativi() {
 
       {/* Tabella o messaggio nessun risultato */}
       {prodotti.length === 0 && !loading ? (
-        <div className="w-full bg-white shadow-md rounded-lg p-8 text-center text-gray-500 text-sm border border-gray-200">
+        <div className={`${scheda()} w-full p-8 text-center text-testo-tenue text-sm`}>
           Nessun risultato trovato per i filtri di ricerca selezionati.
         </div>
       ) : (
-        <div className="w-full bg-white shadow-md rounded-lg overflow-hidden border border-gray-200 my-6">
-          <table className="min-w-full divide-y divide-gray-200 text-left">
-            <thead className="bg-gray-100">
+        <div className={`${contenitoreTabella()} my-6`}>
+          <table className="min-w-full text-left">
+            <thead className={intestazioneTabella()}>
               <tr>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase">
+                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider">
                   Università
                 </th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase">
+                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider">
                   Codice
                 </th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase">
+                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider">
                   Titolo
                 </th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase">
+                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider">
                   Tipo Prodotto
                 </th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase">
+                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider">
                   Attivo
                 </th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-700 uppercase text-right">
+                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider text-right">
                   Modifica
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-superficie">
               {prodotti.map((item, index) => {
                 const isAttivo = item.listino_attivoSN === -1;
                 return (
                   <tr
                     key={item.listTesta_id || index}
-                    className="hover:bg-gray-50"
+                    className={rigaTabella()}
                   >
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 text-sm font-medium text-testo-forte">
                       {item.nome_universita || "-"}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-testo-tenue">
                       {item.listTesta_codice}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-800">
+                    <td className="px-6 py-4 text-sm text-testo">
                       {item.listTesta_descrizione}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-testo-tenue">
                       {item.listino_tipoCorso_descrizione || "-"}
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <span
-                        className={`px-2 py-1 rounded text-xs font-semibold ${isAttivo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                        className={`px-2 py-1 rounded-controllo text-xs font-semibold ${isAttivo ? "bg-positivo/10 text-positivo" : "bg-superficie-alta text-testo-tenue"}`}
                       >
                         {isAttivo ? "Sì" : "No"}
                       </span>
@@ -330,7 +338,7 @@ export default function ElencoProdottiFormativi() {
                       <button
                         type="button"
                         onClick={() => handleModifica(item.listTesta_id)}
-                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors cursor-pointer"
+                        className={pulsante("primario", "piccolo")}
                       >
                         Modifica
                       </button>
@@ -345,13 +353,13 @@ export default function ElencoProdottiFormativi() {
 
       {/* Indicatore di caricamento o fine lista */}
       {loading && (
-        <div className="text-center py-4 text-gray-500 text-sm">
+        <div className="text-center py-4 text-testo-tenue text-sm">
           Caricamento altri elementi...
         </div>
       )}
 
       {!hasMore && prodotti.length > 0 && (
-        <div className="text-center py-6 text-gray-400 text-xs italic">
+        <div className="text-center py-6 text-testo-tenue text-nota italic">
           Hai raggiunto la fine della lista. Non ci sono altri risultati.
         </div>
       )}

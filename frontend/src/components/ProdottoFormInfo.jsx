@@ -1,11 +1,13 @@
+import { campo, etichetta, spunta } from "../config/styles/campo";
+
 export default function ProdottoFormInfo({ formData, handleChange }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Codice Prodotto */}
         <div>
-          <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-            Codice Prodotto <span className="text-rose-500">*</span>
+          <label className={etichetta()}>
+            Codice Prodotto <span className="text-negativo">*</span>
           </label>
           <div className="flex gap-2">
             <input
@@ -14,21 +16,21 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
               value={formData.listTesta_codice ?? ""}
               onChange={handleChange}
               placeholder="Inserisci o genera codice"
-              className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className={campo()}
             />
           </div>
         </div>
 
         {/* Tipo di Corso / Laurea (Spostato al posto di Tipo Prodotto) */}
         <div>
-          <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+          <label className={etichetta()}>
             Tipo di Corso / Laurea
           </label>
           <select
             name="listino_tipoCorso_id"
             value={formData.listino_tipoCorso_id ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+            className={`${campo()} cursor-pointer`}
           >
             <option value="">-- Seleziona Tipo Corso --</option>
             <option value={1}>MASTER</option>
@@ -52,11 +54,11 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             name="listino_attivoSN"
             checked={formData.listino_attivoSN === -1}
             onChange={handleChange}
-            className="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+            className={`${spunta()} cursor-pointer`}
           />
           <label
             htmlFor="listino_attivoSN"
-            className="text-sm font-medium text-slate-700 cursor-pointer"
+            className="text-sm font-medium text-testo cursor-pointer"
           >
             Attivo
           </label>
@@ -64,14 +66,14 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
 
         {/* Università */}
         <div className="md:col-span-2">
-          <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+          <label className={etichetta()}>
             Università
           </label>
           <select
             name="nome_universita_id"
             value={formData.nome_universita_id ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+            className={`${campo()} cursor-pointer`}
           >
             <option value="">-- Seleziona Università --</option>
             <option value={1}>Università Telematica eCampus</option>
@@ -87,8 +89,8 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
 
       {/* Denominazione */}
       <div>
-        <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
-          Denominazione <span className="text-rose-500">*</span>
+        <label className={etichetta()}>
+          Denominazione <span className="text-negativo">*</span>
         </label>
         <textarea
           name="listTesta_descrizione"
@@ -96,21 +98,21 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
           value={formData.listTesta_descrizione ?? ""}
           onChange={handleChange}
           required
-          className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          className={campo()}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Livello */}
         <div>
-          <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+          <label className={etichetta()}>
             Livello
           </label>
           <select
             name="listTesta_livello"
             value={formData.listTesta_livello ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+            className={`${campo()} cursor-pointer`}
           >
             <option value="">-- Seleziona Livello --</option>
             <option value={1}>1</option>
@@ -120,14 +122,14 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
 
         {/* Modalità di Erogazione */}
         <div>
-          <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+          <label className={etichetta()}>
             Modalità di Erogazione
           </label>
           <select
             name="listino_modalita_id"
             value={formData.listino_modalita_id ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+            className={`${campo()} cursor-pointer`}
           >
             <option value="">-- Seleziona Modalità --</option>
             <option value={1}>FULL ONLINE</option>
@@ -138,14 +140,14 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
 
         {/* Facoltà */}
         <div>
-          <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+          <label className={etichetta()}>
             Facoltà
           </label>
           <select
             name="listino_facolta_id"
             value={formData.listino_facolta_id ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+            className={`${campo()} cursor-pointer`}
           >
             <option value="">-- Seleziona Facoltà --</option>
             <option value={1}>ECONOMIA</option>
@@ -159,14 +161,14 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
 
         {/* Corso di Laurea */}
         <div className="md:col-span-2">
-          <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+          <label className={etichetta()}>
             Corso di Laurea
           </label>
           <select
             name="listino_corsoLaurea_id"
             value={formData.listino_corsoLaurea_id ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+            className={`${campo()} cursor-pointer`}
           >
             <option value="">-- Seleziona Corso di Laurea --</option>
             <option value={1}>L33 - ECONOMIA E COMMERCIO</option>
@@ -224,14 +226,14 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
 
         {/* Durata Laurea */}
         <div>
-          <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+          <label className={etichetta()}>
             Durata Laurea
           </label>
           <select
             name="listino_durataLaurea_id"
             value={formData.listino_durataLaurea_id ?? ""}
             onChange={handleChange}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+            className={`${campo()} cursor-pointer`}
           >
             <option value="">-- Seleziona Durata --</option>
             <option value={1}>TRIENNALE</option>

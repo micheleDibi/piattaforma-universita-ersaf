@@ -4,6 +4,8 @@ import { apiFetch, messaggioErrore } from "../lib/api";
 import AlertMessage from "./AlertMessage";
 import ProdottoFormInfo from "./ProdottoFormInfo";
 import ProdottoDettagliTabella from "./ProdottoDettagliTabella";
+import { pulsante } from "../config/styles/pulsante";
+import { scheda } from "../config/styles/superficie";
 
 // Converte una stringa numerica (con virgola o punto) in Number.
 // Restituisce null se non è un numero valido.
@@ -384,17 +386,17 @@ export default function InserimentoProdotto() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white rounded-xl shadow-md border border-slate-200 mt-6 font-sans">
-      <div className="flex justify-between items-center border-b border-slate-200 pb-4 mb-6">
+    <div className={`${scheda()} max-w-6xl mx-auto p-6 mt-6 font-sans`}>
+      <div className="flex justify-between items-center border-b border-bordo pb-4 mb-6">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">
+          <h2 className="text-xl font-bold text-testo">
             {isModifica ? "Modifica Prodotto" : "Inserimento Prodotto"}
           </h2>
         </div>
         <button
           type="button"
           onClick={() => navigate("/home")}
-          className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 text-sm font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
+          className={pulsante("secondario")}
         >
           ← Torna all'elenco
         </button>
@@ -418,18 +420,18 @@ export default function InserimentoProdotto() {
           isModifica={isModifica}
         />
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+        <div className="flex justify-end gap-3 pt-4 border-t border-bordo">
           <button
             type="button"
             onClick={() => navigate("/prodotti-formativi")}
-            className="px-5 py-2.5 border border-slate-300 text-slate-700 hover:bg-slate-100 font-medium rounded-lg text-sm transition-colors cursor-pointer"
+            className={pulsante("secondario", "grande")}
           >
             Annulla
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+            className={pulsante("primario", "grande")}
           >
             {loading
               ? "Salvataggio in corso..."
