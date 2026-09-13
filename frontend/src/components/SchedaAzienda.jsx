@@ -7,8 +7,11 @@ import {
   campo as classiCampo,
   etichetta as classiEtichetta,
 } from "../config/styles/campo";
+import { contenutoPagina } from "../config/styles/pagina";
 import { pulsante } from "../config/styles/pulsante";
 import { scheda } from "../config/styles/superficie";
+import { ROTTE } from "../config/routes/rotte";
+import IntestazionePagina from "./shared/IntestazionePagina";
 
 // I due bottoni di ElencoAziende navigavano a /nuova-azienda e
 // /modifica-azienda/:id, che non erano registrate in App.jsx: cadevano nel
@@ -104,7 +107,7 @@ export default function SchedaAzienda() {
         { method: inModifica ? "PUT" : "POST", body: JSON.stringify(corpo) },
       );
       if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
-      navigate("/home");
+      navigate(ROTTE.aziende);
     } catch (err) {
       setErrore(err.message);
     } finally {
@@ -141,24 +144,12 @@ export default function SchedaAzienda() {
   );
 
   return (
-    <div className="min-h-screen bg-superficie-tenue px-4 py-10">
-      <form
-        onSubmit={invia}
-        className={`${scheda()} mx-auto max-w-4xl p-8`}
-      >
-        <div className="mb-6 flex items-center justify-between border-b-2 border-bordo pb-2.5">
-          <h2 className="text-xl font-bold text-testo">
-            {inModifica ? "Modifica azienda" : "Nuova azienda"}
-          </h2>
-          <button
-            type="button"
-            onClick={() => navigate("/home")}
-            className={pulsante("discreto")}
-          >
-            ← Torna all'elenco
-          </button>
-        </div>
-
+    <div className={contenutoPagina("modulo")}>
+      <IntestazionePagina
+        titolo={inModifica ? "Modifica azienda" : "Nuova azienda"}
+        indietro={{ rotta: ROTTE.aziende, etichetta: "Aziende" }}
+      />
+      <form onSubmit={invia} className={`${scheda()} p-6 sm:p-8`}>
         {errore && (
           <div className="mb-6 whitespace-pre-line rounded-controllo border border-negativo/30 bg-negativo-tenue p-4 text-sm text-negativo">
             {errore}
@@ -180,7 +171,7 @@ export default function SchedaAzienda() {
           </button>
           <button
             type="button"
-            onClick={() => navigate("/home")}
+            onClick={() => navigate(ROTTE.aziende)}
             className={pulsante("discreto", "grande")}
           >
             Annulla

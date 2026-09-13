@@ -1,42 +1,34 @@
 /**
- * Varianti del pulsante nativo.
+ * Varianti dei pulsanti.
  *
- * Come per i campi non esiste nessun componente: resta `<button>` e da qui
- * arriva la configurazione visuale.
+ * Nessun wrapper cosmetico: il pulsante resta <button> nativo.
  *
  *   <button className={pulsante()}>Salva</button>
- *   <button className={pulsante("secondario")}>Annulla</button>
+ *   <button className={pulsante("secondario", "piccolo")}>Modifica</button>
+ *   <button className={pulsanteIcona()} aria-label="Apri il menu">...</button>
  *
- * Perche' esiste: lo stesso ruolo, l'azione primaria, era dipinto con quattro
- * colori diversi nelle varie pagine, indigo e blue in due tonalita' ciascuno.
- *
- * REGOLA DI QUESTO CATALOGO: riproduce l'aspetto attuale. L'unica scelta che
- * comporta una differenza visibile e' il colore dell'azione primaria, che qui
- * diventa uno solo: convertendo un pulsante oggi blu lo si vede diventare
- * indaco. Per questo la conversione va fatta a vista, una pagina alla volta, e
- * non con una sostituzione automatica.
+ * L'anello di messa a fuoco compare solo da tastiera (focus-visible): chi usa
+ * il mouse non lo vede dopo il clic, chi naviga con Tab sa sempre dove si trova.
  */
 
 const BASE =
-  "inline-flex items-center justify-center gap-2 font-medium " +
-  // Il bordo trasparente tiene la stessa altezza fra primario e secondario, ed
-  // e' anche la misura che i pulsanti avevano prima della centralizzazione.
+  "inline-flex items-center justify-center gap-2 font-medium whitespace-nowrap " +
   "rounded-controllo border border-transparent transition-colors cursor-pointer " +
-  "focus:outline-none focus:ring-2 focus:ring-offset-2 " +
-  "disabled:opacity-50";
+  "focus:outline-none focus-visible:ring-3 focus-visible:ring-fuoco/30 " +
+  "disabled:opacity-50 disabled:cursor-not-allowed";
 
 const VARIANTI = {
-  primario:
-    "bg-primario text-su-primario shadow-sm hover:bg-primario-scuro focus:ring-primario",
+  primario: "bg-primario text-su-primario shadow-xs hover:bg-primario-scuro",
   secondario:
-    "bg-superficie text-testo border-bordo-forte hover:bg-superficie-tenue focus:ring-fuoco",
-  pericolo: "bg-negativo text-su-primario shadow-sm hover:opacity-90 focus:ring-negativo",
-  discreto: "bg-transparent text-testo-tenue hover:bg-superficie-tenue focus:ring-fuoco",
+    "bg-superficie text-testo border-bordo shadow-xs " +
+    "hover:bg-superficie-tenue hover:text-testo-forte",
+  pericolo: "bg-negativo text-su-primario shadow-xs hover:opacity-90",
+  discreto: "bg-transparent text-testo-tenue hover:bg-superficie-alta hover:text-testo-forte",
 };
 
 const DIMENSIONI = {
   normale: "px-4 py-2 text-sm",
-  grande: "px-6 py-2.5 text-sm",
+  grande: "px-5 py-2.5 text-sm",
   piccolo: "px-3 py-1.5 text-xs",
 };
 
@@ -58,4 +50,14 @@ export function pulsante(
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+/** Pulsante con sola icona, per esempio apertura e chiusura del menu. */
+export function pulsanteIcona() {
+  return (
+    "inline-flex size-9 shrink-0 items-center justify-center rounded-controllo " +
+    "text-testo-tenue transition-colors cursor-pointer " +
+    "hover:bg-superficie-alta hover:text-testo-forte " +
+    "focus:outline-none focus-visible:ring-3 focus-visible:ring-fuoco/30"
+  );
 }

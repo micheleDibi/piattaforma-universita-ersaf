@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../lib/api";
 import { campo } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
-import { intestazioneTabella, rigaTabella, velo } from "../config/styles/superficie";
+import { velo } from "../config/styles/superficie";
+import { intestazioneTabella, rigaTabella } from "../config/styles/tabella";
 
 export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
   const [attuatori, setAttuatori] = useState([]);

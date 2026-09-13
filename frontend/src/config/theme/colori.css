@@ -1,40 +1,34 @@
-/* Color system dell'applicazione: unica sorgente di verita' per i colori.
+/* Color system: ogni colore ha un nome che dice a cosa serve, non come appare.
  *
- * I valori non sono inventati: sono quelli gia' usati nei componenti, promossi
- * a token semantici. Il nome dice il RUOLO, non la tinta, cosi' cambiare
- * tinta resta una modifica di una riga sola invece di una ricerca su 606
- * attributi di stile.
- *
- * Regola: nelle pagine e nei componenti si usano solo queste utilita'
- * (bg-primario, text-testo, border-bordo...), mai i colori grezzi della
- * palette come indigo-600 o slate-200.
+ * I valori partono dalla palette di Tailwind, che resta l'unica scala di
+ * riferimento. Le pagine usano soltanto questi nomi (bg-primario,
+ * text-testo-tenue...), mai i colori grezzi.
  */
 
 @theme {
-  /* Azione primaria. Oggi nei componenti convivono indigo e blue per lo stesso
-   * ruolo: qui vince indigo, che e' il piu' diffuso. La conversione dei
-   * componenti uniforma anche gli altri. */
+  /* Azione primaria: pulsanti principali, voce di menu attiva, messa a fuoco. */
   --color-primario: var(--color-indigo-600);
   --color-primario-scuro: var(--color-indigo-700);
   --color-primario-tenue: var(--color-indigo-50);
   --color-su-primario: var(--color-white);
 
-  /* Superfici, dalla piu' alta alla piu' bassa. */
+  /* Superfici, dalla piu' profonda alla piu' alta. La tela e' lo sfondo
+   * dell'applicazione su cui poggiano le schede. */
+  --color-tela: var(--color-slate-50);
   --color-superficie: var(--color-white);
   --color-superficie-tenue: var(--color-slate-50);
   --color-superficie-alta: var(--color-slate-100);
 
-  /* Bordi: quello tenue separa, quello forte delimita un controllo. */
+  /* Bordi e separazioni. */
   --color-bordo: var(--color-slate-200);
   --color-bordo-forte: var(--color-slate-300);
 
-  /* Testo. */
-  --color-testo: var(--color-slate-800);
+  /* Testo: corpo, secondario, titoli. */
+  --color-testo: var(--color-slate-700);
   --color-testo-tenue: var(--color-slate-500);
   --color-testo-forte: var(--color-slate-900);
 
-  /* Stati. Il verde dell'esito positivo e il rosso della distruzione erano
-   * gia' presenti, sparsi tra green ed emerald: qui ne resta uno solo. */
+  /* Stati. */
   --color-positivo: var(--color-emerald-600);
   --color-attenzione: var(--color-amber-500);
   --color-attenzione-tenue: var(--color-amber-50);
@@ -43,7 +37,6 @@
   --color-negativo: var(--color-red-600);
   --color-negativo-tenue: var(--color-red-50);
 
-  /* Messa a fuoco. Oggi e' blu mentre l'azione primaria e' indaco: due tinte
-   * per lo stesso concetto di "attenzione qui". Ne resta una. */
+  /* Messa a fuoco: la stessa tinta dell'azione primaria. */
   --color-fuoco: var(--color-primario);
 }

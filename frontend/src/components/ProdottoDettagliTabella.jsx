@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { campo } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
-import { intestazioneTabella, rigaTabella } from "../config/styles/superficie";
+import { intestazioneTabella, rigaTabella } from "../config/styles/tabella";
 
 export default function ProdottoDettagliTabella({
   dettagli,

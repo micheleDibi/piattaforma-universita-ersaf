@@ -1,19 +1,26 @@
-/* Scala tipografica: dimensioni e pesi con un nome che dice a cosa servono.
- *
- * La scala di Tailwind (text-sm, text-base...) resta valida e non viene
- * duplicata: qui si nominano i tre ruoli ricorrenti nelle pagine, che oggi
- * sono ripetuti a mano con combinazioni leggermente diverse di dimensione e
- * peso.
+/* Scala tipografica: famiglia, dimensioni e pesi con un nome che dice a cosa
+ * servono. La scala di Tailwind resta valida e non viene duplicata: qui si
+ * nominano soltanto i ruoli ricorrenti.
  */
 
 @theme {
+  /* Inter, servita dall'applicazione stessa: nessuna richiesta a servizi
+   * esterni. Se non si carica, subentra il carattere di sistema. */
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+  /* Titolo della pagina: "Attuatori", "Modifica azienda". */
+  --text-titolo-pagina: var(--text-2xl);
+  --text-titolo-pagina--line-height: var(--text-2xl--line-height);
+  --text-titolo-pagina--font-weight: 600;
+  --text-titolo-pagina--letter-spacing: var(--tracking-tight);
+
   /* Titolo di una sezione dentro una scheda: "Contatti", "Dati anagrafici". */
   --text-titolo-sezione: var(--text-base);
   --text-titolo-sezione--line-height: var(--text-base--line-height);
-  --text-titolo-sezione--font-weight: 700;
+  --text-titolo-sezione--font-weight: 600;
 
-  /* Etichetta di un campo. Va usata con uppercase e tracking-wider: la forma
-   * completa sta nella variante `etichetta()` di config/styles/campo.js. */
+  /* Etichetta di un campo o di una colonna. Va usata con uppercase e
+   * tracking-wider: la forma completa sta nelle varianti. */
   --text-etichetta: var(--text-xs);
   --text-etichetta--line-height: var(--text-xs--line-height);
   --text-etichetta--font-weight: 600;

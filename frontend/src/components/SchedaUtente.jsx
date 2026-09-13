@@ -214,7 +214,7 @@ export default function SchedaUtente() {
     isAttivo && ruoliAttuatori.includes(String(ruoloId));
 
   return (
-    <div className="max-w-[850px] mx-auto my-10 p-5 bg-superficie text-testo font-sans">
+    <div className="w-full text-testo font-sans">
       <h2 className={titoloSezione("separato")}>
         Dettagli Utente e Ruolo
       </h2>

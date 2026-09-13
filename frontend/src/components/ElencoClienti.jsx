@@ -1,14 +1,25 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
+import { Plus } from "lucide-react";
 import { apiFetch } from "../lib/api";
 import { leggiRuolo } from "../lib/sessione";
+import IntestazionePagina from "./shared/IntestazionePagina";
+import BarraStrumenti from "./shared/BarraStrumenti";
+import CampoRicerca from "./shared/CampoRicerca";
 import { campo } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
+import { contenutoPagina } from "../config/styles/pagina";
 import {
-  contenitoreTabella,
+  cella,
+  cellaAzioni,
+  cellaIntestazione,
   intestazioneTabella,
   rigaTabella,
-} from "../config/styles/superficie";
+  schedaElenco,
+  scorrimentoTabella,
+  statoVuoto,
+  tabella,
+} from "../config/styles/tabella";
 
 function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
   const [sottoscrittori, setSottoscrittori] = useState([]);
@@ -171,29 +182,10 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
   if (canSeeAzienda) colSpanCount += 1;
 
   return (
-    <>
-      <div className="w-full p-6">
-        <div className="w-full my-6 flex flex-col sm:flex-row justify-between items-center gap-4 px-2">
-          <h3 className="text-xl font-bold text-testo">
-            {soloAttuatori ? "Elenco Attuatori:" : "Elenco Sottoscrittori:"}
-          </h3>
-
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <div className="w-full sm:w-72">
-              <input
-                type="text"
-                placeholder={
-                  soloAttuatori
-                    ? "Cerca per nome, cognome o azienda..."
-                    : "Cerca per nome o cognome..."
-                }
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={campo()}
-              />
-            </div>
-          </div>
-
+    <div className={contenutoPagina()}>
+      <IntestazionePagina
+        titolo={soloAttuatori ? "Attuatori" : "Sottoscrittori"}
+        azioni={
           <button
             type="button"
             onClick={() =>
@@ -203,12 +195,25 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
                   : "/nuovo?tipo=sottoscrittore",
               )
             }
-            className={`${pulsante()} whitespace-nowrap`}
+            className={pulsante()}
           >
-            {soloAttuatori ? "Nuovo Attuatore" : "Nuovo Sottoscrittore"}
+            <Plus aria-hidden="true" className="size-icona-piccola" />
+            {soloAttuatori ? "Nuovo attuatore" : "Nuovo sottoscrittore"}
           </button>
-        </div>
-        <div>
+        }
+      />
+
+      <div className={schedaElenco()}>
+        <BarraStrumenti>
+          <CampoRicerca
+            valore={searchTerm}
+            onCambia={setSearchTerm}
+            segnaposto={
+              soloAttuatori
+                ? "Cerca per nome, cognome o azienda"
+                : "Cerca per nome o cognome"
+            }
+          />
           {soloAttuatori && (
             <select
               value={selectedRuolo}
@@ -222,65 +227,53 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
               <option value="Nazionale">Nazionale</option>
             </select>
           )}
-        </div>
+        </BarraStrumenti>
 
-        <div className={`${contenitoreTabella()} my-6`}>
-          <table className="min-w-full text-left">
-            <thead className={`${intestazioneTabella()} sticky top-0 z-10`}>
+        <div className={scorrimentoTabella()}>
+          <table className={tabella()}>
+            <thead className={intestazioneTabella()}>
               <tr>
-                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider">
-                  Nome
-                </th>
-                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider">
-                  Cognome
-                </th>
+                <th className={cellaIntestazione()}>Nome</th>
+                <th className={cellaIntestazione()}>Cognome</th>
 
                 {soloAttuatori && (
-                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider">
-                    Ruolo
-                  </th>
+                  <th className={cellaIntestazione()}>Ruolo</th>
                 )}
 
                 {canSeeAzienda && (
-                  <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider">
-                    Azienda
-                  </th>
+                  <th className={cellaIntestazione()}>Azienda</th>
                 )}
 
-                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider text-right">
-                  Modifica
+                <th className={cellaIntestazione("destra")}>
+                  <span className="sr-only">Azioni</span>
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-superficie">
+            <tbody>
               {sottoscrittori.map((item, index) => (
                 <tr
                   key={item.cliente_id || index}
                   className={rigaTabella()}
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-testo-forte">
-                    {item.cliente_nome}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-testo-forte">
-                    {item.cliente_cognome}
-                  </td>
+                  <td className={cella("forte")}>{item.cliente_nome}</td>
+                  <td className={cella("forte")}>{item.cliente_cognome}</td>
 
                   {soloAttuatori && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-testo-tenue">
+                    <td className={cella("tenue")}>
                       {item.ruolo?.ruolo_codice || "-"}
                     </td>
                   )}
 
                   {canSeeAzienda && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-testo-tenue">
+                    <td className={cella("tenue")}>
                       {item.azienda?.azienda_ragione_sociale || "-"}
                     </td>
                   )}
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className={cellaAzioni()}>
                     <button
                       type="button"
-                      onClick={() => navigate(`/modifica/${item.cliente_id}`)}
-                      className={pulsante("primario", "piccolo")}
+                      onClick={() => navigate(`/modifica/${item.cliente_id}${soloAttuatori ? "?tipo=attuatore" : ""}`)}
+                      className={pulsante("secondario", "piccolo")}
                     >
                       Modifica
                     </button>
@@ -289,10 +282,7 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
               ))}
               {sottoscrittori.length === 0 && !loading && (
                 <tr className="border-t border-bordo">
-                  <td
-                    colSpan={colSpanCount}
-                    className="px-6 py-8 text-center text-sm text-testo-tenue"
-                  >
+                  <td colSpan={colSpanCount} className={statoVuoto()}>
                     {soloAttuatori
                       ? "Nessun attuatore trovato."
                       : "Nessun sottoscrittore trovato."}
@@ -301,21 +291,21 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
               )}
             </tbody>
           </table>
-
-          {loading && (
-            <div className="py-4 text-center text-sm text-testo-tenue bg-superficie-tenue">
-              Caricamento altri elementi...
-            </div>
-          )}
-
-          {!hasMore && (
-            <div className="py-4 text-center text-nota text-testo-tenue bg-superficie-tenue">
-              Hai raggiunto la fine dell'elenco
-            </div>
-          )}
         </div>
+
+        {loading && (
+          <div className="border-t border-bordo px-4 py-3 text-center text-sm text-testo-tenue">
+            Caricamento altri elementi...
+          </div>
+        )}
+
+        {!hasMore && (
+          <div className="border-t border-bordo px-4 py-3 text-center text-nota text-testo-tenue">
+            Hai raggiunto la fine dell'elenco
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 

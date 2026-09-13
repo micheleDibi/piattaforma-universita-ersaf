@@ -2,50 +2,87 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import "./App.css";
 
 import Login from "./components/Login";
-import NuovoSottoscrittore from "./components/NuovoSottoscrittore";
-import Homepage from "./components/Homepage";
-import ElencoClienti from "./components/ElencoClienti";
-import ElencoAziende from "./components/ElencoAziende";
 import PasswordDimenticata from "./components/PasswordDimenticata";
 import ReimpostaPassword from "./components/ReimpostaPassword";
+import GuscioApplicazione from "./components/shell/GuscioApplicazione";
+import Dashboard from "./components/Dashboard";
+import ElencoClienti from "./components/ElencoClienti";
+import ElencoAziende from "./components/ElencoAziende";
+import ElencoPratiche from "./components/ElencoPratiche";
+import ElencoProdottiFormativi from "./components/ElencoProdottiFormativi";
+import NuovoSottoscrittore from "./components/NuovoSottoscrittore";
 import SchedaUtente from "./components/SchedaUtente";
 import SchedaAzienda from "./components/SchedaAzienda";
-import ElencoProdottiFormativi from "./components/ElencoProdottiFormativi";
 import InserimentoProdotto from "./components/InserimentoProdotto";
+import { ROTTA_INIZIALE, ROTTE } from "./config/routes/rotte";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Login />} />
+        {/* Pagine pubbliche, fuori dal guscio. */}
+        <Route path={ROTTE.accesso} element={<Login />} />
         <Route path="/password-dimenticata" element={<PasswordDimenticata />} />
         <Route path="/reimposta-password" element={<ReimpostaPassword />} />
+
+        {/* Pagine autenticate: elenchi e dettagli condividono il guscio, quindi
+            la barra laterale resta visibile ovunque. */}
+        <Route element={<GuscioApplicazione />}>
+          <Route path={ROTTE.dashboard} element={<Dashboard />} />
+          <Route
+            path={ROTTE.sottoscrittori}
+            element={
+              <ElencoClienti
+                key="sottoscrittori"
+                soloAttuatori={false}
+                soloUtenti={true}
+              />
+            }
+          />
+          <Route
+            path={ROTTE.attuatori}
+            element={<ElencoClienti key="attuatori" soloAttuatori={true} />}
+          />
+          <Route
+            path={ROTTE.aziende}
+            element={<ElencoAziende soloAttuatori={true} />}
+          />
+          <Route path={ROTTE.pratiche} element={<ElencoPratiche />} />
+          <Route
+            path={ROTTE.prodotti}
+            element={<ElencoProdottiFormativi soloAttuatori={true} />}
+          />
+
+          <Route path="/nuovo" element={<NuovoSottoscrittore />} />
+          <Route path="/modifica/:id" element={<NuovoSottoscrittore />} />
+          <Route path="/utente/:id" element={<SchedaUtente />} />
+          <Route path="/nuova-azienda" element={<SchedaAzienda />} />
+          <Route path="/modifica-azienda/:id" element={<SchedaAzienda />} />
+          <Route path="/inserimentoprodotto" element={<InserimentoProdotto />} />
+          <Route
+            path="/inserimentoprodotto/:id"
+            element={<InserimentoProdotto />}
+          />
+        </Route>
+
+        {/* Rotte storiche: ci puntano collegamenti esistenti e segnalibri. */}
+        <Route path="/home" element={<Navigate to={ROTTA_INIZIALE} replace />} />
+        <Route
+          path="/elenco"
+          element={<Navigate to={ROTTE.sottoscrittori} replace />}
+        />
         <Route
           path="/prodotti-formativi"
-          element={<ElencoProdottiFormativi />}
+          element={<Navigate to={ROTTE.prodotti} replace />}
         />
-        <Route path="/elenco" element={<ElencoClienti />} />
-        <Route path="/inserimentoprodotto" element={<InserimentoProdotto />} />
-        <Route
-          path="/inserimentoprodotto/:id"
-          element={<InserimentoProdotto />}
-        />
-        <Route path="/home" element={<Homepage />} />
-        <Route path="/nuovo" element={<NuovoSottoscrittore />} />
-        <Route path="/modifica/:id" element={<NuovoSottoscrittore />} />
-        <Route path="/aziende" element={<ElencoAziende />} />
-        {/* ElencoAziende navigava gia' qui, ma le rotte non erano registrate:
-            cadevano nel catch-all e l'utente finiva sul login. */}
-        <Route path="/nuova-azienda" element={<SchedaAzienda />} />
-        <Route path="/modifica-azienda/:id" element={<SchedaAzienda />} />
-        <Route path="/utente/:id" element={<SchedaUtente />} />
+
         {/* Il difetto che ha prodotto il bug di /nazionale non era la rotta
             mancante: era che una rotta assente non produce alcun segnale e
             lascia una pagina bianca. Vale anche per un refuso nel link della
             mail di reset. Non si registra un segnaposto /nazionale: sarebbe
             una pagina irraggiungibile, perche' per quel ruolo il backend esce
             prima con requires_2fa, e il 2FA e' fuori perimetro. */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to={ROTTE.accesso} replace />} />
       </Routes>
     </BrowserRouter>
   );

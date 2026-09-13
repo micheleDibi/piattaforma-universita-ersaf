@@ -1,17 +1,26 @@
-/* Token di forma dei controlli e delle superfici.
+/* Token di forma e di misura: controlli, superfici, icone e guscio.
  *
- * Non si ridichiara quello che Tailwind gia' esprime: spaziature, spessori e
- * anello di messa a fuoco restano i suoi. Qui si nominano soltanto i raggi,
- * che oggi compaiono in quattro misure diverse per lo stesso tipo di controllo
- * (lg, xl, 2xl e full) e sono la principale fonte di disordine visivo.
- *
- * Scelta: due raggi in tutto. Sobri, non arrotondati.
+ * Spaziature, spessori e anello di messa a fuoco restano quelli di Tailwind:
+ * qui si nominano solo le misure ricorrenti che hanno un ruolo preciso.
  */
 
 @theme {
-  /* Qualsiasi controllo: campi, select, pulsanti. */
+  /* Raggi: uno per i controlli, uno per le superfici che li contengono. */
   --radius-controllo: var(--radius-lg);
-
-  /* Superficie che contiene i controlli: schede, pannelli, riquadri. */
   --radius-superficie: var(--radius-xl);
+
+  /* Icone: nei controlli e nel menu, e nella misura piccola dentro i campi.
+   * Utilita': size-icona, size-icona-piccola. */
+  --spacing-icona: calc(var(--spacing) * 4.5);
+  --spacing-icona-piccola: calc(var(--spacing) * 4);
+
+  /* Guscio dell'applicazione. Utilita': w-barra-laterale, lg:pl-barra-laterale,
+   * h-barra-superiore. */
+  --spacing-barra-laterale: calc(var(--spacing) * 64);
+  --spacing-barra-superiore: calc(var(--spacing) * 14);
+
+  /* Larghezza massima del contenuto. Utilita': max-w-pagina per gli elenchi,
+   * max-w-modulo per le pagine di dettaglio con un modulo. */
+  --container-pagina: var(--container-7xl);
+  --container-modulo: var(--container-5xl);
 }

@@ -4,6 +4,9 @@ import { apiFetch, messaggioErrore } from "../lib/api";
 import AlertMessage from "./AlertMessage";
 import ProdottoFormInfo from "./ProdottoFormInfo";
 import ProdottoDettagliTabella from "./ProdottoDettagliTabella";
+import IntestazionePagina from "./shared/IntestazionePagina";
+import { ROTTE } from "../config/routes/rotte";
+import { contenutoPagina } from "../config/styles/pagina";
 import { pulsante } from "../config/styles/pulsante";
 import { scheda } from "../config/styles/superficie";
 
@@ -377,7 +380,7 @@ export default function InserimentoProdotto() {
       });
 
       setTimeout(() => {
-        navigate("/prodotti-formativi");
+        navigate(ROTTE.prodotti);
       }, 1000);
     } catch (err) {
       setMessage({ type: "error", text: err.message });
@@ -386,61 +389,52 @@ export default function InserimentoProdotto() {
   };
 
   return (
-    <div className={`${scheda()} max-w-6xl mx-auto p-6 mt-6 font-sans`}>
-      <div className="flex justify-between items-center border-b border-bordo pb-4 mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-testo">
-            {isModifica ? "Modifica Prodotto" : "Inserimento Prodotto"}
-          </h2>
-        </div>
-        <button
-          type="button"
-          onClick={() => navigate("/home")}
-          className={pulsante("secondario")}
-        >
-          ← Torna all'elenco
-        </button>
+    <div className={contenutoPagina()}>
+      <IntestazionePagina
+        titolo={isModifica ? "Modifica prodotto" : "Nuovo prodotto"}
+        indietro={{ rotta: ROTTE.prodotti, etichetta: "Prodotti formativi" }}
+      />
+      <div className={`${scheda()} p-6`}>
+        <AlertMessage message={message} />
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <ProdottoFormInfo
+            formData={formData}
+            handleChange={handleChange}
+            handleGeneraCodice={handleGeneraCodice}
+          />
+
+          <ProdottoDettagliTabella
+            dettagli={dettagli}
+            handleDettaglioChange={handleDettaglioChange}
+            handleDettaglioBlur={handleDettaglioBlur}
+            handleAggiungiRiga={handleAggiungiRiga}
+            handleRimuoviRiga={handleRimuoviRiga}
+            isModifica={isModifica}
+          />
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-bordo">
+            <button
+              type="button"
+              onClick={() => navigate(ROTTE.prodotti)}
+              className={pulsante("secondario", "grande")}
+            >
+              Annulla
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className={pulsante("primario", "grande")}
+            >
+              {loading
+                ? "Salvataggio in corso..."
+                : isModifica
+                  ? "Aggiorna Prodotto"
+                  : "Salva Prodotto"}
+            </button>
+          </div>
+        </form>
       </div>
-
-      <AlertMessage message={message} />
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <ProdottoFormInfo
-          formData={formData}
-          handleChange={handleChange}
-          handleGeneraCodice={handleGeneraCodice}
-        />
-
-        <ProdottoDettagliTabella
-          dettagli={dettagli}
-          handleDettaglioChange={handleDettaglioChange}
-          handleDettaglioBlur={handleDettaglioBlur}
-          handleAggiungiRiga={handleAggiungiRiga}
-          handleRimuoviRiga={handleRimuoviRiga}
-          isModifica={isModifica}
-        />
-
-        <div className="flex justify-end gap-3 pt-4 border-t border-bordo">
-          <button
-            type="button"
-            onClick={() => navigate("/prodotti-formativi")}
-            className={pulsante("secondario", "grande")}
-          >
-            Annulla
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className={pulsante("primario", "grande")}
-          >
-            {loading
-              ? "Salvataggio in corso..."
-              : isModifica
-                ? "Aggiorna Prodotto"
-                : "Salva Prodotto"}
-          </button>
-        </div>
-      </form>
     </div>
   );
 }

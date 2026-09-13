@@ -5,6 +5,7 @@ import { pulisciSessione, salvaSessione } from "../lib/sessione";
 import { campo, etichetta } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
 import { paginaCentrata, scheda } from "../config/styles/superficie";
+import { ROTTA_INIZIALE } from "../config/routes/rotte";
 
 // Il ripiego resta specifico della pagina: su /auth/login un errore senza
 // dettaglio significa credenziali sbagliate, non un guasto generico.
@@ -103,9 +104,9 @@ function Login() {
       // quindi a una pagina bianca — ed era per giunta irraggiungibile: per il
       // ruolo Nazionale il backend esce prima con requires_2fa, quindi
       // ruolo_codice === "nazionale" non poteva mai essere vero. Era codice
-      // morto e viene rimosso: destinazione unica, la homepage introdotta da
-      // VinMan99.
-      navigate("/home");
+      // morto e viene rimosso: destinazione unica, la rotta iniziale
+      // dell'applicazione.
+      navigate(ROTTA_INIZIALE);
     } catch (err) {
       setError(err.message);
     } finally {

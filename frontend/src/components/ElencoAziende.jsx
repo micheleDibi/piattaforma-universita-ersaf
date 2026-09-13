@@ -1,13 +1,23 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
+import { Plus } from "lucide-react";
 import { apiFetch } from "../lib/api";
-import { campo } from "../config/styles/campo";
+import IntestazionePagina from "./shared/IntestazionePagina";
+import BarraStrumenti from "./shared/BarraStrumenti";
+import CampoRicerca from "./shared/CampoRicerca";
+import { contenutoPagina } from "../config/styles/pagina";
 import { pulsante } from "../config/styles/pulsante";
 import {
-  contenitoreTabella,
+  cella,
+  cellaAzioni,
+  cellaIntestazione,
   intestazioneTabella,
   rigaTabella,
-} from "../config/styles/superficie";
+  schedaElenco,
+  scorrimentoTabella,
+  statoVuoto,
+  tabella,
+} from "../config/styles/tabella";
 
 function ElencoAziende() {
   const [aziende, setAziende] = useState([]);
@@ -134,48 +144,42 @@ function ElencoAziende() {
     return <div className="p-4 text-center text-negativo">Errore: {error}</div>;
 
   return (
-    <>
-      <div className="w-full p-6">
-        <div className="w-full my-6 flex flex-col sm:flex-row justify-between items-center gap-4 px-2">
-          <h3 className="text-xl font-bold text-testo">Elenco Aziende:</h3>
-
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <div className="w-full sm:w-72">
-              <input
-                type="text"
-                placeholder="Cerca per ragione sociale..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={campo()}
-              />
-            </div>
-          </div>
-
+    <div className={contenutoPagina()}>
+      <IntestazionePagina
+        titolo="Aziende"
+        azioni={
           <button
             type="button"
             onClick={() => navigate("/nuova-azienda")}
-            className={`${pulsante()} whitespace-nowrap`}
+            className={pulsante()}
           >
-            Nuova Azienda
+            <Plus aria-hidden="true" className="size-icona-piccola" />
+            Nuova azienda
           </button>
-        </div>
+        }
+      />
 
-        <div className={`${contenitoreTabella()} my-6`}>
-          <table className="min-w-full text-left">
-            <thead className={`${intestazioneTabella()} sticky top-0 z-10`}>
+      <div className={schedaElenco()}>
+        <BarraStrumenti>
+          <CampoRicerca
+            valore={searchTerm}
+            onCambia={setSearchTerm}
+            segnaposto="Cerca per ragione sociale"
+          />
+        </BarraStrumenti>
+
+        <div className={scorrimentoTabella()}>
+          <table className={tabella()}>
+            <thead className={intestazioneTabella()}>
               <tr>
-                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider">
-                  Ragione Sociale
-                </th>
-                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider">
-                  Sede
-                </th>
-                <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wider text-right">
-                  Modifica
+                <th className={cellaIntestazione()}>Ragione Sociale</th>
+                <th className={cellaIntestazione()}>Sede</th>
+                <th className={cellaIntestazione("destra")}>
+                  <span className="sr-only">Azioni</span>
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-superficie">
+            <tbody>
               {aziende.map((item, index) => {
                 const sede = [
                   item.azienda_via,
@@ -193,19 +197,17 @@ function ElencoAziende() {
                     key={item.azienda_id || index}
                     className={rigaTabella()}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-testo-forte">
+                    <td className={cella("forte")}>
                       {item.azienda_ragione_sociale}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-testo-tenue">
-                      {sede || "-"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className={cella("tenue")}>{sede || "-"}</td>
+                    <td className={cellaAzioni()}>
                       <button
                         type="button"
                         onClick={() =>
                           navigate(`/modifica-azienda/${item.azienda_id}`)
                         }
-                        className={pulsante("primario", "piccolo")}
+                        className={pulsante("secondario", "piccolo")}
                       >
                         Modifica
                       </button>
@@ -215,31 +217,28 @@ function ElencoAziende() {
               })}
               {aziende.length === 0 && !loading && (
                 <tr className="border-t border-bordo">
-                  <td
-                    colSpan={3}
-                    className="px-6 py-8 text-center text-sm text-testo-tenue"
-                  >
+                  <td colSpan={3} className={statoVuoto()}>
                     Nessuna azienda trovata.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
-
-          {loading && (
-            <div className="py-4 text-center text-sm text-testo-tenue bg-superficie-tenue">
-              Caricamento altri elementi...
-            </div>
-          )}
-
-          {!hasMore && (
-            <div className="py-4 text-center text-nota text-testo-tenue bg-superficie-tenue">
-              Hai raggiunto la fine dell'elenco
-            </div>
-          )}
         </div>
+
+        {loading && (
+          <div className="border-t border-bordo py-4 text-center text-sm text-testo-tenue">
+            Caricamento altri elementi...
+          </div>
+        )}
+
+        {!hasMore && (
+          <div className="border-t border-bordo py-4 text-center text-nota text-testo-tenue">
+            Hai raggiunto la fine dell'elenco
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 

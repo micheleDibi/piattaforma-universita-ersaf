@@ -8,6 +8,9 @@ import FormInformazioniPersonali from "./FormInformazioniPersonali";
 import FormDocumento from "./FormDocumento";
 import FormResidenzaDomicilio from "./FormResidenzaDomicilio";
 import FormContatti from "./FormContatti";
+import IntestazionePagina from "./shared/IntestazionePagina";
+import { ROTTE } from "../config/routes/rotte";
+import { contenutoPagina } from "../config/styles/pagina";
 import { pulsante } from "../config/styles/pulsante";
 import { scheda } from "../config/styles/superficie";
 
@@ -28,6 +31,7 @@ function NuovoSottoscrittore() {
 
   const labelTitolo =
     tipoUtente === "attuatore" ? "Attuatore" : "Sottoscrittore";
+  const rottaElenco = tipoUtente === "attuatore" ? ROTTE.attuatori : ROTTE.sottoscrittori;
 
   const [formData, setFormData] = useState({
     codiceFiscale: "",
@@ -309,7 +313,7 @@ function NuovoSottoscrittore() {
 
       if (isEditMode) {
         alert("Modifiche salvate con successo!");
-        navigate("/home");
+        navigate(rottaElenco);
         return;
       }
 
@@ -328,7 +332,7 @@ function NuovoSottoscrittore() {
       );
       if (!creato?.username_generato) {
         alert(`${labelTitolo} salvato correttamente!`);
-        navigate("/home");
+        navigate(rottaElenco);
       }
     } catch (error) {
       console.error("Errore:", error);
@@ -360,7 +364,7 @@ function NuovoSottoscrittore() {
   // si conferma non si naviga via.
   if (credenziali) {
     return (
-      <div className="min-h-screen bg-superficie-tenue py-10 px-4 flex items-start justify-center">
+      <div className={contenutoPagina("modulo")}>
         <div className={`${scheda()} max-w-lg w-full p-8`}>
           <h2 className="text-xl font-bold text-testo mb-2">
             {labelTitolo} creato
@@ -401,7 +405,7 @@ function NuovoSottoscrittore() {
             </button>
             <button
               type="button"
-              onClick={() => navigate("/home")}
+              onClick={() => navigate(rottaElenco)}
               className={pulsante("primario", "grande")}
             >
               Le ho annotate, continua
@@ -413,33 +417,28 @@ function NuovoSottoscrittore() {
   }
 
   return (
-    <div className="min-h-screen bg-superficie-tenue py-10 px-4 sm:px-6 lg:px-8">
-      <div className={`${scheda()} max-w-5xl mx-auto overflow-hidden`}>
+    <div className={contenutoPagina("modulo")}>
+      <IntestazionePagina
+        titolo={`${isEditMode ? "Modifica" : "Nuovo"} ${labelTitolo.toLowerCase()}`}
+        indietro={{ rotta: rottaElenco, etichetta: tipoUtente === "attuatore" ? "Attuatori" : "Sottoscrittori" }}
+      />
+      <div className={`${scheda()} overflow-hidden`}>
         <form onSubmit={handleSubmit}>
-          <div className="flex flex-wrap border-b border-bordo px-6 pt-4 gap-2 bg-superficie-tenue/50 justify-between items-center">
-            <div className="flex flex-wrap gap-2">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-5 py-2.5 text-sm font-semibold rounded-t-controllo border-t border-x transition cursor-pointer ${
-                    activeTab === tab.id
-                      ? "bg-superficie text-primario border-bordo shadow-sm -mb-px z-10"
-                      : "bg-superficie-tenue text-testo-tenue border-transparent hover:bg-superficie-alta"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate("/home")}
-              className={`${pulsante("discreto")} mb-2`}
-            >
-              ← Torna all'elenco
-            </button>
+          <div className="flex flex-wrap border-b border-bordo px-6 pt-4 gap-2 bg-superficie-tenue/50">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-5 py-2.5 text-sm font-semibold rounded-t-controllo border-t border-x transition cursor-pointer ${
+                  activeTab === tab.id
+                    ? "bg-superficie text-primario border-bordo shadow-sm -mb-px z-10"
+                    : "bg-superficie-tenue text-testo-tenue border-transparent hover:bg-superficie-alta"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
           <div className="p-8">
@@ -488,7 +487,7 @@ function NuovoSottoscrittore() {
             <div className="flex justify-end gap-4 pt-8 mt-10 border-t border-bordo">
               <button
                 type="button"
-                onClick={() => navigate("/home")}
+                onClick={() => navigate(rottaElenco)}
                 className={pulsante("secondario", "grande")}
               >
                 Annulla
