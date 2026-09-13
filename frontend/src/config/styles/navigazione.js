@@ -28,16 +28,12 @@ export function voceUscita() {
   return `${VOCE} text-testo-tenue hover:bg-negativo-tenue hover:text-negativo`;
 }
 
-/** Testata del menu con il marchio. Alta quanto la barra superiore da mobile. */
+/**
+ * Testata del menu con il nome dell'applicazione. Alta quanto la barra
+ * superiore da mobile, cosi' le due restano allineate passando da una all'altra.
+ */
 export function testataMenu() {
   return "flex h-barra-superiore shrink-0 items-center gap-3 border-b border-bordo px-5";
-}
-
-export function marchio() {
-  return (
-    "flex size-8 shrink-0 items-center justify-center rounded-controllo " +
-    "bg-primario text-xs font-semibold text-su-primario"
-  );
 }
 
 export function nomeApplicazione() {

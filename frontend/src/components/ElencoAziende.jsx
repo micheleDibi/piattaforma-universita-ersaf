@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import { Plus } from "lucide-react";
 import { apiFetch } from "../lib/api";
 import IntestazionePagina from "./shared/IntestazionePagina";
+import AzioneCrea from "./shared/AzioneCrea";
+import AzioneModificaRiga from "./shared/AzioneModificaRiga";
 import BarraStrumenti from "./shared/BarraStrumenti";
 import CampoRicerca from "./shared/CampoRicerca";
 import { contenutoPagina } from "../config/styles/pagina";
-import { pulsante } from "../config/styles/pulsante";
 import {
   cella,
   cellaAzioni,
@@ -148,14 +148,11 @@ function ElencoAziende() {
       <IntestazionePagina
         titolo="Aziende"
         azioni={
-          <button
-            type="button"
+          <AzioneCrea
             onClick={() => navigate("/nuova-azienda")}
-            className={pulsante()}
-          >
-            <Plus aria-hidden="true" className="size-icona-piccola" />
-            Nuova azienda
-          </button>
+            etichetta="Nuova azienda"
+            etichettaBreve="Nuova"
+          />
         }
       />
 
@@ -192,25 +189,21 @@ function ElencoAziende() {
                   .filter(Boolean)
                   .join(" ");
 
+                const apri = () =>
+                  navigate(`/modifica-azienda/${item.azienda_id}`);
+
                 return (
                   <tr
                     key={item.azienda_id || index}
-                    className={rigaTabella()}
+                    className={rigaTabella(true)}
+                    onClick={apri}
                   >
                     <td className={cella("forte")}>
                       {item.azienda_ragione_sociale}
                     </td>
                     <td className={cella("tenue")}>{sede || "-"}</td>
                     <td className={cellaAzioni()}>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          navigate(`/modifica-azienda/${item.azienda_id}`)
-                        }
-                        className={pulsante("secondario", "piccolo")}
-                      >
-                        Modifica
-                      </button>
+                      <AzioneModificaRiga onClick={apri} />
                     </td>
                   </tr>
                 );

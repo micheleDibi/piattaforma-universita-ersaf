@@ -68,8 +68,10 @@ export function cellaIntestazione(allineamento = "sinistra") {
   );
 }
 
-export function rigaTabella() {
-  return "border-t border-bordo transition-colors hover:bg-superficie-tenue";
+/** @param {boolean} cliccabile  la riga porta al dettaglio al clic */
+export function rigaTabella(cliccabile = false) {
+  const base = "border-t border-bordo transition-colors hover:bg-superficie-tenue";
+  return cliccabile ? `${base} cursor-pointer` : base;
 }
 
 const TONI_CELLA = {

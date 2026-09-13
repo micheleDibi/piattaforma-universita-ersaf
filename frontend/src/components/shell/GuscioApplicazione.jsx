@@ -11,7 +11,7 @@ import {
   cassettoMenu,
   veloCassetto,
 } from "../../config/styles/guscio";
-import { marchio, nomeApplicazione } from "../../config/styles/navigazione";
+import { nomeApplicazione } from "../../config/styles/navigazione";
 
 /**
  * Guscio comune a tutte le pagine autenticate: barra laterale fissa da
@@ -59,9 +59,6 @@ export default function GuscioApplicazione() {
         >
           <Menu aria-hidden="true" className="size-icona" />
         </button>
-        <span className={marchio()} aria-hidden="true">
-          PU
-        </span>
         <span className={nomeApplicazione()}>{NOME_APPLICAZIONE}</span>
       </header>
 

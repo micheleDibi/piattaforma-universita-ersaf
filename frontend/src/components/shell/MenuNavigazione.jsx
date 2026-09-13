@@ -7,7 +7,6 @@ import {
 } from "../../config/routes/rotte";
 import {
   iconaNavigazione,
-  marchio,
   nomeApplicazione,
   testataMenu,
   voceNavigazione,
@@ -17,7 +16,7 @@ import { leggiRuolo } from "../../lib/sessione";
 import { logout } from "../../lib/logout";
 
 /**
- * Contenuto del menu: marchio, voci e uscita.
+ * Contenuto del menu: nome dell'applicazione, voci e uscita.
  *
  * Lo stesso contenuto serve la barra laterale da desktop e il cassetto da
  * mobile; `onNaviga` permette al cassetto di chiudersi quando si sceglie una
@@ -41,9 +40,6 @@ export default function MenuNavigazione({ onNaviga }) {
   return (
     <div className="flex h-full flex-col">
       <div className={testataMenu()}>
-        <span className={marchio()} aria-hidden="true">
-          PU
-        </span>
         <span className={nomeApplicazione()}>{NOME_APPLICAZIONE}</span>
       </div>
 

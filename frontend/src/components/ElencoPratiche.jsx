@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import { Plus } from "lucide-react";
 import { apiFetch } from "../lib/api";
 import IntestazionePagina from "./shared/IntestazionePagina";
+import AzioneCrea from "./shared/AzioneCrea";
+import AzioneModificaRiga from "./shared/AzioneModificaRiga";
 import BarraStrumenti from "./shared/BarraStrumenti";
 import CampoRicerca from "./shared/CampoRicerca";
 import { contenutoPagina } from "../config/styles/pagina";
-import { pulsante } from "../config/styles/pulsante";
 import {
   cella,
   cellaAzioni,
@@ -148,14 +148,11 @@ function ElencoPratiche() {
       <IntestazionePagina
         titolo="Pratiche"
         azioni={
-          <button
-            type="button"
+          <AzioneCrea
             onClick={() => navigate("/nuova-pratica")}
-            className={pulsante()}
-          >
-            <Plus aria-hidden="true" className="size-icona-piccola" />
-            Nuova pratica
-          </button>
+            etichetta="Nuova pratica"
+            etichettaBreve="Nuova"
+          />
         }
       />
 
@@ -182,33 +179,34 @@ function ElencoPratiche() {
               </tr>
             </thead>
             <tbody>
-              {pratiche.map((item, index) => (
-                <tr key={item.pratica_id || index} className={rigaTabella()}>
-                  <td className={cella("forte")}>
-                    {item.pratica_numero || "-"}
-                  </td>
-                  <td className={cella("forte")}>
-                    {item.cliente_nome_completo || "-"}
-                  </td>
-                  <td className={cella("tenue")}>
-                    {item.listTesta_descrizione || "-"}
-                  </td>
-                  <td className={cella("tenue")}>
-                    {item.pratica_stato_descrizione || "-"}
-                  </td>
-                  <td className={cellaAzioni()}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(`/modifica-pratica/${item.pratica_id}`)
-                      }
-                      className={pulsante("secondario", "piccolo")}
-                    >
-                      Modifica
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {pratiche.map((item, index) => {
+                const apri = () =>
+                  navigate(`/modifica-pratica/${item.pratica_id}`);
+
+                return (
+                  <tr
+                    key={item.pratica_id || index}
+                    className={rigaTabella(true)}
+                    onClick={apri}
+                  >
+                    <td className={cella("forte")}>
+                      {item.pratica_numero || "-"}
+                    </td>
+                    <td className={cella("forte")}>
+                      {item.cliente_nome_completo || "-"}
+                    </td>
+                    <td className={cella("tenue")}>
+                      {item.listTesta_descrizione || "-"}
+                    </td>
+                    <td className={cella("tenue")}>
+                      {item.pratica_stato_descrizione || "-"}
+                    </td>
+                    <td className={cellaAzioni()}>
+                      <AzioneModificaRiga onClick={apri} />
+                    </td>
+                  </tr>
+                );
+              })}
               {pratiche.length === 0 && !loading && (
                 <tr className="border-t border-bordo">
                   <td colSpan={5} className={statoVuoto()}>

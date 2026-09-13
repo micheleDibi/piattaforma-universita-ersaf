@@ -52,12 +52,26 @@ export function pulsante(
     .join(" ");
 }
 
-/** Pulsante con sola icona, per esempio apertura e chiusura del menu. */
+/** Pulsante con sola icona su fondo trasparente: apertura e chiusura del menu. */
 export function pulsanteIcona() {
   return (
     "inline-flex size-9 shrink-0 items-center justify-center rounded-controllo " +
     "text-testo-tenue transition-colors cursor-pointer " +
     "hover:bg-superficie-alta hover:text-testo-forte " +
+    "focus:outline-none focus-visible:ring-3 focus-visible:ring-fuoco/30"
+  );
+}
+
+/**
+ * Azione di riga a sola icona, elevata: fondo bianco, bordo e ombra leggera.
+ * Nelle tabelle segnala che la riga e' azionabile senza pesare come un pulsante
+ * pieno; la riga stessa e' comunque cliccabile.
+ */
+export function pulsanteAzioneRiga() {
+  return (
+    "inline-flex size-9 shrink-0 items-center justify-center rounded-controllo " +
+    "border border-bordo bg-superficie text-testo-tenue shadow-sm " +
+    "transition-colors cursor-pointer hover:border-bordo-forte hover:text-primario " +
     "focus:outline-none focus-visible:ring-3 focus-visible:ring-fuoco/30"
   );
 }

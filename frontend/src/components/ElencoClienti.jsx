@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import { Plus } from "lucide-react";
 import { apiFetch } from "../lib/api";
 import { leggiRuolo } from "../lib/sessione";
 import IntestazionePagina from "./shared/IntestazionePagina";
 import BarraStrumenti from "./shared/BarraStrumenti";
 import CampoRicerca from "./shared/CampoRicerca";
+import AzioneCrea from "./shared/AzioneCrea";
+import AzioneModificaRiga from "./shared/AzioneModificaRiga";
 import { campo } from "../config/styles/campo";
-import { pulsante } from "../config/styles/pulsante";
 import { contenutoPagina } from "../config/styles/pagina";
 import {
   cella,
@@ -186,8 +186,7 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
       <IntestazionePagina
         titolo={soloAttuatori ? "Attuatori" : "Sottoscrittori"}
         azioni={
-          <button
-            type="button"
+          <AzioneCrea
             onClick={() =>
               navigate(
                 soloAttuatori
@@ -195,11 +194,9 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
                   : "/nuovo?tipo=sottoscrittore",
               )
             }
-            className={pulsante()}
-          >
-            <Plus aria-hidden="true" className="size-icona-piccola" />
-            {soloAttuatori ? "Nuovo attuatore" : "Nuovo sottoscrittore"}
-          </button>
+            etichetta={soloAttuatori ? "Nuovo attuatore" : "Nuovo sottoscrittore"}
+            etichettaBreve="Nuovo"
+          />
         }
       />
 
@@ -250,36 +247,38 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
               </tr>
             </thead>
             <tbody>
-              {sottoscrittori.map((item, index) => (
-                <tr
-                  key={item.cliente_id || index}
-                  className={rigaTabella()}
-                >
-                  <td className={cella("forte")}>{item.cliente_nome}</td>
-                  <td className={cella("forte")}>{item.cliente_cognome}</td>
+              {sottoscrittori.map((item, index) => {
+                const apri = () =>
+                  navigate(
+                    `/modifica/${item.cliente_id}${soloAttuatori ? "?tipo=attuatore" : ""}`,
+                  );
 
-                  {soloAttuatori && (
-                    <td className={cella("tenue")}>
-                      {item.ruolo?.ruolo_codice || "-"}
-                    </td>
-                  )}
+                return (
+                  <tr
+                    key={item.cliente_id || index}
+                    className={rigaTabella(true)}
+                    onClick={apri}
+                  >
+                    <td className={cella("forte")}>{item.cliente_nome}</td>
+                    <td className={cella("forte")}>{item.cliente_cognome}</td>
 
-                  {canSeeAzienda && (
-                    <td className={cella("tenue")}>
-                      {item.azienda?.azienda_ragione_sociale || "-"}
+                    {soloAttuatori && (
+                      <td className={cella("tenue")}>
+                        {item.ruolo?.ruolo_codice || "-"}
+                      </td>
+                    )}
+
+                    {canSeeAzienda && (
+                      <td className={cella("tenue")}>
+                        {item.azienda?.azienda_ragione_sociale || "-"}
+                      </td>
+                    )}
+                    <td className={cellaAzioni()}>
+                      <AzioneModificaRiga onClick={apri} />
                     </td>
-                  )}
-                  <td className={cellaAzioni()}>
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/modifica/${item.cliente_id}${soloAttuatori ? "?tipo=attuatore" : ""}`)}
-                      className={pulsante("secondario", "piccolo")}
-                    >
-                      Modifica
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                  </tr>
+                );
+              })}
               {sottoscrittori.length === 0 && !loading && (
                 <tr className="border-t border-bordo">
                   <td colSpan={colSpanCount} className={statoVuoto()}>

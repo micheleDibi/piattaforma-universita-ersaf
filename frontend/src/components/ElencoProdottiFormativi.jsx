@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
-import { Plus } from "lucide-react";
 import { apiFetch } from "../lib/api";
 import IntestazionePagina from "./shared/IntestazionePagina";
+import AzioneCrea from "./shared/AzioneCrea";
+import AzioneModificaRiga from "./shared/AzioneModificaRiga";
 import BarraStrumenti from "./shared/BarraStrumenti";
 import CampoRicerca from "./shared/CampoRicerca";
 import { campo } from "../config/styles/campo";
-import { pulsante } from "../config/styles/pulsante";
 import { contenutoPagina } from "../config/styles/pagina";
 import {
   cella,
@@ -226,10 +226,11 @@ export default function ElencoProdottiFormativi() {
       <IntestazionePagina
         titolo="Prodotti formativi"
         azioni={
-          <button type="button" onClick={handleNuovo} className={pulsante()}>
-            <Plus aria-hidden="true" className="size-icona-piccola" />
-            Nuovo prodotto
-          </button>
+          <AzioneCrea
+            onClick={handleNuovo}
+            etichetta="Nuovo prodotto"
+            etichettaBreve="Nuovo"
+          />
         }
       />
 
@@ -302,10 +303,12 @@ export default function ElencoProdottiFormativi() {
               <tbody>
                 {prodotti.map((item, index) => {
                   const isAttivo = item.listino_attivoSN === -1;
+                  const apri = () => handleModifica(item.listTesta_id);
                   return (
                     <tr
                       key={item.listTesta_id || index}
-                      className={rigaTabella()}
+                      className={rigaTabella(true)}
+                      onClick={apri}
                     >
                       <td className={cella("tenue")}>
                         {item.nome_universita || "-"}
@@ -327,13 +330,7 @@ export default function ElencoProdottiFormativi() {
                         </span>
                       </td>
                       <td className={cellaAzioni()}>
-                        <button
-                          type="button"
-                          onClick={() => handleModifica(item.listTesta_id)}
-                          className={pulsante("secondario", "piccolo")}
-                        >
-                          Modifica
-                        </button>
+                        <AzioneModificaRiga onClick={apri} />
                       </td>
                     </tr>
                   );

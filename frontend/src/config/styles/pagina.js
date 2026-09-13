@@ -12,8 +12,13 @@ export function contenutoPagina(larghezza = "pagina") {
   return `mx-auto w-full ${massimo} px-4 py-6 sm:px-6 lg:px-8 lg:py-8`;
 }
 
+/**
+ * Titolo e azioni sulla stessa riga a ogni larghezza: da schermo stretto
+ * l'azione resta accanto al titolo invece di finire su una riga propria.
+ * Le azioni accorciano la loro etichetta, non cambiano posto.
+ */
 export function intestazionePagina() {
-  return "mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between";
+  return "mb-6 flex flex-row items-center justify-between gap-3";
 }
 
 export function titoloPagina() {
