@@ -194,8 +194,10 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
                   : "/nuovo?tipo=sottoscrittore",
               )
             }
-            etichetta={soloAttuatori ? "Nuovo attuatore" : "Nuovo sottoscrittore"}
-            etichettaBreve="Nuovo"
+            etichetta="Nuovo"
+            etichettaEstesa={
+              soloAttuatori ? "Nuovo attuatore" : "Nuovo sottoscrittore"
+            }
           />
         }
       />

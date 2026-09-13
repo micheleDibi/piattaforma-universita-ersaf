@@ -150,8 +150,8 @@ function ElencoAziende() {
         azioni={
           <AzioneCrea
             onClick={() => navigate("/nuova-azienda")}
-            etichetta="Nuova azienda"
-            etichettaBreve="Nuova"
+            etichetta="Nuova"
+            etichettaEstesa="Nuova azienda"
           />
         }
       />

@@ -228,8 +228,8 @@ export default function ElencoProdottiFormativi() {
         azioni={
           <AzioneCrea
             onClick={handleNuovo}
-            etichetta="Nuovo prodotto"
-            etichettaBreve="Nuovo"
+            etichetta="Nuovo"
+            etichettaEstesa="Nuovo prodotto"
           />
         }
       />

@@ -2,31 +2,30 @@ import { Plus } from "lucide-react";
 import { pulsante } from "../../config/styles/pulsante";
 
 /**
- * Azione principale di una pagina di elenco: "Nuovo sottoscrittore",
- * "Nuova azienda".
+ * Azione principale di una pagina di elenco.
  *
- * Da schermo stretto resta accanto al titolo e mostra la sola forma breve
- * ("Nuovo", "Nuova"): l'etichetta intera occuperebbe la riga da sola e
- * spingerebbe il pulsante sotto il titolo. Il nome accessibile resta quello
- * intero in entrambi i casi.
+ * L'etichetta visibile e' sempre la forma breve ("Nuovo", "Nuova"): sta
+ * accanto al titolo della pagina, che nomina gia' l'entita', quindi scriverla
+ * per esteso la ripeterebbe e allargherebbe il pulsante senza aggiungere nulla.
+ * Il nome accessibile resta invece quello intero, perche' letto da solo
+ * "Nuova" non direbbe di cosa.
  *
  * @param {{
  *   onClick: () => void,
  *   etichetta: string,
- *   etichettaBreve: string,
+ *   etichettaEstesa: string,
  * }} props
  */
-export default function AzioneCrea({ onClick, etichetta, etichettaBreve }) {
+export default function AzioneCrea({ onClick, etichetta, etichettaEstesa }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={pulsante()}
-      aria-label={etichetta}
+      aria-label={etichettaEstesa}
     >
       <Plus aria-hidden="true" className="size-icona-piccola" />
-      <span className="hidden sm:inline">{etichetta}</span>
-      <span className="sm:hidden">{etichettaBreve}</span>
+      {etichetta}
     </button>
   );
 }

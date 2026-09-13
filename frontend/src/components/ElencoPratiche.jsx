@@ -150,8 +150,8 @@ function ElencoPratiche() {
         azioni={
           <AzioneCrea
             onClick={() => navigate("/nuova-pratica")}
-            etichetta="Nuova pratica"
-            etichettaBreve="Nuova"
+            etichetta="Nuova"
+            etichettaEstesa="Nuova pratica"
           />
         }
       />
