@@ -1,0 +1,59 @@
+/* Una sola riga: le inattive cedono spazio alla dicitura completa dell'attiva. */
+.schede { container-type: inline-size; isolation: isolate; min-width: 0; }
+.schede__barra {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: end;
+  gap: var(--spacing);
+  padding: calc(var(--spacing) * 3) min(2cqi, calc(var(--spacing) * 6)) 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  background: var(--color-superficie-tenue);
+}
+.schede__linguetta {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: calc(var(--spacing) * 3) min(2cqi, calc(var(--spacing) * 5));
+  border: 1px solid var(--color-bordo);
+  border-bottom: 0;
+  border-radius: var(--radius-controllo) var(--radius-controllo) 0 0;
+  background: var(--color-superficie-tenue);
+  color: var(--color-testo-tenue);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--text-sm--line-height);
+  cursor: pointer;
+  translate: 0 var(--spostamento-ingresso);
+  transition: translate var(--durata-normale) var(--curva-ingresso),
+    background-color var(--durata-rapida) var(--curva-ingresso),
+    color var(--durata-rapida) var(--curva-ingresso);
+}
+.schede__linguetta:hover { background: var(--color-interazione-hover); color: var(--color-testo-forte); }
+.schede__linguetta[aria-selected="true"] {
+  flex-shrink: 0;
+  translate: 0 0;
+  background: var(--color-interazione-selezionata);
+  color: var(--color-primario);
+}
+.schede__etichetta { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@container (width < theme(--container-sm)) {
+  .schede__linguetta:not([aria-selected="true"]) {
+    min-width: calc(var(--text-sm) + var(--spacing) * 1.5);
+    padding-inline: calc(var(--spacing) / 2);
+  }
+}
+.schede__linguetta:focus-visible { outline: 2px solid var(--color-fuoco); outline-offset: -3px; }
+/* Il bordo e la superficie del pannello coprono la base delle linguette. */
+.schede__pannello {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--color-bordo);
+  background: var(--color-superficie);
+  box-shadow: 0 -3px 5px -5px var(--color-testo-tenue);
+  padding: clamp(calc(var(--spacing) * 3), 4cqi, calc(var(--spacing) * 8));
+}
+@media (prefers-reduced-motion: reduce) {
+  .schede__linguetta { transition: none; translate: none; }
+}

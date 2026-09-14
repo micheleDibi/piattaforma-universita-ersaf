@@ -4,6 +4,8 @@
  * qui si nominano solo le misure ricorrenti che hanno un ruolo preciso.
  */
 
+:root { --soglia-menu-mobile: theme(--breakpoint-lg); }
+
 @theme {
   /* Raggi: uno per i controlli, uno per le superfici che li contengono. */
   --radius-controllo: var(--radius-lg);
@@ -13,11 +15,23 @@
    * Utilita': size-icona, size-icona-piccola. */
   --spacing-icona: calc(var(--spacing) * 4.5);
   --spacing-icona-piccola: calc(var(--spacing) * 4);
+  --spessore-icona: 2;
 
   /* Guscio dell'applicazione. Utilita': w-barra-laterale, lg:pl-barra-laterale,
    * h-barra-superiore. */
   --spacing-barra-laterale: calc(var(--spacing) * 64);
-  --spacing-barra-superiore: calc(var(--spacing) * 14);
+  --spacing-barra-superiore: calc(var(--spacing) * 20);
+  --container-filtri-elenco: var(--container-xs);
+  --container-ricerca-elenco: var(--container-sm);
+  --breakpoint-testata-stretta: 20rem;
+
+  /* Soglie del contenitore elenco, non della finestra. */
+  --breakpoint-elenco-semplice: 40rem;
+  --breakpoint-elenco-articolato: 52rem;
+  --spacing-colonna-azioni: calc(var(--spacing) * 18);
+  --spacing-colonna-ruolo: calc(var(--spacing) * 36);
+  --spacing-colonna-numero: calc(var(--spacing) * 36);
+  --spacing-colonna-stato: calc(var(--spacing) * 28);
 
   /* Larghezza massima del contenuto. Utilita': max-w-pagina per gli elenchi,
    * max-w-modulo per le pagine di dettaglio con un modulo. */

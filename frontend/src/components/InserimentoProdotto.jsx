@@ -1,3 +1,4 @@
+import { leggiUtenteId } from "../lib/sessione";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { apiFetch, messaggioErrore } from "../lib/api";
@@ -24,7 +25,7 @@ export default function InserimentoProdotto() {
   const { id } = useParams();
   const isModifica = Boolean(id);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     listTesta_codice: "",
     listTesta_descrizione: "",
     listTesta_livello: "",
@@ -36,8 +37,8 @@ export default function InserimentoProdotto() {
     listino_corsoLaurea_id: "",
     nome_universita_id: "",
     listino_attivoSN: -1,
-    listTesta_created_by: 1,
-  });
+    listTesta_created_by: leggiUtenteId(),
+  }));
 
   const [dettagli, setDettagli] = useState([
     {
@@ -79,14 +80,6 @@ export default function InserimentoProdotto() {
   };
 
   useEffect(() => {
-    const utenteId = localStorage.getItem("utente_id");
-    if (utenteId) {
-      setFormData((prev) => ({
-        ...prev,
-        listTesta_created_by: Number(utenteId),
-      }));
-    }
-
     async function caricaDatiProdotto() {
       if (!isModifica) {
         await fetchNextCode();

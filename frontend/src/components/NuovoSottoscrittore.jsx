@@ -1,3 +1,6 @@
+import { ANAGRAFICA_INIZIALE } from "../config/anagraficaIniziale.js";
+import CredenzialiCreate from "./CredenzialiCreate.jsx";
+import { useIngresso } from "../hooks/useIngresso.js";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
 import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
@@ -13,6 +16,7 @@ import { ROTTE } from "../config/routes/rotte";
 import { contenutoPagina } from "../config/styles/pagina";
 import { pulsante } from "../config/styles/pulsante";
 import { scheda } from "../config/styles/superficie";
+import BarraSchede from "./shared/BarraSchede.jsx";
 
 function NuovoSottoscrittore() {
   const { id } = useParams();
@@ -21,6 +25,7 @@ function NuovoSottoscrittore() {
   const isEditMode = Boolean(id);
 
   const [activeTab, setActiveTab] = useState("dati-principali");
+  const pannello = useIngresso(activeTab);
   // Credenziali generate dal server, da mostrare una volta sola.
   const [credenziali, setCredenziali] = useState(null);
 
@@ -33,104 +38,7 @@ function NuovoSottoscrittore() {
     tipoUtente === "attuatore" ? "Attuatore" : "Sottoscrittore";
   const rottaElenco = tipoUtente === "attuatore" ? ROTTE.attuatori : ROTTE.sottoscrittori;
 
-  const [formData, setFormData] = useState({
-    codiceFiscale: "",
-    genere: "",
-    nome: "",
-    cognome: "",
-    cittadinanza: "",
-    luogoDiNascita: "",
-    provDiNascita: "",
-    dataDiNascita: "",
-    tipoDocumento: "",
-    nDocumento: "",
-    comuneDiRilascio: "",
-    dataInizioRilascio: "",
-    dataScadenza: "",
-    residenzaIndirizzo: "",
-    residenzaCivico: "",
-    residenzaComune: "",
-    residenzaCap: "",
-    residenzaProvincia: "",
-    domicilioIndirizzo: "",
-    domicilioCivico: "",
-    domicilioComune: "",
-    domicilioCap: "",
-    domicilioProvincia: "",
-    email: "",
-    cellulare: "",
-    telefono: "",
-    pec: "",
-    universita_immatricolato: false,
-    universita_data_immatricolazione: "",
-    universita_riforma: "",
-    universita_conclusione: "",
-    universita_data_conclusione: "",
-    universita_iscrizioneAltraUniversita: false,
-    universita_diploma: "",
-    universita_istituto: "",
-    universita_via_istituto: "",
-    universita_citta_istituto: "",
-    universita_provincia_istituto: "",
-    universita_anno_scolastico: "",
-    universita_votoRicevuto_diploma: "",
-    universita_votoMassimo_diploma: "",
-    universita_istituto_ai: "",
-    universita_citta_istituto_ai: "",
-    universita_provincia_istituto_ai: "",
-    universita_via_istituto_ai: "",
-    universita_anno_scolastico_ai: "",
-    universita_votoRicevuto_ai: "",
-    universita_votoMassimo_ai: "",
-    universita_titolo_universitario: "",
-    universita_materia_titolo: "",
-    universita_universita_titolo: "",
-    universita_data_titolo: "",
-    universita_votoRicevuto_titolo: "",
-    universita_votoMassimo_titolo: "",
-    universita_materia_pl1: "",
-    universita_istituto_pl1: "",
-    universita_data_pl1: "",
-    universita_materia_pl2: "",
-    universita_istituto_pl2: "",
-    universita_data_pl2: "",
-    universita_materia_ats1: "",
-    universita_istituto_ats1: "",
-    universita_data_ats1: "",
-    universita_materia_ats2: "",
-    universita_istituto_ats2: "",
-    universita_data_ats2: "",
-    universita_attivita_professionalizzanti: false,
-    universita_corsi_di_formazione: false,
-    universita_altre_attivita_certificate: false,
-    universita_ateneoNullaosta: "",
-    universita_percentualeInvalidita: "",
-    universita_tipoInvalidita: "",
-    universita_professione: "",
-    universita_data_professione: "",
-    universita_luogo_professione: "",
-    universita_sessione_professione: "",
-    universita_annoSessione_professione: "",
-    universita_voto_professione: "",
-    universita_qualifica_professionale: "",
-    universita_data_qualifica: "",
-    universita_luogo: "",
-    universita_corrispondenza: "",
-    universita_albo: "",
-    universita_forzeDellOrdine: "",
-    universita_universitaConclusione: "",
-    universita_cittaUniConclusione: "",
-    universita_provinciaConclusione: "",
-    universita_attIscritto_tipo: "",
-    universita_attIscritto_altro: "",
-    universita_attIscritto_classeLaurea: "",
-    universita_attIscritto_denominazione: "",
-    universita_attIscritto_universita: "",
-    universita_attIscritto_citta: "",
-    universita_attIscritto_provincia: "",
-    universita_attIscritto_annoIscrizione: "",
-    universita_attIscritto_modalita: "",
-  });
+  const [formData, setFormData] = useState(ANAGRAFICA_INIZIALE);
 
   useEffect(() => {
     if (isEditMode) {
@@ -363,57 +271,7 @@ function NuovoSottoscrittore() {
   // di creazione: nel database c'e' l'hash. Si mostrano qui, e finche' non le
   // si conferma non si naviga via.
   if (credenziali) {
-    return (
-      <div className={contenutoPagina("modulo")}>
-        <div className={`${scheda()} max-w-lg w-full p-8`}>
-          <h2 className="text-xl font-bold text-testo mb-2">
-            {labelTitolo} creato
-          </h2>
-          <p className="text-sm text-testo-tenue mb-6">
-            Annota queste credenziali e consegnale alla persona: la password non
-            sarà più recuperabile, nel database resta solo la sua impronta.
-          </p>
-
-          <dl className="rounded-superficie border border-attenzione-bordo bg-attenzione-tenue p-5 mb-6">
-            <dt className="text-nota font-bold tracking-wide text-attenzione-forte">
-              USERNAME
-            </dt>
-            <dd className="font-mono text-base text-testo-forte mb-4 select-all break-all">
-              {credenziali.username}
-            </dd>
-            <dt className="text-nota font-bold tracking-wide text-attenzione-forte">
-              PASSWORD
-            </dt>
-            <dd className="font-mono text-base text-testo-forte select-all break-all">
-              {credenziali.password}
-            </dd>
-          </dl>
-
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() =>
-                navigator.clipboard
-                  ?.writeText(
-                    `${credenziali.username}\n${credenziali.password}`,
-                  )
-                  .catch(() => {})
-              }
-              className={pulsante("secondario", "grande")}
-            >
-              Copia
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate(rottaElenco)}
-              className={pulsante("primario", "grande")}
-            >
-              Le ho annotate, continua
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <CredenzialiCreate credenziali={credenziali} titolo={labelTitolo} onContinua={() => navigate(rottaElenco)} />;
   }
 
   return (
@@ -422,26 +280,13 @@ function NuovoSottoscrittore() {
         titolo={`${isEditMode ? "Modifica" : "Nuovo"} ${labelTitolo.toLowerCase()}`}
         indietro={{ rotta: rottaElenco, etichetta: tipoUtente === "attuatore" ? "Attuatori" : "Sottoscrittori" }}
       />
-      <div className={`${scheda()} overflow-hidden`}>
+      <div className={`${scheda()} schede overflow-hidden`}>
         <form onSubmit={handleSubmit}>
-          <div className="flex flex-wrap border-b border-bordo px-6 pt-4 gap-2 bg-superficie-tenue/50">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-5 py-2.5 text-sm font-semibold rounded-t-controllo border-t border-x transition cursor-pointer ${
-                  activeTab === tab.id
-                    ? "bg-superficie text-primario border-bordo shadow-sm -mb-px z-10"
-                    : "bg-superficie-tenue text-testo-tenue border-transparent hover:bg-superficie-alta"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <BarraSchede id="anagrafica" etichetta="Schede anagrafica" schede={tabs}
+            attiva={activeTab} onChange={setActiveTab} />
 
-          <div className="p-8">
+          <div ref={pannello} role="tabpanel" id={`anagrafica-pannello-${activeTab}`}
+            aria-labelledby={`anagrafica-scheda-${activeTab}`} className="movimento-scheda schede__pannello">
             {activeTab === "dati-principali" ? (
               <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

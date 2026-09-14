@@ -9,6 +9,7 @@ from src.auth.models import AuthSessione
 from src.security.password import hash_password, verify_password
 from src.utenti.models import Utente
 from tests.support import factories as f
+from tests.support.sessioni import token_cookie, intestazioni_sessione
 
 pytestmark = pytest.mark.mariadb
 
@@ -22,7 +23,7 @@ def _login(client, username, password):
     )
 
 
-def test_login_riuscito_restituisce_token_e_utente_id(client, db):
+def test_login_riuscito_restituisce_cookie_e_utente_id(client, db):
     attuatore = f.crea_attuatore(
         db, email="attuatore@example.org", password_hash=hash_password(PASSWORD)
     )
@@ -30,8 +31,8 @@ def test_login_riuscito_restituisce_token_e_utente_id(client, db):
 
     assert risposta.status_code == 200
     corpo = risposta.json()
-    assert corpo["token_type"] == "bearer"
-    assert len(corpo["token"]) == 43
+    assert "token_type" not in corpo and "token" not in corpo
+    assert len(token_cookie(risposta)) == 43
     # utente_id resta nella risposta: il frontend lo mette nel corpo di
     # POST /clienti/, e toglierlo romperebbe la creazione dei sottoscrittori.
     assert corpo["utente_id"] == attuatore.utente_id
@@ -39,7 +40,7 @@ def test_login_riuscito_restituisce_token_e_utente_id(client, db):
 
     # Nel database c'e' solo l'impronta, mai il token.
     sessione = db.execute(select(AuthSessione)).scalar_one()
-    assert sessione.sess_token_hash != corpo["token"]
+    assert sessione.sess_token_hash != token_cookie(risposta)
     assert len(sessione.sess_token_hash) == 64
 
 
@@ -175,9 +176,9 @@ def test_rehash_non_valorizza_changed_at(client, db):
     assert utente.utente_password_changed_via is None
 
     # E la sessione emessa deve essere utilizzabile subito.
-    token = risposta.json()["token"]
+    token = token_cookie(risposta)
     assert (
-        client.post("/auth/logout", headers={"Authorization": f"Bearer {token}"}).status_code
+        client.post("/auth/logout", headers=intestazioni_sessione(token)).status_code
         == 204
     )
 

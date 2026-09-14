@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Search } from "../../config/icone.js";
 import { campo } from "../../config/styles/campo";
 
 /**

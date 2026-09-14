@@ -10,13 +10,16 @@ import {
   LayoutDashboard,
   UserCog,
   Users,
-} from "lucide-react";
+} from "../icone.js";
 
 export const NOME_APPLICAZIONE = "Piattaforma Università";
 
 export const ROTTE = {
   accesso: "/",
+  recuperoPassword: "/password-dimenticata",
+  reimpostaPassword: "/reimposta-password",
   dashboard: "/dashboard",
+  profilo: "/profilo",
   sottoscrittori: "/sottoscrittori",
   attuatori: "/attuatori",
   aziende: "/aziende",

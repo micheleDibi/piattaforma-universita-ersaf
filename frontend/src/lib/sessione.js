@@ -1,54 +1,46 @@
-// Unico punto in cui si decide DOVE vive la sessione.
-//
-// Si usa localStorage, come prima. sessionStorage ridurrebbe la finestra utile
-// a un XSS, ma su un back-office rompe l'apertura di un link in una scheda
-// nuova e impone un login a ogni chiusura di scheda; il token scade comunque
-// lato server dopo SESSION_TTL_HOURS e il 401 viene gestito da apiFetch.
-// Un cookie HttpOnly sarebbe piu' solido, ma e' incompatibile con la scelta
-// Authorization: Bearer e porterebbe con se' CSRF e modifiche a CORS.
-// Per cambiare idea basta questa riga.
-const DEPOSITO = window.localStorage;
+// Credenziale nel cookie HttpOnly; metadati e CSRF soltanto in memoria.
+let sessione = null;
+const osservatori = new Set();
 
-// Le tre chiavi devono stare nello STESSO deposito: se utente_id
-// sopravvivesse al token, NuovoSottoscrittore salverebbe clienti attribuiti a
-// una sessione morta.
-const CHIAVE_TOKEN = "sessione_token";
-const CHIAVE_UTENTE = "utente_id";
-const CHIAVE_RUOLO = "ruolo_codice";
-
-export function salvaSessione({ token, utenteId, ruoloCodice }) {
-  DEPOSITO.setItem(CHIAVE_TOKEN, token);
-  DEPOSITO.setItem(CHIAVE_UTENTE, String(utenteId));
-  // Normalizzato in minuscolo IN SCRITTURA: il backend confronta
-  // ruolo_codice.lower(), il frontend confrontava === "nazionale" con la N
-  // maiuscola che arriva dal database. Normalizzare qui rende ogni confronto a
-  // valle insensibile al maiuscolo.
-  DEPOSITO.setItem(CHIAVE_RUOLO, String(ruoloCodice ?? "").toLowerCase());
+function pubblicaSessione(valore) {
+  sessione = valore;
+  osservatori.forEach((osservatore) => osservatore());
 }
 
-export function leggiToken() {
-  return DEPOSITO.getItem(CHIAVE_TOKEN);
+export function osservaSessione(osservatore) {
+  osservatori.add(osservatore);
+  return () => osservatori.delete(osservatore);
 }
 
-export function leggiRuolo() {
-  return DEPOSITO.getItem(CHIAVE_RUOLO) ?? "";
+export function leggiSessione() { return sessione; }
+
+export function rimuoviDepositoLegacy() {
+  for (const deposito of ["localStorage", "sessionStorage"]) {
+    try {
+      for (const chiave of ["sessione_token", "utente_id", "ruolo_codice", "token", "codice_ruolo"]) {
+        window[deposito].removeItem(chiave);
+      }
+    } catch { /* Lo storage non serve alla sessione cookie. */ }
+  }
 }
 
-/**
- * clienti.utente_id e' NOT NULL. Prima si faceva
- * Number(localStorage.getItem("utente_id")): con la chiave assente diventava
- * NaN, che JSON.stringify serializza come null, e il POST falliva con un
- * errore incomprensibile a meta' compilazione del form. Qui si restituisce
- * null in modo esplicito, cosi' il chiamante puo' fermarsi prima.
- */
-export function leggiUtenteId() {
-  const grezzo = DEPOSITO.getItem(CHIAVE_UTENTE);
-  const numero = Number(grezzo);
-  return grezzo !== null && Number.isInteger(numero) && numero > 0 ? numero : null;
+export function salvaSessione({ utente_id, ruolo_codice, csrf_token, utente_username, nome, cognome }) {
+  if (!Number.isInteger(utente_id) || utente_id <= 0 || !/^[a-f0-9]{64}$/.test(csrf_token ?? "")) {
+    throw new Error("Risposta del server non valida. Riprova.");
+  }
+  pubblicaSessione(Object.freeze({
+    utenteId: utente_id, ruoloCodice: String(ruolo_codice ?? "").toLowerCase(), csrf: csrf_token,
+    username: typeof utente_username === "string" ? utente_username.trim() : "",
+    nome: typeof nome === "string" ? nome.trim() : "",
+    cognome: typeof cognome === "string" ? cognome.trim() : "",
+  }));
+  rimuoviDepositoLegacy();
 }
 
-export function pulisciSessione() {
-  [CHIAVE_TOKEN, CHIAVE_UTENTE, CHIAVE_RUOLO].forEach((chiave) =>
-    DEPOSITO.removeItem(chiave),
-  );
-}
+export function leggiCsrf() { return sessione?.csrf ?? null; }
+export function leggiRuolo() { return sessione?.ruoloCodice ?? ""; }
+export function leggiUtenteId() { return sessione?.utenteId ?? null; }
+export function haSessione() { return sessione !== null; }
+export function pulisciSessione() { pubblicaSessione(null); rimuoviDepositoLegacy(); }
+
+rimuoviDepositoLegacy();

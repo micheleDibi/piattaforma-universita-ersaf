@@ -1,3 +1,4 @@
+import { SEGNAPOSTI_SELEZIONE } from "../config/testi/selezioni.js";
 import { campo, etichetta, spunta } from "../config/styles/campo";
 
 export default function ProdottoFormInfo({ formData, handleChange }) {
@@ -32,7 +33,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             onChange={handleChange}
             className={`${campo()} cursor-pointer`}
           >
-            <option value="">-- Seleziona Tipo Corso --</option>
+            <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.tipoCorso}</option>
             <option value={1}>MASTER</option>
             <option value={2}>MASTER AREA SCUOLA</option>
             <option value={3}>MASTER CLASSI DI CONCORSO</option>
@@ -75,7 +76,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             onChange={handleChange}
             className={`${campo()} cursor-pointer`}
           >
-            <option value="">-- Seleziona Università --</option>
+            <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.universita}</option>
             <option value={1}>Università Telematica eCampus</option>
             <option value={2}>Link Campus University</option>
             <option value={3}>
@@ -114,7 +115,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             onChange={handleChange}
             className={`${campo()} cursor-pointer`}
           >
-            <option value="">-- Seleziona Livello --</option>
+            <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.livello}</option>
             <option value={1}>1</option>
             <option value={2}>2</option>
           </select>
@@ -131,7 +132,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             onChange={handleChange}
             className={`${campo()} cursor-pointer`}
           >
-            <option value="">-- Seleziona Modalità --</option>
+            <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.modalita}</option>
             <option value={1}>FULL ONLINE</option>
             <option value={2}>BLENDED</option>
             <option value={3}>PRESENZIALE</option>
@@ -149,7 +150,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             onChange={handleChange}
             className={`${campo()} cursor-pointer`}
           >
-            <option value="">-- Seleziona Facoltà --</option>
+            <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.facolta}</option>
             <option value={1}>ECONOMIA</option>
             <option value={2}>GIURISPRUDENZA</option>
             <option value={3}>INGEGNERIA</option>
@@ -170,7 +171,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             onChange={handleChange}
             className={`${campo()} cursor-pointer`}
           >
-            <option value="">-- Seleziona Corso di Laurea --</option>
+            <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.corsoLaurea}</option>
             <option value={1}>L33 - ECONOMIA E COMMERCIO</option>
             <option value={2}>
               L15 - SCIENZE DEL TURISMO PER IL MANAGEMENT
@@ -235,7 +236,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             onChange={handleChange}
             className={`${campo()} cursor-pointer`}
           >
-            <option value="">-- Seleziona Durata --</option>
+            <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.durata}</option>
             <option value={1}>TRIENNALE</option>
             <option value={2}>MAGISTRALE</option>
             <option value={3}>CICLO UNICO</option>

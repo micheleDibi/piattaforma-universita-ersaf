@@ -1,17 +1,22 @@
-import { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router";
-import { Menu, X } from "lucide-react";
+import { useState } from "react";
+import Dialogo from "../shared/Dialogo.jsx";
+import { useSchermoCompatto } from "../../hooks/useSchermoCompatto.js";
+import { useIngresso } from "../../hooks/useIngresso.js";
+import { movimentoPagina } from "../../config/styles/movimento.js";
+import { NavLink, Outlet, useLocation } from "react-router";
+import { CircleUserRound, Menu, X } from "../../config/icone.js";
+import { ROTTE } from "../../config/routes/rotte.js";
+import { TESTI_PROFILO } from "../../config/testi/profilo.js";
+import { accessoProfiloMobile, STILI_PROFILO } from "../../config/styles/profilo.js";
 import MenuNavigazione from "./MenuNavigazione";
-import { NOME_APPLICAZIONE } from "../../config/routes/rotte";
+import { LOGO_UNIVERSITA } from "../../config/identita.js";
+import { STILI_LOGO } from "../../config/styles/identita.js";
 import { pulsanteIcona } from "../../config/styles/pulsante";
 import {
   areaContenuto,
   barraLaterale,
   barraSuperiore,
-  cassettoMenu,
-  veloCassetto,
 } from "../../config/styles/guscio";
-import { nomeApplicazione } from "../../config/styles/navigazione";
 
 /**
  * Guscio comune a tutte le pagine autenticate: barra laterale fissa da
@@ -20,27 +25,14 @@ import { nomeApplicazione } from "../../config/styles/navigazione";
  */
 export default function GuscioApplicazione() {
   const { pathname } = useLocation();
+  const compatto = useSchermoCompatto();
+  const contenuto = useIngresso(pathname);
 
   // Il menu ricorda la pagina in cui e' stato aperto: cambiando pagina risulta
   // chiuso da solo, senza un effetto che reimposti lo stato a ogni navigazione.
   const [apertoSu, setApertoSu] = useState(null);
-  const aperto = apertoSu === pathname;
+  const aperto = compatto && apertoSu === pathname;
   const chiudi = () => setApertoSu(null);
-
-  // Con il menu aperto: Esc lo chiude e la pagina sotto non scorre.
-  useEffect(() => {
-    if (!aperto) return undefined;
-    const suTasto = (evento) => {
-      if (evento.key === "Escape") setApertoSu(null);
-    };
-    const overflowPrecedente = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", suTasto);
-    return () => {
-      window.removeEventListener("keydown", suTasto);
-      document.body.style.overflow = overflowPrecedente;
-    };
-  }, [aperto]);
 
   return (
     <div className="min-h-screen bg-tela">
@@ -52,26 +44,21 @@ export default function GuscioApplicazione() {
         <button
           type="button"
           onClick={() => setApertoSu(pathname)}
-          className={pulsanteIcona()}
+          className={pulsanteIcona("neutro", "grande")}
           aria-label="Apri il menu"
           aria-expanded={aperto}
           aria-controls="menu-mobile"
         >
           <Menu aria-hidden="true" className="size-icona" />
         </button>
-        <span className={nomeApplicazione()}>{NOME_APPLICAZIONE}</span>
+        <img {...LOGO_UNIVERSITA} className={STILI_LOGO.barraMobile} />
+        <NavLink to={ROTTE.profilo} aria-label={TESTI_PROFILO.titolo}
+          className={({ isActive }) => accessoProfiloMobile(isActive)}>
+          <CircleUserRound aria-hidden="true" className={STILI_PROFILO.icona} />
+        </NavLink>
       </header>
 
-      {aperto && (
-        <div className="lg:hidden">
-          <div className={veloCassetto()} onClick={chiudi} aria-hidden="true" />
-          <div
-            id="menu-mobile"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Menu"
-            className={cassettoMenu()}
-          >
+      <Dialogo id="menu-mobile" aperto={aperto} onChiudi={chiudi} etichetta="Menu" variante="menu">
             <button
               type="button"
               onClick={chiudi}
@@ -81,12 +68,10 @@ export default function GuscioApplicazione() {
               <X aria-hidden="true" className="size-icona" />
             </button>
             <MenuNavigazione onNaviga={chiudi} />
-          </div>
-        </div>
-      )}
+      </Dialogo>
 
       <div className={areaContenuto()}>
-        <main>
+        <main ref={contenuto} className={movimentoPagina(pathname)}>
           <Outlet />
         </main>
       </div>

@@ -1,3 +1,4 @@
+import { SEGNAPOSTI_SELEZIONE } from "../config/testi/selezioni.js";
 import { campo, etichetta } from "../config/styles/campo";
 import { riquadro, titoloSezione } from "../config/styles/superficie";
 
@@ -229,7 +230,7 @@ export default function SezioneTitoli({ formData, handleChange }) {
                 onChange={handleChange}
                 className={campo()}
               >
-                <option value="">Seleziona titolo</option>
+                <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.titolo}</option>
                 <option value="laurea_1_livello">
                   Laurea (Laurea 1° Livello)
                 </option>

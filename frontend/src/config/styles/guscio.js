@@ -20,18 +20,6 @@ export function barraSuperiore() {
   );
 }
 
-export function veloCassetto() {
-  return "fixed inset-0 z-40 bg-testo-forte/30 backdrop-blur-xs";
-}
-
-/** Il cassetto non supera l'85% dello schermo: resta visibile il velo da toccare. */
-export function cassettoMenu() {
-  return (
-    "fixed inset-y-0 left-0 z-50 flex w-barra-laterale max-w-[85vw] flex-col " +
-    "bg-superficie shadow-xl"
-  );
-}
-
 /**
  * Area del contenuto. min-w-0 e' essenziale: senza, una tabella larga allarga
  * l'intera pagina invece di scorrere nel proprio contenitore.

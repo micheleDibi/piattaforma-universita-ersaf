@@ -23,6 +23,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
 from pydantic import field_validator
@@ -82,6 +83,12 @@ class Impostazioni(BaseSettings):
 
     # --- sessioni -----------------------------------------------------------
     session_ttl_hours: int = 12
+
+    # Prenotazioni atomiche condivise tra tutti i worker del login.
+    login_finestra_secondi: int = 900
+    login_tentativi_account: int = 5
+    login_tentativi_ip: int = 50
+    login_attesa_massima_secondi: int = 60
 
     # --- password -----------------------------------------------------------
     bcrypt_cost: int = 12
@@ -204,6 +211,16 @@ def verifica_configurazione(imp: Impostazioni | None = None) -> None:
         problemi.append("PASSWORD_RESET_RATE_LIMIT_PER_HOUR deve essere almeno 1")
     if imp.session_ttl_hours < 1:
         problemi.append("SESSION_TTL_HOURS deve essere almeno 1")
+    for nome in ("login_finestra_secondi", "login_tentativi_account", "login_tentativi_ip", "login_attesa_massima_secondi"):
+        if getattr(imp, nome) < 1:
+            problemi.append(f"{nome.upper()} deve essere almeno 1")
+    if imp.login_attesa_massima_secondi > imp.login_finestra_secondi:
+        problemi.append("LOGIN_ATTESA_MASSIMA_SECONDI non puo' superare la finestra")
+    if "*" in imp.lista_cors_origins:
+        problemi.append("CORS_ORIGINS deve elencare origini esplicite per le sessioni cookie")
+    frontend = urlsplit(imp.frontend_base_url)
+    if frontend.scheme == "http" and frontend.hostname not in {"localhost", "127.0.0.1", "::1"}:
+        problemi.append("Le sessioni cookie richiedono HTTPS; HTTP e' ammesso solo su loopback")
 
     if not imp.frontend_base_url.startswith(("http://", "https://")):
         problemi.append(

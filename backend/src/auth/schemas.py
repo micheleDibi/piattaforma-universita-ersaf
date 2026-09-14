@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class LoginRequest(BaseModel):
-    utente_username: str
-    utente_password: str
+    utente_username: str = Field(max_length=255)
+    utente_password: str = Field(max_length=4096)
 
 
 class RichiestaResetRequest(BaseModel):

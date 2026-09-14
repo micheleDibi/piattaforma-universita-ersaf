@@ -12,8 +12,8 @@ const VOCE =
 
 export function voceNavigazione(attiva = false) {
   return attiva
-    ? `${VOCE} bg-primario-tenue text-primario`
-    : `${VOCE} text-testo-tenue hover:bg-superficie-alta hover:text-testo-forte`;
+    ? `${VOCE} bg-interazione-selezionata text-primario shadow-selezione hover:bg-interazione-selezionata-hover`
+    : `${VOCE} text-testo-tenue hover:bg-interazione-hover hover:text-testo-forte`;
 }
 
 export function iconaNavigazione(attiva = false) {
@@ -23,19 +23,16 @@ export function iconaNavigazione(attiva = false) {
   return `size-icona shrink-0 ${colore}`;
 }
 
-/** Voce di uscita: neutra a riposo, negativa al passaggio. */
+/** L'uscita condivide il feedback delle altre voci del menu. */
 export function voceUscita() {
-  return `${VOCE} text-testo-tenue hover:bg-negativo-tenue hover:text-negativo`;
+  return `${VOCE} text-testo-tenue hover:bg-interazione-hover hover:text-testo-forte`;
 }
 
 /**
- * Testata del menu con il nome dell'applicazione. Alta quanto la barra
+ * Testata del menu con il logo dell'applicazione. Alta quanto la barra
  * superiore da mobile, cosi' le due restano allineate passando da una all'altra.
  */
 export function testataMenu() {
   return "flex h-barra-superiore shrink-0 items-center gap-3 border-b border-bordo px-5";
 }
 
-export function nomeApplicazione() {
-  return "truncate text-sm font-semibold text-testo-forte";
-}

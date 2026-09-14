@@ -20,12 +20,12 @@ vf_http_base() {
 # giro completo senza creare sessioni. Un 5xx indica che il DB non risponde.
 vf_login_db() {
     local codice
-    codice="$(http_code -X POST -H 'Content-Type: application/json' \
+    codice="$(http_code -X POST -H 'Content-Type: application/json' -H 'X-ERSAF-Request: 1' \
         --data '{"utente_username":"verifica.deploy.inesistente","utente_password":"non-valida"}' "$1/api/auth/login")"
     case "$codice" in
         401) vf_ok "login di prova respinto con 401: API e database collegati";;
         5*|000) vf_ko "login di prova fallito con $codice: API o database non funzionanti";;
-        *) vf_ok "login di prova risposto $codice (atteso 401): controllare i log api";;
+        *) vf_ko "login di prova risposto $codice (atteso 401): controllare i log api";;
     esac
 }
 

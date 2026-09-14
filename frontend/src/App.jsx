@@ -5,7 +5,9 @@ import Login from "./components/Login";
 import PasswordDimenticata from "./components/PasswordDimenticata";
 import ReimpostaPassword from "./components/ReimpostaPassword";
 import GuscioApplicazione from "./components/shell/GuscioApplicazione";
+import RichiediSessione from "./components/shell/RichiediSessione";
 import Dashboard from "./components/Dashboard";
+import MioProfilo from "./components/MioProfilo";
 import ElencoClienti from "./components/ElencoClienti";
 import ElencoAziende from "./components/ElencoAziende";
 import ElencoPratiche from "./components/ElencoPratiche";
@@ -22,13 +24,14 @@ function App() {
       <Routes>
         {/* Pagine pubbliche, fuori dal guscio. */}
         <Route path={ROTTE.accesso} element={<Login />} />
-        <Route path="/password-dimenticata" element={<PasswordDimenticata />} />
-        <Route path="/reimposta-password" element={<ReimpostaPassword />} />
+        <Route path={ROTTE.recuperoPassword} element={<PasswordDimenticata />} />
+        <Route path={ROTTE.reimpostaPassword} element={<ReimpostaPassword />} />
 
         {/* Pagine autenticate: elenchi e dettagli condividono il guscio, quindi
             la barra laterale resta visibile ovunque. */}
-        <Route element={<GuscioApplicazione />}>
+        <Route element={<RichiediSessione><GuscioApplicazione /></RichiediSessione>}>
           <Route path={ROTTE.dashboard} element={<Dashboard />} />
+          <Route path={ROTTE.profilo} element={<MioProfilo />} />
           <Route
             path={ROTTE.sottoscrittori}
             element={

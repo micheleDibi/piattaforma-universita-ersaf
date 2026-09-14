@@ -1,3 +1,4 @@
+import { SEGNAPOSTI_SELEZIONE } from "../config/testi/selezioni.js";
 import { campo, etichetta } from "../config/styles/campo";
 import { titoloSezione } from "../config/styles/superficie";
 
@@ -16,7 +17,7 @@ export default function FormDocumento({ formData, handleChange }) {
           onChange={handleChange}
           className={`${campo("comodo")} transition`}
         >
-          <option value="">Seleziona il tipo di documento</option>
+          <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.documento}</option>
           <option value="Carta d'identità">Carta d'identità</option>
           <option value="Passaporto">Passaporto</option>
           <option value="Patente">Patente</option>

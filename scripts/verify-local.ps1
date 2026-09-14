@@ -47,6 +47,7 @@ try {
     }
     if ($Gate -in @('Frontend', 'All')) {
         $Frontend = Join-Path $ProjectRoot 'frontend'
+        Invoke-ProjectGate 'frontend-test' $Frontend { npm.cmd test }
         Invoke-ProjectGate 'frontend-build' $Frontend { npm.cmd run build }
         Invoke-ProjectGate 'frontend-lint' $Frontend { npm.cmd run lint }
     }

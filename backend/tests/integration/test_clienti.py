@@ -14,6 +14,7 @@ from src.security.password import hash_password, verify_password
 from src.universita.models import Universita
 from src.utenti.models import Utente
 from tests.support import factories as f
+from tests.support.sessioni import token_cookie, intestazioni_sessione
 
 pytestmark = pytest.mark.mariadb
 
@@ -33,7 +34,7 @@ def _operatore(client, db, ruolo=f.RUOLO_REGIONALE, email="operatore@example.org
         },
     )
     assert risposta.status_code == 200, risposta.text
-    return attuatore, {"Authorization": f"Bearer {risposta.json()['token']}"}
+    return attuatore, intestazioni_sessione(token_cookie(risposta))
 
 
 def _anagrafica(**extra):

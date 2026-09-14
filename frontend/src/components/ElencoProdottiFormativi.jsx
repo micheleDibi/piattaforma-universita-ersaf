@@ -1,24 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { apiFetch } from "../lib/api";
-import IntestazionePagina from "./shared/IntestazionePagina";
+import IntestazioneElenco from "./shared/IntestazioneElenco";
 import AzioneCrea from "./shared/AzioneCrea";
-import AzioneModificaRiga from "./shared/AzioneModificaRiga";
-import BarraStrumenti from "./shared/BarraStrumenti";
+import RigheElenco from "./shared/RigheElenco.jsx";
+import { MODELLO_PRODOTTI } from "../config/elenchi.js";
+import { rigaProdotto } from "../lib/righeElenco.js";
 import CampoRicerca from "./shared/CampoRicerca";
 import { campo } from "../config/styles/campo";
+import { TESTI_ELENCO } from "../config/testi/elenco.js";
 import { contenutoPagina } from "../config/styles/pagina";
-import {
-  cella,
-  cellaAzioni,
-  cellaIntestazione,
-  intestazioneTabella,
-  rigaTabella,
-  schedaElenco,
-  scorrimentoTabella,
-  statoVuoto,
-  tabella,
-} from "../config/styles/tabella";
+import { schedaElenco } from "../config/styles/tabella";
 
 export default function ElencoProdottiFormativi() {
   const navigate = useNavigate();
@@ -27,7 +19,6 @@ export default function ElencoProdottiFormativi() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -108,7 +99,6 @@ export default function ElencoProdottiFormativi() {
     try {
       setLoading(true);
       loadingRef.current = true;
-      setSkip(0);
       skipRef.current = 0;
 
       const uniParam =
@@ -167,7 +157,6 @@ export default function ElencoProdottiFormativi() {
         loadingRef.current = true;
 
         const nextSkip = skipRef.current + LIMIT;
-        setSkip(nextSkip);
         skipRef.current = nextSkip;
 
         try {
@@ -223,7 +212,7 @@ export default function ElencoProdottiFormativi() {
 
   return (
     <div className={contenutoPagina()}>
-      <IntestazionePagina
+      <IntestazioneElenco
         titolo="Prodotti formativi"
         azioni={
           <AzioneCrea
@@ -232,113 +221,67 @@ export default function ElencoProdottiFormativi() {
             etichettaEstesa="Nuovo prodotto"
           />
         }
-      />
-
-      <div className={schedaElenco()}>
-        {/* Ricerca e filtri a tendina */}
-        <BarraStrumenti>
+        ricerca={
           <CampoRicerca
             valore={searchTerm}
             onCambia={setSearchTerm}
             segnaposto="Cerca per titolo o codice"
           />
-
-          <select
-            value={filtroUniversita}
-            onChange={(e) => setFiltroUniversita(e.target.value)}
-            className={`${campo()} sm:w-56`}
-          >
-            <option value="Tutte le università">Tutte le università</option>
-            {universitaList.map((uni) => (
-              <option key={uni.id} value={uni.descrizione}>
-                {uni.descrizione}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={filtroTipo}
-            onChange={(e) => setFiltroTipo(e.target.value)}
-            className={`${campo()} sm:w-56`}
-          >
-            <option value="Tutti i tipi">Tutti i tipi</option>
-            {tipiList.map((tipo) => (
-              <option key={tipo.id} value={tipo.descrizione}>
-                {tipo.descrizione}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={filtroAttivo}
-            onChange={(e) => setFiltroAttivo(e.target.value)}
-            className={`${campo()} sm:w-40`}
-          >
-            <option value="Tutti">Attivo: Tutti</option>
-            <option value="Sì">Attivo: Sì</option>
-            <option value="No">Attivo: No</option>
-          </select>
-        </BarraStrumenti>
-
-        {/* Tabella o messaggio nessun risultato */}
-        {prodotti.length === 0 && !loading ? (
-          <div className={statoVuoto()}>
-            Nessun risultato trovato per i filtri di ricerca selezionati.
-          </div>
-        ) : (
-          <div className={scorrimentoTabella()}>
-            <table className={tabella()}>
-              <thead className={intestazioneTabella()}>
-                <tr>
-                  <th className={cellaIntestazione()}>Università</th>
-                  <th className={cellaIntestazione()}>Codice</th>
-                  <th className={cellaIntestazione()}>Titolo</th>
-                  <th className={cellaIntestazione()}>Tipo Prodotto</th>
-                  <th className={cellaIntestazione()}>Attivo</th>
-                  <th className={cellaIntestazione("destra")}>
-                    <span className="sr-only">Azioni</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {prodotti.map((item, index) => {
-                  const isAttivo = item.listino_attivoSN === -1;
-                  const apri = () => handleModifica(item.listTesta_id);
-                  return (
-                    <tr
-                      key={item.listTesta_id || index}
-                      className={rigaTabella(true)}
-                      onClick={apri}
-                    >
-                      <td className={cella("tenue")}>
-                        {item.nome_universita || "-"}
-                      </td>
-                      <td className={cella("forte")}>
-                        {item.listTesta_codice}
-                      </td>
-                      <td className={cella("forte")}>
-                        {item.listTesta_descrizione}
-                      </td>
-                      <td className={cella("tenue")}>
-                        {item.listino_tipoCorso_descrizione || "-"}
-                      </td>
-                      <td className={cella()}>
-                        <span
-                          className={`px-2 py-1 rounded-controllo text-xs font-semibold ${isAttivo ? "bg-positivo/10 text-positivo" : "bg-superficie-alta text-testo-tenue"}`}
-                        >
-                          {isAttivo ? "Sì" : "No"}
-                        </span>
-                      </td>
-                      <td className={cellaAzioni()}>
-                        <AzioneModificaRiga onClick={apri} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        }
+        filtri={{
+          onAzzera: () => { setFiltroUniversita("Tutte le università"); setFiltroTipo("Tutti i tipi"); setFiltroAttivo("Tutti"); },
+          attivi: [filtroUniversita !== "Tutte le università",
+            filtroTipo !== "Tutti i tipi", filtroAttivo !== "Tutti"].filter(Boolean).length,
+          contenuto: <>
+            <label className="filtri-elenco__campo"><span>{TESTI_ELENCO.universita}</span>
+            <select
+              value={filtroUniversita}
+              aria-label={TESTI_ELENCO.universita}
+              onChange={(e) => setFiltroUniversita(e.target.value)}
+              className={campo()}
+            >
+              <option value="Tutte le università" data-senza-filtro>Tutte le università</option>
+              {universitaList.map((uni) => (
+                <option key={uni.id} value={uni.descrizione}>
+                  {uni.descrizione}
+                </option>
+              ))}
+            </select>
+            </label>
+            <label className="filtri-elenco__campo"><span>{TESTI_ELENCO.tipoCorso}</span>
+            <select
+              value={filtroTipo}
+              aria-label={TESTI_ELENCO.tipoCorso}
+              onChange={(e) => setFiltroTipo(e.target.value)}
+              className={campo()}
+            >
+              <option value="Tutti i tipi" data-senza-filtro>Tutti i tipi</option>
+              {tipiList.map((tipo) => (
+                <option key={tipo.id} value={tipo.descrizione}>
+                  {tipo.descrizione}
+                </option>
+              ))}
+            </select>
+            </label>
+            <label className="filtri-elenco__campo"><span>{TESTI_ELENCO.statoProdotto}</span>
+            <select
+              value={filtroAttivo}
+              aria-label={TESTI_ELENCO.statoProdotto}
+              onChange={(e) => setFiltroAttivo(e.target.value)}
+              className={campo()}
+            >
+              <option value="Tutti" data-senza-filtro>Attivo: Tutti</option>
+              <option value="Sì">Attivo: Sì</option>
+              <option value="No">Attivo: No</option>
+            </select>
+            </label>
+          </>,
+        }}
+      />
+      <div className={schedaElenco("corpo")}>
+        <RigheElenco dati={prodotti.map(rigaProdotto)} modello={MODELLO_PRODOTTI}
+          onApri={handleModifica}
+          vuoto={!loading && "Nessun risultato trovato per i filtri di ricerca selezionati."} />
 
         {/* Indicatore di caricamento o fine lista */}
         {loading && (

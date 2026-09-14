@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "../../config/icone.js";
 import {
   collegamentoIndietro,
   descrizionePagina,

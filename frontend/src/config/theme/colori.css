@@ -1,42 +1,50 @@
-/* Color system: ogni colore ha un nome che dice a cosa serve, non come appare.
- *
- * I valori partono dalla palette di Tailwind, che resta l'unica scala di
- * riferimento. Le pagine usano soltanto questi nomi (bg-primario,
- * text-testo-tenue...), mai i colori grezzi.
- */
-
+/* Ruoli semantici dell'intera app, derivati dai campioni del logo.
+ * I colori luminosi di marca vengono scuriti quando devono portare testo. */
 @theme {
-  /* Azione primaria: pulsanti principali, voce di menu attiva, messa a fuoco. */
-  --color-primario: var(--color-indigo-600);
-  --color-primario-scuro: var(--color-indigo-700);
-  --color-primario-tenue: var(--color-indigo-50);
-  --color-su-primario: var(--color-white);
+  --color-primario: var(--color-marchio-viola);
+  --color-primario-scuro: color-mix(in srgb, var(--color-marchio-viola) 80%, var(--color-neutro-nero));
+  --color-primario-tenue: color-mix(in srgb, var(--color-marchio-viola) 6%, var(--color-neutro-bianco));
+  --color-su-primario: var(--color-neutro-bianco);
+  --color-accento: var(--color-marchio-oro);
+  --color-accento-tenue: color-mix(in srgb, var(--color-marchio-oro) 16%, var(--color-neutro-bianco));
+  --color-accento-tenue-hover: color-mix(in srgb, var(--color-marchio-oro) 24%, var(--color-neutro-bianco));
+  --color-interazione-hover: color-mix(in srgb, var(--color-accento) 6%, transparent);
+  --color-interazione-selezionata: color-mix(in srgb, var(--color-accento) 10%, transparent);
+  --color-interazione-selezionata-hover: color-mix(in srgb, var(--color-accento) 14%, transparent);
 
-  /* Superfici, dalla piu' profonda alla piu' alta. La tela e' lo sfondo
-   * dell'applicazione su cui poggiano le schede. */
-  --color-tela: var(--color-slate-50);
-  --color-superficie: var(--color-white);
-  --color-superficie-tenue: var(--color-slate-50);
-  --color-superficie-alta: var(--color-slate-100);
+  --color-tela: color-mix(in srgb, var(--color-marchio-viola) 2.5%, var(--color-neutro-bianco));
+  --color-superficie: var(--color-neutro-bianco);
+  --color-superficie-tenue: color-mix(in srgb, var(--color-marchio-viola) 3%, var(--color-neutro-bianco));
+  --color-superficie-alta: color-mix(in srgb, var(--color-marchio-viola) 6%, var(--color-neutro-bianco));
 
-  /* Bordi e separazioni. */
-  --color-bordo: var(--color-slate-200);
-  --color-bordo-forte: var(--color-slate-300);
+  --color-bordo: color-mix(in srgb, var(--color-marchio-viola) 16%, var(--color-neutro-bianco));
+  --color-bordo-neutro: color-mix(in srgb, var(--color-marchio-carbone) 25%, var(--color-neutro-bianco));
+  --color-bordo-forte: color-mix(in srgb, var(--color-marchio-viola) 30%, var(--color-neutro-bianco));
+  --color-bordo-controllo: var(--color-testo-tenue);
+  --color-testo: var(--color-marchio-carbone);
+  --color-testo-tenue: color-mix(in srgb, var(--color-marchio-carbone) 78%, var(--color-neutro-bianco));
+  --color-testo-forte: color-mix(in srgb, var(--color-marchio-viola) 65%, var(--color-marchio-carbone));
 
-  /* Testo: corpo, secondario, titoli. */
-  --color-testo: var(--color-slate-700);
-  --color-testo-tenue: var(--color-slate-500);
-  --color-testo-forte: var(--color-slate-900);
+  --color-positivo: color-mix(in srgb, var(--color-marchio-verde) 64%, var(--color-neutro-nero));
+  --color-positivo-forte: color-mix(in srgb, var(--color-marchio-verde) 48%, var(--color-neutro-nero));
+  --color-positivo-tenue: color-mix(in srgb, var(--color-marchio-verde) 9%, var(--color-neutro-bianco));
+  --color-positivo-bordo: color-mix(in srgb, var(--color-marchio-verde) 32%, var(--color-neutro-bianco));
 
-  /* Stati. */
-  --color-positivo: var(--color-emerald-600);
-  --color-attenzione: var(--color-amber-500);
-  --color-attenzione-tenue: var(--color-amber-50);
-  --color-attenzione-bordo: var(--color-amber-200);
-  --color-attenzione-forte: var(--color-amber-800);
-  --color-negativo: var(--color-red-600);
-  --color-negativo-tenue: var(--color-red-50);
+  --color-attenzione: var(--color-marchio-oro);
+  --color-attenzione-tenue: color-mix(in srgb, var(--color-marchio-oro) 12%, var(--color-neutro-bianco));
+  --color-attenzione-bordo: color-mix(in srgb, var(--color-marchio-oro) 35%, var(--color-neutro-bianco));
+  --color-attenzione-forte: color-mix(in srgb, var(--color-marchio-oro) 43%, var(--color-neutro-nero));
 
-  /* Messa a fuoco: la stessa tinta dell'azione primaria. */
+  --color-negativo: color-mix(in srgb, var(--color-marchio-rosso) 78%, var(--color-neutro-nero));
+  --color-negativo-forte: color-mix(in srgb, var(--color-marchio-rosso) 66%, var(--color-neutro-nero));
+  --color-negativo-tenue: color-mix(in srgb, var(--color-marchio-rosso) 7%, var(--color-neutro-bianco));
+  --color-negativo-bordo: color-mix(in srgb, var(--color-marchio-rosso) 27%, var(--color-neutro-bianco));
+
+  --color-informazione: color-mix(in srgb, var(--color-marchio-blu) 55%, var(--color-neutro-nero));
+  --color-informazione-forte: color-mix(in srgb, var(--color-marchio-blu) 50%, var(--color-neutro-nero));
+  --color-informazione-tenue: color-mix(in srgb, var(--color-marchio-blu) 8%, var(--color-neutro-bianco));
+  --color-informazione-bordo: color-mix(in srgb, var(--color-marchio-blu) 30%, var(--color-neutro-bianco));
+
   --color-fuoco: var(--color-primario);
+  --shadow-selezione: inset 3px 0 0 var(--color-accento);
 }

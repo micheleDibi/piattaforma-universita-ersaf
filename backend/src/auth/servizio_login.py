@@ -108,6 +108,9 @@ def verifica_credenziali(db: Session, utente: Utente | None, password: str) -> b
     corretta = secrets.compare_digest(
         legacy.encode("utf-8"), password.encode("utf-8")
     )
+    if not corretta:
+        verify_password(password, hash_fittizio())
+        return False
     if corretta:
         try:
             riscrivi_hash(db, utente.utente_id, hash_password(password))
@@ -136,6 +139,7 @@ def cliente_principale(db: Session, utente_id: int):
             Cliente.cliente_ruolo,
             Cliente.cliente_email,
             Cliente.cliente_nome,
+            Cliente.cliente_cognome,
         )
         .where(Cliente.utente_id == utente_id)
         .order_by(

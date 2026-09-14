@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus } from "../../config/icone.js";
 import { pulsante } from "../../config/styles/pulsante";
 
 /**
@@ -21,11 +21,11 @@ export default function AzioneCrea({ onClick, etichetta, etichettaEstesa }) {
     <button
       type="button"
       onClick={onClick}
-      className={pulsante()}
+      className={`${pulsante()} azione-crea`}
       aria-label={etichettaEstesa}
     >
       <Plus aria-hidden="true" className="size-icona-piccola" />
-      {etichetta}
+      <span className="azione-crea__etichetta">{etichetta}</span>
     </button>
   );
 }

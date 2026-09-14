@@ -51,26 +51,16 @@ def _istantanea(url: str) -> set[tuple]:
 
 @pytest.fixture
 def database_vergine():
-    """Database vuoto, creato e distrutto dal test."""
-    url_base = os.environ["TEST_DATABASE_URL"]
-    nome = "ersaf_migrazioni"
-    # render_as_string(hide_password=False) e non str(): str() di una URL di
-    # SQLAlchemy maschera la password con "***", e quel letterale finirebbe
-    # nella stringa di connessione.
-    url_servizio = make_url(url_base).set(database="ersaf_test").render_as_string(
-        hide_password=False
-    )
-    esegui_sql(
-        url_servizio,
-        f"DROP DATABASE IF EXISTS `{nome}`; "
-        f"CREATE DATABASE `{nome}` CHARACTER SET utf8mb4 "
-        f"COLLATE utf8mb4_unicode_ci;",
-    )
-    url = make_url(url_base).set(database=nome).render_as_string(hide_password=False)
+    """Solo ersaf_test locale, con ripristino dello schema dopo ogni prova DDL."""
+    url = os.environ["TEST_DATABASE_URL"]
+    esegui_sql(url, "DROP DATABASE IF EXISTS ersaf_test; "
+               "CREATE DATABASE ersaf_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
     try:
         yield url
     finally:
-        esegui_sql(url_servizio, f"DROP DATABASE IF EXISTS `{nome}`;")
+        esegui_file_sql(url, SCHEMA_BASE)
+        for migrazione in MIGRAZIONI:
+            esegui_file_sql(url, migrazione)
 
 
 def test_migrazioni_su_database_pulito(database_vergine):

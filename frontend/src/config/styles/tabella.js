@@ -20,8 +20,9 @@
  */
 
 /** Scheda di un elenco: barra strumenti e tabella sulla stessa superficie. */
-export function schedaElenco() {
-  return "bg-superficie border border-bordo rounded-superficie shadow-xs overflow-hidden";
+export function schedaElenco(variante = "completa") {
+  const forma = variante === "corpo" ? "rounded-b-superficie border-t-0" : "rounded-superficie";
+  return `bg-superficie border border-bordo ${forma} shadow-xs overflow-hidden`;
 }
 
 /** Barra degli strumenti in testa all'elenco: ricerca e filtri a sinistra. */
@@ -34,7 +35,7 @@ export function barraStrumenti() {
 
 /** Lo scorrimento orizzontale di una tabella larga resta qui dentro. */
 export function scorrimentoTabella() {
-  return "w-full overflow-x-auto";
+  return "relative w-full overflow-x-auto";
 }
 
 export function tabella() {
@@ -70,7 +71,7 @@ export function cellaIntestazione(allineamento = "sinistra") {
 
 /** @param {boolean} cliccabile  la riga porta al dettaglio al clic */
 export function rigaTabella(cliccabile = false) {
-  const base = "border-t border-bordo transition-colors hover:bg-superficie-tenue";
+  const base = "border-t border-bordo transition-colors hover:bg-interazione-hover focus-within:bg-interazione-hover";
   return cliccabile ? `${base} cursor-pointer` : base;
 }
 

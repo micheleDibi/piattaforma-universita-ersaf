@@ -12,6 +12,7 @@ from __future__ import annotations
 import functools
 import os
 from pathlib import Path
+from urllib.parse import urlsplit
 
 DIR_BACKEND = Path(__file__).resolve().parents[1]
 RADICE = DIR_BACKEND.parent
@@ -20,6 +21,14 @@ URL_TEST_PREDEFINITA = "mysql+pymysql://ersaf:ersaf@127.0.0.1:3307/ersaf_test"
 
 os.environ.setdefault("TEST_DATABASE_URL", URL_TEST_PREDEFINITA)
 os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
+
+# La suite distrugge tabelle: anche un'esecuzione diretta deve restare locale.
+destinazione = urlsplit(os.environ["TEST_DATABASE_URL"])
+if (destinazione.scheme != "mysql+pymysql"
+        or destinazione.hostname not in {"127.0.0.1", "localhost", "::1"}
+        or destinazione.port != 3307 or destinazione.path != "/ersaf_test"
+        or destinazione.query):
+    raise RuntimeError("I test richiedono esclusivamente MariaDB loopback:3307/ersaf_test")
 
 # Pepper di test, deliberatamente DIVERSE dai valori di .env.example: un test
 # verifica che quei valori vengano rifiutati, e se il conftest li usasse come
@@ -33,6 +42,7 @@ os.environ.setdefault("BCRYPT_COST", "4")
 
 os.environ.setdefault("EMAIL_BACKEND", "memoria")
 os.environ.setdefault("FRONTEND_BASE_URL", "https://test.example.org")
+os.environ.setdefault("CORS_ORIGINS", "https://test.example.org")
 os.environ.setdefault("SMTP_HOST", "smtp.invalid")  # RFC 6761: non risolve mai
 os.environ.setdefault("PASSWORD_RESET_BUDGET_MS", "150")
 os.environ.setdefault("LOG_FILE", "")  # nessun file di log durante i test
@@ -51,6 +61,7 @@ SCHEMA_BASE = RADICE / "db" / "test" / "schema_base.sql"
 
 # Ordine figlio -> padre. `ruoli` non compare: e' lookup, non stato.
 TABELLE_DA_SVUOTARE = [
+    "auth_login_limite",
     "password_reset_token",
     "password_reset_richiesta",
     "auth_sessione",
@@ -228,7 +239,8 @@ def client(db_pulito):
     from src.main import app
 
     with TestClient(
-        app, client=("203.0.113.7", 44444), raise_server_exceptions=False
+        app, client=("203.0.113.7", 44444), raise_server_exceptions=False,
+        base_url="https://test.example.org", headers={"X-ERSAF-Request": "1"},
     ) as istanza:
         yield istanza
 
@@ -244,7 +256,8 @@ def client_da(db_pulito):
 
     def costruisci(ip: str, porta: int = 40000):
         istanza = TestClient(
-            app, client=(ip, porta), raise_server_exceptions=False
+            app, client=(ip, porta), raise_server_exceptions=False,
+            base_url="https://test.example.org", headers={"X-ERSAF-Request": "1"},
         ).__enter__()
         aperti.append(istanza)
         return istanza

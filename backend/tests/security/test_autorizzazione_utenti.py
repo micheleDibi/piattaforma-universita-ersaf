@@ -16,6 +16,7 @@ import pytest
 from src.security.password import hash_password
 from src.utenti.models import Utente
 from tests.support import factories as f
+from tests.support.sessioni import token_cookie, intestazioni_sessione
 
 pytestmark = pytest.mark.mariadb
 
@@ -32,7 +33,7 @@ def _sessione(client, db, ruolo):
         json={"utente_username": attuatore.username, "utente_password": PASSWORD},
     )
     assert risposta.status_code == 200, risposta.text
-    return attuatore, {"Authorization": f"Bearer {risposta.json()['token']}"}
+    return attuatore, intestazioni_sessione(token_cookie(risposta))
 
 
 def test_un_utente_qualsiasi_non_puo_spegnere_un_altro(client, db):

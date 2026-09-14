@@ -17,6 +17,7 @@ import pytest
 from src.security.password import hash_password
 from src.security.sessioni import valida_sessione
 from tests.support import factories as f
+from tests.support.sessioni import token_cookie, intestazioni_sessione
 
 pytestmark = pytest.mark.mariadb
 
@@ -33,7 +34,7 @@ def _sessione(client, db, ruolo):
         json={"utente_username": attuatore.username, "utente_password": PASSWORD},
     )
     assert risposta.status_code == 200, risposta.text
-    return attuatore, {"Authorization": f"Bearer {risposta.json()['token']}"}
+    return attuatore, intestazioni_sessione(token_cookie(risposta))
 
 
 def test_senza_token_non_si_impersona_nessuno(client, db):
@@ -69,7 +70,7 @@ def test_un_regionale_puo_impersonare_e_riceve_una_sessione_valida(client, db):
     corpo = risposta.json()
     assert corpo["utente_id"] == bersaglio.utente_id
     # Il token emesso e' davvero una sessione del bersaglio, non del chiamante.
-    esito = valida_sessione(db, corpo["token"])
+    esito = valida_sessione(db, token_cookie(risposta))
     assert esito is not None
     assert esito[1] == bersaglio.utente_id
 

@@ -1,3 +1,4 @@
+import { SEGNAPOSTI_SELEZIONE } from "../config/testi/selezioni.js";
 import { campo, etichetta } from "../config/styles/campo";
 import { titoloSezione } from "../config/styles/superficie";
 
@@ -31,7 +32,7 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
           onChange={handleChange}
           className={`${campo("comodo")} transition`}
         >
-          <option value="">Seleziona il genere</option>
+          <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.genere}</option>
           <option value="uomo">uomo</option>
           <option value="donna">donna</option>
         </select>

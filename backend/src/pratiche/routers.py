@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
-from typing import List, Optional
+from typing import Annotated, List
 
 from src.auth.dipendenze import get_current_utente
 from src.database import get_db
+from src.pratiche.filtri import FiltriPratiche, query_filtrata
+from src.pratiche.opzioni import router as opzioni_router
 from src.pratiche.models import Pratica, PraticaCreate, PraticaResponse, PraticaUpdate
 
 # Stessa scelta di aziende/routers.py: autenticazione a livello di router,
@@ -13,6 +15,8 @@ router = APIRouter(
     tags=["Pratiche"],
     dependencies=[Depends(get_current_utente)],
 )
+
+router.include_router(opzioni_router)
 
 # joinedload sulle relazioni che PraticaResponse.estrai_relazioni legge per
 # popolare cliente_nome_completo / pratica_stato_descrizione / listTesta_descrizione.
@@ -62,33 +66,9 @@ def crea_pratica(pratica_in: PraticaCreate, db: Session = Depends(get_db)):
 
 # GET ALL
 @router.get("/", response_model=List[PraticaResponse])
-def lista_pratiche(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(40, ge=1, le=200),
-    search: Optional[str] = None,
-    cliente_id: Optional[int] = None,
-    pratica_stato_id: Optional[int] = None,
-    db: Session = Depends(get_db),
-):
-    query = db.query(Pratica).options(*_RELAZIONI_ELENCO)
-
-    # Ricerca per numero pratica: e' l'unico campo testuale "identificativo"
-    # su Pratica stessa. Se serve anche cercare per nome/cognome cliente,
-    # va aggiunto un join esplicito su Cliente qui.
-    if search:
-        query = query.filter(Pratica.pratica_numero.ilike(f"%{search}%"))
-    if cliente_id is not None:
-        query = query.filter(Pratica.cliente_id == cliente_id)
-    if pratica_stato_id is not None:
-        query = query.filter(Pratica.pratica_stato_id == pratica_stato_id)
-
-    # Piu' recenti prima: a differenza di ElencoAziende (ordine alfabetico
-    # naturale sulla ragione sociale), per un elenco di pratiche ha piu' senso
-    # vedere prima quelle create per ultime. Se preferisci l'ordine per id
-    # crescente come in aziende, cambia .desc() in .asc().
-    return (
-        query.order_by(Pratica.pratica_id.desc()).offset(skip).limit(limit).all()
-    )
+def lista_pratiche(filtri: Annotated[FiltriPratiche, Query()], db: Session = Depends(get_db)):
+    return (query_filtrata(db, filtri).options(*_RELAZIONI_ELENCO)
+            .order_by(Pratica.pratica_id.desc()).offset(filtri.skip).limit(filtri.limit).all())
 
 
 # GET BY ID

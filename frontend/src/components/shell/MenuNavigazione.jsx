@@ -1,36 +1,42 @@
 import { NavLink, useLocation, useNavigate } from "react-router";
-import { LogOut } from "lucide-react";
+import { LogOut } from "../../config/icone.js";
 import {
-  NOME_APPLICAZIONE,
   ROTTE,
   VOCI_MENU,
 } from "../../config/routes/rotte";
 import {
   iconaNavigazione,
-  nomeApplicazione,
   testataMenu,
   voceNavigazione,
   voceUscita,
 } from "../../config/styles/navigazione";
-import { leggiRuolo } from "../../lib/sessione";
+import { useSessione } from "../../hooks/useSessione.js";
+import TileProfilo from "../profilo/TileProfilo.jsx";
 import { logout } from "../../lib/logout";
+import { useState } from "react";
+import { LOGO_UNIVERSITA } from "../../config/identita.js";
+import { STILI_LOGO } from "../../config/styles/identita.js";
 
 /**
- * Contenuto del menu: nome dell'applicazione, voci e uscita.
+ * Contenuto del menu: logo dell'applicazione, voci e uscita.
  *
  * Lo stesso contenuto serve la barra laterale da desktop e il cassetto da
  * mobile; `onNaviga` permette al cassetto di chiudersi quando si sceglie una
  * voce.
  */
 export default function MenuNavigazione({ onNaviga }) {
+  const [erroreUscita, setErroreUscita] = useState("");
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const aderente = leggiRuolo() === "aderente";
+  const aderente = useSessione()?.ruoloCodice === "aderente";
   const voci = VOCI_MENU.filter((voce) => !voce.soloAderente || aderente);
 
   const esci = async () => {
-    await logout();
-    navigate(ROTTE.accesso, { replace: true });
+    setErroreUscita("");
+    try {
+      await logout();
+      navigate(ROTTE.accesso, { replace: true });
+    } catch (errore) { setErroreUscita(errore.message); }
   };
 
   const eAttiva = (voce, isActive) =>
@@ -40,7 +46,7 @@ export default function MenuNavigazione({ onNaviga }) {
   return (
     <div className="flex h-full flex-col">
       <div className={testataMenu()}>
-        <span className={nomeApplicazione()}>{NOME_APPLICAZIONE}</span>
+        <img {...LOGO_UNIVERSITA} className={STILI_LOGO.navigazione} />
       </div>
 
       <nav
@@ -73,6 +79,8 @@ export default function MenuNavigazione({ onNaviga }) {
       </nav>
 
       <div className="border-t border-bordo p-3">
+        <TileProfilo onNaviga={onNaviga} />
+        {erroreUscita && <p role="alert" className="text-sm text-negativo">{erroreUscita}</p>}
         <button type="button" onClick={esci} className={voceUscita()}>
           <LogOut aria-hidden="true" className="size-icona shrink-0" />
           <span>Esci</span>

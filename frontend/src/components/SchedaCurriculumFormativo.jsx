@@ -3,9 +3,12 @@ import SezioneTitoli from "./SezioneTitoli";
 import ImmatricolazioniIscrizioni from "./ImmatricolazioniIscrizioni";
 import AbilitazioniProfessionali from "./AbilitazioniProfessionali";
 import Invalidita from "./Invalidita";
+import BarraSchede from "./shared/BarraSchede.jsx";
+import { useIngresso } from "../hooks/useIngresso.js";
 
 export default function SchedaCurriculumFormativo({ formData, handleChange }) {
   const [activeTab, setActiveTab] = useState("titoli");
+  const pannello = useIngresso(activeTab);
 
   const tabs = [
     {
@@ -43,30 +46,12 @@ export default function SchedaCurriculumFormativo({ formData, handleChange }) {
   ];
 
   return (
-    <div className="w-full">
-      {/* Container della barra delle tab interne */}
-      <div className="flex items-end space-x-2 border-b border-bordo px-2 pt-2">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              type="button"
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`relative px-5 py-3 text-sm font-medium transition-all duration-200 rounded-t-superficie focus:outline-none cursor-pointer ${
-                isActive
-                  ? "bg-superficie text-primario shadow-sm border-t border-x border-bordo z-10 -mb-[1px]"
-                  : "bg-superficie-tenue text-testo-tenue hover:bg-superficie-alta hover:text-testo-forte border-t border-x border-transparent"
-              }`}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Contenuto del form attivo (senza pulsante di salvataggio interno) */}
-      <div className="bg-superficie border-x border-b border-bordo rounded-b-superficie p-6 shadow-sm">
+    <div className="schede w-full">
+      <BarraSchede id="curriculum" etichetta="Curriculum formativo" schede={tabs}
+        attiva={activeTab} onChange={setActiveTab} />
+      <div ref={pannello} role="tabpanel" id={`curriculum-pannello-${activeTab}`}
+        aria-labelledby={`curriculum-scheda-${activeTab}`}
+        className="movimento-scheda schede__pannello border-x border-b border-bordo rounded-b-superficie">
         {tabs.find((tab) => tab.id === activeTab)?.component}
       </div>
     </div>

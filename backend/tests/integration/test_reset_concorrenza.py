@@ -196,7 +196,8 @@ def test_due_conferme_simultanee_una_sola_vince(client, db, mailer):
         def invia():
             # Due client distinti: non si condivide il portal di anyio.
             with TestClient(
-                app, client=("203.0.113.7", 44444), raise_server_exceptions=False
+                app, client=("203.0.113.7", 44444), raise_server_exceptions=False,
+                base_url="https://test.example.org", headers={"X-ERSAF-Request": "1"},
             ) as istanza:
                 return istanza.post(
                     "/auth/password-reset/confirm", json=_corpo(token)

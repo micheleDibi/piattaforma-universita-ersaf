@@ -2,31 +2,22 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { apiFetch } from "../lib/api";
 import { leggiRuolo } from "../lib/sessione";
-import IntestazionePagina from "./shared/IntestazionePagina";
-import BarraStrumenti from "./shared/BarraStrumenti";
+import IntestazioneElenco from "./shared/IntestazioneElenco";
 import CampoRicerca from "./shared/CampoRicerca";
 import AzioneCrea from "./shared/AzioneCrea";
-import AzioneModificaRiga from "./shared/AzioneModificaRiga";
+import RigheElenco from "./shared/RigheElenco.jsx";
+import { modelloClienti } from "../config/elenchi.js";
+import { rigaCliente } from "../lib/righeElenco.js";
 import { campo } from "../config/styles/campo";
+import { TESTI_ELENCO } from "../config/testi/elenco.js";
 import { contenutoPagina } from "../config/styles/pagina";
-import {
-  cella,
-  cellaAzioni,
-  cellaIntestazione,
-  intestazioneTabella,
-  rigaTabella,
-  schedaElenco,
-  scorrimentoTabella,
-  statoVuoto,
-  tabella,
-} from "../config/styles/tabella";
+import { schedaElenco } from "../config/styles/tabella";
 
 function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
   const [sottoscrittori, setSottoscrittori] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [skip, setSkip] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRuolo, setSelectedRuolo] = useState("");
@@ -42,6 +33,7 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
 
   const canSee = leggiRuolo() === "aderente";
   const canSeeAzienda = canSee && soloAttuatori;
+  const opzioniRighe = { attuatori: soloAttuatori, mostraAzienda: canSeeAzienda };
 
   useEffect(() => {
     loadingRef.current = loading;
@@ -64,7 +56,6 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
       try {
         setLoading(true);
         loadingRef.current = true;
-        setSkip(0);
         skipRef.current = 0;
 
         const utentiParam = soloUtenti ? "&solo_utenti=true" : "";
@@ -128,7 +119,6 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
 
         // Usa skipRef al posto dello state skip per evitare loop
         const nextSkip = skipRef.current + LIMIT;
-        setSkip(nextSkip);
         skipRef.current = nextSkip;
 
         try {
@@ -177,13 +167,9 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
   if (error)
     return <div className="p-4 text-center text-negativo">Errore: {error}</div>;
 
-  let colSpanCount = 3;
-  if (soloAttuatori) colSpanCount += 1;
-  if (canSeeAzienda) colSpanCount += 1;
-
-  return (
+return (
     <div className={contenutoPagina()}>
-      <IntestazionePagina
+      <IntestazioneElenco
         titolo={soloAttuatori ? "Attuatori" : "Sottoscrittori"}
         azioni={
           <AzioneCrea
@@ -200,10 +186,7 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
             }
           />
         }
-      />
-
-      <div className={schedaElenco()}>
-        <BarraStrumenti>
+        ricerca={
           <CampoRicerca
             valore={searchTerm}
             onCambia={setSearchTerm}
@@ -213,86 +196,32 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
                 : "Cerca per nome o cognome"
             }
           />
-          {soloAttuatori && (
+        }
+        filtri={soloAttuatori ? { attivi: selectedRuolo ? 1 : 0,
+          onAzzera: () => setSelectedRuolo(""), contenuto: (
+            <label className="filtri-elenco__campo"><span>{TESTI_ELENCO.ruolo}</span>
             <select
               value={selectedRuolo}
+              aria-label={TESTI_ELENCO.ruolo}
               onChange={(e) => setSelectedRuolo(e.target.value)}
-              className={`${campo()} sm:w-48`}
+              className={campo()}
             >
-              <option value="">Tutti i ruoli</option>
+              <option value="" data-senza-filtro>Tutti i ruoli</option>
               <option value="Aderente">Aderente</option>
               <option value="Provinciale">Provinciale</option>
               <option value="Regionale">Regionale</option>
               <option value="Nazionale">Nazionale</option>
             </select>
-          )}
-        </BarraStrumenti>
-
-        <div className={scorrimentoTabella()}>
-          <table className={tabella()}>
-            <thead className={intestazioneTabella()}>
-              <tr>
-                <th className={cellaIntestazione()}>Nome</th>
-                <th className={cellaIntestazione()}>Cognome</th>
-
-                {soloAttuatori && (
-                  <th className={cellaIntestazione()}>Ruolo</th>
-                )}
-
-                {canSeeAzienda && (
-                  <th className={cellaIntestazione()}>Azienda</th>
-                )}
-
-                <th className={cellaIntestazione("destra")}>
-                  <span className="sr-only">Azioni</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sottoscrittori.map((item, index) => {
-                const apri = () =>
-                  navigate(
-                    `/modifica/${item.cliente_id}${soloAttuatori ? "?tipo=attuatore" : ""}`,
-                  );
-
-                return (
-                  <tr
-                    key={item.cliente_id || index}
-                    className={rigaTabella(true)}
-                    onClick={apri}
-                  >
-                    <td className={cella("forte")}>{item.cliente_nome}</td>
-                    <td className={cella("forte")}>{item.cliente_cognome}</td>
-
-                    {soloAttuatori && (
-                      <td className={cella("tenue")}>
-                        {item.ruolo?.ruolo_codice || "-"}
-                      </td>
-                    )}
-
-                    {canSeeAzienda && (
-                      <td className={cella("tenue")}>
-                        {item.azienda?.azienda_ragione_sociale || "-"}
-                      </td>
-                    )}
-                    <td className={cellaAzioni()}>
-                      <AzioneModificaRiga onClick={apri} />
-                    </td>
-                  </tr>
-                );
-              })}
-              {sottoscrittori.length === 0 && !loading && (
-                <tr className="border-t border-bordo">
-                  <td colSpan={colSpanCount} className={statoVuoto()}>
-                    {soloAttuatori
-                      ? "Nessun attuatore trovato."
-                      : "Nessun sottoscrittore trovato."}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            </label>
+          ) } : undefined}
+      />
+      <div className={schedaElenco("corpo")}>
+        <RigheElenco
+          dati={sottoscrittori.map((item) => rigaCliente(item, opzioniRighe))}
+          modello={modelloClienti(opzioniRighe)}
+          onApri={(id) => navigate(`/modifica/${id}${soloAttuatori ? "?tipo=attuatore" : ""}`)}
+          vuoto={!loading && (soloAttuatori ? "Nessun attuatore trovato." : "Nessun sottoscrittore trovato.")}
+        />
 
         {loading && (
           <div className="border-t border-bordo px-4 py-3 text-center text-sm text-testo-tenue">

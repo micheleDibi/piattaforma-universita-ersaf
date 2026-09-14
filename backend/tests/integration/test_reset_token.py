@@ -12,6 +12,7 @@ from src.security.tokens import TipoToken, genera_token, impronta
 from src.utenti.models import Utente
 from tests.conftest import corpo_html
 from tests.support import factories as f
+from tests.support.sessioni import token_cookie, intestazioni_sessione
 
 pytestmark = pytest.mark.mariadb
 
@@ -155,11 +156,12 @@ def test_tutte_le_sessioni_vengono_revocate(client, db):
     )
     sessioni = []
     for _ in range(3):
+        client.cookies.clear()  # tre dispositivi indipendenti
         risposta = client.post(
             "/auth/login",
             json={"utente_username": attuatore.username, "utente_password": "Password123456"},
         )
-        sessioni.append(risposta.json()["token"])
+        sessioni.append(token_cookie(risposta))
 
     assert _conferma(client, token).status_code == 200
 
@@ -172,7 +174,7 @@ def test_tutte_le_sessioni_vengono_revocate(client, db):
     corpo = {"utente_username": "x", "utente_password": "cavallo-batteria-1"}
     for sessione in sessioni:
         assert client.post(
-            "/utenti/", json=corpo, headers={"Authorization": f"Bearer {sessione}"}
+            "/utenti/", json=corpo, headers=intestazioni_sessione(sessione)
         ).status_code == 401
 
 

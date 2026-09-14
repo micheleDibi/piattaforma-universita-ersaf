@@ -14,7 +14,7 @@
  */
 
 const BASE =
-  "w-full bg-superficie border border-bordo rounded-controllo text-testo shadow-xs " +
+  "w-full bg-superficie border rounded-controllo text-testo shadow-xs " +
   "placeholder:text-testo-tenue/70 transition-colors " +
   "focus:outline-none focus:ring-3 focus:ring-fuoco/15 focus:border-fuoco " +
   "disabled:bg-superficie-tenue disabled:text-testo-tenue";
@@ -22,23 +22,25 @@ const BASE =
 const DIMENSIONI = {
   compatto: "px-3 py-2 text-sm",
   comodo: "px-4 py-2.5 text-sm",
+  ampio: "min-h-12 px-4 py-2.5 text-base",
   minimo: "px-2 py-1.5 text-xs",
 };
 
 /**
- * @param {"compatto"|"comodo"|"minimo"} dimensione
+ * @param {"compatto"|"comodo"|"ampio"|"minimo"} dimensione
  * @param {{ errore?: boolean }} opzioni  errore: il valore non ha superato la validazione
  */
 export function campo(dimensione = "compatto", { errore = false } = {}) {
   const misura = DIMENSIONI[dimensione] ?? DIMENSIONI.compatto;
   const stato = errore
     ? "border-negativo focus:border-negativo focus:ring-negativo/15"
-    : "";
+    : dimensione === "ampio" ? "border-bordo-controllo" : "border-bordo";
   return [BASE, misura, stato].filter(Boolean).join(" ");
 }
 
 /** Etichetta di un campo: maiuscoletto spaziato. */
-export function etichetta() {
+export function etichetta(variante = "compatta") {
+  if (variante === "leggibile") return "block text-sm font-medium text-testo-forte mb-2";
   return "block text-etichetta uppercase tracking-wider text-testo-tenue mb-1.5";
 }
 

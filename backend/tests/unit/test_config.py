@@ -25,6 +25,23 @@ def test_una_configurazione_completa_passa():
     _verifica()
 
 
+@pytest.mark.parametrize("origine", ["http://192.168.40.12", "http://unistaging.ersaf.it"])
+def test_sessione_cookie_rifiuta_http_fuori_loopback(origine):
+    with pytest.raises(ErroreConfigurazione, match="HTTPS"):
+        _verifica(frontend_base_url=origine, ersaf_env="sviluppo")
+
+
+def test_cookie_non_ammette_cors_wildcard_anche_in_sviluppo():
+    with pytest.raises(ErroreConfigurazione, match="origini esplicite"):
+        _verifica(cors_origins="*", ersaf_env="sviluppo")
+
+
+@pytest.mark.parametrize("campo", ["login_finestra_secondi", "login_tentativi_account", "login_tentativi_ip", "login_attesa_massima_secondi"])
+def test_limiti_login_non_possono_essere_disabilitati(campo):
+    with pytest.raises(ErroreConfigurazione, match=campo.upper()):
+        _verifica(**{campo: 0})
+
+
 def test_impostazioni_non_solleva_mai_a_import_time():
     """Vincolo strutturale: src/database.py chiama create_engine a import-time,
     quindi Impostazioni() non deve poter fallire, altrimenti nemmeno la

@@ -1,3 +1,4 @@
+import { SEGNAPOSTI_SELEZIONE } from "../config/testi/selezioni.js";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import ModalCambiaPadre from "./ModalCambiaPadre";
@@ -149,18 +150,8 @@ export default function SchedaUtente() {
       }
       const dati = await leggiJson(risposta);
 
-      if (dati?.token) {
-        // Unico punto in cui si scrive la sessione. Prima si cancellavano le
-        // chiavi giuste (sessione_token, ruolo_codice) e se ne scrivevano di
-        // sbagliate (token, codice_ruolo, col nome invertito): apiFetch non
-        // trovava piu' il token e l'impersonificazione non funzionava mai.
-        salvaSessione({
-          token: dati.token,
-          utenteId: dati.utente_id,
-          ruoloCodice: dati.ruolo_codice,
-        });
-        window.location.href = "/home";
-      }
+      salvaSessione(dati ?? {});
+      window.location.href = "/home";
     } catch (err) {
       alert(err.message);
     }
@@ -260,7 +251,7 @@ export default function SchedaUtente() {
               onChange={(e) => setRuoloId(e.target.value)}
               className={campo("comodo")}
             >
-              <option value="">Seleziona ruolo...</option>
+              <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.ruolo}</option>
               <option value="0">Utente</option>
               <option value="1">Aderente</option>
               <option value="2">Regionale</option>
@@ -285,7 +276,7 @@ export default function SchedaUtente() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(true)}
-                className={`${pulsante("secondario")} whitespace-nowrap`}
+                className={`${pulsante("ausiliario")} whitespace-nowrap`}
               >
                 Cambia Padre
               </button>

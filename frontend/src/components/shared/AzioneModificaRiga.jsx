@@ -1,4 +1,4 @@
-import { Pencil } from "lucide-react";
+import { Pencil } from "../../config/icone.js";
 import { pulsanteAzioneRiga } from "../../config/styles/pulsante";
 
 /**
@@ -9,9 +9,9 @@ import { pulsanteAzioneRiga } from "../../config/styles/pulsante";
  * non far scattare due volte la stessa navigazione. Resta un <button> vero, con
  * nome accessibile, perche' la riga cliccabile non e' raggiungibile da tastiera.
  *
- * @param {{ onClick: () => void, etichetta?: string }} props
+ * @param {{ onClick: () => void, etichetta?: string, dimensione?: "normale"|"grande" }} props
  */
-export default function AzioneModificaRiga({ onClick, etichetta = "Modifica" }) {
+export default function AzioneModificaRiga({ onClick, etichetta = "Modifica", dimensione = "normale" }) {
   return (
     <button
       type="button"
@@ -19,7 +19,7 @@ export default function AzioneModificaRiga({ onClick, etichetta = "Modifica" }) 
         evento.stopPropagation();
         onClick();
       }}
-      className={pulsanteAzioneRiga()}
+      className={pulsanteAzioneRiga(dimensione)}
       aria-label={etichetta}
       title={etichetta}
     >

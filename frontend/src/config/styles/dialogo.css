@@ -1,0 +1,27 @@
+/* Dialog nativo: focus e isolamento della pagina gestiti dal browser. */
+.dialogo {
+  @apply fixed border-0 bg-superficie text-testo p-0 shadow-xl;
+}
+.dialogo::backdrop {
+  @apply bg-testo-forte/30 backdrop-blur-xs;
+  opacity: 0;
+  transition: opacity var(--durata-rapida) var(--curva-uscita),
+    display var(--durata-rapida) allow-discrete,
+    overlay var(--durata-rapida) allow-discrete;
+}
+.dialogo[open]::backdrop { opacity: 1; transition-duration: var(--durata-normale); }
+.dialogo--menu {
+  @apply inset-y-0 left-0 right-auto m-0 w-barra-laterale max-w-[85vw] h-dvh max-h-none;
+  translate: -100% 0;
+  transition-duration: var(--durata-normale);
+}
+.dialogo--menu[open] { translate: 0 0; transition-duration: var(--durata-pannello); }
+.dialogo--menu[open]::backdrop { transition-duration: var(--durata-pannello); }
+.dialogo--menu::backdrop { transition-duration: var(--durata-normale); }
+.dialogo--finestra { @apply inset-0 m-auto w-[90%] max-w-[800px] max-h-[85dvh] rounded-superficie; }
+.dialogo__contenuto { @apply flex max-h-[85dvh] flex-col p-6; }
+
+@starting-style {
+  .dialogo--menu[open] { opacity: 0; translate: -100% 0; }
+  .dialogo[open]::backdrop { opacity: 0; }
+}

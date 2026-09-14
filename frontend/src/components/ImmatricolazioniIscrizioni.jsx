@@ -1,3 +1,4 @@
+import { SEGNAPOSTI_SELEZIONE } from "../config/testi/selezioni.js";
 import { daCasella, eVero } from "../lib/flagLegacy";
 import { campo, etichetta, spunta } from "../config/styles/campo";
 import { titoloSezione } from "../config/styles/superficie";
@@ -27,7 +28,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 onChange={handleChange}
                 className={campo()}
               >
-                <option value="">Seleziona status</option>
+                <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.stato}</option>
                 <option value={0}>Non immatricolato</option>
                 <option value={1}>Immatricolato</option>
               </select>
@@ -41,7 +42,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 value={formData.universita_riforma || ""}
                 onChange={handleChange}
               >
-                <option value="">Seleziona tipo corso</option>
+                <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.tipoCorso}</option>
                 <option value="pre_riforma_dm_509_99">
                   PRE riforma D.M. 509/99
                 </option>
@@ -125,7 +126,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                   value={formData.universita_conclusione || ""}
                   onChange={handleChange}
                 >
-                  <option value="">Seleziona</option>
+                  <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.generico}</option>
                   <option value="conseguimento_titolo_finale">
                     conseguimento titolo finale
                   </option>
@@ -199,7 +200,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 onChange={handleChange}
                 className={campo()}
               >
-                <option value="">Seleziona tipo</option>
+                <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.tipo}</option>
                 <option value="laurea_i_livello">Laurea I Livello</option>
                 <option value="laurea_ii_livello">Laurea II Livello</option>
                 <option value="laurea_ciclo_unico">Laurea Ciclo Unico</option>
@@ -284,7 +285,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
                 onChange={handleChange}
                 className={campo()}
               >
-                <option value="">Seleziona modalità</option>
+                <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.modalita}</option>
                 <option value="full_time">Full-Time</option>
                 <option value="part_time">Part-Time</option>
               </select>

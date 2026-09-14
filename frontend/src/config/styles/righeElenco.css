@@ -1,0 +1,93 @@
+/* Il contenitore misura lo spazio reale dopo sidebar e margini. Le soglie
+ * semantiche sono nei token; nessuna misura o variante nelle singole pagine. */
+.elenco-adattivo { container: righe-elenco / inline-size; position: relative; min-width: 0; }
+.elenco-adattivo__tabella { @apply hidden w-full table-fixed text-left text-sm; }
+.elenco-adattivo__tabella th { @apply px-4 py-3 bg-superficie-tenue text-etichetta text-testo-tenue uppercase tracking-wider; }
+.elenco-adattivo__tabella td { @apply px-4 py-3.5 align-top; }
+.elenco-adattivo__tabella tr,
+.elenco-adattivo__lista > li {
+  @apply border-b border-bordo cursor-pointer transition-colors hover:bg-interazione-hover focus-within:bg-interazione-hover;
+}
+.elenco-adattivo__tabella tbody tr:last-child,
+.elenco-adattivo__lista > li:last-child { @apply border-b-0; }
+.elenco-adattivo__tabella col[data-colonna="azioni"] { width: var(--spacing-colonna-azioni); }
+.elenco-adattivo__tabella col[data-colonna="ruolo"] { width: var(--spacing-colonna-ruolo); }
+.elenco-adattivo__tabella col[data-colonna="numero"] { width: var(--spacing-colonna-numero); }
+.elenco-adattivo__tabella col[data-colonna="stato"] { width: var(--spacing-colonna-stato); }
+.elenco-adattivo[data-ampiezza="articolata"] col[data-colonna="nominativo"] { width: 30%; }
+.elenco-adattivo col[data-colonna="prodotto"] { width: 44%; }
+.elenco-adattivo col[data-colonna="universita"] { width: 25%; }
+.elenco-adattivo__tabella td.elenco-adattivo__azione { @apply py-2 text-right align-middle; }
+.elenco-adattivo__tabella td > * + * { @apply mt-1; }
+/* Valori standard */
+.elenco-adattivo__valore { @apply block min-w-0 text-sm text-testo-tenue; overflow-wrap: anywhere; }
+.elenco-adattivo__valore + .elenco-adattivo__valore { @apply mt-1; }
+.elenco-adattivo__valore[data-rilievo="principale"] { @apply font-medium text-testo-forte; }
+.elenco-adattivo__valore[data-rilievo="secondario"] { @apply text-nota; }
+.elenco-adattivo__valore[data-rilievo="stato"] { @apply font-medium; }
+.elenco-adattivo__valore[data-tono="positivo"] { @apply text-positivo; }
+
+/* Distintivo codice monospace */
+.elenco-adattivo__codice {
+  @apply inline-block font-mono text-xs font-semibold px-2 py-0.5 rounded bg-superficie-alta border border-bordo text-testo-tenue tracking-wide uppercase;
+}
+
+/* Badge di stato semantico */
+.elenco-adattivo__badge {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border border-bordo bg-superficie-tenue text-testo-tenue;
+}
+.elenco-adattivo__badge[data-tono="positivo"] {
+  @apply bg-positivo-tenue border-positivo-bordo text-positivo-forte;
+}
+.elenco-adattivo__badge[data-tono="attenzione"] {
+  @apply bg-attenzione-tenue border-attenzione-bordo text-attenzione-forte;
+}
+.elenco-adattivo__badge[data-tono="negativo"] {
+  @apply bg-negativo-tenue border-negativo-bordo text-negativo-forte;
+}
+.elenco-adattivo__badge-punto {
+  @apply inline-block size-1.5 rounded-full shrink-0 bg-current;
+}
+
+/* Lista mobile */
+.elenco-adattivo__lista { @apply m-0 list-none p-0; }
+.elenco-adattivo__lista > li { @apply flex items-center gap-3 p-4; }
+.elenco-adattivo__corpo { @apply relative min-w-0 flex-1 flex flex-col gap-0.5; }
+.elenco-adattivo__principale { @apply min-w-0; }
+.elenco-adattivo__valore-principale { @apply block font-medium text-testo-forte text-sm leading-snug; overflow-wrap: anywhere; }
+
+.elenco-adattivo__fascia-tecnica { @apply flex flex-wrap items-center gap-2 mt-1; }
+.elenco-adattivo__tecnico-item { @apply inline-flex items-center; }
+
+.elenco-adattivo__metadati { @apply flex flex-wrap items-center gap-x-3.5 gap-y-1.5 mt-1.5 text-sm text-testo-tenue; }
+.elenco-adattivo__metadato { @apply inline-flex items-center gap-1.5 min-w-0; }
+.elenco-adattivo__metadato-icona {
+  width: var(--spacing-icona-piccola) !important;
+  height: var(--spacing-icona-piccola) !important;
+  @apply shrink-0 text-testo-tenue opacity-70;
+}
+.elenco-adattivo__metadato-testo { @apply min-w-0 break-words; }
+
+.elenco-adattivo__azione-mobile {
+  @apply self-center shrink-0 flex items-center justify-center text-testo-tenue;
+}
+.elenco-adattivo__chevron {
+  width: var(--spacing-icona) !important;
+  height: var(--spacing-icona) !important;
+  @apply text-testo-tenue opacity-40 transition-all duration-150;
+}
+.elenco-adattivo__lista > li:hover .elenco-adattivo__chevron,
+.elenco-adattivo__lista > li:focus-within .elenco-adattivo__chevron,
+.elenco-adattivo__tabella tr:hover .elenco-adattivo__chevron,
+.elenco-adattivo__tabella tr:focus-within .elenco-adattivo__chevron {
+  @apply opacity-90 text-testo-forte translate-x-0.5;
+}
+
+@container righe-elenco (width >= theme(--breakpoint-elenco-semplice)) {
+  [data-ampiezza="semplice"] > .elenco-adattivo__tabella { display: table; }
+  [data-ampiezza="semplice"] > .elenco-adattivo__lista { display: none; }
+}
+@container righe-elenco (width >= theme(--breakpoint-elenco-articolato)) {
+  [data-ampiezza="articolata"] > .elenco-adattivo__tabella { display: table; }
+  [data-ampiezza="articolata"] > .elenco-adattivo__lista { display: none; }
+}

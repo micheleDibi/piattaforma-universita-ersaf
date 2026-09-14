@@ -1,13 +1,14 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from src.config import get_impostazioni, verifica_configurazione
 from src.logging_config import NOME_LOGGER, configura_logging
+from src.security.browser import verifica_richiesta_browser
 
 # Gli import dei modelli servono a registrare i mapper prima che i router
 # risolvano le relazioni dichiarate per nome. Rimuoverli rompe la
@@ -37,6 +38,7 @@ from src.utenti.routers import router as utente_router
 from src.universita.routers import router as universita_router
 from src.listini_testa.routers import router as listini_testa_router
 from src.pratiche.routers import router as pratiche_router
+from src.profilo.routers import router as profilo_router
 
 logger = logging.getLogger(NOME_LOGGER)
 
@@ -73,7 +75,20 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Retry-After"],
 )
+
+
+@app.middleware("http")
+async def proteggi_richieste_browser(request: Request, call_next):
+    try:
+        verifica_richiesta_browser(request)
+    except HTTPException as errore:
+        return JSONResponse(status_code=errore.status_code, content={"detail": errore.detail})
+    risposta = await call_next(request)
+    if request.url.path.startswith(("/auth/", "/profilo/")) or risposta.status_code in (401, 403, 429):
+        risposta.headers["Cache-Control"] = "no-store"
+    return risposta
 
 app.include_router(utente_router)
 app.include_router(ruolo_router)
@@ -83,6 +98,7 @@ app.include_router(azienda_router)
 app.include_router(universita_router)
 app.include_router(listini_testa_router)
 app.include_router(pratiche_router)
+app.include_router(profilo_router)
 
 
 @app.exception_handler(IntegrityError)

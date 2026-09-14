@@ -20,6 +20,7 @@ from src.security.password import hash_password, verify_password
 from src.utenti.models import Utente
 from src.utenti.schemas import UtenteUpdate
 from tests.support import factories as f
+from tests.support.sessioni import token_cookie, intestazioni_sessione
 
 PASSWORD = "cavallo-batteria-graffetta"
 SENTINELLA = "SegretoDaNonScrivereMai2026"
@@ -72,12 +73,12 @@ def test_creazione_utente_non_scrive_la_password_in_chiaro(client, db, guardia_p
         "/auth/login",
         json={"utente_username": attuatore.username, "utente_password": PASSWORD},
     )
-    token = accesso.json()["token"]
+    token = token_cookie(accesso)
 
     risposta = client.post(
         "/utenti/",
         json={"utente_username": "nuovo-utente", "utente_password": SENTINELLA},
-        headers={"Authorization": f"Bearer {token}"},
+        headers=intestazioni_sessione(token),
     )
     assert risposta.status_code == 201
     assert guardia_plaintext == [], f"password in chiaro in: {guardia_plaintext}"
@@ -102,13 +103,13 @@ def test_aggiornamento_utente_non_puo_toccare_la_password(client, db, guardia_pl
         "/auth/login",
         json={"utente_username": attuatore.username, "utente_password": PASSWORD},
     )
-    token = accesso.json()["token"]
+    token = token_cookie(accesso)
     hash_prima = db.get(Utente, attuatore.utente_id).utente_password_hash
 
     risposta = client.put(
         f"/utenti/{attuatore.utente_id}",
         json={"utente_username": "rinominato", "utente_password": SENTINELLA},
-        headers={"Authorization": f"Bearer {token}"},
+        headers=intestazioni_sessione(token),
     )
     assert risposta.status_code == 200
     assert guardia_plaintext == []
@@ -169,7 +170,7 @@ def test_scritture_su_utente_password_solo_dove_previsto():
     trovate: list[str] = []
     for percorso in _file_sorgente():
         albero = ast.parse(percorso.read_text(encoding="utf-8"), str(percorso))
-        relativo = str(percorso.relative_to(DIR_BACKEND))
+        relativo = percorso.relative_to(DIR_BACKEND).as_posix()
         for nodo in ast.walk(albero):
             scrive = False
             if isinstance(nodo, ast.Assign):

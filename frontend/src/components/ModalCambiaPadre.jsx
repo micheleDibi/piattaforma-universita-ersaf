@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../lib/api";
 import { campo } from "../config/styles/campo";
-import { pulsante } from "../config/styles/pulsante";
-import { velo } from "../config/styles/superficie";
+import { pulsante, pulsanteIcona } from "../config/styles/pulsante";
+import { X } from "../config/icone.js";
+import Dialogo from "./shared/Dialogo.jsx";
 import { intestazioneTabella, rigaTabella } from "../config/styles/tabella";
 
 export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
@@ -54,11 +55,9 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
     return () => clearTimeout(delayDebounceFn);
   }, [searchTermAttuatore, selectedRuoloAttuatore, isOpen]);
 
-  if (!isOpen) return null;
-
   return (
-    <div className={velo()}>
-      <div className="flex max-h-[85vh] w-[90%] max-w-[800px] flex-col rounded-superficie bg-superficie p-6 shadow-2xl">
+    <Dialogo aperto={isOpen} onChiudi={onClose} etichetta="Seleziona Nuovo Utente Padre">
+      <div className="dialogo__contenuto">
         <div className="mb-4 flex items-center justify-between border-b border-bordo pb-2.5">
           <h3 className="text-lg font-semibold text-testo">
             Seleziona Nuovo Utente Padre
@@ -66,9 +65,11 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer text-2xl text-testo-tenue hover:text-testo"
+            className={pulsanteIcona()}
+            aria-label="Chiudi selezione utente padre"
+            title="Chiudi"
           >
-            &times;
+            <X aria-hidden="true" className="size-icona" />
           </button>
         </div>
 
@@ -79,14 +80,14 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
             value={searchTermAttuatore}
             onChange={(e) => setSearchTermAttuatore(e.target.value)}
             className={campo("comodo")}
-            autoFocus
+              data-focus-iniziale
           />
           <select
             value={selectedRuoloAttuatore}
             onChange={(e) => setSelectedRuoloAttuatore(e.target.value)}
             className={`${campo("comodo")} w-auto!`}
           >
-            <option value="">Tutti i ruoli</option>
+            <option value="" data-senza-filtro>Tutti i ruoli</option>
             <option value="Aderente">Aderente</option>
             <option value="Provinciale">Provinciale</option>
             <option value="Regionale">Regionale</option>
@@ -162,6 +163,6 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
           </div>
         )}
       </div>
-    </div>
+    </Dialogo>
   );
 }

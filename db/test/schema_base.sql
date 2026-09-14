@@ -52,6 +52,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `password_reset_token`;
 DROP TABLE IF EXISTS `password_reset_richiesta`;
 DROP TABLE IF EXISTS `auth_sessione`;
+DROP TABLE IF EXISTS `auth_login_limite`;
 DROP TABLE IF EXISTS `universita`;
 DROP TABLE IF EXISTS `clienti`;
 DROP TABLE IF EXISTS `utenti`;

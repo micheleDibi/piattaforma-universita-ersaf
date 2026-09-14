@@ -1,0 +1,17 @@
+.selezione-ricercabile { @apply min-w-0 grid gap-2 border-0 p-0; }
+.selezione-ricercabile legend { @apply mb-2 text-sm font-medium text-testo-forte; }
+.selezione-ricercabile input[type="search"] { @apply min-h-11; }
+.selezione-ricercabile__risultati { @apply hidden max-h-48 overflow-y-auto overscroll-contain; }
+.selezione-ricercabile__risultati label { @apply flex items-center gap-3 min-h-11 px-2 py-2 rounded-controllo cursor-pointer hover:bg-accento-tenue; }
+.selezione-ricercabile__risultati label:has(:checked) { @apply bg-accento-tenue; }
+.selezione-ricercabile span { @apply min-w-0 text-sm break-words; overflow-wrap: anywhere; }
+.selezione-ricercabile small { @apply block text-nota text-testo-tenue; }
+.selezione-ricercabile p { @apply text-nota text-testo-tenue; }
+.selezione-ricercabile p[role="alert"] { @apply text-negativo; }
+.selezione-ricercabile__scelte { @apply grid gap-1; }
+.selezione-ricercabile__scelte li { @apply flex items-center justify-between gap-2 pl-2 rounded-controllo bg-accento-tenue; }
+
+.stato-pagine-elenco { @apply border-t border-bordo py-4 text-center text-sm text-testo-tenue grid justify-items-center gap-2; }
+.stato-pagine-elenco [role="alert"] { @apply text-negativo; }
+
+.selezione-ricercabile:focus-within .selezione-ricercabile__risultati { @apply block; }

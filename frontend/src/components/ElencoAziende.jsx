@@ -1,23 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { apiFetch } from "../lib/api";
-import IntestazionePagina from "./shared/IntestazionePagina";
+import IntestazioneElenco from "./shared/IntestazioneElenco";
 import AzioneCrea from "./shared/AzioneCrea";
-import AzioneModificaRiga from "./shared/AzioneModificaRiga";
-import BarraStrumenti from "./shared/BarraStrumenti";
+import RigheElenco from "./shared/RigheElenco.jsx";
+import { MODELLO_AZIENDE } from "../config/elenchi.js";
+import { rigaAzienda } from "../lib/righeElenco.js";
 import CampoRicerca from "./shared/CampoRicerca";
 import { contenutoPagina } from "../config/styles/pagina";
-import {
-  cella,
-  cellaAzioni,
-  cellaIntestazione,
-  intestazioneTabella,
-  rigaTabella,
-  schedaElenco,
-  scorrimentoTabella,
-  statoVuoto,
-  tabella,
-} from "../config/styles/tabella";
+import { schedaElenco } from "../config/styles/tabella";
 
 function ElencoAziende() {
   const [aziende, setAziende] = useState([]);
@@ -145,7 +136,7 @@ function ElencoAziende() {
 
   return (
     <div className={contenutoPagina()}>
-      <IntestazionePagina
+      <IntestazioneElenco
         titolo="Aziende"
         azioni={
           <AzioneCrea
@@ -154,70 +145,18 @@ function ElencoAziende() {
             etichettaEstesa="Nuova azienda"
           />
         }
-      />
-
-      <div className={schedaElenco()}>
-        <BarraStrumenti>
+        ricerca={
           <CampoRicerca
             valore={searchTerm}
             onCambia={setSearchTerm}
             segnaposto="Cerca per ragione sociale"
           />
-        </BarraStrumenti>
-
-        <div className={scorrimentoTabella()}>
-          <table className={tabella()}>
-            <thead className={intestazioneTabella()}>
-              <tr>
-                <th className={cellaIntestazione()}>Ragione Sociale</th>
-                <th className={cellaIntestazione()}>Sede</th>
-                <th className={cellaIntestazione("destra")}>
-                  <span className="sr-only">Azioni</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {aziende.map((item, index) => {
-                const sede = [
-                  item.azienda_via,
-                  item.azienda_civico,
-                  item.azienda_citta && item.azienda_provincia
-                    ? `- ${item.azienda_citta} (${item.azienda_provincia})`
-                    : item.azienda_citta,
-                  item.azienda_CAP,
-                ]
-                  .filter(Boolean)
-                  .join(" ");
-
-                const apri = () =>
-                  navigate(`/modifica-azienda/${item.azienda_id}`);
-
-                return (
-                  <tr
-                    key={item.azienda_id || index}
-                    className={rigaTabella(true)}
-                    onClick={apri}
-                  >
-                    <td className={cella("forte")}>
-                      {item.azienda_ragione_sociale}
-                    </td>
-                    <td className={cella("tenue")}>{sede || "-"}</td>
-                    <td className={cellaAzioni()}>
-                      <AzioneModificaRiga onClick={apri} />
-                    </td>
-                  </tr>
-                );
-              })}
-              {aziende.length === 0 && !loading && (
-                <tr className="border-t border-bordo">
-                  <td colSpan={3} className={statoVuoto()}>
-                    Nessuna azienda trovata.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        }
+      />
+      <div className={schedaElenco("corpo")}>
+        <RigheElenco dati={aziende.map(rigaAzienda)} modello={MODELLO_AZIENDE}
+          onApri={(id) => navigate(`/modifica-azienda/${id}`)}
+          vuoto={!loading && "Nessuna azienda trovata."} />
 
         {loading && (
           <div className="border-t border-bordo py-4 text-center text-sm text-testo-tenue">

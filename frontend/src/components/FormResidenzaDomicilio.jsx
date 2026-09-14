@@ -1,12 +1,15 @@
 import { campo, etichetta } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
 import { titoloSezione } from "../config/styles/superficie";
+import { useConfermaAzione } from "../hooks/useConfermaAzione.js";
+import { TESTI_COPIA } from "../config/testi/copia.js";
 
 export default function FormResidenzaDomicilio({
   formData,
   handleChange,
   handleCopyResidenza,
 }) {
+  const { esegui, stato } = useConfermaAzione(handleCopyResidenza);
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       {/* Residenza */}
@@ -79,11 +82,14 @@ export default function FormResidenzaDomicilio({
         <div className="pt-2">
           <button
             type="button"
-            onClick={handleCopyResidenza}
-            className={pulsante("secondario", "normale", { larghezzaPiena: true })}
+            onClick={esegui}
+            disabled={stato === "attesa"}
+            data-esito={stato}
+            className={pulsante("ausiliario", "normale", { larghezzaPiena: true })}
           >
-            Copia Residenza in Domicilio
+            {stato === "eseguita" ? TESTI_COPIA.confermaResidenza : "Copia Residenza in Domicilio"}
           </button>
+          <span role="status" className="sr-only">{stato === "eseguita" ? TESTI_COPIA.confermaResidenza : ""}</span>
         </div>
       </div>
 

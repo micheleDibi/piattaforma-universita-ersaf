@@ -11,14 +11,6 @@ export function paginaCentrata() {
   return "min-h-screen flex items-center justify-center bg-tela px-4";
 }
 
-/** Velo di una finestra modale vera, sopra il contenuto della pagina. */
-export function velo() {
-  return (
-    "fixed inset-0 z-50 flex items-center justify-center " +
-    "bg-testo-forte/40 backdrop-blur-sm px-4"
-  );
-}
-
 /** Scheda principale di una pagina o di una sezione di modulo. */
 export function scheda() {
   return "bg-superficie border border-bordo rounded-superficie shadow-xs";

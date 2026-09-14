@@ -42,20 +42,20 @@ SEGNAPOSTO = {"utente_id": "1", "cliente_id": "1", "azienda_id": "1",
 
 
 def _rotte():
-    def raccogli(contenitore):
+    def raccogli(contenitore, prefisso=""):
         for rotta in getattr(contenitore, "routes", []) or []:
             if isinstance(rotta, APIRoute):
-                yield rotta
+                yield rotta, prefisso + rotta.path
             elif type(rotta).__name__ == "_IncludedRouter":
                 # FastAPI annida i router inclusi invece di appiattirli.
-                yield from raccogli(rotta.original_router)
+                yield from raccogli(rotta.original_router, prefisso + rotta.include_context.prefix)
 
-    for rotta in raccogli(app):
+    for rotta, percorso_reale in raccogli(app):
         for metodo in sorted(rotta.methods - {"HEAD", "OPTIONS"}):
-            percorso = rotta.path
+            percorso = percorso_reale
             for nome, valore in SEGNAPOSTO.items():
                 percorso = percorso.replace("{" + nome + "}", valore)
-            yield metodo, rotta.path, percorso
+            yield metodo, percorso_reale, percorso
 
 
 TUTTE = list(_rotte())
@@ -67,6 +67,8 @@ def test_l_elenco_delle_rotte_non_e_vuoto():
     tutti senza provare nulla."""
     assert len(TUTTE) >= 25
     assert len(DA_PROTEGGERE) >= 18
+    assert ("GET", "/auth/session", "/auth/session") in DA_PROTEGGERE
+    assert all(t[1] not in {"/login", "/session", "/logout"} for t in TUTTE)
 
 
 @pytest.mark.parametrize(
@@ -74,7 +76,7 @@ def test_l_elenco_delle_rotte_non_e_vuoto():
     [(m, p) for m, _, p in DA_PROTEGGERE],
     ids=[f"{m} {t}" for m, t, _ in DA_PROTEGGERE],
 )
-def test_senza_bearer_risponde_401(client, metodo, percorso):
+def test_senza_sessione_risponde_401(client, metodo, percorso):
     risposta = client.request(metodo, percorso, json={})
     assert risposta.status_code == 401, (
         f"{metodo} {percorso} risponde {risposta.status_code} senza token"

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { campo } from "../config/styles/campo";
-import { pulsante } from "../config/styles/pulsante";
+import { pulsante, pulsanteIcona } from "../config/styles/pulsante";
+import { Plus, Trash2 } from "../config/icone.js";
 import { intestazioneTabella, rigaTabella } from "../config/styles/tabella";
 
 export default function ProdottoDettagliTabella({
@@ -98,9 +99,10 @@ export default function ProdottoDettagliTabella({
             type="button"
             onClick={handleAggiungiRiga}
             disabled={haRigaNuova}
-            className={`${pulsante("secondario", "piccolo")} disabled:cursor-not-allowed`}
+            className={`${pulsante("ausiliario", "piccolo")} disabled:cursor-not-allowed`}
           >
-            + Aggiungi nuova riga
+            <Plus aria-hidden="true" className="size-icona-piccola" />
+            Aggiungi nuova riga
           </button>
         )}
       </div>
@@ -229,10 +231,11 @@ export default function ProdottoDettagliTabella({
                     <button
                       type="button"
                       onClick={() => handleRimuoviRiga(index)}
-                      className="text-negativo hover:opacity-90 font-bold px-2 py-1 text-xs cursor-pointer"
+                      className={pulsanteIcona("pericolo")}
+                      aria-label="Rimuovi riga"
                       title="Rimuovi riga"
                     >
-                      ✕
+                      <Trash2 aria-hidden="true" className="size-icona-piccola" />
                     </button>
                   )}
                 </td>

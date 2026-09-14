@@ -1,0 +1,12 @@
+/* Campioni opachi del logo originale PraticheUniversita.png.
+ * Le superfici usano i ruoli semantici di theme/colori.css. */
+@theme {
+  --color-marchio-viola: #302878;
+  --color-marchio-oro: #F5A100;
+  --color-marchio-carbone: #3E4047;
+  --color-marchio-verde: #72B736;
+  --color-marchio-rosso: #E54147;
+  --color-marchio-blu: #30A4DD;
+  --color-neutro-bianco: #FFFFFF;
+  --color-neutro-nero: #000000;
+}

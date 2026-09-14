@@ -11,6 +11,7 @@ from src.security.sessioni import revoca_sessioni_utente
 from src.security.tempo import istante_meno_ore, istante_piu_minuti
 from src.utenti.models import Utente
 from tests.support import factories as f
+from tests.support.sessioni import token_cookie, intestazioni_sessione
 
 pytestmark = pytest.mark.mariadb
 
@@ -26,14 +27,14 @@ def _accedi(client, db, email="utente@example.org", **kwargs):
         json={"utente_username": attuatore.username, "utente_password": PASSWORD},
     )
     assert risposta.status_code == 200
-    return attuatore, risposta.json()["token"]
+    return attuatore, token_cookie(risposta)
 
 
 def _intestazione(token):
-    return {"Authorization": f"Bearer {token}"}
+    return intestazioni_sessione(token)
 
 
-def test_una_rotta_protetta_richiede_il_bearer(client, db):
+def test_una_rotta_protetta_richiede_la_sessione(client, db):
     """POST /utenti/ era l'unico endpoint autenticato, e si fidava di un intero
     non firmato passato in un header."""
     corpo = {"utente_username": "nuovo", "utente_password": "cavallo-batteria-1"}
@@ -140,11 +141,12 @@ def test_sessione_anteriore_al_cambio_password_viene_scartata(client, db):
 
 def test_logout_revoca_solo_la_propria_sessione(client, db):
     attuatore, token_uno = _accedi(client, db, email="uno@example.org")
+    client.cookies.clear()  # secondo dispositivo: nessuna sessione da sostituire
     risposta = client.post(
         "/auth/login",
         json={"utente_username": attuatore.username, "utente_password": PASSWORD},
     )
-    token_due = risposta.json()["token"]
+    token_due = token_cookie(risposta)
 
     assert client.post("/auth/logout", headers=_intestazione(token_uno)).status_code == 204
 
