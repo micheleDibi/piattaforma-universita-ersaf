@@ -207,8 +207,9 @@ def aggiorna_cliente(
             campi_cliente[chiave] = ""
 
 
-        campi_curriculum.pop("cliente_id", None)
-        campi_cliente.pop("cliente_id", None)
+    campi_curriculum.pop("cliente_id", None)
+    campi_cliente.pop("cliente_id", None)
+    campi_cliente.pop("utente_id", None)
 
     try:
         for chiave, valore in campi_cliente.items():

@@ -102,8 +102,7 @@ function VerificaContattoModal({
     }
   }
 
-  async function verifica(e) {
-    e.preventDefault();
+  async function verifica() {
     setErrore("");
     setAvviso("");
     if (codiceCompleto.length !== NUMERO_CIFRE) {
@@ -116,8 +115,6 @@ function VerificaContattoModal({
         `/clienti/${clienteId}/contatti/${tipo}/verifica-otp`,
         {
           method: "POST",
-          // 401 qui significa "codice sbagliato/scaduto", non "sessione
-          // scaduta": non deve buttarci fuori dal login.
           gestisci401: false,
           body: JSON.stringify({
             log_otp_id: sfida.logOtpId,
@@ -173,7 +170,7 @@ function VerificaContattoModal({
         )}
 
         {!caricando && sfida && (
-          <form onSubmit={verifica} className="space-y-4">
+          <div className="space-y-4">
             <div className="flex justify-center gap-2">
               {cifre.map((cifra, indice) => (
                 <input
@@ -184,7 +181,17 @@ function VerificaContattoModal({
                   maxLength={1}
                   value={cifra}
                   onChange={(e) => aggiornaCifra(indice, e.target.value)}
-                  onKeyDown={(e) => gestisciTastoIndietro(indice, e)}
+                  onKeyDown={(e) => {
+                    gestisciTastoIndietro(indice, e);
+                    // Invio dall'ultimo campo verifica direttamente, comodo da
+                    // tastiera visto che non c'e' piu' un form da sottomettere.
+                    if (
+                      e.key === "Enter" &&
+                      codiceCompleto.length === NUMERO_CIFRE
+                    ) {
+                      verifica();
+                    }
+                  }}
                   className="h-12 w-10 rounded-lg border border-gray-300 text-center text-lg text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
               ))}
@@ -197,7 +204,8 @@ function VerificaContattoModal({
             </p>
 
             <button
-              type="submit"
+              type="button"
+              onClick={verifica}
               disabled={verificando || codiceCompleto.length !== NUMERO_CIFRE}
               className="w-full rounded-full bg-indigo-600 py-2.5 px-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 transition-colors disabled:opacity-50"
             >
@@ -212,7 +220,7 @@ function VerificaContattoModal({
             >
               {rigenerando ? "Invio in corso..." : "Invia di nuovo il codice"}
             </button>
-          </form>
+          </div>
         )}
 
         <button
