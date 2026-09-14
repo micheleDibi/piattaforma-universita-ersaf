@@ -1,7 +1,8 @@
 """Tabella `messaggi_email`, gia' presente nello schema legacy.
 
-I template del recupero password sono inseriti dalla migrazione 006, cosi' i
-testi restano modificabili senza rideploy come per il resto della piattaforma.
+I template del recupero password sono inseriti dalla migrazione 006, quelli
+per la verifica email/credenziali dalla 011: i testi restano modificabili
+senza rideploy come per il resto della piattaforma.
 """
 
 from __future__ import annotations
@@ -15,6 +16,9 @@ from src.database import Base
 
 CODICE_RESET_RICHIESTA = "password_reset_richiesta"
 CODICE_RESET_ESEGUITO = "password_reset_eseguito"
+CODICE_OTP_LOGIN_NAZIONALE = "login_otp_nazionale"
+CODICE_OTP_VERIFICA_EMAIL = "otp_verifica_email"
+CODICE_CREDENZIALI_ACCESSO = "credenziali_accesso"
 
 
 class MessaggioEmail(Base):

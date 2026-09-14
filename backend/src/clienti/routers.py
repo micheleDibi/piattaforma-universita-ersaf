@@ -1,10 +1,25 @@
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Query,
+    Request,
+    status,
+)
 from sqlalchemy.orm import Session, joinedload
 
 from src.auth.dipendenze import get_current_utente
+from src.auth.models import ATTIVO
+from src.auth.servizio_otp import (
+    SCADENZA_MINUTI,
+    codice_valido,
+    marca_verificato,
+    trova_per_cliente,
+)
 from src.aziende.models import Azienda
 from src.clienti.models import Cliente
 from src.clienti.schemas import (
@@ -12,26 +27,36 @@ from src.clienti.schemas import (
     ClienteResponse,
     ClienteConUtenteCreate,
     ClienteUpdate,
+    VerificaOtpContattoRequest,
 )
-from src.clienti.servizio import TipoUtente, crea_cliente_con_utente
+from src.clienti.servizio import (
+    TipoUtente,
+    attiva_utente_con_password,
+    crea_cliente_con_utente,
+)
+from src.clienti.verifica_contatti import email_gia_verificata, genera_otp_email
 from src.database import get_db
+from src.notifiche.backend_invio import Mailer, get_mailer
+from src.notifiche.email import (
+    DatiInvioCredenziali,
+    DatiInvioOtp,
+    invia_mail_credenziali,
+    invia_mail_otp,
+)
+from src.notifiche.models import CODICE_OTP_VERIFICA_EMAIL
 from src.ruolo.models import Ruolo
+from src.security.rete import ip_client, spacchetta_ip
 from src.universita.models import Universita
 from src.utenti.models import Utente
 
 logger = logging.getLogger("ersaf.clienti")
 
-# L'autenticazione e' una dipendenza del router, non del singolo endpoint:
-# quando era per endpoint, 3 rotte su 4 se ne sono dimenticate - fra cui il PUT,
-# che modifica cliente_ruolo e le abilitazioni.
 router = APIRouter(
     prefix="/clienti",
     tags=["Clienti"],
     dependencies=[Depends(get_current_utente)],
 )
 
-# ClienteResponse annida UtenteResponse, che a sua volta annida padre e
-# aggiornato_da: senza questi joinedload una pagina da 40 costava 121 query.
 _CARICAMENTO_ELENCO = (
     joinedload(Cliente.azienda),
     joinedload(Cliente.ruolo),
@@ -62,18 +87,12 @@ def _cliente_o_404(db: Session, cliente_id: int, con_curriculum: bool = False) -
 @router.post("/con-utente", status_code=status.HTTP_201_CREATED)
 def crea_cliente_e_utente(
     dati: ClienteConUtenteCreate,
-    # Era `str` libero: ?tipo_utente=Attuatorre cadeva in silenzio nel ramo
-    # sottoscrittore. Come Enum, FastAPI risponde 422 con i valori ammessi.
     tipo_utente: TipoUtente = TipoUtente.SOTTOSCRITTORE,
     db: Session = Depends(get_db),
     current_utente=Depends(get_current_utente),
 ):
-    """Crea in una transazione la riga utenti, la riga clienti e il curriculum.
-
-    Il corpo di questa funzione era di 188 righe con otto responsabilita'; ora
-    sta in src/clienti/servizio.py, diviso in funzioni con un nome e due delle
-    quali pure. Qui restano solo l'orchestrazione e la traduzione degli errori.
-    """
+    """Crea in una transazione la riga utenti (disattivata), la riga clienti
+    e il curriculum. L'utente si attiva solo alla verifica email."""
     try:
         esito = crea_cliente_con_utente(
             db, dati.model_dump(), tipo_utente, current_utente.utente_id
@@ -85,9 +104,6 @@ def crea_cliente_e_utente(
         raise
     except Exception:
         db.rollback()
-        # Prima era detail=f"Errore: {str(e)}": il client riceveva nomi di
-        # tabella, di colonna e il testo SQL, e l'eccezione originale veniva
-        # distrutta, rendendo impossibile diagnosticare un guasto reale.
         logger.exception(
             "creazione cliente fallita, richiesta da utente_id=%s",
             current_utente.utente_id,
@@ -98,16 +114,10 @@ def crea_cliente_e_utente(
         )
 
     return {
-        "message": "Cliente, utente e dati università creati con successo!",
+        "message": "Cliente e utente creati. L'account resta disattivato finché l'email non viene verificata.",
         "cliente_id": esito["cliente"].cliente_id,
         "utente_id": esito["utente"].utente_id,
         "username_generato": esito["utente"].utente_username,
-        # Unica occasione in cui questa password esiste in chiaro: nel database
-        # c'e' solo l'hash. Se il chiamante non la mostra all'operatore,
-        # l'account resta inutilizzabile. Il frontend la presenta in un
-        # riquadro da annotare prima di proseguire.
-        "password_generata": esito["password_in_chiaro"],
-        "avviso": "Annota queste credenziali: la password non sarà più recuperabile.",
     }
 
 
@@ -170,15 +180,6 @@ def aggiorna_cliente(
     db: Session = Depends(get_db),
     current_utente=Depends(get_current_utente),
 ):
-    """Aggiornamento parziale di anagrafica e curriculum.
-
-    Due difetti chiusi qui. Il primo: model_dump() senza exclude_unset
-    riscriveva ogni campo omesso col default dello schema, quindi un
-    salvataggio dalla scheda declassava un attuatore a ruolo 0 e gli faceva
-    perdere azienda e associazioni. Il secondo: lo schema era ClienteCreate,
-    che non ha i campi universita_*, quindi il curriculum inviato dal form
-    veniva scartato in silenzio e la risposta era comunque 200.
-    """
     db_cliente = _cliente_o_404(db, cliente_id, con_curriculum=True)
 
     inviati = modifiche.model_dump(exclude_unset=True)
@@ -192,10 +193,23 @@ def aggiorna_cliente(
         for chiave, valore in inviati.items()
         if not chiave.startswith("universita_")
     }
-    # cliente_id compare in UniversitaBase: qui identifica la riga, non un
-    # campo da riscrivere.
+
+    CAMPI_STRINGA_NOT_NULL = {
+        "cliente_codice", "cliente_nome", "cliente_cognome", "cliente_email",
+        "cliente_telefono", "cliente_indirizzo", "cliente_civico", "cliente_citta",
+        "cliente_CAP", "cliente_provincia", "cliente_luogoNascita",
+        "cliente_provinciaNascita", "cliente_cittadinanza", "cliente_tipoDocumento",
+        "cliente_documento", "cliente_comuneRilascio", "cliente_sesso",
+    }
+
+    for chiave in CAMPI_STRINGA_NOT_NULL:
+        if campi_cliente.get(chiave) is None and chiave in campi_cliente:
+            campi_cliente[chiave] = ""
+
+
     campi_curriculum.pop("cliente_id", None)
     campi_cliente.pop("cliente_id", None)
+    campi_cliente.pop("utente_id", None)
 
     try:
         for chiave, valore in campi_cliente.items():
@@ -204,8 +218,6 @@ def aggiorna_cliente(
         if campi_curriculum:
             curriculum = db_cliente.curriculum
             if curriculum is None:
-                # Un cliente creato prima che il curriculum esistesse: si crea
-                # ora, invece di perdere quanto l'operatore ha appena scritto.
                 curriculum = Universita(
                     cliente_id=db_cliente.cliente_id,
                     universita_createBy=current_utente.utente_id,
@@ -233,3 +245,82 @@ def aggiorna_cliente(
 
     db.refresh(db_cliente)
     return db_cliente
+
+
+# =============================================================================
+# Verifica contatti (email)
+# =============================================================================
+@router.post("/{cliente_id}/contatti/email/genera-otp")
+def genera_otp_email_cliente(
+    cliente_id: int,
+    request: Request,
+    attivita: BackgroundTasks,
+    db: Session = Depends(get_db),
+    mailer: Mailer = Depends(get_mailer),
+    current_utente=Depends(get_current_utente),
+):
+    cliente = _cliente_o_404(db, cliente_id)
+    if not cliente.cliente_email:
+        raise HTTPException(status_code=400, detail="Il cliente non ha un indirizzo email.")
+    if email_gia_verificata(db, cliente):
+        raise HTTPException(status_code=400, detail="L'email di questo cliente è già stata verificata.")
+
+    sfida = genera_otp_email(
+        db, cliente, autore_id=current_utente.utente_id, hostname=spacchetta_ip(ip_client(request))
+    )
+    db.commit()
+
+    attivita.add_task(
+        invia_mail_otp,
+        mailer,
+        DatiInvioOtp(
+            log_otp_id=sfida.log_otp_id,
+            destinatario=cliente.cliente_email,
+            nome=f"{cliente.cliente_nome} {cliente.cliente_cognome}".strip() or cliente.cliente_email,
+            codice=sfida.codice,
+            scadenza_minuti=SCADENZA_MINUTI,
+        ),
+        codice_template=CODICE_OTP_VERIFICA_EMAIL,
+    )
+
+    return {"log_otp_id": sfida.log_otp_id, "otp_scadenza": sfida.scadenza.isoformat()}
+
+
+@router.post("/{cliente_id}/contatti/email/verifica-otp")
+def verifica_otp_email_cliente(
+    cliente_id: int,
+    corpo: VerificaOtpContattoRequest,
+    attivita: BackgroundTasks,
+    db: Session = Depends(get_db),
+    mailer: Mailer = Depends(get_mailer),
+    current_utente=Depends(get_current_utente),
+):
+    cliente = _cliente_o_404(db, cliente_id)
+    riga = trova_per_cliente(db, cliente_id, corpo.log_otp_id)
+    if not codice_valido(riga, corpo.otp_codice):
+        raise HTTPException(status_code=401, detail="Codice OTP non valido o scaduto.")
+
+    marca_verificato(riga)
+
+    utente = db.get(Utente, cliente.utente_id)
+    credenziali_inviate = False
+    if utente is not None and utente.utente_attivoSN != ATTIVO:
+        password_in_chiaro = attiva_utente_con_password(
+            db, utente, cliente.cliente_nome, cliente.cliente_cognome
+        )
+        db.commit()
+        attivita.add_task(
+            invia_mail_credenziali,
+            mailer,
+            DatiInvioCredenziali(
+                destinatario=cliente.cliente_email,
+                nome=f"{cliente.cliente_nome} {cliente.cliente_cognome}".strip(),
+                username=utente.utente_username,
+                password=password_in_chiaro,
+            ),
+        )
+        credenziali_inviate = True
+    else:
+        db.commit()
+
+    return {"message": "Email verificata con successo.", "credenziali_inviate": credenziali_inviate}

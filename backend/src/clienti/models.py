@@ -102,3 +102,28 @@ class Cliente(Base):
         universita_id. Se la regola giusta fosse un'altra, si cambia solo qui.
         """
         return max(self.universita, key=lambda u: u.universita_id, default=None)
+
+
+
+    @property
+    def email_verificata(self) -> bool:
+        """Come `curriculum`: calcolata al volo dalla sessione gia' agganciata
+        all'istanza, nessuna colonna nuova su `clienti`."""
+        from sqlalchemy import select
+        from sqlalchemy.orm import object_session
+        from src.auth.models import LogOtp
+
+        sessione = object_session(self)
+        if sessione is None or not self.cliente_email:
+            return False
+        return (
+        sessione.execute(
+            select(LogOtp.log_otp_id).where(
+                LogOtp.cliente_id == self.cliente_id,
+                LogOtp.log_otp_tipo_riferimento == "email",
+                LogOtp.log_otp_riferimento == self.cliente_email,
+                LogOtp.log_otp_check == 1,
+            ).limit(1)
+        ).scalar_one_or_none()
+        is not None
+    )

@@ -50,6 +50,7 @@ export default function InserimentoProdotto() {
       listDettaglio_durata: "",
       listDettaglio_CFU: "",
       listDettaglio_tasse: "",
+      isNew: true,
     },
   ]);
 
@@ -125,6 +126,7 @@ export default function InserimentoProdotto() {
               listDettaglio_durata: d.listDettaglio_durata ?? "",
               listDettaglio_CFU: d.listDettaglio_CFU ?? "",
               listDettaglio_tasse: d.listDettaglio_tasse ?? "",
+              isNew: false, // <-- Distingue le righe già salvate a DB
             })),
           );
         }
@@ -248,25 +250,37 @@ export default function InserimentoProdotto() {
       const prezzo = parseNumeroItaliano(det.listDettaglio_prezzo);
       const tasse = parseNumeroItaliano(det.listDettaglio_tasse);
 
-      if (prezzo === null || prezzo <= 0) {
+      // Per QUALSIASI riga (nuova o vecchia): il prezzo non può essere del tutto vuoto/null
+      if (prezzo === null) {
         setMessage({
           type: "error",
-          text: `Errore nella riga ${i + 1}: Il prezzo è obbligatorio e deve essere maggiore di zero.`,
+          text: `Errore nella riga ${i + 1}: Il prezzo è un campo obbligatorio.`,
         });
         setLoading(false);
         return;
       }
 
+      // Solo per le NUOVE righe: blocco su prezzo <= 0
+      if (det.isNew && prezzo <= 0) {
+        setMessage({
+          type: "error",
+          text: `Errore nella riga ${i + 1}: Per i nuovi dettagli il prezzo deve essere maggiore di zero.`,
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Controllo tasse (valido se compilato)
       if (
         det.listDettaglio_tasse !== "" &&
         det.listDettaglio_tasse !== null &&
         det.listDettaglio_tasse !== undefined &&
         tasse !== null &&
-        tasse <= 0
+        tasse < 0 // Modificato in < 0 se 0 tasse è consentito, altrimenti mantieni tasse <= 0
       ) {
         setMessage({
           type: "error",
-          text: `Errore nella riga ${i + 1}: Le tasse non possono essere uguali a zero o negative.`,
+          text: `Errore nella riga ${i + 1}: Le tasse non possono essere negative.`,
         });
         setLoading(false);
         return;
