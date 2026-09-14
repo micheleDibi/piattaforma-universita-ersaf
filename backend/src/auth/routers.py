@@ -37,14 +37,19 @@ from src.auth.schemas import (
     RigeneraOtpRequest,
     VerificaOtpRequest,
 )
-
-from src.auth.servizio_otp import SCADENZA_MINUTI, codice_valido, genera_otp, marca_verificato, trova
-
 from src.auth.servizio_login import (
     cliente_principale,
     codice_ruolo,
     trova_utente_per_username,
     verifica_credenziali,
+)
+from src.auth.servizio_otp import (
+    SCADENZA_MINUTI,
+    TIPO_RIFERIMENTO_LOGIN,
+    codice_valido,
+    genera_otp,
+    marca_verificato,
+    trova_per_utente,
 )
 from src.auth.servizio_reset import (
     applica_nuova_password,
@@ -61,18 +66,13 @@ from src.database import get_db
 from src.notifiche.backend_invio import Mailer, get_mailer
 from src.notifiche.email import (
     DatiInvioCambio,
-    invia_mail_cambio_eseguito,
-    invia_mail_reset,
-)
-from src.notifiche.email import (
-    DatiInvioCambio,
     DatiInvioOtp,
     invia_mail_cambio_eseguito,
     invia_mail_otp,
     invia_mail_reset,
 )
 from src.security.password import hash_password, messaggi_policy, verifica_policy_password
-from src.security.rete import ip_client, user_agent, spacchetta_ip
+from src.security.rete import ip_client, spacchetta_ip, user_agent
 from src.security.sessioni import crea_sessione, revoca_sessione
 from src.security.tempo import pavimento_temporale
 from src.security.tokens import forma_token_valida
@@ -95,7 +95,6 @@ def _credenziali_errate() -> HTTPException:
     )
 
 
-@router.post("/login")
 @router.post("/login")
 def login(
     creds: LoginRequest,
@@ -134,7 +133,15 @@ def login(
         # Username+password gia' superati. Ora si genera l'OTP e si invia
         # via email; niente sessione/token finche' /auth/verifica-otp non
         # va a buon fine.
-        sfida = genera_otp(db, utente, cliente, hostname=spacchetta_ip(ip))
+        sfida = genera_otp(
+            db,
+            cliente_id=cliente.cliente_id,
+            utente_id=utente.utente_id,
+            tipo_riferimento=TIPO_RIFERIMENTO_LOGIN,
+            riferimento=utente.utente_username,
+            autore_id=utente.utente_id,
+            hostname=spacchetta_ip(ip),
+        )
         db.commit()
         logger.info("verifica a due fattori richiesta per utente_id=%s", utente.utente_id)
 
@@ -195,7 +202,7 @@ def verifica_otp_login(corpo: VerificaOtpRequest, request: Request, db: Session 
     ip = ip_client(request)
     ua = user_agent(request)
 
-    riga = trova(db, corpo.utente_id, corpo.log_otp_id)
+    riga = trova_per_utente(db, corpo.utente_id, corpo.log_otp_id)
     if not codice_valido(riga, corpo.otp_codice):
         raise _otp_non_valido()
 
@@ -237,7 +244,7 @@ def rigenera_otp_login(
     db: Session = Depends(get_db),
     mailer: Mailer = Depends(get_mailer),
 ):
-    riga_precedente = trova(db, corpo.utente_id, corpo.log_otp_id)
+    riga_precedente = trova_per_utente(db, corpo.utente_id, corpo.log_otp_id)
     utente = db.get(Utente, corpo.utente_id) if riga_precedente else None
     cliente = cliente_principale(db, corpo.utente_id) if utente else None
     if (
@@ -248,7 +255,15 @@ def rigenera_otp_login(
     ):
         raise _sessione_verifica_non_valida()
 
-    sfida = genera_otp(db, utente, cliente, hostname=spacchetta_ip(ip_client(request)))
+    sfida = genera_otp(
+        db,
+        cliente_id=cliente.cliente_id,
+        utente_id=utente.utente_id,
+        tipo_riferimento=TIPO_RIFERIMENTO_LOGIN,
+        riferimento=utente.utente_username,
+        autore_id=utente.utente_id,
+        hostname=spacchetta_ip(ip_client(request)),
+    )
     db.commit()
     logger.info("OTP rigenerato per utente_id=%s", utente.utente_id)
 
@@ -379,8 +394,6 @@ def conferma_reset(
             },
         )
 
-    # Si legge l'utente PRIMA di consumare, per poter applicare la regola
-    # "password diversa da username e email". La lettura non modifica nulla.
     riferimenti = dati_token(db, corpo.token)
     username, email = (
         username_e_email(db, riferimenti.utente_id) if riferimenti else (None, None)
@@ -397,14 +410,9 @@ def conferma_reset(
             },
         )
 
-    # bcrypt (~250 ms in produzione) FUORI dalla transazione: dentro terrebbe un
-    # lock di riga su password_reset_token per un quarto di secondo senza
-    # motivo. L'unicita' della transazione riguarda gli effetti sul database.
     nuovo_hash = hash_password(corpo.password)
 
     try:
-        # Query [C] della 002: consumo atomico. Due richieste concorrenti: solo
-        # una ottiene rowcount == 1.
         if consuma_token(db, corpo.token, ip, ua) != 1 or riferimenti is None:
             db.rollback()
             raise HTTPException(
@@ -433,9 +441,6 @@ def conferma_reset(
     logger.info("cambio password completato, prt_id=%s", riferimenti.prt_id)
 
     if riferimenti.prt_email_inviata:
-        # Dopo il commit. Il destinatario e' l'indirizzo a cui il link e' stato
-        # realmente spedito, congelato dalla 002: se il cliente ha cambiato
-        # email nel frattempo, la notifica segue il link.
         attivita.add_task(
             invia_mail_cambio_eseguito,
             mailer,
@@ -444,11 +449,9 @@ def conferma_reset(
             ),
         )
 
-    # L'utente NON viene autenticato: la risposta rimanda al login.
     return {
         "message": "Password aggiornata. Ora puoi accedere con le nuove credenziali."
     }
-
 
 
 def _bersaglio_non_impersonabile() -> HTTPException:
@@ -482,19 +485,14 @@ def login_as(
     ip = ip_client(request)
     ua = user_agent(request)
 
-    # --- chi chiama ---------------------------------------------------------
     ruolo_chiamante = richiedi_ruolo_amministrativo(
         db, current_utente, "impersonificazione"
     )
 
-    # --- chi viene impersonato ----------------------------------------------
     utente = db.get(Utente, utente_id)
     if utente is None:
         raise _bersaglio_non_impersonabile()
 
-    # Il login normale passa da verifica_credenziali, che rifiuta gli utenti
-    # spenti. Qui non c'e' password da verificare, quindi il controllo va
-    # ripetuto: senza, si poteva impersonare un account disattivato.
     if utente.utente_attivoSN != ATTIVO:
         raise _bersaglio_non_impersonabile()
 
@@ -507,9 +505,6 @@ def login_as(
 
     ruolo = codice_ruolo(db, cliente.cliente_ruolo)
     if (ruolo or "").lower() == "nazionale":
-        # Allineato al login: per il ruolo Nazionale non si emette sessione
-        # senza 2FA. Senza questo ramo, login-as era la strada per ottenere
-        # proprio la sessione che il login nega.
         logger.warning(
             "impersonificazione negata: il bersaglio utente_id=%s e' Nazionale",
             utente.utente_id,
@@ -521,8 +516,6 @@ def login_as(
 
     token, scadenza = crea_sessione(db, utente.utente_id, ip, ua)
     db.commit()
-    # Traccia di audit: entrambi gli id sulla stessa riga, perche' da qui in
-    # poi i log della sessione emessa parlano solo del bersaglio.
     logger.warning(
         "impersonificazione: utente_id=%s (%s) assume l'identita' di utente_id=%s",
         current_utente.utente_id,

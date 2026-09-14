@@ -8,6 +8,7 @@ import FormInformazioniPersonali from "./FormInformazioniPersonali";
 import FormDocumento from "./FormDocumento";
 import FormResidenzaDomicilio from "./FormResidenzaDomicilio";
 import FormContatti from "./FormContatti";
+import VerificaContattoModal from "./VerificaContattoModal";
 
 function NuovoSottoscrittore() {
   const { id } = useParams();
@@ -16,8 +17,13 @@ function NuovoSottoscrittore() {
   const isEditMode = Boolean(id);
 
   const [activeTab, setActiveTab] = useState("dati-principali");
-  // Credenziali generate dal server, da mostrare una volta sola.
-  const [credenziali, setCredenziali] = useState(null);
+
+  // Stato del cliente appena creato: niente più credenziali da mostrare qui,
+  // l'account resta disattivato finché l'email non è verificata.
+  const [clienteCreato, setClienteCreato] = useState(null); // { clienteId, emailVerificata }
+  const [modaleVerificaAperto, setModaleVerificaAperto] = useState(false);
+  // Stato di verifica email in modalità modifica (letto dal cliente esistente).
+  const [emailVerificata, setEmailVerificata] = useState(false);
 
   const queryParams = new URLSearchParams(location.search);
   const tipoUtente =
@@ -134,10 +140,6 @@ function NuovoSottoscrittore() {
           return res.json();
         })
         .then((data) => {
-          // Il curriculum arriva in `curriculum`. Prima era
-          // `data.universita || data`: ClienteResponse non esponeva la
-          // relazione, quindi si leggeva l'oggetto cliente e la scheda restava
-          // sempre vuota.
           const uniData = data.curriculum || {};
 
           setFormData((prev) => ({
@@ -186,6 +188,8 @@ function NuovoSottoscrittore() {
                 return acc;
               }, {}),
           }));
+
+          setEmailVerificata(Boolean(data.email_verificata));
         })
         .catch((err) => {
           console.error("Errore:", err);
@@ -198,13 +202,11 @@ function NuovoSottoscrittore() {
     const { name, value, type, checked } = e.target;
     let finalValue = value;
 
-    // Campi che richiedono un valore numerico (0 o 1) da select o input numerici
     const numericFields = [
       "universita_immatricolato",
       "universita_iscrizioneAltraUniversita",
     ];
 
-    // Campi checkbox che devono inviare 1 o 0
     const numericCheckboxFields = [
       "universita_attivita_professionalizzanti",
       "universita_corsi_di_formazione",
@@ -245,9 +247,6 @@ function NuovoSottoscrittore() {
       cliente_provincia: formData.residenzaProvincia || null,
       cliente_cellulare: formData.cellulare || null,
       utente_id: utenteId,
-      // Solo in creazione, e solo 0: il ruolo lo assegna poi un
-      // amministratore dalla scheda utente. Mandarlo anche in modifica
-      // declassava a "Utente" chiunque si salvasse, attuatori compresi.
       ...(isEditMode ? {} : { cliente_ruolo: 0 }),
       cliente_luogoNascita: formData.luogoDiNascita || null,
       cliente_provinciaNascita: formData.provDiNascita || null,
@@ -271,12 +270,6 @@ function NuovoSottoscrittore() {
     );
     const curriculumPayload = {};
 
-    // I cinque flag si mandano cosi' come sono. Il Boolean() che stava qui
-    // distruggeva il -1 costruito da ImmatricolazioniIscrizioni: diventava
-    // true, il backend lo salvava 1, e la casella si rileggeva vuota. La
-    // conversione nella convenzione legacy (-1 per quattro colonne, 1 per
-    // universita_immatricolato) la fa ora il validatore di UniversitaBase, che
-    // vale per tutti i percorsi di scrittura e non solo per questo.
     curriculumKeys.forEach((key) => {
       const val = formData[key];
       curriculumPayload[key] = val === "" || val === undefined ? null : val;
@@ -299,9 +292,6 @@ function NuovoSottoscrittore() {
       });
 
       if (!response.ok) {
-        // Un 422 porta l'elenco dei campi mancanti: ridurlo a "si è
-        // verificato un errore" lasciava l'operatore senza modo di capire
-        // quale campo compilare.
         throw new Error(await messaggioErrore(response));
       }
 
@@ -311,20 +301,15 @@ function NuovoSottoscrittore() {
         return;
       }
 
-      // Le credenziali generate esistono in chiaro solo in questa risposta:
-      // nel database c'e' soltanto l'hash. Prima si controllava response.ok e
-      // si navigava via senza leggere il corpo, e l'utente appena creato
-      // restava senza modo di accedere.
+      // L'utente nasce disattivato: nessuna credenziale da mostrare qui,
+      // solo l'invito a verificare l'email.
       const creato = await leggiJson(response);
-      setCredenziali(
-        creato?.username_generato
-          ? {
-              username: creato.username_generato,
-              password: creato.password_generata,
-            }
-          : null,
-      );
-      if (!creato?.username_generato) {
+      if (creato?.cliente_id) {
+        setClienteCreato({
+          clienteId: creato.cliente_id,
+          emailVerificata: false,
+        });
+      } else {
         alert(`${labelTitolo} salvato correttamente!`);
         navigate("/home");
       }
@@ -353,58 +338,71 @@ function NuovoSottoscrittore() {
     }));
   };
 
-  // Le credenziali generate dal server esistono in chiaro solo nella risposta
-  // di creazione: nel database c'e' l'hash. Si mostrano qui, e finche' non le
-  // si conferma non si naviga via.
-  if (credenziali) {
+  // Schermata dopo la creazione: niente più credenziali da annotare, solo
+  // lo stato di verifica email e la scelta di farla subito o più tardi.
+  if (clienteCreato) {
     return (
       <div className="min-h-screen bg-slate-50 py-10 px-4 flex items-start justify-center">
         <div className="max-w-lg w-full bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
           <h2 className="text-xl font-bold text-slate-800 mb-2">
             {labelTitolo} creato
           </h2>
-          <p className="text-sm text-slate-600 mb-6">
-            Annota queste credenziali e consegnale alla persona: la password non
-            sarà più recuperabile, nel database resta solo la sua impronta.
-          </p>
 
-          <dl className="rounded-2xl border border-amber-200 bg-amber-50 p-5 mb-6">
-            <dt className="text-[11px] font-bold tracking-wide text-amber-800">
-              USERNAME
-            </dt>
-            <dd className="font-mono text-base text-slate-900 mb-4 select-all break-all">
-              {credenziali.username}
-            </dd>
-            <dt className="text-[11px] font-bold tracking-wide text-amber-800">
-              PASSWORD
-            </dt>
-            <dd className="font-mono text-base text-slate-900 select-all break-all">
-              {credenziali.password}
-            </dd>
-          </dl>
+          {clienteCreato.emailVerificata ? (
+            <>
+              <p className="text-sm text-slate-600 mb-6">
+                Email verificata. Le credenziali di accesso sono state inviate a{" "}
+                <span className="font-medium">{formData.email}</span>.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate("/home")}
+                className="px-5 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold cursor-pointer hover:bg-blue-700"
+              >
+                Vai all'elenco
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-slate-600 mb-6">
+                L'account resta disattivato finché l'email non viene verificata.
+                Puoi verificarla ora, oppure farlo più tardi dalla scheda
+                cliente.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setModaleVerificaAperto(true)}
+                  className="px-5 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold cursor-pointer hover:bg-blue-700"
+                >
+                  Verifica email ora
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/home")}
+                  className="px-5 py-3 border border-slate-200 text-slate-600 rounded-lg text-sm font-bold cursor-pointer hover:bg-slate-50"
+                >
+                  Verifica più tardi
+                </button>
+              </div>
+            </>
+          )}
 
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() =>
-                navigator.clipboard
-                  ?.writeText(
-                    `${credenziali.username}\n${credenziali.password}`,
-                  )
-                  .catch(() => {})
-              }
-              className="px-5 py-3 bg-slate-600 text-white rounded-lg text-sm font-bold cursor-pointer hover:bg-slate-700"
-            >
-              Copia
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/home")}
-              className="px-5 py-3 bg-blue-600 text-white rounded-lg text-sm font-bold cursor-pointer hover:bg-blue-700"
-            >
-              Le ho annotate, continua
-            </button>
-          </div>
+          {modaleVerificaAperto && (
+            <VerificaContattoModal
+              clienteId={clienteCreato.clienteId}
+              tipo="email"
+              etichetta={formData.email}
+              onVerificato={() => {
+                setModaleVerificaAperto(false);
+                setClienteCreato((prev) => ({
+                  ...prev,
+                  emailVerificata: true,
+                }));
+              }}
+              onChiudi={() => setModaleVerificaAperto(false)}
+            />
+          )}
         </div>
       </div>
     );
@@ -460,7 +458,13 @@ function NuovoSottoscrittore() {
                   handleCopyResidenza={handleCopyResidenza}
                 />
                 <hr className="border-slate-100 my-6" />
-                <FormContatti formData={formData} handleChange={handleChange} />
+                <FormContatti
+                  formData={formData}
+                  handleChange={handleChange}
+                  clienteId={isEditMode ? Number(id) : null}
+                  emailVerificata={emailVerificata}
+                  onEmailVerificata={() => setEmailVerificata(true)}
+                />
               </div>
             ) : activeTab === "utente" ? (
               <SchedaUtente />
