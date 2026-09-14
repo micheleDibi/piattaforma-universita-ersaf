@@ -3,23 +3,15 @@ from typing import List, Optional
 
 from fastapi import (
     APIRouter,
-    BackgroundTasks,
     Depends,
     HTTPException,
     Query,
-    Request,
     status,
 )
 from sqlalchemy.orm import Session, joinedload
 
 from src.auth.dipendenze import get_current_utente
-from src.auth.models import ATTIVO
-from src.auth.servizio_otp import (
-    SCADENZA_MINUTI,
-    codice_valido,
-    marca_verificato,
-    trova_per_cliente,
-)
+
 from src.aziende.models import Azienda
 from src.clienti.models import Cliente
 from src.clienti.schemas import (
@@ -27,25 +19,15 @@ from src.clienti.schemas import (
     ClienteResponse,
     ClienteConUtenteCreate,
     ClienteUpdate,
-    VerificaOtpContattoRequest,
 )
 from src.clienti.servizio import (
     TipoUtente,
-    attiva_utente_con_password,
     crea_cliente_con_utente,
 )
-from src.clienti.verifica_contatti import email_gia_verificata, genera_otp_email
+
 from src.database import get_db
-from src.notifiche.backend_invio import Mailer, get_mailer
-from src.notifiche.email import (
-    DatiInvioCredenziali,
-    DatiInvioOtp,
-    invia_mail_credenziali,
-    invia_mail_otp,
-)
-from src.notifiche.models import CODICE_OTP_VERIFICA_EMAIL
+
 from src.ruolo.models import Ruolo
-from src.security.rete import ip_client, spacchetta_ip
 from src.universita.models import Universita
 from src.utenti.models import Utente
 
@@ -92,7 +74,7 @@ def crea_cliente_e_utente(
     current_utente=Depends(get_current_utente),
 ):
     """Crea in una transazione la riga utenti (disattivata), la riga clienti
-    e il curriculum. L'utente si attiva solo alla verifica email."""
+    e il curriculum. L'utente si attiva dopo la verifica di email e cellulare."""
     try:
         esito = crea_cliente_con_utente(
             db, dati.model_dump(), tipo_utente, current_utente.utente_id
@@ -114,7 +96,7 @@ def crea_cliente_e_utente(
         )
 
     return {
-        "message": "Cliente e utente creati. L'account resta disattivato finché l'email non viene verificata.",
+        "message": "Cliente e utente creati. L'account resta disattivato finché email e cellulare non sono verificati.",
         "cliente_id": esito["cliente"].cliente_id,
         "utente_id": esito["utente"].utente_id,
         "username_generato": esito["utente"].utente_username,
@@ -180,6 +162,8 @@ def aggiorna_cliente(
     db: Session = Depends(get_db),
     current_utente=Depends(get_current_utente),
 ):
+    from src.otp.servizio import blocca_cliente
+    blocca_cliente(db, cliente_id)
     db_cliente = _cliente_o_404(db, cliente_id, con_curriculum=True)
 
     inviati = modifiche.model_dump(exclude_unset=True)
@@ -212,6 +196,14 @@ def aggiorna_cliente(
     campi_cliente.pop("utente_id", None)
 
     try:
+        from sqlalchemy import delete, update
+        from src.otp.models import ContattoVerificato, Sfida
+        for tipo in ("email", "cellulare"):
+            campo_contatto = "cliente_" + tipo
+            if campo_contatto in campi_cliente and campi_cliente[campo_contatto] != getattr(db_cliente, campo_contatto):
+                db.execute(delete(ContattoVerificato).where(ContattoVerificato.cliente_id == cliente_id, ContattoVerificato.tipo == tipo))
+                tipi = [tipo, "login"] if tipo == "email" else [tipo]
+                db.execute(update(Sfida).where(Sfida.cliente_id == cliente_id, Sfida.tipo.in_(tipi)).values(stato="superato"))
         for chiave, valore in campi_cliente.items():
             setattr(db_cliente, chiave, valore)
 
@@ -245,82 +237,3 @@ def aggiorna_cliente(
 
     db.refresh(db_cliente)
     return db_cliente
-
-
-# =============================================================================
-# Verifica contatti (email)
-# =============================================================================
-@router.post("/{cliente_id}/contatti/email/genera-otp")
-def genera_otp_email_cliente(
-    cliente_id: int,
-    request: Request,
-    attivita: BackgroundTasks,
-    db: Session = Depends(get_db),
-    mailer: Mailer = Depends(get_mailer),
-    current_utente=Depends(get_current_utente),
-):
-    cliente = _cliente_o_404(db, cliente_id)
-    if not cliente.cliente_email:
-        raise HTTPException(status_code=400, detail="Il cliente non ha un indirizzo email.")
-    if email_gia_verificata(db, cliente):
-        raise HTTPException(status_code=400, detail="L'email di questo cliente è già stata verificata.")
-
-    sfida = genera_otp_email(
-        db, cliente, autore_id=current_utente.utente_id, hostname=spacchetta_ip(ip_client(request))
-    )
-    db.commit()
-
-    attivita.add_task(
-        invia_mail_otp,
-        mailer,
-        DatiInvioOtp(
-            log_otp_id=sfida.log_otp_id,
-            destinatario=cliente.cliente_email,
-            nome=f"{cliente.cliente_nome} {cliente.cliente_cognome}".strip() or cliente.cliente_email,
-            codice=sfida.codice,
-            scadenza_minuti=SCADENZA_MINUTI,
-        ),
-        codice_template=CODICE_OTP_VERIFICA_EMAIL,
-    )
-
-    return {"log_otp_id": sfida.log_otp_id, "otp_scadenza": sfida.scadenza.isoformat()}
-
-
-@router.post("/{cliente_id}/contatti/email/verifica-otp")
-def verifica_otp_email_cliente(
-    cliente_id: int,
-    corpo: VerificaOtpContattoRequest,
-    attivita: BackgroundTasks,
-    db: Session = Depends(get_db),
-    mailer: Mailer = Depends(get_mailer),
-    current_utente=Depends(get_current_utente),
-):
-    cliente = _cliente_o_404(db, cliente_id)
-    riga = trova_per_cliente(db, cliente_id, corpo.log_otp_id)
-    if not codice_valido(riga, corpo.otp_codice):
-        raise HTTPException(status_code=401, detail="Codice OTP non valido o scaduto.")
-
-    marca_verificato(riga)
-
-    utente = db.get(Utente, cliente.utente_id)
-    credenziali_inviate = False
-    if utente is not None and utente.utente_attivoSN != ATTIVO:
-        password_in_chiaro = attiva_utente_con_password(
-            db, utente, cliente.cliente_nome, cliente.cliente_cognome
-        )
-        db.commit()
-        attivita.add_task(
-            invia_mail_credenziali,
-            mailer,
-            DatiInvioCredenziali(
-                destinatario=cliente.cliente_email,
-                nome=f"{cliente.cliente_nome} {cliente.cliente_cognome}".strip(),
-                username=utente.utente_username,
-                password=password_in_chiaro,
-            ),
-        )
-        credenziali_inviate = True
-    else:
-        db.commit()
-
-    return {"message": "Email verificata con successo.", "credenziali_inviate": credenziali_inviate}

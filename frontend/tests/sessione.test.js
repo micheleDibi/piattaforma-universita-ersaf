@@ -1,6 +1,7 @@
 import { beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import { accedi } from "../src/lib/accesso.js";
+import { operazioniAccessoOtp, operazioniContattoOtp } from "../src/lib/otp.js";
 import { apiFetch, caricaSessione, messaggioErrore } from "../src/lib/api.js";
 import { logout } from "../src/lib/logout.js";
 import { haSessione, leggiCsrf, leggiUtenteId, pulisciSessione, salvaSessione } from "../src/lib/sessione.js";
@@ -68,8 +69,26 @@ test("429 espone Retry-After per il conto alla rovescia", async () => {
 
 test("Nazionale resta al passaggio 2FA senza creare una sessione", async () => {
   risposte.push(json({ requires_2fa: true }));
-  assert.equal(await accedi("nazionale", "password"), false);
+  assert.deepEqual(await accedi("nazionale", "password"), { requires_2fa: true });
   assert.equal(haSessione(), false);
+});
+
+test("OTP completa la sessione cookie e non conserva la sfida nello storage", async () => {
+  risposte.push(json(dati));
+  await operazioniAccessoOtp.verifica({ sfida: "sfida-segreta", codice: "123456" });
+  assert.equal(haSessione(), true);
+  assert.equal(richieste[0].credentials, "include");
+  assert.equal(window.localStorage.getItem("sfida"), null);
+  assert.equal(window.sessionStorage.getItem("sfida"), null);
+});
+
+test("errore OTP non espelle la sessione e il contatto usa il CSRF comune", async () => {
+  salvaSessione(dati);
+  risposte.push(json({ detail: "Codice scaduto" }, 400));
+  await assert.rejects(operazioniContattoOtp(7, "email", "prova@example.org").verifica({ sfida: "prova", codice: "123456" }), /Codice scaduto/);
+  assert.equal(richieste[0].headers["X-CSRF-Token"], dati.csrf_token);
+  assert.equal(haSessione(), true);
+  assert.equal(redirect.length, 0);
 });
 
 test("bootstrap paralleli condividono la richiesta, la scrittura allega il CSRF", async () => {

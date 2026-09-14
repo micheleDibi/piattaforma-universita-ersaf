@@ -179,6 +179,6 @@ def test_la_password_generata_supera_sempre_la_policy(nome, cognome, utente_id):
     assert verifica_policy_password(password, username=username) == []
 
 
-def test_la_password_generata_parte_dal_nome():
+def test_la_password_generata_e_imprevedibile():
     """Il formato resta quello scelto: e' una decisione, non un difetto."""
-    assert genera_password("Mario", "Rossi", 4772, "MarioRossi").startswith("MarRos4772")
+    assert genera_password("Mario", "Rossi", 4772, "MarioRossi") != genera_password("Mario", "Rossi", 4772, "MarioRossi")

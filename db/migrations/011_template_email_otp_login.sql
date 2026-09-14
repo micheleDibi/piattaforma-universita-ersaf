@@ -1,8 +1,8 @@
 -- =============================================================================
--- 010 - TEMPLATE EMAIL OTP LOGIN NAZIONALE
+-- 011 - TEMPLATE EMAIL OTP LOGIN NAZIONALE
 -- =============================================================================
 -- DB        : admin_entedb (MariaDB 10.11, InnoDB, utf8mb4_unicode_ci)
--- Rollback  : db/rollback/007_template_email_otp_login_down.sql
+-- Rollback  : db/rollback/011_template_email_otp_login_down.sql
 -- Dipende da: 006 (UNIQUE su messaggi_email.messaggio_email_codice)
 -- Idempotente: si (ON DUPLICATE KEY UPDATE)
 --

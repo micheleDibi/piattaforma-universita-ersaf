@@ -19,6 +19,7 @@
 .dialogo--menu[open]::backdrop { transition-duration: var(--durata-pannello); }
 .dialogo--menu::backdrop { transition-duration: var(--durata-normale); }
 .dialogo--finestra { @apply inset-0 m-auto w-[90%] max-w-[800px] max-h-[85dvh] rounded-superficie; }
+.dialogo--otp { @apply inset-0 m-auto w-[90%] max-w-md max-h-[85dvh] rounded-superficie; }
 .dialogo__contenuto { @apply flex max-h-[85dvh] flex-col p-6; }
 
 @starting-style {

@@ -1,0 +1,9 @@
+# Incluso solo con NOTIFICHE_REALI=si in shared/compose.env.
+# Abilita uscita dell'API verso i provider SMTP/HTTPS; non pubblica porte.
+# Il DB resta sulla sola rete interna data. L'API ottiene accesso in uscita
+# anche alla LAN: valutare le regole firewall del server prima di abilitarlo.
+services:
+  api:
+    networks: [app, data, notifiche]
+networks:
+  notifiche: {}

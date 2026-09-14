@@ -1,8 +1,8 @@
 -- =============================================================================
--- 011 - TEMPLATE EMAIL: VERIFICA CONTATTI E CREDENZIALI DI ACCESSO
+-- 012 - TEMPLATE EMAIL: VERIFICA CONTATTI E CREDENZIALI DI ACCESSO
 -- =============================================================================
 -- DB        : admin_entedb (MariaDB 10.11, InnoDB, utf8mb4_unicode_ci)
--- Rollback  : db/rollback/011_template_email_verifica_contatti_down.sql
+-- Rollback  : db/rollback/012_template_email_verifica_contatti_down.sql
 -- Dipende da: 006 (UNIQUE su messaggi_email.messaggio_email_codice)
 -- Idempotente: si (ON DUPLICATE KEY UPDATE)
 --
@@ -37,7 +37,7 @@ ON DUPLICATE KEY UPDATE
   `messaggio_email_oggetto` = VALUES(`messaggio_email_oggetto`),
   `messaggio_email_testo`   = VALUES(`messaggio_email_testo`);
 
--- Segnaposto: {{nome}}, {{username}}, {{password}}
+-- Segnaposto: {{nome}}, {{username}}, {{password}}, {{istruzioni_accesso}}
 INSERT INTO `messaggi_email`
   (`messaggio_email_codice`, `messaggio_email_oggetto`, `messaggio_email_testo`)
 VALUES (
@@ -46,9 +46,9 @@ VALUES (
   CONCAT(
     '<p>Benvenuto {{nome}},</p>',
     '<p>ricevi questa mail poiché sei stato anagrafato presso uno dei centri ERSAF presenti sul territorio nazionale.</p>',
-    '<p>Puoi accedere alla piattaforma <a href="https://universo.ersaf.it/">https://universo.ersaf.it/</a> con le seguenti credenziali:</p>',
+    '<p>{{istruzioni_accesso}}</p>',
     '<p><strong>Username:</strong> {{username}}<br /><strong>Password:</strong> {{password}}</p>',
-    '<p>Potrai cambiare la password dalla sezione "Il mio profilo".</p>',
+    '<p>Conserva queste credenziali in un luogo sicuro.</p>',
     '<p>Distintamente</p>',
     '<p><strong>Ente di Ricerca Scientifica ed Alta Formazione in sigla ERSAF</strong><br />',
     'P.zza del Popolo, N&deg;18<br />00187 Roma (Rm)<br />',

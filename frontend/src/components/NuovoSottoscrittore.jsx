@@ -1,5 +1,4 @@
 import { ANAGRAFICA_INIZIALE } from "../config/anagraficaIniziale.js";
-import CredenzialiCreate from "./CredenzialiCreate.jsx";
 import { useIngresso } from "../hooks/useIngresso.js";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
@@ -26,8 +25,6 @@ function NuovoSottoscrittore() {
 
   const [activeTab, setActiveTab] = useState("dati-principali");
   const pannello = useIngresso(activeTab);
-  // Credenziali generate dal server, da mostrare una volta sola.
-  const [credenziali, setCredenziali] = useState(null);
 
   const queryParams = new URLSearchParams(location.search);
   const tipoUtente =
@@ -225,23 +222,8 @@ function NuovoSottoscrittore() {
         return;
       }
 
-      // Le credenziali generate esistono in chiaro solo in questa risposta:
-      // nel database c'e' soltanto l'hash. Prima si controllava response.ok e
-      // si navigava via senza leggere il corpo, e l'utente appena creato
-      // restava senza modo di accedere.
       const creato = await leggiJson(response);
-      setCredenziali(
-        creato?.username_generato
-          ? {
-              username: creato.username_generato,
-              password: creato.password_generata,
-            }
-          : null,
-      );
-      if (!creato?.username_generato) {
-        alert(`${labelTitolo} salvato correttamente!`);
-        navigate(rottaElenco);
-      }
+      navigate(`/modifica/${creato.cliente_id}?tipo=${tipoUtente}`);
     } catch (error) {
       console.error("Errore:", error);
       alert(error.message);
@@ -266,13 +248,6 @@ function NuovoSottoscrittore() {
       domicilioProvincia: prev.residenzaProvincia,
     }));
   };
-
-  // Le credenziali generate dal server esistono in chiaro solo nella risposta
-  // di creazione: nel database c'e' l'hash. Si mostrano qui, e finche' non le
-  // si conferma non si naviga via.
-  if (credenziali) {
-    return <CredenzialiCreate credenziali={credenziali} titolo={labelTitolo} onContinua={() => navigate(rottaElenco)} />;
-  }
 
   return (
     <div className={contenutoPagina("modulo")}>
@@ -306,7 +281,7 @@ function NuovoSottoscrittore() {
                   handleCopyResidenza={handleCopyResidenza}
                 />
                 <hr className="border-bordo my-6" />
-                <FormContatti formData={formData} handleChange={handleChange} />
+                <FormContatti key={id || "nuovo"} clienteId={id} formData={formData} handleChange={handleChange} />
               </div>
             ) : activeTab === "utente" ? (
               <SchedaUtente />

@@ -12,7 +12,7 @@ export async function accedi(username, password) {
     const ripiego = risposta.status === 401 ? "Username o password errati" : "Risposta del server non valida. Riprova.";
     throw new ErroreApi(descriviErrore(risposta, dati, ripiego), risposta.status, secondiAttesa(risposta.headers.get("Retry-After")));
   }
-  if (dati?.requires_2fa) return false;
+  if (dati?.requires_2fa) return dati;
   salvaSessione(dati ?? {});
   return true;
 }

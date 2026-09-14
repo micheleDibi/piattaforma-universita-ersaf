@@ -65,14 +65,19 @@ def login(creds: LoginRequest, request: Request, response: Response, db: Session
     prenotazione = prenota_tentativo(creds.utente_username, ip_client(request))
     utente, ruolo = _identita_ammessa(db, creds)
     if (ruolo or "").lower() == "nazionale":
-        # Il 2FA resta fuori perimetro: nessun cookie o token di sessione.
-        db.commit()
+        from src.otp.servizio import blocca_cliente
+        from src.otp.invio import genera_e_invia
+        versione_password = utente.utente_password_hash or utente.utente_password
+        cliente = cliente_principale(db, utente.utente_id)
+        contesto = blocca_cliente(db, cliente.cliente_id)
+        if (contesto[1].utente_attivoSN != -1
+                or versione_password != (contesto[1].utente_password_hash or contesto[1].utente_password)
+                or (codice_ruolo(db, contesto[0].cliente_ruolo) or "").lower() != "nazionale"):
+            raise _credenziali_errate()
+        sfida = genera_e_invia(db, contesto, "login", (utente.utente_id, ip_client(request)))
         azzera_account(prenotazione)
-        return {
-            "requires_2fa": True,
-            "message": "Verifica a due fattori richiesta (2FA)",
-            "utente_username": utente.utente_username,
-        }
+        return {"requires_2fa": True, **sfida}
+
     dati = emetti_sessione(db, utente, ruolo, request, response)
     azzera_account(prenotazione)
     logger.info("login riuscito per utente_id=%s", utente.utente_id)

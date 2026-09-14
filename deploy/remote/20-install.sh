@@ -55,6 +55,8 @@ LOG_LEVEL=INFO
 LOG_FILE=
 EMAIL_BACKEND=file
 EMAIL_FILE_DIR=/app/var/email
+SMS_BACKEND=file
+SMS_FILE_DIR=/app/var/email/sms
 SMTP_FROM=ERSAF collaudo <noreply@ersaf.it>
 EOT
 )"

@@ -159,7 +159,7 @@ def aggiorna_utente(utente_id: int,
             detail="Non hai i permessi per modificare un altro utente.",
         )
 
-    db_utente = db.query(Utente).filter(Utente.utente_id == utente_id).first()
+    db_utente = db.query(Utente).filter(Utente.utente_id == utente_id).with_for_update().first()
     if not db_utente:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Utente non trovato"
@@ -169,6 +169,9 @@ def aggiorna_utente(utente_id: int,
     # loro default, azzerando utente_created_by e utente_updated_by.
     # Lo schema non ha piu' utente_password: la password non si cambia da qui.
     modifiche = utente.model_dump(exclude_unset=True)
+    if "utente_attivoSN" in modifiche:
+        from src.otp.models import Attivazione
+        db.query(Attivazione).filter(Attivazione.utente_id == utente_id).delete()
     if "utente_padre" in modifiche:
         _verifica_padre(db, modifiche["utente_padre"], utente_id=utente_id)
 

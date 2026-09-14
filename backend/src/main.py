@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from src.config import get_impostazioni, verifica_configurazione
 from src.logging_config import NOME_LOGGER, configura_logging
 from src.security.browser import verifica_richiesta_browser
+from src.notifiche.config_sms import ConfigSMS
 
 # Gli import dei modelli servono a registrare i mapper prima che i router
 # risolvano le relazioni dichiarate per nome. Rimuoverli rompe la
@@ -30,6 +31,8 @@ from src.auth.models import (  # noqa: F401
 )
 from src.notifiche.models import MessaggioEmail  # noqa: F401
 
+from src.otp.contatti import router as otp_contatti_router
+from src.otp.accesso import router as otp_accesso_router
 from src.auth.routers import router as auth_router
 from src.aziende.routers import router as azienda_router
 from src.clienti.routers import router as cliente_router
@@ -58,6 +61,10 @@ async def lifespan(app: FastAPI):
     impostazioni = get_impostazioni()
     configura_logging(impostazioni)
     verifica_configurazione(impostazioni)
+    sms = ConfigSMS()
+    sms.verifica()
+    if impostazioni.ersaf_env == "produzione" and sms.sms_backend != "skebby":
+        raise ValueError("In produzione configurare SMS_BACKEND=skebby.")
     logger.info(
         "avvio: ambiente=%s invio_email=%s costo_bcrypt=%s",
         impostazioni.ersaf_env,
@@ -86,7 +93,7 @@ async def proteggi_richieste_browser(request: Request, call_next):
     except HTTPException as errore:
         return JSONResponse(status_code=errore.status_code, content={"detail": errore.detail})
     risposta = await call_next(request)
-    if request.url.path.startswith(("/auth/", "/profilo/")) or risposta.status_code in (401, 403, 429):
+    if request.url.path.startswith(("/auth/", "/profilo/")) or "/contatti" in request.url.path or risposta.status_code in (401, 403, 429):
         risposta.headers["Cache-Control"] = "no-store"
     return risposta
 
@@ -94,6 +101,8 @@ app.include_router(utente_router)
 app.include_router(ruolo_router)
 app.include_router(cliente_router)
 app.include_router(auth_router)
+app.include_router(otp_accesso_router)
+app.include_router(otp_contatti_router)
 app.include_router(azienda_router)
 app.include_router(universita_router)
 app.include_router(listini_testa_router)

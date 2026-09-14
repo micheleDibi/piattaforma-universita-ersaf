@@ -79,12 +79,7 @@ function App() {
           element={<Navigate to={ROTTE.prodotti} replace />}
         />
 
-        {/* Il difetto che ha prodotto il bug di /nazionale non era la rotta
-            mancante: era che una rotta assente non produce alcun segnale e
-            lascia una pagina bianca. Vale anche per un refuso nel link della
-            mail di reset. Non si registra un segnaposto /nazionale: sarebbe
-            una pagina irraggiungibile, perche' per quel ruolo il backend esce
-            prima con requires_2fa, e il 2FA e' fuori perimetro. */}
+        {/* Il secondo fattore rimane nel flusso di accesso; le rotte sono protette dalla sessione cookie. */}
         <Route path="*" element={<Navigate to={ROTTE.accesso} replace />} />
       </Routes>
     </BrowserRouter>

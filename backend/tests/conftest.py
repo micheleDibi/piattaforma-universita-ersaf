@@ -41,6 +41,7 @@ os.environ.setdefault("SESSION_TOKEN_PEPPER", "pepper-di-test-sessione-" + "s" *
 os.environ.setdefault("BCRYPT_COST", "4")
 
 os.environ.setdefault("EMAIL_BACKEND", "memoria")
+os.environ["SMS_BACKEND"] = "memoria"
 os.environ.setdefault("FRONTEND_BASE_URL", "https://test.example.org")
 os.environ.setdefault("CORS_ORIGINS", "https://test.example.org")
 os.environ.setdefault("SMTP_HOST", "smtp.invalid")  # RFC 6761: non risolve mai
@@ -61,6 +62,7 @@ SCHEMA_BASE = RADICE / "db" / "test" / "schema_base.sql"
 
 # Ordine figlio -> padre. `ruoli` non compare: e' lookup, non stato.
 TABELLE_DA_SVUOTARE = [
+    "otp_sfide", "otp_contatti", "otp_attivazioni", "otp_limiti",
     "auth_login_limite",
     "password_reset_token",
     "password_reset_richiesta",
@@ -292,3 +294,13 @@ def corpo_html(messaggio) -> str:
         if parte.get_content_type() == "text/html":
             return parte.get_content()
     return ""
+
+
+@pytest.fixture(autouse=True)
+def sms():
+    from src.notifiche.sms import memoria_sms
+    memoria_sms.inviati.clear()
+    memoria_sms.errore = False
+    yield memoria_sms
+    memoria_sms.inviati.clear()
+    memoria_sms.errore = False

@@ -36,10 +36,12 @@ bcrypt>=4.0,<5
 # tutte le route sono sync e i background task sincroni girano nel threadpool,
 # dove una chiamata bloccante non ferma l'event loop. Niente aiosmtplib.
 
+# Client HTTPS Skebby con timeout e trasporto sostituibile nei test.
+httpx>=0.27,<1
+
 # --- test -------------------------------------------------------------------
 pytest>=8.0
 # TestClient di starlette 1.3 usa httpx2 e segnala come deprecato l'uso di
 # httpx: con `filterwarnings = error` nel pytest.ini quella deprecazione
 # fermerebbe la suite, quindi si installa quello giusto.
 httpx2>=2.12
-httpx>=0.27

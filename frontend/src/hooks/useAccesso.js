@@ -9,6 +9,7 @@ export function useAccesso() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [avviso, setAvviso] = useState("");
+  const [sfida, setSfida] = useState(null);
   const [loading, setLoading] = useState(false);
   const [attesa, setAttesa] = useState(0);
   const [limiteRaggiunto, setLimiteRaggiunto] = useState(false);
@@ -31,11 +32,12 @@ export function useAccesso() {
     setAvviso("");
     setLimiteRaggiunto(false);
     try {
-      if (await accedi(username, password)) {
-        setPassword("");
+      const risultato = await accedi(username, password);
+      setPassword("");
+      if (risultato === true) {
         navigate(destinazioneDopoAccesso(ROTTA_INIZIALE), { replace: true });
       } else {
-        setAvviso("Il tuo account richiede la verifica in due passaggi, non ancora disponibile su questa piattaforma. Contatta il tuo referente ERSAF.");
+        setSfida(risultato);
       }
     } catch (errore) {
       setLimiteRaggiunto(errore.stato === 429);
@@ -47,5 +49,6 @@ export function useAccesso() {
     }
   };
 
-  return { username, setUsername, password, setPassword, error, avviso, loading, attesa, limiteRaggiunto, handleSubmit };
+  const completa = () => navigate(destinazioneDopoAccesso(ROTTA_INIZIALE), { replace: true });
+  return { username, setUsername, password, setPassword, error, avviso, loading, attesa, limiteRaggiunto, handleSubmit, sfida, setSfida, completa };
 }

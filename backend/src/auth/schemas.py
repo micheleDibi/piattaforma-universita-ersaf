@@ -36,14 +36,3 @@ CORPO_RISPOSTA_GENERICA: bytes = json.dumps(
 ).encode("utf-8")
 
 MESSAGGIO_CREDENZIALI = "Username o password errati"
-
-
-class VerificaOtpRequest(BaseModel):
-    utente_id: int
-    log_otp_id: int
-    otp_codice: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
-
-
-class RigeneraOtpRequest(BaseModel):
-    utente_id: int
-    log_otp_id: int

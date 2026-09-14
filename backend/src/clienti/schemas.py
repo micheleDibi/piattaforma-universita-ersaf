@@ -187,6 +187,7 @@ class ClienteUpdate(UniversitaBase):
 class ClienteResponse(ClienteBase):
     cliente_id: int
     email_verificata: bool = False
+    cellulare_verificato: bool = False
     azienda: Optional[AziendaResponse] = None
     ruolo: Optional[RuoloResponse] = None
     utente: Optional[UtenteResponse] = None
@@ -207,9 +208,3 @@ class ClienteConUtenteCreate(ClienteBase, UniversitaBase):
     # utente_id è già gestito come Optional in ClienteBase, non serve ridefinirlo
     utente_username: Optional[str] = None
     utente_password: Optional[str] = None
-
-
-class VerificaOtpContattoRequest(BaseModel):
-    log_otp_id: int
-    otp_codice: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
-

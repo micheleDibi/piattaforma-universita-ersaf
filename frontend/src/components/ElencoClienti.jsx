@@ -12,6 +12,7 @@ import { campo } from "../config/styles/campo";
 import { TESTI_ELENCO } from "../config/testi/elenco.js";
 import { contenutoPagina } from "../config/styles/pagina";
 import { schedaElenco } from "../config/styles/tabella";
+import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 
 function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
   const [sottoscrittori, setSottoscrittori] = useState([]);
@@ -31,7 +32,7 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
 
   const navigate = useNavigate();
 
-  const canSee = leggiRuolo() === "Nazionale";
+  const canSee = leggiRuolo() === "nazionale";
   const canSeeAzienda = canSee && soloAttuatori;
   const opzioniRighe = { attuatori: soloAttuatori, mostraAzienda: canSeeAzienda };
 
@@ -163,7 +164,15 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
   }, [soloAttuatori, soloUtenti]); // Rimossa la dipendenza "skip"
 
   if (initialLoading)
-    return <div className="p-4 text-center text-testo-tenue">Caricamento...</div>;
+    return (
+      <div className={contenutoPagina()}>
+        <IndicatoreCaricamento
+          dimensione="grande"
+          messaggio={soloAttuatori ? "Caricamento attuatori..." : "Caricamento sottoscrittori..."}
+          centrato
+        />
+      </div>
+    );
   if (error)
     return <div className="p-4 text-center text-negativo">Errore: {error}</div>;
 

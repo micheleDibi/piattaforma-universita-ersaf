@@ -16,17 +16,9 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from email.message import EmailMessage
-from src.notifiche.models import (
-    CODICE_CREDENZIALI_ACCESSO,
-    CODICE_OTP_LOGIN_NAZIONALE,
-    CODICE_RESET_ESEGUITO,
-    CODICE_RESET_RICHIESTA,
-    MessaggioEmail,
-)
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
-from src.notifiche.models import CODICE_OTP_LOGIN_NAZIONALE, CODICE_RESET_ESEGUITO, CODICE_RESET_RICHIESTA, MessaggioEmail
 
 
 from sqlalchemy import select, update
@@ -217,73 +209,5 @@ def invia_mail_cambio_eseguito(mailer: Mailer, dati: DatiInvioCambio) -> None:
         logger.info("mail di avvenuto cambio password inviata")
     except Exception:
         logger.exception("invio della mail di avvenuto cambio fallito")
-    finally:
-        db.close()
-
-
-
-@dataclass(frozen=True)
-class DatiInvioOtp:
-    log_otp_id: int
-    destinatario: str
-    nome: str
-    codice: str
-    scadenza_minuti: int
-
-
-def invia_mail_otp(
-    mailer: Mailer, dati: DatiInvioOtp, codice_template: str = CODICE_OTP_LOGIN_NAZIONALE
-) -> None:
-    """Task di background. codice_template sceglie il testo: login e verifica
-    email condividono la stessa meccanica di invio, non lo stesso testo."""
-    db = SessionLocal()
-    try:
-        oggetto_grezzo, corpo_grezzo = carica_template(db, codice_template)
-        valori = {
-            "nome": dati.nome or "utente",
-            "codice_otp": dati.codice,
-            "scadenza_minuti": str(dati.scadenza_minuti),
-        }
-        messaggio = componi(
-            rendi_oggetto(oggetto_grezzo, valori),
-            rendi_html(corpo_grezzo, valori),
-            dati.destinatario,
-        )
-        mailer.invia(messaggio)
-        logger.info("mail OTP inviata, log_otp_id=%s, template=%s", dati.log_otp_id, codice_template)
-    except Exception:
-        logger.exception("invio della mail OTP fallito, log_otp_id=%s", dati.log_otp_id)
-    finally:
-        db.close()
-
-
-@dataclass(frozen=True)
-class DatiInvioCredenziali:
-    destinatario: str
-    nome: str
-    username: str
-    password: str
-
-
-def invia_mail_credenziali(mailer: Mailer, dati: DatiInvioCredenziali) -> None:
-    """Mandata una sola volta, subito dopo l'attivazione dell'utente: da quel
-    momento la password in chiaro non esiste piu' da nessun'altra parte."""
-    db = SessionLocal()
-    try:
-        oggetto_grezzo, corpo_grezzo = carica_template(db, CODICE_CREDENZIALI_ACCESSO)
-        valori = {
-            "nome": dati.nome or "utente",
-            "username": dati.username,
-            "password": dati.password,
-        }
-        messaggio = componi(
-            rendi_oggetto(oggetto_grezzo, valori),
-            rendi_html(corpo_grezzo, valori),
-            dati.destinatario,
-        )
-        mailer.invia(messaggio)
-        logger.info("mail credenziali inviata a username=%s", dati.username)
-    except Exception:
-        logger.exception("invio della mail credenziali fallito per username=%s", dati.username)
     finally:
         db.close()

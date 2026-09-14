@@ -63,32 +63,15 @@ def _anagrafica(**extra):
 # =============================================================================
 # Creazione
 # =============================================================================
-def test_l_utente_creato_riesce_ad_accedere(client, db):
-    """Il difetto era utente_attivoSN=1 dove la convenzione legacy vuole -1.
-
-    Sia il login sia la validazione della sessione confrontano con -1: chi
-    veniva creato riceveva lo stesso 401 indistinguibile di un account che non
-    esiste, senza che nessuno potesse capire perche'.
-    """
+def test_l_utente_creato_attende_la_verifica_dei_contatti(client, db):
+    from src.otp.models import Attivazione
     _, intestazione = _operatore(client, db)
-
-    creazione = client.post(
-        "/clienti/con-utente?tipo_utente=sottoscrittore",
-        json=_anagrafica(),
-        headers=intestazione,
-    )
-    assert creazione.status_code == 201, creazione.text
+    creazione = client.post("/clienti/con-utente?tipo_utente=sottoscrittore", json=_anagrafica(), headers=intestazione)
+    assert creazione.status_code == 201
     corpo = creazione.json()
-
-    accesso = client.post(
-        "/auth/login",
-        json={
-            "utente_username": corpo["username_generato"],
-            "utente_password": corpo["password_generata"],
-        },
-    )
-    assert accesso.status_code == 200, accesso.text
-    assert accesso.json()["utente_id"] == corpo["utente_id"]
+    assert "password_generata" not in corpo
+    assert db.get(Attivazione, corpo["utente_id"]).cliente_id == corpo["cliente_id"]
+    assert client.post("/auth/login", json={"utente_username": corpo["username_generato"], "utente_password": "password-qualsiasi"}).status_code == 401
 
 
 def test_la_password_non_finisce_in_chiaro_nel_database(client, db):
@@ -102,18 +85,18 @@ def test_la_password_non_finisce_in_chiaro_nel_database(client, db):
     # NOT NULL: stringa vuota, mai NULL e mai la password.
     assert utente.utente_password == ""
     assert utente.utente_password_hash
-    assert utente.utente_password_hash != corpo["password_generata"]
-    assert verify_password(corpo["password_generata"], utente.utente_password_hash)
+    assert "password_generata" not in corpo
+    assert utente.utente_password_hash.startswith("$2b$")
 
 
-def test_l_utente_creato_e_attivo_con_la_convenzione_legacy(client, db):
+def test_l_utente_creato_e_inattivo_fino_a_entrambi_i_contatti(client, db):
     _, intestazione = _operatore(client, db)
 
     corpo = client.post(
         "/clienti/con-utente", json=_anagrafica(), headers=intestazione
     ).json()
 
-    assert db.get(Utente, corpo["utente_id"]).utente_attivoSN == -1
+    assert db.get(Utente, corpo["utente_id"]).utente_attivoSN == 0
 
 
 def test_due_omonimi_ricevono_username_distinti(client, db):

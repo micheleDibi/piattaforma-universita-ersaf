@@ -1,7 +1,7 @@
 """Creazione di un cliente con il suo utente.
 
 L'utente nasce disattivato e senza password reale: la password vera si
-genera solo quando l'email risulta verificata (attiva_utente_con_password),
+genera solo dopo la verifica di email e cellulare (attiva_utente_con_password),
 non piu' alla creazione. Fino a quel momento l'account e' indistinguibile,
 dall'esterno, da un account inesistente (stesso controllo di
 verifica_credenziali sul login).
@@ -24,7 +24,6 @@ from src.auth.models import ATTIVO
 from src.clienti.models import Cliente
 from src.security.password import (
     hash_password,
-    messaggi_policy,
     verifica_policy_password,
 )
 from src.universita.models import Universita
@@ -106,20 +105,15 @@ def genera_username(db: Session, nome: str, cognome: str) -> str:
 
 
 def genera_password(nome: str, cognome: str, utente_id: int, username: str) -> str:
-    """LIMITE NOTO: la password resta ricavabile dal nome della persona. E'
-    una scelta consapevole; la mitigazione e' l'obbligo di cambio al primo
-    accesso, per cui le colonne utente_password_changed_at/_via esistono
-    gia'."""
-    base = f"{nome.strip()[:3]}{cognome.strip()[:3]}{utente_id}"
-
-    candidato = base
-    for _ in range(12):
-        if not verifica_policy_password(candidato, username=username):
-            return candidato
-        candidato += str(secrets.randbelow(10))
-
-    logger.warning("password generata dal nome rifiutata dalla policy, uso un valore casuale")
-    return secrets.token_urlsafe(16)
+    """Password iniziale casuale; mai derivata dai dati anagrafici."""
+    from src.config import get_impostazioni
+    lunghezza = max(24, get_impostazioni().password_min_length)
+    if lunghezza > 72:
+        raise ValueError("La lunghezza minima configurata supera il limite bcrypt.")
+    while True:
+        password = secrets.token_urlsafe(54)[:lunghezza]
+        if not verifica_policy_password(password, username=username):
+            return password
 
 
 def crea_utente_per_cliente(db: Session, nome: str, cognome: str, autore_id: int) -> Utente:
@@ -155,7 +149,7 @@ def crea_utente_per_cliente(db: Session, nome: str, cognome: str, autore_id: int
 def attiva_utente_con_password(db: Session, utente: Utente, nome: str, cognome: str) -> str:
     """Genera la password vera e attiva l'account (ATTIVO = -1).
 
-    Va chiamata solo quando l'email risulta verificata. Ritorna la password
+    Va chiamata solo dopo la verifica di email e cellulare. Ritorna la password
     in chiaro, da mandare una sola volta per email: da qui in poi nel
     database resta solo l'hash.
     """
@@ -235,4 +229,6 @@ def crea_cliente_con_utente(
         )
     )
 
+    from src.otp.models import Attivazione
+    db.add(Attivazione(utente_id=nuovo_utente.utente_id, cliente_id=nuovo_cliente.cliente_id))
     return {"cliente": nuovo_cliente, "utente": nuovo_utente}

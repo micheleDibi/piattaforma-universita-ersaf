@@ -1,3 +1,4 @@
+from src.otp.models import ContattoVerificato
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, ForeignKey, Date, text
 from datetime import  date
@@ -105,25 +106,19 @@ class Cliente(Base):
 
 
 
+    verifiche_contatti: Mapped[List[ContattoVerificato]] = relationship(
+        ContattoVerificato, primaryjoin="Cliente.cliente_id == foreign(ContattoVerificato.cliente_id)",
+        viewonly=True, lazy="selectin",
+    )
+
+    def _contatto_verificato(self, tipo):
+        from src.otp.identita import versione
+        return any(r.tipo == tipo and r.versione == versione(self, tipo) for r in self.verifiche_contatti)
+
     @property
     def email_verificata(self) -> bool:
-        """Come `curriculum`: calcolata al volo dalla sessione gia' agganciata
-        all'istanza, nessuna colonna nuova su `clienti`."""
-        from sqlalchemy import select
-        from sqlalchemy.orm import object_session
-        from src.auth.models import LogOtp
+        return self._contatto_verificato("email")
 
-        sessione = object_session(self)
-        if sessione is None or not self.cliente_email:
-            return False
-        return (
-        sessione.execute(
-            select(LogOtp.log_otp_id).where(
-                LogOtp.cliente_id == self.cliente_id,
-                LogOtp.log_otp_tipo_riferimento == "email",
-                LogOtp.log_otp_riferimento == self.cliente_email,
-                LogOtp.log_otp_check == 1,
-            ).limit(1)
-        ).scalar_one_or_none()
-        is not None
-    )
+    @property
+    def cellulare_verificato(self) -> bool:
+        return self._contatto_verificato("cellulare")
