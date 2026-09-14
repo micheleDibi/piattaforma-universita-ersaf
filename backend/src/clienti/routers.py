@@ -193,8 +193,22 @@ def aggiorna_cliente(
         for chiave, valore in inviati.items()
         if not chiave.startswith("universita_")
     }
-    campi_curriculum.pop("cliente_id", None)
-    campi_cliente.pop("cliente_id", None)
+
+    CAMPI_STRINGA_NOT_NULL = {
+        "cliente_codice", "cliente_nome", "cliente_cognome", "cliente_email",
+        "cliente_telefono", "cliente_indirizzo", "cliente_civico", "cliente_citta",
+        "cliente_CAP", "cliente_provincia", "cliente_luogoNascita",
+        "cliente_provinciaNascita", "cliente_cittadinanza", "cliente_tipoDocumento",
+        "cliente_documento", "cliente_comuneRilascio", "cliente_sesso",
+    }
+
+    for chiave in CAMPI_STRINGA_NOT_NULL:
+        if campi_cliente.get(chiave) is None and chiave in campi_cliente:
+            campi_cliente[chiave] = ""
+
+
+        campi_curriculum.pop("cliente_id", None)
+        campi_cliente.pop("cliente_id", None)
 
     try:
         for chiave, valore in campi_cliente.items():
