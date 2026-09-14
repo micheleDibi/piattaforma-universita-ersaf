@@ -40,6 +40,7 @@ from sqlalchemy import (
     Integer,
     LargeBinary,
     String,
+    text
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -163,3 +164,27 @@ class AuthSessione(Base):
     sess_revoked_reason: Mapped[Optional[str]] = mapped_column(String(30))
     sess_ip: Mapped[Optional[bytes]] = mapped_column(LargeBinary(16))
     sess_user_agent: Mapped[Optional[str]] = mapped_column(String(255))
+
+
+class LogOtp(Base):
+    """Riusa la tabella legacy `logs_otp` (script InDe genera/verifica OTP),
+    senza alcuna modifica di schema."""
+
+    __tablename__ = "logs_otp"
+
+    log_otp_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    cliente_id: Mapped[int] = mapped_column(Integer, ForeignKey("clienti.cliente_id"), nullable=False)
+    utente_id: Mapped[int] = mapped_column(Integer, ForeignKey("utenti.utente_id"), nullable=False)
+    log_otp_tipo_riferimento: Mapped[str] = mapped_column(String(45), nullable=False)
+    log_otp_riferimento: Mapped[str] = mapped_column(String(255), nullable=False)
+    log_otp_codice: Mapped[str] = mapped_column(String(45), nullable=False)
+    log_otp_check: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    log_otp_datetime_check: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    log_otp_hostname: Mapped[str] = mapped_column(String(45), nullable=False)
+    log_otp_created_by: Mapped[int] = mapped_column(Integer, ForeignKey("utenti.utente_id"), nullable=False)
+    log_otp_created_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, default=datetime.now)
+    log_otp_updated_by: Mapped[int] = mapped_column(Integer, ForeignKey("utenti.utente_id"), nullable=False)
+    log_otp_updated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True, onupdate=text("CURRENT_TIMESTAMP")
+    )
+    log_otp_expired_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

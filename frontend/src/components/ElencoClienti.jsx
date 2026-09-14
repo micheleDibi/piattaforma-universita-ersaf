@@ -22,7 +22,7 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
 
   const navigate = useNavigate();
 
-  const canSee = leggiRuolo() === "aderente";
+  const canSee = leggiRuolo() === "Nazionale";
   const canSeeAzienda = canSee && soloAttuatori;
 
   useEffect(() => {

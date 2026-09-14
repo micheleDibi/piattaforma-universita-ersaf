@@ -4,7 +4,7 @@ import { logout } from "../lib/logout";
 
 function Sidebar({ active, setActive }) {
   const navigate = useNavigate();
-  const canSee = leggiRuolo() === "aderente";
+  const canSee = leggiRuolo() === "nazionale";
 
   const links = [
     { id: "dashboard", label: "Dashboard" },

@@ -19,6 +19,9 @@ from email.message import EmailMessage
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
+from src.notifiche.models import CODICE_OTP_LOGIN_NAZIONALE, CODICE_RESET_ESEGUITO, CODICE_RESET_RICHIESTA, MessaggioEmail
+
+
 from sqlalchemy import select, update
 
 from src.auth.models import Esito, PasswordResetRichiesta
@@ -207,5 +210,43 @@ def invia_mail_cambio_eseguito(mailer: Mailer, dati: DatiInvioCambio) -> None:
         logger.info("mail di avvenuto cambio password inviata")
     except Exception:
         logger.exception("invio della mail di avvenuto cambio fallito")
+    finally:
+        db.close()
+
+
+
+@dataclass(frozen=True)
+class DatiInvioOtp:
+    log_otp_id: int
+    destinatario: str
+    nome: str
+    codice: str
+    scadenza_minuti: int
+
+
+def invia_mail_otp(mailer: Mailer, dati: DatiInvioOtp) -> None:
+    """Task di background, stesso schema di invia_mail_reset.
+
+    Il codice arriva qui in chiaro: la riga in logs_otp lo contiene gia' in
+    chiaro (colonna legacy), quindi non si introduce un nuovo posto dove il
+    segreto e' leggibile.
+    """
+    db = SessionLocal()
+    try:
+        oggetto_grezzo, corpo_grezzo = carica_template(db, CODICE_OTP_LOGIN_NAZIONALE)
+        valori = {
+            "nome": dati.nome or "utente",
+            "codice_otp": dati.codice,
+            "scadenza_minuti": str(dati.scadenza_minuti),
+        }
+        messaggio = componi(
+            rendi_oggetto(oggetto_grezzo, valori),
+            rendi_html(corpo_grezzo, valori),
+            dati.destinatario,
+        )
+        mailer.invia(messaggio)
+        logger.info("mail OTP inviata, log_otp_id=%s", dati.log_otp_id)
+    except Exception:
+        logger.exception("invio della mail OTP fallito, log_otp_id=%s", dati.log_otp_id)
     finally:
         db.close()

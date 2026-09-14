@@ -34,7 +34,12 @@ from src.auth.schemas import (
     ConfermaResetRequest,
     LoginRequest,
     RichiestaResetRequest,
+    RigeneraOtpRequest,
+    VerificaOtpRequest,
 )
+
+from src.auth.servizio_otp import SCADENZA_MINUTI, codice_valido, genera_otp, marca_verificato, trova
+
 from src.auth.servizio_login import (
     cliente_principale,
     codice_ruolo,
@@ -59,8 +64,15 @@ from src.notifiche.email import (
     invia_mail_cambio_eseguito,
     invia_mail_reset,
 )
+from src.notifiche.email import (
+    DatiInvioCambio,
+    DatiInvioOtp,
+    invia_mail_cambio_eseguito,
+    invia_mail_otp,
+    invia_mail_reset,
+)
 from src.security.password import hash_password, messaggi_policy, verifica_policy_password
-from src.security.rete import ip_client, user_agent
+from src.security.rete import ip_client, user_agent, spacchetta_ip
 from src.security.sessioni import crea_sessione, revoca_sessione
 from src.security.tempo import pavimento_temporale
 from src.security.tokens import forma_token_valida
@@ -84,35 +96,29 @@ def _credenziali_errate() -> HTTPException:
 
 
 @router.post("/login")
-def login(creds: LoginRequest, request: Request, db: Session = Depends(get_db)):
+@router.post("/login")
+def login(
+    creds: LoginRequest,
+    request: Request,
+    attivita: BackgroundTasks,
+    db: Session = Depends(get_db),
+    mailer: Mailer = Depends(get_mailer),
+):
     ip = ip_client(request)
     ua = user_agent(request)
 
     utente, ambiguo = trova_utente_per_username(db, creds.utente_username)
     if ambiguo:
-        # Il database non ha la UNIQUE su utente_username e contiene sei gruppi
-        # di duplicati. Prima si prendeva una riga arbitraria: se la password
-        # digitata era quella dell'altro omonimo l'accesso falliva senza motivo
-        # apparente, e se coincideva si entrava nell'account sbagliato.
-        # La bonifica e' descritta nella migrazione 005.
-        logger.warning(
-            "accesso negato: lo username corrisponde a piu' di un utente"
-        )
+        logger.warning("accesso negato: lo username corrisponde a piu' di un utente")
         verifica_credenziali(db, None, creds.utente_password)
         raise _credenziali_errate()
 
     if not verifica_credenziali(db, utente, creds.utente_password):
         raise _credenziali_errate()
 
-    # Gli 869 utenti senza riga `clienti` producevano un 500 qui
-    # (user.clienti.ruolo.ruolo_codice su clienti = None), e un 500 distingueva
-    # "password sbagliata" da "utente esistente ma orfano".
     cliente = cliente_principale(db, utente.utente_id)
     if cliente is None:
-        logger.warning(
-            "accesso negato: utente senza riga clienti, utente_id=%s",
-            utente.utente_id,
-        )
+        logger.warning("accesso negato: utente senza riga clienti, utente_id=%s", utente.utente_id)
         raise _credenziali_errate()
 
     ruolo = codice_ruolo(db, cliente.cliente_ruolo)
@@ -120,22 +126,37 @@ def login(creds: LoginRequest, request: Request, db: Session = Depends(get_db)):
     if cliente.cliente_ruolo in RUOLI_SENZA_ACCESSO:
         logger.warning(
             "accesso negato: utente_id=%s ha un ruolo non consentito (ruolo_id=%s)",
-            utente.utente_id,
-            cliente.cliente_ruolo,
+            utente.utente_id, cliente.cliente_ruolo,
         )
         raise _credenziali_errate()
 
     if ruolo and ruolo.lower() == "nazionale":
-        # Il flusso 2FA vero e' fuori perimetro. Non si emette sessione e non
-        # si restituisce utente_id: il frontend deve fermarsi qui.
-        db.commit()  # l'eventuale rehash pigro resta valido
-        logger.info(
-            "verifica a due fattori richiesta per utente_id=%s", utente.utente_id
+        # Username+password gia' superati. Ora si genera l'OTP e si invia
+        # via email; niente sessione/token finche' /auth/verifica-otp non
+        # va a buon fine.
+        sfida = genera_otp(db, utente, cliente, hostname=spacchetta_ip(ip))
+        db.commit()
+        logger.info("verifica a due fattori richiesta per utente_id=%s", utente.utente_id)
+
+        attivita.add_task(
+            invia_mail_otp,
+            mailer,
+            DatiInvioOtp(
+                log_otp_id=sfida.log_otp_id,
+                destinatario=cliente.cliente_email,
+                nome=cliente.cliente_nome or utente.utente_username,
+                codice=sfida.codice,
+                scadenza_minuti=SCADENZA_MINUTI,
+            ),
         )
+
         return {
             "requires_2fa": True,
             "message": "Verifica a due fattori richiesta (2FA)",
+            "utente_id": utente.utente_id,
             "utente_username": utente.utente_username,
+            "log_otp_id": sfida.log_otp_id,
+            "otp_scadenza": sfida.scadenza.isoformat(),
         }
 
     token, scadenza = crea_sessione(db, utente.utente_id, ip, ua)
@@ -144,15 +165,109 @@ def login(creds: LoginRequest, request: Request, db: Session = Depends(get_db)):
 
     return {
         "message": "Login effettuato con successo",
-        # utente_id resta nella risposta: il frontend lo salva e lo inserisce
-        # nel corpo di POST /clienti/. Toglierlo romperebbe la creazione dei
-        # sottoscrittori.
         "utente_id": utente.utente_id,
         "utente_username": utente.utente_username,
         "ruolo_codice": ruolo,
         "token": token,
         "token_type": "bearer",
         "scadenza": scadenza.isoformat() if scadenza else None,
+    }
+
+
+def _otp_non_valido() -> HTTPException:
+    """Messaggio unico per 'sbagliato', 'scaduto' e 'gia' usato': altrimenti
+    l'endpoint diventa un oracolo su quanto un attaccante e' vicino al codice."""
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Codice OTP non valido o scaduto. Richiedine uno nuovo se necessario.",
+    )
+
+
+def _sessione_verifica_non_valida() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Sessione di verifica non valida. Rifai il login.",
+    )
+
+
+@router.post("/verifica-otp")
+def verifica_otp_login(corpo: VerificaOtpRequest, request: Request, db: Session = Depends(get_db)):
+    ip = ip_client(request)
+    ua = user_agent(request)
+
+    riga = trova(db, corpo.utente_id, corpo.log_otp_id)
+    if not codice_valido(riga, corpo.otp_codice):
+        raise _otp_non_valido()
+
+    utente = db.get(Utente, corpo.utente_id)
+    cliente = cliente_principale(db, corpo.utente_id) if utente else None
+    # Ricontrollati qui: utente/ruolo possono essere cambiati fra la
+    # generazione e la verifica del codice.
+    if (
+        utente is None
+        or utente.utente_attivoSN != ATTIVO
+        or cliente is None
+        or cliente.cliente_ruolo in RUOLI_SENZA_ACCESSO
+    ):
+        raise _sessione_verifica_non_valida()
+
+    marca_verificato(riga)
+    token, scadenza = crea_sessione(db, utente.utente_id, ip, ua)
+    db.commit()
+
+    ruolo = codice_ruolo(db, cliente.cliente_ruolo)
+    logger.info("verifica OTP riuscita, login completato per utente_id=%s", utente.utente_id)
+
+    return {
+        "message": "Login effettuato con successo",
+        "utente_id": utente.utente_id,
+        "utente_username": utente.utente_username,
+        "ruolo_codice": ruolo,
+        "token": token,
+        "token_type": "bearer",
+        "scadenza": scadenza.isoformat() if scadenza else None,
+    }
+
+
+@router.post("/rigenera-otp")
+def rigenera_otp_login(
+    corpo: RigeneraOtpRequest,
+    request: Request,
+    attivita: BackgroundTasks,
+    db: Session = Depends(get_db),
+    mailer: Mailer = Depends(get_mailer),
+):
+    riga_precedente = trova(db, corpo.utente_id, corpo.log_otp_id)
+    utente = db.get(Utente, corpo.utente_id) if riga_precedente else None
+    cliente = cliente_principale(db, corpo.utente_id) if utente else None
+    if (
+        utente is None
+        or utente.utente_attivoSN != ATTIVO
+        or cliente is None
+        or cliente.cliente_ruolo in RUOLI_SENZA_ACCESSO
+    ):
+        raise _sessione_verifica_non_valida()
+
+    sfida = genera_otp(db, utente, cliente, hostname=spacchetta_ip(ip_client(request)))
+    db.commit()
+    logger.info("OTP rigenerato per utente_id=%s", utente.utente_id)
+
+    attivita.add_task(
+        invia_mail_otp,
+        mailer,
+        DatiInvioOtp(
+            log_otp_id=sfida.log_otp_id,
+            destinatario=cliente.cliente_email,
+            nome=cliente.cliente_nome or utente.utente_username,
+            codice=sfida.codice,
+            scadenza_minuti=SCADENZA_MINUTI,
+        ),
+    )
+
+    return {
+        "utente_id": utente.utente_id,
+        "log_otp_id": sfida.log_otp_id,
+        "otp_scadenza": sfida.scadenza.isoformat(),
     }
 
 

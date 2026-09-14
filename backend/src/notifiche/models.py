@@ -15,6 +15,7 @@ from src.database import Base
 
 CODICE_RESET_RICHIESTA = "password_reset_richiesta"
 CODICE_RESET_ESEGUITO = "password_reset_eseguito"
+CODICE_OTP_LOGIN_NAZIONALE = "login_otp_nazionale"
 
 
 class MessaggioEmail(Base):
