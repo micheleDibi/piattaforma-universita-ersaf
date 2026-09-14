@@ -12,6 +12,7 @@ from src.security.password import hash_password
 from tests.support import factories as f
 from tests.support.sessioni import token_cookie, intestazioni_sessione
 from tests.conftest import corpo_html
+from src.notifiche.formato_email import come_testo
 from tests.integration.test_clienti import _anagrafica, _operatore
 
 pytestmark = pytest.mark.mariadb
@@ -22,7 +23,7 @@ def nazionale(client, db, mailer):
     persona = f.crea_attuatore(db, email="nazionale@example.org", ruolo=5, password_hash=hash_password(PASSWORD))
     risposta = client.post("/auth/login", json={"utente_username": persona.username, "utente_password": PASSWORD})
     assert risposta.status_code == 200, risposta.text
-    codice = re.search(r"\b\d{6}\b", corpo_html(mailer.inviate[-1])).group()
+    codice = re.search(r"\b\d{6}\b", come_testo(corpo_html(mailer.inviate[-1]))).group()
     return persona, risposta.json(), codice
 
 
@@ -97,7 +98,7 @@ def test_attivazione_dopo_entrambi_con_invio_credenziali(client, db, mailer, sms
     identita, headers = nuovo(client, db)
     for indice, tipo in enumerate([primo, "cellulare" if primo == "email" else "email"]):
         token = invia(client, identita, headers, tipo)
-        testo = corpo_html(mailer.inviate[-1]) if tipo == "email" else sms.inviati[-1][1]
+        testo = come_testo(corpo_html(mailer.inviate[-1])) if tipo == "email" else sms.inviati[-1][1]
         codice = re.search(r"\b\d{6}\b", testo).group()
         risposta = conferma(client, identita, headers, tipo, {"sfida": token, "codice": codice})
         assert risposta.status_code == 200, risposta.text
@@ -121,7 +122,7 @@ def test_contact_scope_modifiche_csrf_e_provider_failure(client, db, mailer, sms
     assert risposta.status_code == 503 and risposta.headers["Retry-After"] == "60"
     assert db.scalar(select(Sfida)).stato == "fallito"
     token = invia(client, identita, headers, "email")
-    codice = re.search(r"\b\d{6}\b", corpo_html(mailer.inviate[-1])).group()
+    codice = re.search(r"\b\d{6}\b", come_testo(corpo_html(mailer.inviate[-1]))).group()
     assert conferma(client, identita, headers, "cellulare", {"sfida": token, "codice": codice}).status_code == 400
     assert client.put(f"/clienti/{identita['cliente_id']}", headers=headers,
                       json={"cliente_email": "nuova@example.org"}).status_code == 200
@@ -142,7 +143,7 @@ def test_disattivazione_manual_non_viene_annullata(client, db, mailer, sms):
     assert client.put(f"/utenti/{identita['utente_id']}", headers=headers, json={"utente_attivoSN": 0}).status_code == 200
     for tipo in ("email", "cellulare"):
         token = invia(client, identita, headers, tipo)
-        testo = corpo_html(mailer.inviate[-1]) if tipo == "email" else sms.inviati[-1][1]
+        testo = come_testo(corpo_html(mailer.inviate[-1])) if tipo == "email" else sms.inviati[-1][1]
         codice = re.search(r"\b\d{6}\b", testo).group()
         assert conferma(client, identita, headers, tipo, {"sfida": token, "codice": codice}).status_code == 200
     db.expire_all()
@@ -152,7 +153,7 @@ def test_disattivazione_manual_non_viene_annullata(client, db, mailer, sms):
 def test_email_credenziali_fallita_non_dichiara_consegna(client, db, mailer, sms):
     identita, headers = nuovo(client, db)
     token = invia(client, identita, headers, "email")
-    codice = re.search(r"\b\d{6}\b", corpo_html(mailer.inviate[-1])).group()
+    codice = re.search(r"\b\d{6}\b", come_testo(corpo_html(mailer.inviate[-1]))).group()
     assert conferma(client, identita, headers, "email", {"sfida": token, "codice": codice}).status_code == 200
     token = invia(client, identita, headers, "cellulare")
     codice = re.search(r"\b\d{6}\b", sms.inviati[-1][1]).group()

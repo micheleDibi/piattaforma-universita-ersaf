@@ -1,5 +1,7 @@
 """Composizione e invio delle mail del recupero password.
 
+Layout, firma, logo CID e alternativa testuale sono condivisi in messaggio_email.
+
 I testi vivono in `messaggi_email` (migrazione 006), cosi' restano
 modificabili senza rideploy come per il resto della piattaforma. I segnaposto
 sono {{nome}}, e OGNI valore dinamico viene escapato in HTML.
@@ -28,6 +30,7 @@ from src.config import get_impostazioni
 from src.database import SessionLocal
 from src.errori import ErroreTemplateEmail
 from src.notifiche.backend_invio import Mailer
+from src.notifiche.messaggio_email import crea_messaggio
 from src.notifiche.models import (
     CODICE_RESET_ESEGUITO,
     CODICE_RESET_RICHIESTA,
@@ -128,17 +131,7 @@ def carica_template(db, codice: str) -> tuple[str, str]:
 def componi(
     oggetto: str, corpo_html: str, destinatario: str
 ) -> EmailMessage:
-    messaggio = EmailMessage()
-    messaggio["From"] = get_impostazioni().smtp_from
-    messaggio["To"] = destinatario
-    messaggio["Subject"] = oggetto
-    # Alternativa testuale minima: senza, alcuni client segnano il messaggio
-    # come sospetto.
-    messaggio.set_content(
-        "Questo messaggio richiede un client di posta che visualizzi l'HTML."
-    )
-    messaggio.add_alternative(corpo_html, subtype="html")
-    return messaggio
+    return crea_messaggio(oggetto, corpo_html, destinatario, get_impostazioni().smtp_from)
 
 
 def invia_mail_reset(mailer: Mailer, dati: DatiInvioReset) -> None:

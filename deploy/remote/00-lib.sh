@@ -92,7 +92,12 @@ compose_rel() {
         file+=(-f "$RELEASES/$id/deploy/compose.esposizione.yml")
     fi
     if [ -f "$SHARED/compose.env" ] && [ "$(compose_env_get NOTIFICHE_REALI)" = "si" ]; then
-        file+=(-f "$RELEASES/$id/deploy/compose.notifiche.yml")
+        # Il fallback mantiene disponibile il rollback alle release precedenti
+        # all'introduzione dei provider reali.
+        local notifiche="$RELEASES/$id/deploy/compose.notifiche.yml"
+        [ -f "$notifiche" ] || notifiche="$SHARED/compose.notifiche.yml"
+        [ -f "$notifiche" ] || die "configurazione rete notifiche assente"
+        file+=(-f "$notifiche")
     fi
     RELEASE_TAG="$id" RELEASE_DIR="$RELEASES/$id" docker compose \
         -p "$PROJECT" --project-directory "$BASE" --env-file "$SHARED/compose.env" \

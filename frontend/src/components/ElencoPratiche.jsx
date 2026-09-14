@@ -12,6 +12,7 @@ import usePagineRemote from "../hooks/usePagineRemote";
 import { contenutoPagina } from "../config/styles/pagina";
 import { schedaElenco } from "../config/styles/tabella";
 import { pulsante } from "../config/styles/pulsante";
+import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 
 export default function ElencoPratiche() {
   const navigate = useNavigate();
@@ -27,7 +28,11 @@ export default function ElencoPratiche() {
         onApri={id => navigate(`/modifica-pratica/${id}`)}
         vuoto={!pagina.loading && !pagina.errore && "Nessuna pratica trovata."} />
       <div className="stato-pagine-elenco">
-        <p role="status">{pagina.loading ? "Caricamento…" : !pagina.altri && pagina.elementi.length ? "Hai raggiunto la fine dell’elenco" : ""}</p>
+        {pagina.loading ? (
+          <IndicatoreCaricamento dimensione="compatto" messaggio="Caricamento pratiche…" />
+        ) : !pagina.altri && pagina.elementi.length ? (
+          <p role="status">Hai raggiunto la fine dell’elenco</p>
+        ) : null}
         {pagina.errore && <p role="alert">{pagina.errore}</p>}
         {(pagina.altri || pagina.errore) && <button type="button" className={pulsante("secondario")}
           onClick={pagina.carica} disabled={pagina.loading}>{pagina.errore ? "Riprova" : "Carica altre pratiche"}</button>}

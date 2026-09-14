@@ -12,6 +12,7 @@ import { pulsante } from "../config/styles/pulsante";
 import { scheda } from "../config/styles/superficie";
 import { ROTTE } from "../config/routes/rotte";
 import IntestazionePagina from "./shared/IntestazionePagina";
+import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 
 // I due bottoni di ElencoAziende navigavano a /nuova-azienda e
 // /modifica-azienda/:id, che non erano registrate in App.jsx: cadevano nel
@@ -117,9 +118,11 @@ export default function SchedaAzienda() {
 
   if (caricamento)
     return (
-      <div className="p-12 text-center text-testo-tenue">
-        Caricamento in corso...
-      </div>
+      <IndicatoreCaricamento
+        dimensione="grande"
+        messaggio="Caricamento in corso..."
+        centrato
+      />
     );
 
   const campo = ([nome, etichetta], obbligatorio) => (

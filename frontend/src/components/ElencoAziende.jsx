@@ -9,6 +9,7 @@ import { rigaAzienda } from "../lib/righeElenco.js";
 import CampoRicerca from "./shared/CampoRicerca";
 import { contenutoPagina } from "../config/styles/pagina";
 import { schedaElenco } from "../config/styles/tabella";
+import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 
 function ElencoAziende() {
   const [aziende, setAziende] = useState([]);
@@ -130,7 +131,11 @@ function ElencoAziende() {
   }, [skip]);
 
   if (initialLoading)
-    return <div className="p-4 text-center text-testo-tenue">Caricamento...</div>;
+    return (
+      <div className={contenutoPagina()}>
+        <IndicatoreCaricamento dimensione="grande" messaggio="Caricamento aziende..." centrato />
+      </div>
+    );
   if (error)
     return <div className="p-4 text-center text-negativo">Errore: {error}</div>;
 
@@ -159,8 +164,8 @@ function ElencoAziende() {
           vuoto={!loading && "Nessuna azienda trovata."} />
 
         {loading && (
-          <div className="border-t border-bordo py-4 text-center text-sm text-testo-tenue">
-            Caricamento altri elementi...
+          <div className="border-t border-bordo py-4">
+            <IndicatoreCaricamento dimensione="compatto" messaggio="Caricamento altri elementi..." />
           </div>
         )}
 

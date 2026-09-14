@@ -7,6 +7,7 @@ import { salvaSessione } from "../lib/sessione";
 import { campo, etichetta } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
 import { titoloSezione } from "../config/styles/superficie";
+import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 
 export default function SchedaUtente() {
   const { id } = useParams();
@@ -165,9 +166,11 @@ export default function SchedaUtente() {
     );
   if (loading)
     return (
-      <div className="text-center p-12 text-testo-tenue text-base">
-        Caricamento in corso...
-      </div>
+      <IndicatoreCaricamento
+        dimensione="grande"
+        messaggio="Caricamento in corso..."
+        centrato
+      />
     );
   if (error)
     return (

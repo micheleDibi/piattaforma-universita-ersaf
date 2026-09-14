@@ -11,6 +11,7 @@ import { campo } from "../config/styles/campo";
 import { TESTI_ELENCO } from "../config/testi/elenco.js";
 import { contenutoPagina } from "../config/styles/pagina";
 import { schedaElenco } from "../config/styles/tabella";
+import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 
 export default function ElencoProdottiFormativi() {
   const navigate = useNavigate();
@@ -206,7 +207,11 @@ export default function ElencoProdottiFormativi() {
   }, []);
 
   if (initialLoading)
-    return <div className="p-4 text-center text-testo-tenue">Caricamento...</div>;
+    return (
+      <div className={contenutoPagina()}>
+        <IndicatoreCaricamento dimensione="grande" messaggio="Caricamento prodotti formativi..." centrato />
+      </div>
+    );
   if (error)
     return <div className="p-4 text-center text-negativo">Errore: {error}</div>;
 
@@ -285,8 +290,8 @@ export default function ElencoProdottiFormativi() {
 
         {/* Indicatore di caricamento o fine lista */}
         {loading && (
-          <div className="border-t border-bordo px-4 py-4 text-center text-sm text-testo-tenue">
-            Caricamento altri elementi...
+          <div className="border-t border-bordo px-4 py-4">
+            <IndicatoreCaricamento dimensione="compatto" messaggio="Caricamento altri elementi..." />
           </div>
         )}
 

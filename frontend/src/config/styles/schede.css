@@ -9,7 +9,7 @@
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
-  background: var(--color-superficie-tenue);
+  background: var(--color-superficie);
 }
 .schede__linguetta {
   position: relative;
@@ -19,7 +19,7 @@
   border: 1px solid var(--color-bordo);
   border-bottom: 0;
   border-radius: var(--radius-controllo) var(--radius-controllo) 0 0;
-  background: var(--color-superficie-tenue);
+  background: var(--color-superficie);
   color: var(--color-testo-tenue);
   font-size: var(--text-sm);
   font-weight: var(--font-weight-medium);

@@ -43,6 +43,7 @@ cmd_deploy() {
     precedente="$(compose_env_get RELEASE_TAG)"
     ACTIVE_ID="$id"
     cmd_release "$archivio" "$id" "$sha" "$dirty"
+    prepara_notifiche
     db_up
     if [ "$primo_clone" = 1 ]; then
         if clone_present; then log "clone gia' presente: la clonazione non viene ripetuta"; else do_clone 0; fi

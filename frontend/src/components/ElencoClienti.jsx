@@ -233,8 +233,8 @@ return (
         />
 
         {loading && (
-          <div className="border-t border-bordo px-4 py-3 text-center text-sm text-testo-tenue">
-            Caricamento altri elementi...
+          <div className="border-t border-bordo px-4 py-4">
+            <IndicatoreCaricamento dimensione="compatto" messaggio="Caricamento altri elementi..." />
           </div>
         )}
 
