@@ -1,6 +1,6 @@
 import { ChevronRight } from "../../config/icone.js";
 
-// Composizione nativa della tabella (38 righe): colonne e campi accorpati sono
+// Composizione nativa della tabella: colonne e campi sono
 // dichiarati dal modello, senza componenti cosmetici per celle o singoli testi.
 export default function TabellaElenco({ dati, modello, onApri }) {
   return (

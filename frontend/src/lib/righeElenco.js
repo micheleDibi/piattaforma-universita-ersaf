@@ -7,6 +7,8 @@ export function rigaCliente(item, { attuatori, mostraAzienda }) {
     id: item.cliente_id, nomeAzione: nominativo,
     campi: {
       nominativo,
+      nome: testo(item.cliente_nome),
+      cognome: testo(item.cliente_cognome),
       ...(attuatori ? { ruolo: testo(item.ruolo?.ruolo_codice) } : {}),
       ...(mostraAzienda ? { azienda: testo(item.azienda?.azienda_ragione_sociale) } : {}),
     },

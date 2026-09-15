@@ -28,10 +28,12 @@
   /* Soglie del contenitore elenco, non della finestra. */
   --breakpoint-elenco-semplice: 40rem;
   --breakpoint-elenco-articolato: 52rem;
-  --spacing-colonna-azioni: calc(var(--spacing) * 18);
+  --spacing-colonna-azioni: calc(var(--spacing) * 12);
+  --spacing-colonna-azioni-compatta: calc(var(--spacing) * 10);
   --spacing-colonna-ruolo: calc(var(--spacing) * 36);
   --spacing-colonna-numero: calc(var(--spacing) * 36);
-  --spacing-colonna-stato: calc(var(--spacing) * 28);
+  --spacing-colonna-stato: calc(var(--spacing) * 32);
+  --spacing-colonna-stato-compatta: calc(var(--spacing) * 28);
 
   /* Larghezza massima del contenuto. Utilita': max-w-pagina per gli elenchi,
    * max-w-modulo per le pagine di dettaglio con un modulo. */

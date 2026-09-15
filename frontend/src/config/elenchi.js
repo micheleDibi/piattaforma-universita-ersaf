@@ -1,4 +1,6 @@
 const nominativo = { id: "nominativo", etichetta: "Nominativo", rilievo: "principale" };
+const nome = { id: "nome", etichetta: "Nome", rilievo: "principale" };
+const cognome = { id: "cognome", etichetta: "Cognome", rilievo: "principale" };
 const ruolo = { id: "ruolo", etichetta: "Ruolo", icona: "ruolo" };
 const azienda = { id: "azienda", etichetta: "Azienda", icona: "azienda" };
 const sede = { id: "sede", etichetta: "Sede", icona: "sede" };
@@ -14,11 +16,12 @@ const tipo = { id: "tipo", etichetta: "Tipo di corso", icona: "tipo" };
 const colonna = (campo) => ({ id: campo.id, etichetta: campo.etichetta, campi: [campo] });
 
 export function modelloClienti({ attuatori, mostraAzienda }) {
-  const campi = [nominativo, ...(attuatori ? [ruolo] : []), ...(mostraAzienda ? [azienda] : [])];
+  const riferimenti = [...(attuatori ? [ruolo] : []), ...(mostraAzienda ? [azienda] : [])];
   return {
     id: "clienti", etichetta: attuatori ? "Attuatori" : "Sottoscrittori",
     ampiezza: mostraAzienda ? "articolata" : "semplice",
-    colonne: campi.map(colonna), mobile: campi,
+    colonne: [nome, cognome, ...riferimenti].map(colonna),
+    mobile: [nominativo, ...riferimenti],
   };
 }
 
@@ -36,10 +39,6 @@ export const MODELLO_PRATICHE = {
 
 export const MODELLO_PRODOTTI = {
   id: "prodotti", etichetta: "Prodotti formativi", ampiezza: "articolata",
-  colonne: [
-    { id: "prodotto", etichetta: "Prodotto", campi: [titolo, codice] },
-    colonna(universita),
-    { id: "tipo", etichetta: "Tipo e stato", campi: [tipo, stato] },
-  ],
+  colonne: [titolo, codice, universita, tipo, stato].map(colonna),
   mobile: [titolo, universita, tipo, codice, stato],
 };

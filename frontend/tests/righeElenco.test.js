@@ -3,12 +3,15 @@ import assert from "node:assert/strict";
 import { rigaCliente, rigaAzienda, rigaPratica, rigaProdotto } from "../src/lib/righeElenco.js";
 import { modelloClienti, MODELLO_AZIENDE, MODELLO_PRATICHE, MODELLO_PRODOTTI } from "../src/config/elenchi.js";
 
-test("il nominativo accorpato conserva ID cliente e campi parziali senza usare l'ID utente", () => {
+test("nome e cognome separati e nominativo mobile conservano ID cliente e campi parziali", () => {
   const item = { cliente_id: 14, utente_id: 9, cliente_nome: " Maria Alessandra ", cliente_cognome: "Della Valle" };
   const opzioni = { attuatori: false, mostraAzienda: false };
   assert.equal(rigaCliente(item, opzioni).id, 14);
   assert.equal(rigaCliente(item, opzioni).campi.nominativo, "Maria Alessandra Della Valle");
+  assert.equal(rigaCliente(item, opzioni).campi.nome, "Maria Alessandra");
+  assert.equal(rigaCliente(item, opzioni).campi.cognome, "Della Valle");
   assert.equal(rigaCliente({ cliente_cognome: "D'Amico" }, opzioni).campi.nominativo, "D'Amico");
+  assert.equal(rigaCliente({ cliente_cognome: "D'Amico" }, opzioni).campi.nome, "-");
 });
 
 test("azienda e ruolo rispettano la visibilità anche nella presentazione mobile", () => {
@@ -19,7 +22,10 @@ test("azienda e ruolo rispettano la visibilità anche nella presentazione mobile
     assert.equal(Object.hasOwn(riga.campi, "azienda"), opzioni.mostraAzienda);
     assert.equal(modello.mobile.some((campo) => campo.id === "azienda"), opzioni.mostraAzienda);
     assert.equal(Object.hasOwn(riga.campi, "ruolo"), opzioni.attuatori);
-    assert.deepEqual(modello.colonne.flatMap((c) => c.campi), modello.mobile);
+    const campiDesktop = modello.colonne.flatMap((c) => c.campi);
+    assert.equal(campiDesktop.some((campo) => campo.id === "azienda"), opzioni.mostraAzienda);
+    assert.equal(campiDesktop.some((campo) => campo.id === "ruolo"), opzioni.attuatori);
+    assert.equal(modello.mobile.some((campo) => campo.id === "ruolo"), opzioni.attuatori);
   }
 });
 
@@ -61,4 +67,3 @@ test("modello elenchi: codice e stato hanno rilievi dedicati e i campi secondari
   assert.equal(prodottoStato.rilievo, "stato");
   assert.equal(universita.icona, "universita");
 });
-

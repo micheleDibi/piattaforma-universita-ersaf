@@ -14,9 +14,11 @@
 .elenco-adattivo__tabella col[data-colonna="ruolo"] { width: var(--spacing-colonna-ruolo); }
 .elenco-adattivo__tabella col[data-colonna="numero"] { width: var(--spacing-colonna-numero); }
 .elenco-adattivo__tabella col[data-colonna="stato"] { width: var(--spacing-colonna-stato); }
-.elenco-adattivo[data-ampiezza="articolata"] col[data-colonna="nominativo"] { width: 30%; }
-.elenco-adattivo col[data-colonna="prodotto"] { width: 44%; }
-.elenco-adattivo col[data-colonna="universita"] { width: 25%; }
+.elenco-adattivo[data-ampiezza="articolata"] col[data-colonna="nome"],
+.elenco-adattivo[data-ampiezza="articolata"] col[data-colonna="cognome"] { width: 17%; }
+.elenco-adattivo[data-modello="prodotti"] col[data-colonna="codice"],
+.elenco-adattivo[data-modello="prodotti"] col[data-colonna="tipo"] { width: 18%; }
+.elenco-adattivo[data-modello="prodotti"] col[data-colonna="universita"] { width: 20%; }
 .elenco-adattivo__tabella td.elenco-adattivo__azione { @apply py-2 text-right align-middle; }
 .elenco-adattivo__tabella td > * + * { @apply mt-1; }
 /* Valori standard */
@@ -29,12 +31,14 @@
 
 /* Distintivo codice monospace */
 .elenco-adattivo__codice {
-  @apply inline-block font-mono text-xs font-semibold px-2 py-0.5 rounded bg-superficie-alta border border-bordo text-testo-tenue tracking-wide uppercase;
+  @apply inline-block max-w-full font-mono text-xs font-semibold px-2 py-0.5 rounded bg-superficie-alta border border-bordo text-testo-tenue tracking-wide uppercase;
+  overflow-wrap: anywhere;
 }
 
 /* Badge di stato semantico */
 .elenco-adattivo__badge {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border border-bordo bg-superficie-tenue text-testo-tenue;
+  @apply inline-flex max-w-full items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border border-bordo bg-superficie-tenue text-testo-tenue;
+  overflow-wrap: anywhere;
 }
 .elenco-adattivo__badge[data-tono="positivo"] {
   @apply bg-positivo-tenue border-positivo-bordo text-positivo-forte;
@@ -90,4 +94,20 @@
 @container righe-elenco (width >= theme(--breakpoint-elenco-articolato)) {
   [data-ampiezza="articolata"] > .elenco-adattivo__tabella { display: table; }
   [data-ampiezza="articolata"] > .elenco-adattivo__lista { display: none; }
+}
+
+/* Nei desktop la sidebar riduce il contenitore: conserviamo tutte le colonne,
+ * lasciando andare a capo i valori e riducendo solo lo spazio fra le celle. */
+@media (width >= theme(--breakpoint-lg)) {
+  .elenco-adattivo > .elenco-adattivo__tabella { display: table; }
+  .elenco-adattivo > .elenco-adattivo__lista { display: none; }
+}
+@container righe-elenco (width < theme(--breakpoint-elenco-articolato)) {
+  .elenco-adattivo__tabella th,
+  .elenco-adattivo__tabella td { @apply px-3; }
+  .elenco-adattivo__tabella col[data-colonna="azioni"] { width: var(--spacing-colonna-azioni-compatta); }
+  .elenco-adattivo__tabella col[data-colonna="stato"] { width: var(--spacing-colonna-stato-compatta); }
+  .elenco-adattivo[data-modello="prodotti"] col[data-colonna="codice"] { width: 17%; }
+  .elenco-adattivo[data-modello="prodotti"] col[data-colonna="universita"] { width: 18%; }
+  .elenco-adattivo[data-modello="prodotti"] col[data-colonna="tipo"] { width: 22%; }
 }
