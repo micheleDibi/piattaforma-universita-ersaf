@@ -181,6 +181,7 @@ function NuovoSottoscrittore() {
       cliente_cittaDomicilio: formData.domicilioComune || null,
       cliente_CAPDomicilio: formData.domicilioCap || null,
       cliente_provinciaDomicilio: formData.domicilioProvincia || null,
+      azienda_id: formData.azienda_id ?? null,
     };
 
     const curriculumKeys = Object.keys(formData).filter((key) =>
@@ -240,9 +241,10 @@ function NuovoSottoscrittore() {
     { id: "dati-principali", label: "Dati Principali" },
     { id: "curriculum", label: "Curriculum Formativo" },
     { id: "utente", label: "Utente" },
-    { id: "azienda", label: "Azienda" },
+    ...(tipoUtente === "attuatore"
+      ? [{ id: "azienda", label: "Azienda" }]
+      : []),
     { id: "esami", label: "Esami" },
-    { id: "prevalutazioni", label: "Prevalutazioni e-campus" },
   ];
 
   const handleCopyResidenza = () => {
@@ -317,16 +319,14 @@ function NuovoSottoscrittore() {
                 handleChange={handleChange}
               />
             ) : activeTab === "azienda" ? (
-              isEditMode ? (
-                <SchedaAziendaAttuatori aziendaId={formData.azienda_id} />
-              ) : (
-                <div className="py-12 text-center text-testo-tenue">
-                  <p className="text-sm">
-                    Salva prima il {labelTitolo.toLowerCase()} per gestire
-                    l'azienda collegata.
-                  </p>
-                </div>
-              )
+              <SchedaAziendaAttuatori
+                aziendaId={formData.azienda_id}
+                isEditMode={isEditMode}
+                clienteId={id}
+                onCambiaAziendaId={(nuovoId) =>
+                  setFormData((prev) => ({ ...prev, azienda_id: nuovoId }))
+                }
+              />
             ) : (
               <div className="py-12 text-center text-testo-tenue">
                 <h3 className="text-lg font-semibold mb-2">

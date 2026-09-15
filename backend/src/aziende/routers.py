@@ -110,6 +110,29 @@ def lista_aziende(
         query.order_by(Azienda.azienda_id.asc()).offset(skip).limit(limit).all()
     )
 
+#Get P IVA
+@router.get("/cerca-per-piva", response_model=AziendaResponse)
+def cerca_azienda_per_piva(
+    partita_iva: str = Query(..., min_length=11, max_length=11),
+    db: Session = Depends(get_db),
+):
+    """Match esatto, non ilike: usata dal flusso di associazione azienda-
+    attuatore, dove un risultato ambiguo rischierebbe di agganciare l'azienda
+    sbagliata. 404 (non una lista vuota) cosi' il frontend distingue
+    "nessun risultato, proponi la creazione" da un errore generico.
+    """
+    azienda = (
+        db.query(Azienda)
+        .filter(Azienda.azienda_partitaIVA == partita_iva)
+        .first()
+    )
+    if not azienda:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Nessuna azienda trovata con questa Partita IVA.",
+        )
+    return azienda
+
 
 #GET BY ID
 @router.get("/{azienda_id}", response_model=AziendaResponse)
@@ -150,9 +173,17 @@ def _dettaglio_o_nuovo(db: Session, azienda_id: int) -> AderenteDettaglio:
         .first()
     )
     if dettaglio is None:
-        dettaglio = AderenteDettaglio(azienda_id=azienda_id)
+        # Un'istanza transiente non ha ancora i default lato server: quelli
+        # (default=0) si applicano solo al flush, non alla costruzione
+        # Python. Senza valorizzarli qui esplicitamente ogni percentuale
+        # resterebbe None, e AderenteDettaglioResponse (campi int, non
+        # Optional) rifiuterebbe la risposta con un 500 alla prima GET su
+        # un'azienda senza dettaglio ancora salvato.
+        dettaglio = AderenteDettaglio(
+            azienda_id=azienda_id,
+            **{campo: 0 for campo in AderenteDettaglioBase.model_fields},
+        )
     return dettaglio
-
 
 @router.get("/{azienda_id}/dettagli", response_model=AderenteDettaglioResponse)
 def dettaglio_azienda_percentuali(azienda_id: int, db: Session = Depends(get_db)):
