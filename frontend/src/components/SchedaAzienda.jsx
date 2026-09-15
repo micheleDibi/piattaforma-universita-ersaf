@@ -8,6 +8,7 @@ import { ROTTE } from "../config/routes/rotte";
 import IntestazionePagina from "./shared/IntestazionePagina";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 import CampiAzienda, { VUOTO_AZIENDA } from "./CampiAzienda.jsx";
+import GerarchiaAzienda from "./GerarchiaAzienda.jsx";
 
 export default function SchedaAzienda() {
   const { id } = useParams();
@@ -100,7 +101,7 @@ export default function SchedaAzienda() {
         <div className="mb-8">
           <CampiAzienda dati={dati} onChange={aggiorna} />
         </div>
-
+        {inModifica && <GerarchiaAzienda aziendaId={id} />}
         <div className="flex gap-3">
           <button
             type="submit"

@@ -7,6 +7,10 @@ from src.auth.dipendenze import get_current_utente
 from src.database import get_db
 from src.aziende.models import Azienda, AderenteDettaglio
 from src.aziende.schemas import AziendaCreate, AziendaResponse, AziendaUpdate, AderenteDettaglioBase, AderenteDettaglioResponse, AderenteDettaglioUpdate
+from src.aziende_xcod.models import AziendaXCod
+from src.aziende_xcod.servizi import aziende_visibili_ids, padre_id_di
+import datetime
+from src.auth.servizio_login import cliente_principale
 
 
 # L'autenticazione e' una dipendenza del router, non del singolo endpoint:
@@ -68,25 +72,79 @@ def _verifica_unicita(db: Session, valori: dict, escludi_id: Optional[int] = Non
                 )
 
 
-def _azienda_o_404(db: Session, azienda_id: int) -> Azienda:
+def _azienda_o_404(db: Session, azienda_id: int, visibili: Optional[set[int]] = None) -> Azienda:
+    # Se non e' visibile per l'utente corrente si risponde 404 come se non
+    # esistesse, non 403: evita di rivelare l'esistenza di aziende fuori dal
+    # proprio ramo di gerarchia.
+    if visibili is not None and azienda_id not in visibili:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Azienda non trovata.")
     azienda = db.query(Azienda).filter(Azienda.azienda_id == azienda_id).first()
     if not azienda:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Azienda non trovata.",
-        )
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Azienda non trovata.")
     return azienda
+
+def _azienda_o_404(db: Session, azienda_id: int, visibili: Optional[set[int]] = None) -> Azienda:
+    # Se non e' visibile per l'utente corrente si risponde 404 come se non
+    # esistesse, non 403: evita di rivelare l'esistenza di aziende fuori dal
+    # proprio ramo di gerarchia.
+    if visibili is not None and azienda_id not in visibili:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Azienda non trovata.")
+    azienda = db.query(Azienda).filter(Azienda.azienda_id == azienda_id).first()
+    if not azienda:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Azienda non trovata.")
+    return azienda
+
+
+def _verifica_percentuali_non_superano_padre(db: Session, azienda_id: int, valori: dict) -> None:
+    """Regola 1 della gerarchia: un'azienda non può avere percentuali
+    superiori a quelle del proprio padre. Un'azienda radice (senza padre)
+    non ha alcun tetto."""
+    padre_id = padre_id_di(db, azienda_id)
+    if padre_id is None:
+        return
+
+    padre_dettaglio = (
+        db.query(AderenteDettaglio)
+        .filter(AderenteDettaglio.azienda_id == padre_id)
+        .first()
+    )
+    for campo in AderenteDettaglioBase.model_fields:
+        limite = getattr(padre_dettaglio, campo, 0) if padre_dettaglio else 0
+        if valori.get(campo, 0) > limite:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"La percentuale '{campo}' supera quella del padre ({limite}).",
+            )
 
 
 #POST
 @router.post("/", response_model=AziendaResponse, status_code=status.HTTP_201_CREATED)
-def crea_azienda(azienda_in: AziendaCreate, db: Session = Depends(get_db)):
+def crea_azienda(
+    azienda_in: AziendaCreate,
+    db: Session = Depends(get_db),
+    utente_corrente=Depends(get_current_utente),
+):
     _verifica_unicita(db, azienda_in.model_dump())
 
     nuova_azienda = Azienda(**azienda_in.model_dump())
     db.add(nuova_azienda)
     db.commit()
     db.refresh(nuova_azienda)
+
+    cliente_creatore = cliente_principale(db, utente_corrente.utente_id)
+    padre_id = getattr(cliente_creatore, "azienda_id", None) if cliente_creatore else None
+
+    ora = datetime.datetime.utcnow()
+    db.add(AziendaXCod(
+        azienda_padre_id=padre_id,
+        azienda_figlia_id=nuova_azienda.azienda_id,
+        azienda_xCod_created_by=utente_corrente.utente_id,
+        azienda_xCod_created_at=ora,
+        azienda_xCod_updated_by=utente_corrente.utente_id,
+        azienda_xCod_updated_at=ora,
+    ))
+    db.commit()
+
     return nuova_azienda
 
 
@@ -94,38 +152,38 @@ def crea_azienda(azienda_in: AziendaCreate, db: Session = Depends(get_db)):
 @router.get("/", response_model=List[AziendaResponse])
 def lista_aziende(
     skip: int = Query(0, ge=0),
-    # Un tetto esplicito: prima ?limit=10000000 scaricava l'intera tabella.
     limit: int = Query(40, ge=1, le=200),
     search: Optional[str] = None,
     db: Session = Depends(get_db),
+    utente_corrente=Depends(get_current_utente),
 ):
     query = db.query(Azienda)
     if search:
         query = query.filter(Azienda.azienda_ragione_sociale.ilike(f"{search}%"))
 
-    # Senza ORDER BY, MySQL non garantisce l'ordine fra una pagina e la
-    # successiva: lo scroll infinito di ElencoAziende poteva ripetere o saltare
-    # righe.
+    visibili = aziende_visibili_ids(db, utente_corrente)
+    if visibili is not None:
+        query = query.filter(Azienda.azienda_id.in_(visibili))
+
     return (
         query.order_by(Azienda.azienda_id.asc()).offset(skip).limit(limit).all()
     )
+
 
 #Get P IVA
 @router.get("/cerca-per-piva", response_model=AziendaResponse)
 def cerca_azienda_per_piva(
     partita_iva: str = Query(..., min_length=11, max_length=11),
     db: Session = Depends(get_db),
+    utente_corrente=Depends(get_current_utente),
 ):
-    """Match esatto, non ilike: usata dal flusso di associazione azienda-
-    attuatore, dove un risultato ambiguo rischierebbe di agganciare l'azienda
-    sbagliata. 404 (non una lista vuota) cosi' il frontend distingue
-    "nessun risultato, proponi la creazione" da un errore generico.
-    """
-    azienda = (
-        db.query(Azienda)
-        .filter(Azienda.azienda_partitaIVA == partita_iva)
-        .first()
-    )
+    query = db.query(Azienda).filter(Azienda.azienda_partitaIVA == partita_iva)
+
+    visibili = aziende_visibili_ids(db, utente_corrente)
+    if visibili is not None:
+        query = query.filter(Azienda.azienda_id.in_(visibili))
+
+    azienda = query.first()
     if not azienda:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -136,20 +194,24 @@ def cerca_azienda_per_piva(
 
 #GET BY ID
 @router.get("/{azienda_id}", response_model=AziendaResponse)
-def dettaglio_azienda(azienda_id: int, db: Session = Depends(get_db)):
-    return _azienda_o_404(db, azienda_id)
+def dettaglio_azienda(
+    azienda_id: int,
+    db: Session = Depends(get_db),
+    utente_corrente=Depends(get_current_utente),
+):
+    return _azienda_o_404(db, azienda_id, aziende_visibili_ids(db, utente_corrente))
 
 
 #PUT
 @router.put("/{azienda_id}", response_model=AziendaResponse)
 def aggiorna_azienda(
-    azienda_id: int, azienda_in: AziendaUpdate, db: Session = Depends(get_db)
+    azienda_id: int,
+    azienda_in: AziendaUpdate,
+    db: Session = Depends(get_db),
+    utente_corrente=Depends(get_current_utente),
 ):
-    azienda = _azienda_o_404(db, azienda_id)
+    azienda = _azienda_o_404(db, azienda_id, aziende_visibili_ids(db, utente_corrente))
 
-    # exclude_unset=True: senza, ogni campo non inviato veniva riscritto con il
-    # default dello schema, e su CAP, provincia, via, citta' e partita IVA -
-    # NOT NULL nel database - il risultato era un 500.
     modifiche = azienda_in.model_dump(exclude_unset=True)
     _verifica_unicita(db, modifiche, escludi_id=azienda_id)
 
@@ -161,33 +223,13 @@ def aggiorna_azienda(
     return azienda
 
 
-
-def _dettaglio_o_nuovo(db: Session, azienda_id: int) -> AderenteDettaglio:
-    """azienda_id non ha una UNIQUE, quindi in teoria potrebbero esserci piu'
-    righe: qui si prende la prima, trattando la relazione come 1:1 (intento
-    applicativo confermato via chat), o si costruisce un'istanza non ancora
-    aggiunta alla sessione se non esiste."""
-    dettaglio = (
-        db.query(AderenteDettaglio)
-        .filter(AderenteDettaglio.azienda_id == azienda_id)
-        .first()
-    )
-    if dettaglio is None:
-        # Un'istanza transiente non ha ancora i default lato server: quelli
-        # (default=0) si applicano solo al flush, non alla costruzione
-        # Python. Senza valorizzarli qui esplicitamente ogni percentuale
-        # resterebbe None, e AderenteDettaglioResponse (campi int, non
-        # Optional) rifiuterebbe la risposta con un 500 alla prima GET su
-        # un'azienda senza dettaglio ancora salvato.
-        dettaglio = AderenteDettaglio(
-            azienda_id=azienda_id,
-            **{campo: 0 for campo in AderenteDettaglioBase.model_fields},
-        )
-    return dettaglio
-
 @router.get("/{azienda_id}/dettagli", response_model=AderenteDettaglioResponse)
-def dettaglio_azienda_percentuali(azienda_id: int, db: Session = Depends(get_db)):
-    _azienda_o_404(db, azienda_id)
+def dettaglio_azienda_percentuali(
+    azienda_id: int,
+    db: Session = Depends(get_db),
+    utente_corrente=Depends(get_current_utente),
+):
+    _azienda_o_404(db, azienda_id, aziende_visibili_ids(db, utente_corrente))
     return _dettaglio_o_nuovo(db, azienda_id)
 
 
@@ -196,11 +238,15 @@ def aggiorna_dettaglio_azienda(
     azienda_id: int,
     dettaglio_in: AderenteDettaglioUpdate,
     db: Session = Depends(get_db),
+    utente_corrente=Depends(get_current_utente),
 ):
-    _azienda_o_404(db, azienda_id)
-    dettaglio = _dettaglio_o_nuovo(db, azienda_id)
+    _azienda_o_404(db, azienda_id, aziende_visibili_ids(db, utente_corrente))
 
-    for chiave, valore in dettaglio_in.model_dump().items():
+    valori = dettaglio_in.model_dump()
+    _verifica_percentuali_non_superano_padre(db, azienda_id, valori)
+
+    dettaglio = _dettaglio_o_nuovo(db, azienda_id)
+    for chiave, valore in valori.items():
         setattr(dettaglio, chiave, valore)
 
     db.add(dettaglio)
