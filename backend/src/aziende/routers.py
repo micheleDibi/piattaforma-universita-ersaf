@@ -5,8 +5,9 @@ from typing import List, Optional
 
 from src.auth.dipendenze import get_current_utente
 from src.database import get_db
-from src.aziende.models import Azienda
-from src.aziende.schemas import AziendaCreate, AziendaResponse, AziendaUpdate
+from src.aziende.models import Azienda, AderenteDettaglio
+from src.aziende.schemas import AziendaCreate, AziendaResponse, AziendaUpdate, AderenteDettaglioBase, AderenteDettaglioResponse, AderenteDettaglioUpdate
+
 
 # L'autenticazione e' una dipendenza del router, non del singolo endpoint:
 # quando era per endpoint, 4 rotte su 4 se ne sono dimenticate.
@@ -135,3 +136,43 @@ def aggiorna_azienda(
     db.commit()
     db.refresh(azienda)
     return azienda
+
+
+
+def _dettaglio_o_nuovo(db: Session, azienda_id: int) -> AderenteDettaglio:
+    """azienda_id non ha una UNIQUE, quindi in teoria potrebbero esserci piu'
+    righe: qui si prende la prima, trattando la relazione come 1:1 (intento
+    applicativo confermato via chat), o si costruisce un'istanza non ancora
+    aggiunta alla sessione se non esiste."""
+    dettaglio = (
+        db.query(AderenteDettaglio)
+        .filter(AderenteDettaglio.azienda_id == azienda_id)
+        .first()
+    )
+    if dettaglio is None:
+        dettaglio = AderenteDettaglio(azienda_id=azienda_id)
+    return dettaglio
+
+
+@router.get("/{azienda_id}/dettagli", response_model=AderenteDettaglioResponse)
+def dettaglio_azienda_percentuali(azienda_id: int, db: Session = Depends(get_db)):
+    _azienda_o_404(db, azienda_id)
+    return _dettaglio_o_nuovo(db, azienda_id)
+
+
+@router.put("/{azienda_id}/dettagli", response_model=AderenteDettaglioResponse)
+def aggiorna_dettaglio_azienda(
+    azienda_id: int,
+    dettaglio_in: AderenteDettaglioUpdate,
+    db: Session = Depends(get_db),
+):
+    _azienda_o_404(db, azienda_id)
+    dettaglio = _dettaglio_o_nuovo(db, azienda_id)
+
+    for chiave, valore in dettaglio_in.model_dump().items():
+        setattr(dettaglio, chiave, valore)
+
+    db.add(dettaglio)
+    db.commit()
+    db.refresh(dettaglio)
+    return dettaglio

@@ -16,6 +16,7 @@ import { contenutoPagina } from "../config/styles/pagina";
 import { pulsante } from "../config/styles/pulsante";
 import { scheda } from "../config/styles/superficie";
 import BarraSchede from "./shared/BarraSchede.jsx";
+import SchedaAziendaAttuatori from "./SchedaAziendaAttuatori";
 
 function NuovoSottoscrittore() {
   const { id } = useParams();
@@ -33,7 +34,8 @@ function NuovoSottoscrittore() {
 
   const labelTitolo =
     tipoUtente === "attuatore" ? "Attuatore" : "Sottoscrittore";
-  const rottaElenco = tipoUtente === "attuatore" ? ROTTE.attuatori : ROTTE.sottoscrittori;
+  const rottaElenco =
+    tipoUtente === "attuatore" ? ROTTE.attuatori : ROTTE.sottoscrittori;
 
   const [formData, setFormData] = useState(ANAGRAFICA_INIZIALE);
 
@@ -86,6 +88,10 @@ function NuovoSottoscrittore() {
             cellulare: data.cliente_cellulare || "",
             telefono: data.cliente_telefono || "",
             pec: data.cliente_pec || "",
+            // FK verso aziende: non ha prefisso "cliente_" nella risposta,
+            // e' la colonna grezza della tabella clienti. Serve alla scheda
+            // Azienda per sapere quale azienda caricare.
+            azienda_id: data.azienda_id ?? null,
 
             ...Object.keys(prev)
               .filter((k) => k.startsWith("universita_"))
@@ -234,6 +240,7 @@ function NuovoSottoscrittore() {
     { id: "dati-principali", label: "Dati Principali" },
     { id: "curriculum", label: "Curriculum Formativo" },
     { id: "utente", label: "Utente" },
+    { id: "azienda", label: "Azienda" },
     { id: "esami", label: "Esami" },
     { id: "prevalutazioni", label: "Prevalutazioni e-campus" },
   ];
@@ -253,15 +260,29 @@ function NuovoSottoscrittore() {
     <div className={contenutoPagina("modulo")}>
       <IntestazionePagina
         titolo={`${isEditMode ? "Modifica" : "Nuovo"} ${labelTitolo.toLowerCase()}`}
-        indietro={{ rotta: rottaElenco, etichetta: tipoUtente === "attuatore" ? "Attuatori" : "Sottoscrittori" }}
+        indietro={{
+          rotta: rottaElenco,
+          etichetta:
+            tipoUtente === "attuatore" ? "Attuatori" : "Sottoscrittori",
+        }}
       />
       <div className={`${scheda()} schede overflow-hidden`}>
         <form onSubmit={handleSubmit}>
-          <BarraSchede id="anagrafica" etichetta="Schede anagrafica" schede={tabs}
-            attiva={activeTab} onChange={setActiveTab} />
+          <BarraSchede
+            id="anagrafica"
+            etichetta="Schede anagrafica"
+            schede={tabs}
+            attiva={activeTab}
+            onChange={setActiveTab}
+          />
 
-          <div ref={pannello} role="tabpanel" id={`anagrafica-pannello-${activeTab}`}
-            aria-labelledby={`anagrafica-scheda-${activeTab}`} className="movimento-scheda schede__pannello">
+          <div
+            ref={pannello}
+            role="tabpanel"
+            id={`anagrafica-pannello-${activeTab}`}
+            aria-labelledby={`anagrafica-scheda-${activeTab}`}
+            className="movimento-scheda schede__pannello"
+          >
             {activeTab === "dati-principali" ? (
               <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -281,7 +302,12 @@ function NuovoSottoscrittore() {
                   handleCopyResidenza={handleCopyResidenza}
                 />
                 <hr className="border-bordo my-6" />
-                <FormContatti key={id || "nuovo"} clienteId={id} formData={formData} handleChange={handleChange} />
+                <FormContatti
+                  key={id || "nuovo"}
+                  clienteId={id}
+                  formData={formData}
+                  handleChange={handleChange}
+                />
               </div>
             ) : activeTab === "utente" ? (
               <SchedaUtente />
@@ -290,6 +316,17 @@ function NuovoSottoscrittore() {
                 formData={formData}
                 handleChange={handleChange}
               />
+            ) : activeTab === "azienda" ? (
+              isEditMode ? (
+                <SchedaAziendaAttuatori aziendaId={formData.azienda_id} />
+              ) : (
+                <div className="py-12 text-center text-testo-tenue">
+                  <p className="text-sm">
+                    Salva prima il {labelTitolo.toLowerCase()} per gestire
+                    l'azienda collegata.
+                  </p>
+                </div>
+              )
             ) : (
               <div className="py-12 text-center text-testo-tenue">
                 <h3 className="text-lg font-semibold mb-2">
@@ -312,10 +349,7 @@ function NuovoSottoscrittore() {
               >
                 Annulla
               </button>
-              <button
-                type="submit"
-                className={pulsante("primario", "grande")}
-              >
+              <button type="submit" className={pulsante("primario", "grande")}>
                 {isEditMode ? "Salva Modifiche" : `Crea ${labelTitolo}`}
               </button>
             </div>

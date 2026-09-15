@@ -127,10 +127,7 @@ export default function SchedaAzienda() {
 
   const campo = ([nome, etichetta], obbligatorio) => (
     <div key={nome} className="flex flex-col">
-      <label
-        htmlFor={nome}
-        className={classiEtichetta()}
-      >
+      <label htmlFor={nome} className={classiEtichetta()}>
         {etichetta.toUpperCase()}
         {obbligatorio && <span className="text-negativo"> *</span>}
       </label>

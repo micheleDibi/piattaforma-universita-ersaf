@@ -133,7 +133,11 @@ function ElencoAziende() {
   if (initialLoading)
     return (
       <div className={contenutoPagina()}>
-        <IndicatoreCaricamento dimensione="grande" messaggio="Caricamento aziende..." centrato />
+        <IndicatoreCaricamento
+          dimensione="grande"
+          messaggio="Caricamento aziende..."
+          centrato
+        />
       </div>
     );
   if (error)
@@ -159,13 +163,19 @@ function ElencoAziende() {
         }
       />
       <div className={schedaElenco("corpo")}>
-        <RigheElenco dati={aziende.map(rigaAzienda)} modello={MODELLO_AZIENDE}
+        <RigheElenco
+          dati={aziende.map(rigaAzienda)}
+          modello={MODELLO_AZIENDE}
           onApri={(id) => navigate(`/modifica-azienda/${id}`)}
-          vuoto={!loading && "Nessuna azienda trovata."} />
+          vuoto={!loading && "Nessuna azienda trovata."}
+        />
 
         {loading && (
           <div className="border-t border-bordo py-4">
-            <IndicatoreCaricamento dimensione="compatto" messaggio="Caricamento altri elementi..." />
+            <IndicatoreCaricamento
+              dimensione="compatto"
+              messaggio="Caricamento altri elementi..."
+            />
           </div>
         )}
 

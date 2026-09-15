@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, LargeBinary
+from sqlalchemy import String, Integer, LargeBinary, ForeignKey
 from src.database import Base
 from typing import List, Optional
 
@@ -49,3 +49,34 @@ class Azienda(Base):
     # giusto per una relazione anagrafica.
     clienti: Mapped[List["Cliente"]] = relationship(back_populates="azienda")
     pratiche: Mapped[List["Pratica"]] = relationship("Pratica", back_populates="azienda")
+    dettagli: Mapped[List["AderenteDettaglio"]] = relationship(back_populates="azienda")
+
+
+
+
+
+class AderenteDettaglio(Base):
+    """Percentuali di convenzione universitaria per azienda aderente.
+
+    FK su azienda_id, non su cliente_id: il dettaglio appartiene
+    all'azienda, non al singolo sottoscrittore (confermato via chat).
+    azienda_id non ha una UNIQUE nel database, quindi "un dettaglio per
+    azienda" resta un vincolo applicativo (vedi _dettaglio_o_nuovo nel
+    router), non garantito a livello di schema.
+    """
+
+    __tablename__ = "aderenti_dettagli"
+
+    aderente_dettaglio_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    azienda_id: Mapped[int] = mapped_column(Integer, ForeignKey("aziende.azienda_id"), nullable=False, default=1)
+
+    universita_ecampus_lauree: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    universita_ecampus_master: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    universita_link_lauree: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    universita_link_master: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    universita_SSML_lauree: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    universita_SSML_master: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    universita_A4U_master: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    universita_A4U_perfezionamenti: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    azienda: Mapped["Azienda"] = relationship(back_populates="dettagli")
