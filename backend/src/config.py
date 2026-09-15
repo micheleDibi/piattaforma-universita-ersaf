@@ -82,7 +82,11 @@ class Impostazioni(BaseSettings):
     frontend_base_url: str = "http://localhost:5173"
 
     # --- sessioni -----------------------------------------------------------
-    session_ttl_hours: int = 12
+    # Scorrevole: ogni uso sposta la scadenza avanti di questa finestra e il
+    # cookie viene rimandato con lo stesso Max-Age. Il tetto e' assoluto dalla
+    # creazione: oltre, si rientra anche se si e' attivi ogni giorno.
+    session_inattivita_giorni: int = 14
+    session_durata_massima_giorni: int = 90
 
     # Prenotazioni atomiche condivise tra tutti i worker del login.
     login_finestra_secondi: int = 900
@@ -209,8 +213,14 @@ def verifica_configurazione(imp: Impostazioni | None = None) -> None:
         problemi.append("PASSWORD_RESET_TOKEN_TTL_MINUTES deve essere almeno 1")
     if imp.password_reset_rate_limit_per_hour < 1:
         problemi.append("PASSWORD_RESET_RATE_LIMIT_PER_HOUR deve essere almeno 1")
-    if imp.session_ttl_hours < 1:
-        problemi.append("SESSION_TTL_HOURS deve essere almeno 1")
+    if imp.session_inattivita_giorni < 1:
+        problemi.append("SESSION_INATTIVITA_GIORNI deve essere almeno 1")
+    if imp.session_durata_massima_giorni < imp.session_inattivita_giorni:
+        problemi.append(
+            "SESSION_DURATA_MASSIMA_GIORNI non puo' essere inferiore a "
+            "SESSION_INATTIVITA_GIORNI: il tetto assoluto scatterebbe prima "
+            "della finestra di inattivita'"
+        )
     for nome in ("login_finestra_secondi", "login_tentativi_account", "login_tentativi_ip", "login_attesa_massima_secondi"):
         if getattr(imp, nome) < 1:
             problemi.append(f"{nome.upper()} deve essere almeno 1")

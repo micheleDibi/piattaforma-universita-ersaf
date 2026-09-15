@@ -57,6 +57,20 @@ def istante_piu_ore(ore: int) -> ClauseElement:
     return func.datetime(func.now(), f"+{ore} hours")
 
 
+def istante_meno_giorni(giorni: int) -> ClauseElement:
+    giorni = int(giorni)
+    if _mariadb():
+        return text(f"NOW() - INTERVAL {giorni} DAY")
+    return func.datetime(func.now(), f"-{giorni} days")
+
+
+def istante_piu_giorni(giorni: int) -> ClauseElement:
+    giorni = int(giorni)
+    if _mariadb():
+        return text(f"NOW() + INTERVAL {giorni} DAY")
+    return func.datetime(func.now(), f"+{giorni} days")
+
+
 def adesso() -> ClauseElement:
     return func.now()
 

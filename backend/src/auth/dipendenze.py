@@ -5,12 +5,12 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from src.database import get_db
 from src.security.sessioni import segna_ultimo_accesso, valida_sessione
-from src.security.browser import token_richiesta, verifica_csrf
+from src.security.browser import imposta_cookie, token_richiesta, verifica_csrf
 from src.utenti.models import Utente
 
 logger = logging.getLogger("ersaf.auth")
@@ -30,6 +30,7 @@ def _non_autenticato(dettaglio: str) -> HTTPException:
 
 def get_sessione_corrente(
     request: Request,
+    response: Response,
     db: Session = Depends(get_db),
 ) -> SessioneCorrente:
     token = token_richiesta(request)
@@ -49,7 +50,10 @@ def get_sessione_corrente(
         raise _non_autenticato("Sessione non valida o scaduta")
 
     verifica_csrf(request, token)
-    segna_ultimo_accesso(db, sess_id)
+    # Rinnovo scorrevole: quando il database sposta avanti la scadenza il
+    # cookie deve seguirla, altrimenti il browser lo perderebbe per primo.
+    if segna_ultimo_accesso(db, sess_id):
+        imposta_cookie(response, token)
     return SessioneCorrente(utente=utente, sess_id=sess_id)
 
 

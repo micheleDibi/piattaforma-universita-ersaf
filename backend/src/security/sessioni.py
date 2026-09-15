@@ -8,6 +8,13 @@ solo SHA-256(token || SESSION_TOKEN_PEPPER). Nessun JWT: un JWT non e'
 revocabile senza una lista di revoca, e la revoca al cambio password e'
 esattamente il requisito.
 
+La scadenza e' SCORREVOLE (ADR 0008): `sess_expires_at` nasce a
+NOW() + SESSION_INATTIVITA_GIORNI e ogni uso la sposta avanti, con la stessa
+soglia di `sess_last_seen_at`; `sess_created_at` fissa il tetto assoluto
+SESSION_DURATA_MASSIMA_GIORNI, oltre il quale la validazione respinge la
+sessione anche se usata ogni giorno. Chi rinnova la riga rimanda anche il
+cookie con Max-Age pieno, altrimenti il browser lo perderebbe prima del server.
+
 NON si tocca `utente_session`, che appartiene alla piattaforma legacy Instant
 Developer ancora in produzione.
 """
@@ -22,7 +29,7 @@ from sqlalchemy.orm import Session
 
 from src.auth.models import ATTIVO, AuthSessione, MotivoRevoca
 from src.config import get_impostazioni
-from src.security.tempo import istante_meno_minuti, istante_piu_ore
+from src.security.tempo import istante_meno_giorni, istante_meno_minuti, istante_piu_giorni
 from src.security.tokens import TipoToken, forma_token_valida, genera_token, impronta
 from src.utenti.models import Utente
 
@@ -54,7 +61,7 @@ def crea_sessione(
         utente_id=utente_id,
         sess_token_hash=impronta(token, TipoToken.SESSIONE),
         sess_created_at=func.now(),
-        sess_expires_at=istante_piu_ore(get_impostazioni().session_ttl_hours),
+        sess_expires_at=istante_piu_giorni(get_impostazioni().session_inattivita_giorni),
         sess_ip=ip,
         sess_user_agent=user_agent,
     )
@@ -67,10 +74,11 @@ def crea_sessione(
 def valida_sessione(db: Session, token: str) -> tuple[int, int] | None:
     """Query [B] della migrazione 004. Restituisce (sess_id, utente_id).
 
-    Oltre a revoca e scadenza, la query scarta le sessioni di utenti
-    disattivati e quelle nate PRIMA dell'ultimo cambio password: e' difesa in
-    profondita', perche' se la revoca massiva della [A] fallisse quelle
-    sessioni resterebbero altrimenti valide.
+    Oltre a revoca e scadenza scorrevole, la query applica il tetto assoluto
+    dalla creazione e scarta le sessioni di utenti disattivati e quelle nate
+    PRIMA dell'ultimo cambio password: e' difesa in profondita', perche' se la
+    revoca massiva della [A] fallisse quelle sessioni resterebbero altrimenti
+    valide.
     """
     if not forma_token_valida(token):
         return None
@@ -82,6 +90,8 @@ def valida_sessione(db: Session, token: str) -> tuple[int, int] | None:
             AuthSessione.sess_token_hash == impronta(token, TipoToken.SESSIONE),
             AuthSessione.sess_revoked_at.is_(None),
             AuthSessione.sess_expires_at > func.now(),
+            AuthSessione.sess_created_at
+            > istante_meno_giorni(get_impostazioni().session_durata_massima_giorni),
             Utente.utente_attivoSN == ATTIVO,
             or_(
                 Utente.utente_password_changed_at.is_(None),
@@ -92,9 +102,11 @@ def valida_sessione(db: Session, token: str) -> tuple[int, int] | None:
     return (riga.sess_id, riga.utente_id) if riga else None
 
 
-def segna_ultimo_accesso(db: Session, sess_id: int) -> None:
-    """Aggiorna sess_last_seen_at, non piu' spesso della soglia."""
-    db.execute(
+def segna_ultimo_accesso(db: Session, sess_id: int) -> bool:
+    """Aggiorna sess_last_seen_at e sposta avanti la scadenza, non piu' spesso
+    della soglia. Restituisce True quando ha scritto: e' il segnale per
+    rimandare il cookie con il Max-Age pieno."""
+    esito = db.execute(
         update(AuthSessione)
         .where(
             AuthSessione.sess_id == sess_id,
@@ -104,10 +116,16 @@ def segna_ultimo_accesso(db: Session, sess_id: int) -> None:
                 < istante_meno_minuti(MINUTI_SOGLIA_ULTIMO_ACCESSO),
             ),
         )
-        .values(sess_last_seen_at=func.now())
+        .values(
+            sess_last_seen_at=func.now(),
+            sess_expires_at=istante_piu_giorni(
+                get_impostazioni().session_inattivita_giorni
+            ),
+        )
         .execution_options(synchronize_session=False)
     )
     db.commit()
+    return esito.rowcount > 0
 
 
 def revoca_sessione(db: Session, token: str, motivo: MotivoRevoca) -> int:

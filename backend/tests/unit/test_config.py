@@ -42,6 +42,18 @@ def test_limiti_login_non_possono_essere_disabilitati(campo):
         _verifica(**{campo: 0})
 
 
+def test_la_finestra_di_inattivita_non_puo_essere_zero():
+    with pytest.raises(ErroreConfigurazione, match="SESSION_INATTIVITA_GIORNI"):
+        _verifica(session_inattivita_giorni=0)
+
+
+def test_il_tetto_assoluto_non_puo_precedere_la_finestra():
+    """Con il tetto sotto la finestra la sessione scadrebbe prima di quanto la
+    finestra promette: la configurazione mentirebbe."""
+    with pytest.raises(ErroreConfigurazione, match="SESSION_DURATA_MASSIMA_GIORNI"):
+        _verifica(session_inattivita_giorni=14, session_durata_massima_giorni=7)
+
+
 def test_impostazioni_non_solleva_mai_a_import_time():
     """Vincolo strutturale: src/database.py chiama create_engine a import-time,
     quindi Impostazioni() non deve poter fallire, altrimenti nemmeno la

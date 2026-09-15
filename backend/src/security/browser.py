@@ -33,9 +33,12 @@ def token_csrf(token: str) -> str:
 
 
 def imposta_cookie(response: Response, token: str) -> None:
+    # Max-Age pari alla finestra di inattivita': viene rimandato a ogni rinnovo
+    # lato server, cosi' browser e database scadono insieme (ADR 0008).
     response.set_cookie(
         nome_cookie(), token, httponly=True, secure=cookie_sicuro(),
-        samesite="lax", path="/", max_age=get_impostazioni().session_ttl_hours * 3600,
+        samesite="lax", path="/",
+        max_age=get_impostazioni().session_inattivita_giorni * 86400,
     )
     response.headers["Cache-Control"] = "no-store"
 

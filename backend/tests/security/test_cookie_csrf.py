@@ -26,7 +26,7 @@ def test_cookie_sicuro_bootstrap_e_nessun_token_nel_json(client, db):
     _, risposta = accesso(client, db)
     cookie = risposta.headers["set-cookie"]
     assert nome_cookie().startswith("__Host-")
-    for attributo in ("HttpOnly", "Secure", "SameSite=lax", "Path=/", "Max-Age=43200"):
+    for attributo in ("HttpOnly", "Secure", "SameSite=lax", "Path=/", "Max-Age=1209600"):
         assert attributo in cookie
     assert "Domain=" not in cookie
     assert "token" not in risposta.json() and "token_type" not in risposta.json()
