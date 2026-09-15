@@ -2,7 +2,7 @@ import { NavLink, useLocation, useNavigate } from "react-router";
 import { LogOut } from "../../config/icone.js";
 import {
   ROTTE,
-  VOCI_MENU,
+  vociMenuPerRuolo,
 } from "../../config/routes/rotte";
 import {
   iconaNavigazione,
@@ -28,8 +28,7 @@ export default function MenuNavigazione({ onNaviga }) {
   const [erroreUscita, setErroreUscita] = useState("");
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const aderente = useSessione()?.ruoloCodice === "aderente";
-  const voci = VOCI_MENU.filter((voce) => !voce.soloAderente || aderente);
+  const voci = vociMenuPerRuolo(useSessione()?.ruoloCodice);
 
   const esci = async () => {
     setErroreUscita("");

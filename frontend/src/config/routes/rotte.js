@@ -31,8 +31,8 @@ export const ROTTE = {
 export const ROTTA_INIZIALE = ROTTE.sottoscrittori;
 
 /**
- * Voci del menu. `soloAderente` replica la regola della barra laterale
- * precedente; `prefissi` tiene evidenziata la sezione anche nelle pagine di
+ * Voci del menu. `soloNazionale` riserva gli elenchi gestionali al Nazionale;
+ * `prefissi` tiene evidenziata la sezione anche nelle pagine di
  * dettaglio che le appartengono.
  */
 export const VOCI_MENU = [
@@ -42,26 +42,32 @@ export const VOCI_MENU = [
     rotta: ROTTE.attuatori,
     etichetta: "Attuatori",
     icona: UserCog,
-    soloAderente: true,
+    soloNazionale: true,
   },
   {
     rotta: ROTTE.aziende,
     etichetta: "Aziende",
     icona: Building2,
-    soloAderente: true,
+    soloNazionale: true,
     prefissi: ["/nuova-azienda", "/modifica-azienda"],
   },
   {
     rotta: ROTTE.pratiche,
     etichetta: "Pratiche",
     icona: FileText,
-    soloAderente: true,
+    soloNazionale: true,
   },
   {
     rotta: ROTTE.prodotti,
     etichetta: "Prodotti formativi",
     icona: GraduationCap,
-    soloAderente: true,
+    soloNazionale: true,
     prefissi: ["/inserimentoprodotto"],
   },
 ];
+
+/** Riceve il ruolo gia normalizzato dalla sessione; condiviso da desktop e mobile. */
+export function vociMenuPerRuolo(ruoloCodice) {
+  const nazionale = ruoloCodice === "nazionale";
+  return VOCI_MENU.filter((voce) => !voce.soloNazionale || nazionale);
+}
