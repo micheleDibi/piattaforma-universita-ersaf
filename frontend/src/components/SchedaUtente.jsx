@@ -1,3 +1,4 @@
+import { ROTTA_INIZIALE } from "../config/routes/percorsi.js";
 import { SEGNAPOSTI_SELEZIONE } from "../config/testi/selezioni.js";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
@@ -10,7 +11,7 @@ import { titoloSezione } from "../config/styles/superficie";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 
 export default function SchedaUtente() {
-  const { id } = useParams();
+  const { clienteId: id } = useParams();
 
   const [cliente, setCliente] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -152,7 +153,7 @@ export default function SchedaUtente() {
       const dati = await leggiJson(risposta);
 
       salvaSessione(dati ?? {});
-      window.location.href = "/home";
+      window.location.href = ROTTA_INIZIALE;
     } catch (err) {
       alert(err.message);
     }

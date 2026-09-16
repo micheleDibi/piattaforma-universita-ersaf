@@ -1,5 +1,8 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router";
+import useQueryPagina from "../hooks/useQueryPagina.js";
+import { QUERY_PRODOTTI } from "../config/routes/query.js";
+import { PERCORSI } from "../config/routes/percorsi.js";
+import useNavigazioneElenco from "../hooks/useNavigazioneElenco.js";
+import { useState, useEffect } from "react";
 import { apiFetch } from "../lib/api";
 import IntestazioneElenco from "./shared/IntestazioneElenco";
 import AzioneCrea from "./shared/AzioneCrea";
@@ -11,61 +14,33 @@ import { campo } from "../config/styles/campo";
 import { TESTI_ELENCO } from "../config/testi/elenco.js";
 import { contenutoPagina } from "../config/styles/pagina";
 import { schedaElenco } from "../config/styles/tabella";
-import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
+import StatoPagineElenco from "./shared/StatoPagineElenco.jsx";
+import usePagineRemote from "../hooks/usePagineRemote.js";
+import { paginaElenco, queryProdotti } from "../lib/queryElenchi.js";
 
 export default function ElencoProdottiFormativi() {
-  const navigate = useNavigate();
+  const risorsa = PERCORSI.prodotti;
+  const { apri } = useNavigazioneElenco(risorsa.elenco);
 
-  const [prodotti, setProdotti] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [query, aggiornaQuery] = useQueryPagina(QUERY_PRODOTTI);
+  const searchTerm = query.ricerca;
+  const setSearchTerm = ricerca => aggiornaQuery({ ricerca });
 
   const [universitaList, setUniversitaList] = useState([]);
   const [tipiList, setTipiList] = useState([]);
 
-  const [filtroUniversita, setFiltroUniversita] = useState(
-    "Tutte le università",
-  );
-  const [filtroTipo, setFiltroTipo] = useState("Tutti i tipi");
-  const [filtroAttivo, setFiltroAttivo] = useState("Tutti");
-  const LIMIT = 40;
-
-  const skipRef = useRef(0);
-  const loadingRef = useRef(false);
-  const hasMoreRef = useRef(true);
-  const searchTermRef = useRef(searchTerm);
-  const filtroUniversitaRef = useRef(filtroUniversita);
-  const filtroTipoRef = useRef(filtroTipo);
-  const filtroAttivoRef = useRef(filtroAttivo);
-
-  useEffect(() => {
-    loadingRef.current = loading;
-  }, [loading]);
-  useEffect(() => {
-    hasMoreRef.current = hasMore;
-  }, [hasMore]);
-  useEffect(() => {
-    searchTermRef.current = searchTerm;
-  }, [searchTerm]);
-  useEffect(() => {
-    filtroUniversitaRef.current = filtroUniversita;
-  }, [filtroUniversita]);
-  useEffect(() => {
-    filtroTipoRef.current = filtroTipo;
-  }, [filtroTipo]);
-  useEffect(() => {
-    filtroAttivoRef.current = filtroAttivo;
-  }, [filtroAttivo]);
-
+  const filtroUniversita = query.universita;
+  const filtroTipo = query.tipo;
+  const filtroAttivo = query.attivo;
+  const setFiltroUniversita = universita => aggiornaQuery({ universita });
+  const setFiltroTipo = tipo => aggiornaQuery({ tipo });
+  const setFiltroAttivo = attivo => aggiornaQuery({ attivo });
   const handleModifica = (id) => {
-    navigate(`/inserimentoprodotto/${id}`);
+    apri(risorsa.dettaglio(id));
   };
 
   const handleNuovo = () => {
-    navigate("/inserimentoprodotto");
+    apri(risorsa.nuovo);
   };
 
   useEffect(() => {
@@ -91,129 +66,7 @@ export default function ElencoProdottiFormativi() {
     fetchFiltriOpzioni();
   }, []);
 
-  const fetchProdottiFiltrati = async (
-    searchVal,
-    uniVal,
-    tipoVal,
-    attivoVal,
-  ) => {
-    try {
-      setLoading(true);
-      loadingRef.current = true;
-      skipRef.current = 0;
-
-      const uniParam =
-        uniVal !== "Tutte le università"
-          ? `&universita=${encodeURIComponent(uniVal)}`
-          : "";
-      const tipoParam =
-        tipoVal !== "Tutti i tipi"
-          ? `&tipo_corso=${encodeURIComponent(tipoVal)}`
-          : "";
-      const attivoParam =
-        attivoVal !== "Tutti" ? `&attivo=${attivoVal === "Sì" ? -1 : 0}` : "";
-      const searchParam =
-        searchVal && searchVal.trim()
-          ? `&search=${encodeURIComponent(searchVal.trim())}`
-          : "";
-
-      const response = await apiFetch(
-        `/listini-testa/?skip=0&limit=${LIMIT}${searchParam}${uniParam}${tipoParam}${attivoParam}`,
-      );
-      if (!response.ok) throw new Error("Errore durante il recupero dei dati");
-      const data = await response.json();
-
-      setHasMore(data.length >= LIMIT);
-      setProdotti(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-      setInitialLoading(false);
-      loadingRef.current = false;
-    }
-  };
-
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchProdottiFiltrati(
-        searchTerm,
-        filtroUniversita,
-        filtroTipo,
-        filtroAttivo,
-      );
-    }, 300);
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, filtroUniversita, filtroTipo, filtroAttivo]);
-
-  useEffect(() => {
-    const handleScroll = async () => {
-      if (
-        window.innerHeight + window.scrollY >=
-          document.documentElement.scrollHeight - 200 &&
-        !loadingRef.current &&
-        hasMoreRef.current
-      ) {
-        setLoading(true);
-        loadingRef.current = true;
-
-        const nextSkip = skipRef.current + LIMIT;
-        skipRef.current = nextSkip;
-
-        try {
-          const uniParam =
-            filtroUniversitaRef.current !== "Tutte le università"
-              ? `&universita=${encodeURIComponent(filtroUniversitaRef.current)}`
-              : "";
-          const tipoParam =
-            filtroTipoRef.current !== "Tutti i tipi"
-              ? `&tipo_corso=${encodeURIComponent(filtroTipoRef.current)}`
-              : "";
-          const attivoParam =
-            filtroAttivoRef.current !== "Tutti"
-              ? `&attivo=${filtroAttivoRef.current === "Sì" ? -1 : 0}`
-              : "";
-          const searchParam = searchTermRef.current.trim()
-            ? `&search=${encodeURIComponent(searchTermRef.current.trim())}`
-            : "";
-
-          const response = await apiFetch(
-            `/listini-testa/?skip=${nextSkip}&limit=${LIMIT}${searchParam}${uniParam}${tipoParam}${attivoParam}`,
-          );
-          if (!response.ok)
-            throw new Error("Errore durante il recupero dei dati");
-          const data = await response.json();
-
-          if (data.length < LIMIT) setHasMore(false);
-
-          setProdotti((prev) => {
-            const existingIds = new Set(prev.map((item) => item.listTesta_id));
-            const uniqueNewItems = data.filter(
-              (item) => !existingIds.has(item.listTesta_id),
-            );
-            return [...prev, ...uniqueNewItems];
-          });
-        } catch (err) {
-          setError(err.message);
-        } finally {
-          setLoading(false);
-          loadingRef.current = false;
-        }
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  if (initialLoading)
-    return (
-      <div className={contenutoPagina()}>
-        <IndicatoreCaricamento dimensione="grande" messaggio="Caricamento prodotti formativi..." centrato />
-      </div>
-    );
-  if (error)
-    return <div className="p-4 text-center text-negativo">Errore: {error}</div>;
+  const pagina = usePagineRemote(queryProdotti(query), paginaElenco, true);
 
   return (
     <div className={contenutoPagina()}>
@@ -234,7 +87,7 @@ export default function ElencoProdottiFormativi() {
           />
         }
         filtri={{
-          onAzzera: () => { setFiltroUniversita("Tutte le università"); setFiltroTipo("Tutti i tipi"); setFiltroAttivo("Tutti"); },
+          onAzzera: () => aggiornaQuery({ universita: "Tutte le università", tipo: "Tutti i tipi", attivo: "Tutti" }),
           attivi: [filtroUniversita !== "Tutte le università",
             filtroTipo !== "Tutti i tipi", filtroAttivo !== "Tutti"].filter(Boolean).length,
           contenuto: <>
@@ -284,22 +137,11 @@ export default function ElencoProdottiFormativi() {
         }}
       />
       <div className={schedaElenco("corpo")}>
-        <RigheElenco dati={prodotti.map(rigaProdotto)} modello={MODELLO_PRODOTTI}
+        <RigheElenco dati={pagina.elementi.map(rigaProdotto)} modello={MODELLO_PRODOTTI}
           onApri={handleModifica}
-          vuoto={!loading && "Nessun risultato trovato per i filtri di ricerca selezionati."} />
+          vuoto={!pagina.loading && !pagina.errore && "Nessun risultato trovato per i filtri di ricerca selezionati."} />
 
-        {/* Indicatore di caricamento o fine lista */}
-        {loading && (
-          <div className="border-t border-bordo px-4 py-4">
-            <IndicatoreCaricamento dimensione="compatto" messaggio="Caricamento altri elementi..." />
-          </div>
-        )}
-
-        {!hasMore && prodotti.length > 0 && (
-          <div className="border-t border-bordo px-4 py-4 text-center text-nota italic text-testo-tenue">
-            Hai raggiunto la fine della lista. Non ci sono altri risultati.
-          </div>
-        )}
+        <StatoPagineElenco pagina={pagina} />
       </div>
     </div>
   );

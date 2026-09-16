@@ -1,3 +1,7 @@
+import PaginaNonTrovata from "./PaginaNonTrovata.jsx";
+import StatoCaricamentoDettaglio from "./shared/StatoCaricamentoDettaglio.jsx";
+import { parseNumeroItaliano, creaPayloadProdotto, aggiungiDettaglio } from "../lib/prodottoPayload.js";
+import useNavigazioneElenco from "../hooks/useNavigazioneElenco.js";
 import { leggiUtenteId } from "../lib/sessione";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
@@ -11,18 +15,10 @@ import { contenutoPagina } from "../config/styles/pagina";
 import { pulsante } from "../config/styles/pulsante";
 import { scheda } from "../config/styles/superficie";
 
-// Converte una stringa numerica (con virgola o punto) in Number.
-// Restituisce null se non è un numero valido.
-const parseNumeroItaliano = (valore) => {
-  if (valore === "" || valore === null || valore === undefined) return null;
-  const normalizzato = String(valore).replace(",", ".");
-  const num = Number(normalizzato);
-  return isNaN(num) ? null : num;
-};
-
 export default function InserimentoProdotto() {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { ritorno } = useNavigazioneElenco(ROTTE.prodotti);
+  const { prodottoId: id } = useParams();
   const isModifica = Boolean(id);
 
   const [formData, setFormData] = useState(() => ({
@@ -54,6 +50,7 @@ export default function InserimentoProdotto() {
     },
   ]);
 
+  const [lettura, setLettura] = useState({ loading: isModifica, errore: null });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
@@ -95,7 +92,7 @@ export default function InserimentoProdotto() {
             res,
             "Errore nel recupero del prodotto",
           );
-          throw new Error(testoErrore);
+          throw Object.assign(new Error(testoErrore), { status: res.status });
         }
 
         const data = await res.json();
@@ -130,8 +127,9 @@ export default function InserimentoProdotto() {
             })),
           );
         }
-      } catch (err) {
-        setMessage({ type: "error", text: err.message });
+        setLettura({ loading: false, errore: null });
+      } catch (errore) {
+        setLettura({ loading: false, errore });
       }
     }
 
@@ -198,30 +196,7 @@ export default function InserimentoProdotto() {
     const oggi = new Date().toISOString().split("T")[0];
     const dataIeri = getIeri(oggi);
 
-    setDettagli((prevDettagli) => {
-      const dettagliAggiornati = prevDettagli.map((det, index) => {
-        if (index === prevDettagli.length - 1) {
-          return {
-            ...det,
-            listDettaglio_dataFineValidazionoe: dataIeri,
-          };
-        }
-        return det;
-      });
-
-      return [
-        ...dettagliAggiornati,
-        {
-          listDettaglio_dataInizioValidazione: oggi,
-          listDettaglio_dataFineValidazionoe: "9999-12-31",
-          listDettaglio_prezzo: "",
-          listDettaglio_durata: "",
-          listDettaglio_CFU: "",
-          listDettaglio_tasse: "",
-          isNew: true,
-        },
-      ];
-    });
+    setDettagli(prev => aggiungiDettaglio(prev, oggi, dataIeri));
   };
 
   const handleRimuoviRiga = (index) => {
@@ -308,53 +283,7 @@ export default function InserimentoProdotto() {
       ].listDettaglio_dataFineValidazionoe = "9999-12-31";
     }
 
-    const payload = {
-      ...formData,
-      listTesta_livello:
-        formData.listTesta_livello !== ""
-          ? Number(formData.listTesta_livello)
-          : null,
-      listino_modalita_id:
-        formData.listino_modalita_id !== ""
-          ? Number(formData.listino_modalita_id)
-          : null,
-      listino_tipoCorso_id:
-        formData.listino_tipoCorso_id !== ""
-          ? Number(formData.listino_tipoCorso_id)
-          : null,
-      listino_durataLaurea_id:
-        formData.listino_durataLaurea_id !== ""
-          ? Number(formData.listino_durataLaurea_id)
-          : null,
-      listino_facolta_id:
-        formData.listino_facolta_id !== ""
-          ? Number(formData.listino_facolta_id)
-          : null,
-      listino_corsoLaurea_id:
-        formData.listino_corsoLaurea_id !== ""
-          ? Number(formData.listino_corsoLaurea_id)
-          : null,
-      nome_universita_id:
-        formData.nome_universita_id !== ""
-          ? Number(formData.nome_universita_id)
-          : null,
-      dettagli: dettagliDaInviare.map((d) => ({
-        listDettaglio_dataInizioValidazione:
-          d.listDettaglio_dataInizioValidazione || null,
-        listDettaglio_dataFineValidazionoe:
-          d.listDettaglio_dataFineValidazionoe || "9999-12-31",
-        listDettaglio_prezzo: parseNumeroItaliano(d.listDettaglio_prezzo),
-        listDettaglio_durata:
-          d.listDettaglio_durata !== "" && d.listDettaglio_durata !== null
-            ? parseInt(d.listDettaglio_durata, 10)
-            : null,
-        listDettaglio_CFU:
-          d.listDettaglio_CFU !== "" && d.listDettaglio_CFU !== null
-            ? parseInt(d.listDettaglio_CFU, 10)
-            : null,
-        listDettaglio_tasse: parseNumeroItaliano(d.listDettaglio_tasse),
-      })),
-    };
+    const payload = creaPayloadProdotto(formData, dettagliDaInviare);
 
     try {
       const url = isModifica ? `/listini-testa/${id}` : `/listini-testa`;
@@ -387,7 +316,7 @@ export default function InserimentoProdotto() {
       });
 
       setTimeout(() => {
-        navigate(ROTTE.prodotti);
+        navigate(ritorno);
       }, 1000);
     } catch (err) {
       setMessage({ type: "error", text: err.message });
@@ -395,11 +324,14 @@ export default function InserimentoProdotto() {
     }
   };
 
+  if (lettura.errore?.status === 404) return <PaginaNonTrovata />;
+  if (lettura.loading || lettura.errore) return <StatoCaricamentoDettaglio {...lettura} ritorno={ritorno} />;
+
   return (
     <div className={contenutoPagina()}>
       <IntestazionePagina
         titolo={isModifica ? "Modifica prodotto" : "Nuovo prodotto"}
-        indietro={{ rotta: ROTTE.prodotti, etichetta: "Prodotti formativi" }}
+        indietro={{ rotta: ritorno, etichetta: "Prodotti formativi" }}
       />
       <div className={`${scheda()} p-6`}>
         <AlertMessage message={message} />
@@ -423,7 +355,7 @@ export default function InserimentoProdotto() {
           <div className="flex justify-end gap-3 pt-4 border-t border-bordo">
             <button
               type="button"
-              onClick={() => navigate(ROTTE.prodotti)}
+              onClick={() => navigate(ritorno)}
               className={pulsante("secondario", "grande")}
             >
               Annulla

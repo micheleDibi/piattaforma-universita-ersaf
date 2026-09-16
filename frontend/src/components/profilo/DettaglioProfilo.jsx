@@ -1,4 +1,5 @@
-import { useState } from "react";
+import useQueryPagina from "../../hooks/useQueryPagina.js";
+import { QUERY_PROFILO } from "../../config/routes/query.js";
 import BarraSchede from "../shared/BarraSchede.jsx";
 import { STILI_PROFILO as stili } from "../../config/styles/profilo.js";
 import { SCHEDE_PROFILO, TESTI_PROFILO } from "../../config/testi/profilo.js";
@@ -6,7 +7,8 @@ import DatiPrincipaliProfilo from "./DatiPrincipaliProfilo.jsx";
 import RiepilogoProfilo from "./RiepilogoProfilo.jsx";
 
 export default function DettaglioProfilo({ profilo }) {
-  const [attiva, setAttiva] = useState(SCHEDE_PROFILO[0].id);
+  const [{ scheda: attiva }, aggiornaQuery] = useQueryPagina(QUERY_PROFILO);
+  const setAttiva = scheda => aggiornaQuery({ scheda }, { replace: false });
   const schede = SCHEDE_PROFILO.map(({ id, etichetta }) => ({ id, label: etichetta }));
   return (
     <div className={stili.contenitore}>

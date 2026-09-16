@@ -1,5 +1,6 @@
+import { ROTTE } from "../config/routes/percorsi.js";
 const CHIAVE_RITORNO = "ritorno_accesso";
-const PUBBLICHE = new Set(["/", "/password-dimenticata", "/reimposta-password"]);
+const PUBBLICHE = new Set([ROTTE.accesso, ROTTE.recuperoPassword, ROTTE.reimpostaPassword]);
 
 export function percorsoSicuro(percorso) {
   if (typeof percorso !== "string" || percorso.length > 2048 || !percorso.startsWith("/")) return null;
@@ -27,5 +28,5 @@ export function destinazioneDopoAccesso(ripiego) {
 
 export function vaiAlLogin() {
   conservaDestinazione();
-  window.location.replace("/?sessione=scaduta");
+  window.location.replace(`${ROTTE.accesso}?sessione=scaduta`);
 }

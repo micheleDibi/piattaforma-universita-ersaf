@@ -18,7 +18,7 @@ export function creaPaginazione(richiedi, pubblica) {
       const pagina = await richiedi(offset, controller.signal);
       if (controller.signal.aborted) return;
       offset += pagina.elementi.length;
-      const identita = item => item?.pratica_id ?? item?.id ?? item;
+      const identita = item => item?.pratica_id ?? item?.cliente_id ?? item?.azienda_id ?? item?.listTesta_id ?? item?.id ?? item;
       const presenti = new Set(elementi.map(identita));
       elementi = [...elementi, ...pagina.elementi.filter(item => !presenti.has(identita(item)))];
       altri = pagina.altri;

@@ -1,3 +1,6 @@
+import PaginaNonTrovata from "./PaginaNonTrovata.jsx";
+import StatoCaricamentoDettaglio from "./shared/StatoCaricamentoDettaglio.jsx";
+import useNavigazioneElenco from "../hooks/useNavigazioneElenco.js";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { apiFetch, messaggioErrore } from "../lib/api";
@@ -13,11 +16,6 @@ import { scheda } from "../config/styles/superficie";
 import { ROTTE } from "../config/routes/rotte";
 import IntestazionePagina from "./shared/IntestazionePagina";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
-
-// I due bottoni di ElencoAziende navigavano a /nuova-azienda e
-// /modifica-azienda/:id, che non erano registrate in App.jsx: cadevano nel
-// catch-all e l'utente finiva sulla schermata di login senza spiegazione. Il
-// backend le rotte le aveva gia'; mancava solo questa pagina.
 
 // obbligatori nel database (NOT NULL senza un default utile)
 const OBBLIGATORI = [
@@ -47,10 +45,12 @@ const VUOTO = Object.fromEntries(
 );
 
 export default function SchedaAzienda() {
-  const { id } = useParams();
+  const { aziendaId: id } = useParams();
   const navigate = useNavigate();
+  const { ritorno } = useNavigazioneElenco(ROTTE.aziende);
   const inModifica = Boolean(id);
 
+  const [erroreLettura, setErroreLettura] = useState(null);
   const [dati, setDati] = useState(VUOTO);
   const [caricamento, setCaricamento] = useState(inModifica);
   const [errore, setErrore] = useState("");
@@ -62,7 +62,7 @@ export default function SchedaAzienda() {
     let annullato = false;
     apiFetch(`/aziende/${id}`)
       .then(async (risposta) => {
-        if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
+        if (!risposta.ok) throw Object.assign(new Error(await messaggioErrore(risposta)), { status: risposta.status });
         return risposta.json();
       })
       .then((azienda) => {
@@ -79,7 +79,7 @@ export default function SchedaAzienda() {
       })
       .catch((err) => {
         if (annullato) return;
-        setErrore(err.message);
+        setErroreLettura(err);
         setCaricamento(false);
       });
 
@@ -108,13 +108,16 @@ export default function SchedaAzienda() {
         { method: inModifica ? "PUT" : "POST", body: JSON.stringify(corpo) },
       );
       if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
-      navigate(ROTTE.aziende);
+      navigate(ritorno);
     } catch (err) {
       setErrore(err.message);
     } finally {
       setSalvataggio(false);
     }
   };
+
+  if (erroreLettura?.status === 404) return <PaginaNonTrovata />;
+  if (erroreLettura) return <StatoCaricamentoDettaglio errore={erroreLettura} ritorno={ritorno} />;
 
   if (caricamento)
     return (
@@ -150,7 +153,7 @@ export default function SchedaAzienda() {
     <div className={contenutoPagina("modulo")}>
       <IntestazionePagina
         titolo={inModifica ? "Modifica azienda" : "Nuova azienda"}
-        indietro={{ rotta: ROTTE.aziende, etichetta: "Aziende" }}
+        indietro={{ rotta: ritorno, etichetta: "Aziende" }}
       />
       <form onSubmit={invia} className={`${scheda()} p-6 sm:p-8`}>
         {errore && (
@@ -174,7 +177,7 @@ export default function SchedaAzienda() {
           </button>
           <button
             type="button"
-            onClick={() => navigate(ROTTE.aziende)}
+            onClick={() => navigate(ritorno)}
             className={pulsante("discreto", "grande")}
           >
             Annulla

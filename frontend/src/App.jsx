@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import { BrowserRouter, Route, Routes } from "react-router";
 import "./App.css";
 
 import Login from "./components/Login";
@@ -13,10 +13,12 @@ import ElencoAziende from "./components/ElencoAziende";
 import ElencoPratiche from "./components/ElencoPratiche";
 import ElencoProdottiFormativi from "./components/ElencoProdottiFormativi";
 import NuovoSottoscrittore from "./components/NuovoSottoscrittore";
-import SchedaUtente from "./components/SchedaUtente";
+import SchedaPratica from "./components/SchedaPratica.jsx";
+import PaginaNonTrovata from "./components/PaginaNonTrovata.jsx";
+import PaginaEntita from "./components/shell/PaginaEntita.jsx";
 import SchedaAzienda from "./components/SchedaAzienda";
 import InserimentoProdotto from "./components/InserimentoProdotto";
-import { ROTTA_INIZIALE, ROTTE } from "./config/routes/rotte";
+import { PERCORSI, ROTTE } from "./config/routes/percorsi.js";
 
 function App() {
   return (
@@ -56,31 +58,18 @@ function App() {
             element={<ElencoProdottiFormativi soloAttuatori={true} />}
           />
 
-          <Route path="/nuovo" element={<NuovoSottoscrittore />} />
-          <Route path="/modifica/:id" element={<NuovoSottoscrittore />} />
-          <Route path="/utente/:id" element={<SchedaUtente />} />
-          <Route path="/nuova-azienda" element={<SchedaAzienda />} />
-          <Route path="/modifica-azienda/:id" element={<SchedaAzienda />} />
-          <Route path="/inserimentoprodotto" element={<InserimentoProdotto />} />
-          <Route
-            path="/inserimentoprodotto/:id"
-            element={<InserimentoProdotto />}
-          />
+          {[
+            [PERCORSI.sottoscrittori, <NuovoSottoscrittore tipoUtente="sottoscrittore" />],
+            [PERCORSI.attuatori, <NuovoSottoscrittore tipoUtente="attuatore" />],
+            [PERCORSI.aziende, <SchedaAzienda />],
+            [PERCORSI.prodotti, <InserimentoProdotto />],
+            [PERCORSI.pratiche, <SchedaPratica />],
+          ].flatMap(([risorsa, pagina]) => [risorsa.nuovo, risorsa.modello].map(path => (
+            <Route key={path} path={path} element={<PaginaEntita risorsa={risorsa}>{pagina}</PaginaEntita>} />
+          )))}
         </Route>
 
-        {/* Rotte storiche: ci puntano collegamenti esistenti e segnalibri. */}
-        <Route path="/home" element={<Navigate to={ROTTA_INIZIALE} replace />} />
-        <Route
-          path="/elenco"
-          element={<Navigate to={ROTTE.sottoscrittori} replace />}
-        />
-        <Route
-          path="/prodotti-formativi"
-          element={<Navigate to={ROTTE.prodotti} replace />}
-        />
-
-        {/* Il secondo fattore rimane nel flusso di accesso; le rotte sono protette dalla sessione cookie. */}
-        <Route path="*" element={<Navigate to={ROTTE.accesso} replace />} />
+        <Route path="*" element={<PaginaNonTrovata />} />
       </Routes>
     </BrowserRouter>
   );

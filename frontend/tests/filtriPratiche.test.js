@@ -62,3 +62,12 @@ test("righe ripetute tra pagine non si duplicano e offset segue le righe ricevut
   assert.deepEqual(offset, [0, 1, 2]);
   assert.deepEqual(stati.at(-1).elementi, [{ pratica_id: 5 }]);
 });
+
+test("paginazione condivisa riconosce anche le identita cliente, azienda e prodotto", async () => {
+  for (const campo of ["cliente_id", "azienda_id", "listTesta_id"]) {
+    const stati = [];
+    const pagine = creaPaginazione(async skip => ({ elementi: [{ [campo]: 42 }], altri: skip === 0 }), s => stati.push(s));
+    await pagine.prossima(); await pagine.prossima();
+    assert.equal(stati.at(-1).elementi.length, 1, campo);
+  }
+});

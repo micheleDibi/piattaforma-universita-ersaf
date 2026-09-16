@@ -9,8 +9,8 @@ import usePagineRemote from "../../hooks/usePagineRemote";
 export default function SelezioneRicercabile({ configurazione, selezionati, onCambia }) {
   const id = useId();
   const [ricerca, setRicerca] = useState("");
-  const { titolo, endpoint, multipla, segnaposto } = configurazione;
-  const pagina = usePagineRemote(`${endpoint}?limit=20&search=${encodeURIComponent(ricerca)}`, paginaOpzioni);
+  const { titolo, endpoint, multipla, segnaposto, estrai = paginaOpzioni } = configurazione;
+  const pagina = usePagineRemote(`${endpoint}${endpoint.includes("?") ? "&" : "?"}limit=20&search=${encodeURIComponent(ricerca)}`, estrai);
   return <fieldset className="selezione-ricercabile" onBlur={event => {
     if (!event.currentTarget.contains(event.relatedTarget)) setRicerca("");
   }}>

@@ -1,7 +1,13 @@
+import PaginaNonTrovata from "./PaginaNonTrovata.jsx";
+import StatoCaricamentoDettaglio from "./shared/StatoCaricamentoDettaglio.jsx";
+import useQueryPagina from "../hooks/useQueryPagina.js";
+import useNavigazioneElenco from "../hooks/useNavigazioneElenco.js";
+import { QUERY_ANAGRAFICA } from "../config/routes/query.js";
+import { PERCORSI } from "../config/routes/percorsi.js";
 import { ANAGRAFICA_INIZIALE } from "../config/anagraficaIniziale.js";
 import { useIngresso } from "../hooks/useIngresso.js";
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
 import { leggiUtenteId } from "../lib/sessione";
 import SchedaUtente from "./SchedaUtente";
@@ -17,31 +23,28 @@ import { pulsante } from "../config/styles/pulsante";
 import { scheda } from "../config/styles/superficie";
 import BarraSchede from "./shared/BarraSchede.jsx";
 
-function NuovoSottoscrittore() {
-  const { id } = useParams();
+function NuovoSottoscrittore({ tipoUtente }) {
+  const { clienteId: id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const isEditMode = Boolean(id);
 
-  const [activeTab, setActiveTab] = useState("dati-principali");
+  const [{ scheda: activeTab }, aggiornaQuery] = useQueryPagina(QUERY_ANAGRAFICA);
+  const setActiveTab = scheda => aggiornaQuery({ scheda }, { replace: false });
   const pannello = useIngresso(activeTab);
-
-  const queryParams = new URLSearchParams(location.search);
-  const tipoUtente =
-    queryParams.get("tipo") ||
-    (location.pathname.includes("attuatore") ? "attuatore" : "sottoscrittore");
 
   const labelTitolo =
     tipoUtente === "attuatore" ? "Attuatore" : "Sottoscrittore";
-  const rottaElenco = tipoUtente === "attuatore" ? ROTTE.attuatori : ROTTE.sottoscrittori;
+  const risorsa = tipoUtente === "attuatore" ? PERCORSI.attuatori : PERCORSI.sottoscrittori;
+  const { ritorno: rottaElenco } = useNavigazioneElenco(risorsa.elenco);
 
+  const [lettura, setLettura] = useState({ loading: isEditMode, errore: null });
   const [formData, setFormData] = useState(ANAGRAFICA_INIZIALE);
 
   useEffect(() => {
     if (isEditMode) {
       apiFetch(`/clienti/${id}`)
         .then((res) => {
-          if (!res.ok) throw new Error("Errore nel recupero del cliente");
+          if (!res.ok) throw Object.assign(new Error("Impossibile caricare l’anagrafica."), { status: res.status });
           return res.json();
         })
         .then((data) => {
@@ -98,10 +101,8 @@ function NuovoSottoscrittore() {
               }, {}),
           }));
         })
-        .catch((err) => {
-          console.error("Errore:", err);
-          alert("Impossibile caricare i dati.");
-        });
+        .then(() => setLettura({ loading: false, errore: null }))
+        .catch(errore => setLettura({ loading: false, errore }));
     }
   }, [id, isEditMode]);
 
@@ -138,7 +139,7 @@ function NuovoSottoscrittore() {
     const utenteId = leggiUtenteId();
     if (utenteId === null) {
       alert("Sessione scaduta. Rifai il login prima di salvare.");
-      navigate("/");
+      navigate(ROTTE.accesso);
       return;
     }
 
@@ -223,7 +224,7 @@ function NuovoSottoscrittore() {
       }
 
       const creato = await leggiJson(response);
-      navigate(`/modifica/${creato.cliente_id}?tipo=${tipoUtente}`);
+      navigate(risorsa.dettaglio(creato.cliente_id), { replace: true, state: { elenco: rottaElenco } });
     } catch (error) {
       console.error("Errore:", error);
       alert(error.message);
@@ -248,6 +249,9 @@ function NuovoSottoscrittore() {
       domicilioProvincia: prev.residenzaProvincia,
     }));
   };
+
+  if (lettura.errore?.status === 404) return <PaginaNonTrovata />;
+  if (lettura.loading || lettura.errore) return <StatoCaricamentoDettaglio {...lettura} ritorno={rottaElenco} />;
 
   return (
     <div className={contenutoPagina("modulo")}>

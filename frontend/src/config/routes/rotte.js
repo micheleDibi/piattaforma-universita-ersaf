@@ -14,27 +14,10 @@ import {
 
 export const NOME_APPLICAZIONE = "Piattaforma Università";
 
-export const ROTTE = {
-  accesso: "/",
-  recuperoPassword: "/password-dimenticata",
-  reimpostaPassword: "/reimposta-password",
-  dashboard: "/dashboard",
-  profilo: "/profilo",
-  sottoscrittori: "/sottoscrittori",
-  attuatori: "/attuatori",
-  aziende: "/aziende",
-  pratiche: "/pratiche",
-  prodotti: "/prodotti",
-};
+import { ROTTE } from "./percorsi.js";
+export { ROTTE, ROTTA_INIZIALE } from "./percorsi.js";
 
-/** Dove si arriva dopo l'accesso e dalle rotte storiche /home ed /elenco. */
-export const ROTTA_INIZIALE = ROTTE.sottoscrittori;
-
-/**
- * Voci del menu. `soloNazionale` riserva gli elenchi gestionali al Nazionale;
- * `prefissi` tiene evidenziata la sezione anche nelle pagine di
- * dettaglio che le appartengono.
- */
+/** Visibilita comune a menu desktop e mobile. */
 export const VOCI_MENU = [
   { rotta: ROTTE.dashboard, etichetta: "Dashboard", icona: LayoutDashboard },
   { rotta: ROTTE.sottoscrittori, etichetta: "Sottoscrittori", icona: Users },
@@ -49,7 +32,6 @@ export const VOCI_MENU = [
     etichetta: "Aziende",
     icona: Building2,
     soloNazionale: true,
-    prefissi: ["/nuova-azienda", "/modifica-azienda"],
   },
   {
     rotta: ROTTE.pratiche,
@@ -62,7 +44,6 @@ export const VOCI_MENU = [
     etichetta: "Prodotti formativi",
     icona: GraduationCap,
     soloNazionale: true,
-    prefissi: ["/inserimentoprodotto"],
   },
 ];
 

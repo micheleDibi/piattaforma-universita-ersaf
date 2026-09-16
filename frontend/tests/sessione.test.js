@@ -20,7 +20,7 @@ const json = (d, status = 200, headers = {}) => new Response(JSON.stringify(d), 
 beforeEach(() => {
   globalThis.window = {
     localStorage: deposito(), sessionStorage: deposito(),
-    location: { origin: "https://ersaf.example", pathname: "/elenco", search: "?pagina=2", hash: "#righe", replace: (url) => redirect.push(url) },
+    location: { origin: "https://ersaf.example", pathname: "/sottoscrittori", search: "?ricerca=rossi", hash: "#righe", replace: (url) => redirect.push(url) },
   };
   richieste.length = risposte.length = redirect.length = 0;
   pulisciSessione();
@@ -114,8 +114,8 @@ test("401 salva pagina, query e ancora, spiega la scadenza e consuma il ritorno 
   await assert.rejects(apiFetch("/clienti"), /Sessione scaduta/);
   assert.equal(haSessione(), false);
   assert.deepEqual(redirect, ["/?sessione=scaduta"]);
-  assert.equal(destinazioneDopoAccesso("/home"), "/elenco?pagina=2#righe");
-  assert.equal(destinazioneDopoAccesso("/home"), "/home");
+  assert.equal(destinazioneDopoAccesso("/dashboard"), "/sottoscrittori?ricerca=rossi#righe");
+  assert.equal(destinazioneDopoAccesso("/dashboard"), "/dashboard");
 });
 
 test("logout fallito conserva la sessione e segnala l'errore", async () => {
@@ -139,7 +139,7 @@ test("ritorno rifiuta URL esterni, pagine pubbliche e caratteri ambigui", () => 
   }
   conservaDestinazione();
   window.sessionStorage.setItem("ritorno_accesso", "//male.example");
-  assert.equal(destinazioneDopoAccesso("/home"), "/home");
+  assert.equal(destinazioneDopoAccesso("/dashboard"), "/dashboard");
 });
 
 test("422 mantiene i dettagli dei campi nelle altre pagine", async () => {

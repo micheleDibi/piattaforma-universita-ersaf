@@ -1,4 +1,4 @@
-import { NavLink, useLocation, useNavigate } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 import { LogOut } from "../../config/icone.js";
 import {
   ROTTE,
@@ -27,7 +27,6 @@ import { STILI_LOGO } from "../../config/styles/identita.js";
 export default function MenuNavigazione({ onNaviga }) {
   const [erroreUscita, setErroreUscita] = useState("");
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const voci = vociMenuPerRuolo(useSessione()?.ruoloCodice);
 
   const esci = async () => {
@@ -37,10 +36,6 @@ export default function MenuNavigazione({ onNaviga }) {
       navigate(ROTTE.accesso, { replace: true });
     } catch (errore) { setErroreUscita(errore.message); }
   };
-
-  const eAttiva = (voce, isActive) =>
-    isActive ||
-    (voce.prefissi ?? []).some((prefisso) => pathname.startsWith(prefisso));
 
   return (
     <div className="flex h-full flex-col">
@@ -60,14 +55,14 @@ export default function MenuNavigazione({ onNaviga }) {
               to={voce.rotta}
               onClick={onNaviga}
               className={({ isActive }) =>
-                voceNavigazione(eAttiva(voce, isActive))
+                voceNavigazione(isActive)
               }
             >
               {({ isActive }) => (
                 <>
                   <Icona
                     aria-hidden="true"
-                    className={iconaNavigazione(eAttiva(voce, isActive))}
+                    className={iconaNavigazione(isActive)}
                   />
                   <span className="truncate">{voce.etichetta}</span>
                 </>
