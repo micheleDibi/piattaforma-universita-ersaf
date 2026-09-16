@@ -179,15 +179,6 @@ function Get-GitSha {
     return "$sha".Trim()
 }
 
-# Progressivo della versione: i commit raggiungibili da quello pubblicato. La storia di
-# main cresce soltanto (fast-forward e merge), quindi il numero non torna mai indietro e
-# lo stesso codice porta lo stesso numero su qualunque server.
-function Get-NumeroVersione([string] $Sha) {
-    $numero = & git -C $ProjectRoot rev-list --count $Sha
-    if ($LASTEXITCODE -ne 0 -or -not "$numero".Trim()) { Stop-WithError "conteggio dei commit fallito per $Sha" }
-    return "$numero".Trim()
-}
-
 function Test-DirtyTree {
     $stato = & git -C $ProjectRoot status --porcelain -- backend frontend db deploy
     return [bool] $stato
@@ -239,17 +230,16 @@ function Publish-Release([string] $Comando, [string[]] $Opzioni) {
     $adesso = Get-Date
     $invariante = [Globalization.CultureInfo]::InvariantCulture
     $id = $adesso.ToString('yyyyMMdd-HHmmss', $invariante) + '-' + $sha.Substring(0, 7)
-    $versione = Get-NumeroVersione $sha
+    # Il numero di versione lo assegna il server (contatore delle pubblicazioni).
     $aggiornata = $adesso.ToString("yyyy-MM-dd'T'HH':'mm':'sszzz", $invariante)
     $archivio = New-ReleaseArchive $id
     $dimensione = [math]::Round((Get-Item -LiteralPath $archivio).Length / 1KB)
-    Write-Note "release $id (git $($sha.Substring(0, 7)), versione $versione, $dimensione KB)"
+    Write-Note "release $id (git $($sha.Substring(0, 7)), $dimensione KB)"
     Write-Step 'Trasferimento sul server'
     $remoto = Send-Archive $archivio $id
     if ($Comando -eq 'build') { Write-Step 'Build remota delle immagini, nessun container toccato' }
     else { Write-Step 'Deploy remoto: build, migrazioni sul clone, avvio, verifica' }
-    $datiVersione = @("--versione=$versione", "--aggiornata=$aggiornata")
-    Invoke-Remote (@($Comando, $remoto, $id, $sha, $sporco) + $Opzioni + $datiVersione) | Out-Null
+    Invoke-Remote (@($Comando, $remoto, $id, $sha, $sporco) + $Opzioni + @("--aggiornata=$aggiornata")) | Out-Null
     return $id
 }
 

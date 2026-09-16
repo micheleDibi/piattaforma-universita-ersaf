@@ -59,6 +59,7 @@ cmd_deploy() {
     completa_api_env
     # cmd_verify termina con die: in subshell il fallimento torna qui e scatta il rollback.
     if avvia_app && ( cmd_verify ); then
+        registra_versione "$id"
         cmd_prune
         log "deploy completato: release $id (git $sha)"
         return 0

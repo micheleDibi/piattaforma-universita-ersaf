@@ -28,9 +28,13 @@ export function voceUscita() {
   return `${VOCE} text-testo-tenue hover:bg-interazione-hover hover:text-testo-forte`;
 }
 
-/** Versione e data dell'ultimo aggiornamento, sotto "Esci": discreta, allineata al testo delle voci. */
+/**
+ * Versione e data dell'ultimo aggiornamento: in fondo all'elenco delle voci,
+ * sopra la linea che le separa da profilo e uscita. Il rientro (padding del menu
+ * + padding della voce) la allinea alle icone.
+ */
 export function notaVersione() {
-  return "mt-2 px-3 text-nota leading-relaxed text-testo-tenue";
+  return "shrink-0 px-6 pb-3 text-nota leading-relaxed text-testo-tenue";
 }
 
 /**

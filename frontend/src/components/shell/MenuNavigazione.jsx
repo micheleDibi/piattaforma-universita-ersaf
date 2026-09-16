@@ -74,6 +74,11 @@ export default function MenuNavigazione({ onNaviga }) {
         })}
       </nav>
 
+      <div className={notaVersione()}>
+        <p>{VERSIONE_APPLICAZIONE.versione}</p>
+        {VERSIONE_APPLICAZIONE.aggiornamento && <p>{VERSIONE_APPLICAZIONE.aggiornamento}</p>}
+      </div>
+
       <div className="border-t border-bordo p-3">
         <TileProfilo onNaviga={onNaviga} />
         {erroreUscita && <p role="alert" className="text-sm text-negativo">{erroreUscita}</p>}
@@ -81,10 +86,6 @@ export default function MenuNavigazione({ onNaviga }) {
           <LogOut aria-hidden="true" className="size-icona shrink-0" />
           <span>Esci</span>
         </button>
-        <div className={notaVersione()}>
-          <p>{VERSIONE_APPLICAZIONE.versione}</p>
-          {VERSIONE_APPLICAZIONE.aggiornamento && <p>{VERSIONE_APPLICAZIONE.aggiornamento}</p>}
-        </div>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { TESTI_VERSIONE as testi } from "../config/testi/versione.js";
 const FUSO = "Europe/Rome";
 
 /**
- * Progressivo e istante della release, incorporati nel bundle dal deploy
+ * Numero della pubblicazione e istante della release, incorporati nel bundle dal deploy
  * (build-arg VITE_VERSIONE e VITE_AGGIORNATA_IL, vedi Dockerfile). Fuori dal
  * deploy mancano entrambi: e' la versione di sviluppo.
  */
@@ -15,7 +15,7 @@ export function leggiVersione(ambiente = import.meta.env ?? {}) {
   return { numero, aggiornataIl: data && !Number.isNaN(data.getTime()) ? data : null };
 }
 
-/** Le due righe da mostrare: "Versione 117" e "Aggiornata il 16/09/2026 alle 19:30". */
+/** Le due righe da mostrare: "Versione 12" e "Aggiornata il 16/09/2026 alle 19:30". */
 export function descriviVersione({ numero, aggiornataIl }) {
   if (numero === null) return { versione: testi.sviluppo, aggiornamento: null };
   if (!aggiornataIl) return { versione: testi.versione(numero), aggiornamento: null };
