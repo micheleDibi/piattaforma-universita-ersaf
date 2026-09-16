@@ -3,10 +3,12 @@ from sqlalchemy.orm import Session
 from typing import List
 from src.listino_tipoCorso.models import ListinoTipoCorsoDB, ListinoTipoCorso, ListinoTipoCorsoCreate
 from src.database import get_db
+from src.auth.dipendenze import get_current_utente
 
 router = APIRouter(
     prefix="/listini-tipi-corsi",
-    tags=["Listini Tipi Corsi"]
+    tags=["Listini Tipi Corsi"],
+    dependencies=[Depends(get_current_utente)],
 )
 
 #  POST

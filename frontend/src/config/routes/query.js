@@ -28,6 +28,13 @@ export const QUERY_PRATICHE = {
     leggi: (valori) =>
       [...new Set(valori.filter(idValido))].slice(0, 100).map(Number),
   },
+  universita: id,
+  tipoCorso: {
+    predefinito: [],
+    leggi: (valori) => [...new Set(valori.filter(idValido))].map(Number),
+  },
+  filtroInterno: scelta(["1"], ""),
+  tipoSelezionato: id,
 };
 export const QUERY_ANAGRAFICA = {
   scheda: scelta(

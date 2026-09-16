@@ -15,6 +15,8 @@ class FiltriPratiche(BaseModel):
     studenti: list[Annotated[int, Field(gt=0)]] = Field(default_factory=list, max_length=100)
     pratica_stato_id: int | None = Field(None, gt=0)
     percorso_id: int | None = Field(None, gt=0)
+    nome_universita_id: int | None = Field(None, gt=0)
+    listino_tipo_corso_id: list[Annotated[int, Field(gt=0)]] = Field(default_factory=list, max_length=10)
 
 
 def query_filtrata(db: Session, filtri: FiltriPratiche):
@@ -29,4 +31,8 @@ def query_filtrata(db: Session, filtri: FiltriPratiche):
         query = query.filter(Pratica.pratica_stato_id == filtri.pratica_stato_id)
     if filtri.percorso_id is not None:
         query = query.filter(Pratica.listTesta_id == filtri.percorso_id)
+    if filtri.nome_universita_id is not None:
+        query = query.filter(Pratica.nome_universita_id == filtri.nome_universita_id)
+    if filtri.listino_tipo_corso_id:
+        query = query.filter(Pratica.listino_tipo_corso_id.in_(filtri.listino_tipo_corso_id))
     return query

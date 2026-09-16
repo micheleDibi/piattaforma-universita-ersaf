@@ -44,6 +44,7 @@ from src.universita.routers import router as universita_router
 from src.listini_testa.routers import router as listini_testa_router
 from src.pratiche.routers import router as pratiche_router
 from src.profilo.routers import router as profilo_router
+from src.listino_tipoCorso.routers import router as listini_tipi_corsi_router
 
 logger = logging.getLogger(NOME_LOGGER)
 
@@ -111,6 +112,7 @@ app.include_router(universita_router)
 app.include_router(listini_testa_router)
 app.include_router(pratiche_router)
 app.include_router(profilo_router)
+app.include_router(listini_tipi_corsi_router)
 
 
 @app.exception_handler(IntegrityError)

@@ -19,6 +19,7 @@ from src.clienti.schemas import (
     ClienteResponse,
     ClienteConUtenteCreate,
     ClienteUpdate,
+    PermessiPraticheResponse,
 )
 from src.clienti.servizio import (
     TipoUtente,
@@ -38,6 +39,22 @@ router = APIRouter(
     tags=["Clienti"],
     dependencies=[Depends(get_current_utente)],
 )
+
+@router.get("/permessi-pratiche", response_model=PermessiPraticheResponse)
+def permessi_pratiche_correnti(current_utente=Depends(get_current_utente)):
+    cliente: Cliente = current_utente.clienti
+    if cliente is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Nessun cliente associato a questo utente.",
+        )
+    return PermessiPraticheResponse(
+        abilPraticheUniv=bool(cliente.cliente_abilPraticheUniv),
+        ecampus=bool(cliente.cliente_abilitazione_ecampus),
+        link_campus=bool(cliente.cliente_abilitazione_link_campus),
+        corsi_speciali=bool(cliente.cliente_abilitazione_corsi_speciali),
+        a4u=bool(cliente.cliente_abilitazione_a4u),
+    )
 
 _CARICAMENTO_ELENCO = (
     joinedload(Cliente.azienda),
