@@ -49,8 +49,10 @@ export const STILI_SICUREZZA = {
   qrImmagine: "block size-44",
   chiave: "mt-1 block font-mono text-sm tracking-wider text-testo-forte [overflow-wrap:anywhere]",
   // Una passkey per riga: testo a sinistra che va a capo da solo, "Rimuovi" a destra.
-  elencoPasskey: "space-y-2",
-  passkey: "flex items-center gap-3 rounded-controllo border border-bordo bg-superficie px-3 py-2.5",
+  // Su mobile le righe occupano la colonna; da sm l'elenco e' largo quanto il
+  // contenuto (tra 20 e 28rem) e tutte le righe hanno la stessa larghezza.
+  elencoPasskey: "grid gap-2 sm:w-fit sm:min-w-80 sm:max-w-md",
+  passkey: "flex items-center gap-3 rounded-controllo border border-bordo bg-superficie px-3 py-2.5 sm:gap-6",
   passkeyTesto: "min-w-0 flex-1 space-y-0.5",
   passkeyNome: "flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-testo-forte [overflow-wrap:anywhere]",
   passkeyEtichetta: "inline-flex items-center rounded-full border border-bordo bg-superficie-tenue px-2 py-0.5 text-nota font-medium text-testo-tenue",
