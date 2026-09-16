@@ -90,7 +90,10 @@ def test_migrazioni_su_database_pulito(database_vergine):
     finally:
         motore.dispose()
 
-    assert {"password_reset_token", "password_reset_richiesta", "auth_sessione"} <= tabelle
+    assert {
+        "password_reset_token", "password_reset_richiesta", "auth_sessione",
+        "auth_totp", "auth_passkey", "auth_mfa_utente",
+    } <= tabelle
     assert sorted(template) == ["password_reset_eseguito", "password_reset_richiesta"]
     assert colonne == {
         "utente_password",

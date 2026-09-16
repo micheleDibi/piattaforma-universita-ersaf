@@ -31,9 +31,12 @@ from src.auth.models import (  # noqa: F401
     PasswordResetToken,
 )
 from src.notifiche.models import MessaggioEmail  # noqa: F401
+from src.mfa.models import AuthMfaUtente, AuthPasskey, AuthTotp  # noqa: F401
 
 from src.otp.contatti import router as otp_contatti_router
 from src.otp.accesso import router as otp_accesso_router
+from src.mfa.accesso import router as mfa_accesso_router
+from src.mfa.gestione import router as mfa_gestione_router
 from src.auth.routers import router as auth_router
 from src.aziende.routers import router as azienda_router
 from src.aziende_xcod.router import router as aziende_xcod_router
@@ -104,6 +107,8 @@ app.include_router(ruolo_router)
 app.include_router(cliente_router)
 app.include_router(auth_router)
 app.include_router(otp_accesso_router)
+app.include_router(mfa_accesso_router)
+app.include_router(mfa_gestione_router)
 app.include_router(otp_contatti_router)
 app.include_router(azienda_router)
 app.include_router(aziende_xcod_router)

@@ -15,6 +15,30 @@ export const TESTI_ACCESSO = {
   verificaSessione: "Verifica dell’accesso",
   verificaInCorso: "Verifica della sessione in corso…",
   riprova: "Riprova",
+  // Passo del secondo fattore, per metodo in corso (lo dice il server).
+  passi: {
+    email: { titolo: "Verifica il tuo accesso", descrizione: "Inserisci il codice che ti abbiamo inviato via email." },
+    email_accesso: {
+      titolo: "Verifica la tua email",
+      descrizione: "Il tuo account non ha ancora un metodo di verifica: ti abbiamo inviato un codice all’indirizzo in anagrafica. Confermandolo, l’email risulterà verificata e potrai entrare.",
+    },
+    totp: { titolo: "Verifica il tuo accesso", descrizione: "Inserisci il codice mostrato dall’app di autenticazione." },
+    passkey: { titolo: "Verifica il tuo accesso", descrizione: "Conferma con la passkey sul tuo telefono." },
+  },
+  notaTotp: "Il codice cambia ogni 30 secondi: inserisci quello mostrato adesso.",
+  passkey: {
+    usa: "Usa la passkey sul telefono",
+    inCorso: "In attesa del telefono…",
+    istruzioni: "Il browser ti mostrerà un codice da inquadrare, oppure una notifica se il telefono è già collegato. Conferma con impronta, volto o PIN.",
+    nonSupportata: "Questo browser non supporta le passkey: scegli un altro metodo.",
+    annullata: "Operazione annullata o non completata sul telefono. Riprova.",
+    giaRegistrata: "Questa passkey è già registrata.",
+    dominio: "Il sito non corrisponde a quello per cui la passkey è stata creata.",
+    generico: "Verifica con la passkey non riuscita. Riprova.",
+  },
+  altroMetodo: "Usa un altro metodo",
+  scegliMetodo: "Scegli come verificare l’accesso:",
+  metodi: { passkey: "Passkey sul telefono", totp: "App di autenticazione", email: "Codice via email" },
 };
 
 export const TESTI_PASSWORD = {

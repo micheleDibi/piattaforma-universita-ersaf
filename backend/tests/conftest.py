@@ -35,6 +35,7 @@ if (destinazione.scheme != "mysql+pymysql"
 # default quel test non potrebbe esistere.
 os.environ.setdefault("PASSWORD_RESET_TOKEN_PEPPER", "pepper-di-test-reset-" + "r" * 32)
 os.environ.setdefault("SESSION_TOKEN_PEPPER", "pepper-di-test-sessione-" + "s" * 32)
+os.environ.setdefault("TOTP_CHIAVE", "chiave-di-test-totp-" + "t" * 32)
 
 # Un hash a costo 12 richiede ~250 ms: con decine di login la suite diventerebbe
 # inutilizzabile. Un solo test rialza il costo e verifica il prefisso $2b$12$.
@@ -44,6 +45,8 @@ os.environ.setdefault("EMAIL_BACKEND", "memoria")
 os.environ["SMS_BACKEND"] = "memoria"
 os.environ.setdefault("FRONTEND_BASE_URL", "https://test.example.org")
 os.environ.setdefault("CORS_ORIGINS", "https://test.example.org")
+os.environ.setdefault("WEBAUTHN_RP_ID", "test.example.org")
+os.environ.setdefault("WEBAUTHN_ORIGINI", "https://test.example.org")
 os.environ.setdefault("SMTP_HOST", "smtp.invalid")  # RFC 6761: non risolve mai
 os.environ.setdefault("PASSWORD_RESET_BUDGET_MS", "150")
 os.environ.setdefault("LOG_FILE", "")  # nessun file di log durante i test
@@ -62,6 +65,7 @@ SCHEMA_BASE = RADICE / "db" / "test" / "schema_base.sql"
 
 # Ordine figlio -> padre. `ruoli` non compare: e' lookup, non stato.
 TABELLE_DA_SVUOTARE = [
+    "auth_passkey", "auth_totp", "auth_mfa_utente",
     "otp_sfide", "otp_contatti", "otp_attivazioni", "otp_limiti",
     "auth_login_limite",
     "password_reset_token",

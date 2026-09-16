@@ -12,9 +12,12 @@ import itertools
 import uuid
 from dataclasses import dataclass
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from src.clienti.models import Cliente
+from src.otp.identita import versione
+from src.otp.models import ContattoVerificato
 from src.utenti.models import Utente
 
 _contatore = itertools.count(1)
@@ -158,3 +161,16 @@ def crea_utente_orfano(db: Session, **kwargs) -> Utente:
     """Utente SENZA riga `clienti`: nel dump sono 869, e sono quelli su cui
     /auth/login restituiva 500."""
     return crea_utente(db, **kwargs)
+
+
+def verifica_email(db: Session, cliente_id: int) -> None:
+    """Segna l'email del cliente come verificata nel protocollo OTP (otp_contatti),
+    come farebbe la conferma di un codice dalla scheda cliente. Senza questa
+    riga un Nazionale al login riceve il codice di verifica dell'email, non
+    l'OTP di login (ADR 0009)."""
+    cliente = db.get(Cliente, cliente_id)
+    db.merge(ContattoVerificato(
+        cliente_id=cliente_id, tipo="email", versione=versione(cliente, "email"),
+        verificato=db.scalar(select(func.now())),
+    ))
+    db.commit()

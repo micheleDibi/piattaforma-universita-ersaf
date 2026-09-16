@@ -4,7 +4,14 @@ import { STILI_ACCESSO as stili } from "../../config/styles/accesso.js";
 import { pulsante } from "../../config/styles/pulsante.js";
 import AlertMessage from "../AlertMessage.jsx";
 
-export default function ModuloOtp({ iniziale, operazioni, onVerificato, onAnnulla }) {
+/**
+ * Inserimento di un codice a sei cifre per una sfida gia' aperta.
+ *
+ * `nota` sostituisce la frase sul destinatario quando il codice non viene
+ * spedito (app di autenticazione); `reinvio={false}` toglie il pulsante di
+ * reinvio, che per quei metodi non ha senso.
+ */
+export default function ModuloOtp({ iniziale, operazioni, onVerificato, onAnnulla, nota, reinvio = true }) {
   const otp = useOtp({ iniziale, operazioni, onVerificato });
   const id = useId();
   return (
@@ -12,7 +19,7 @@ export default function ModuloOtp({ iniziale, operazioni, onVerificato, onAnnull
       onSubmit={(e) => { e.preventDefault(); e.stopPropagation(); void otp.esegui(Boolean(otp.sfida)); }}>
       <AlertMessage message={otp.errore ? { type: "error", text: otp.errore } : null} separato={false} />
       {otp.sfida ? <>
-        <p className={stili.nota}>Codice inviato a {otp.sfida.destinatario}. È valido per 10 minuti.</p>
+        <p className={stili.nota}>{nota ?? `Codice inviato a ${otp.sfida.destinatario}. È valido per 10 minuti.`}</p>
         <div>
           <label className={stili.etichetta} htmlFor={id}>Codice di verifica</label>
           <input id={id} autoFocus autoComplete="one-time-code" inputMode="numeric" pattern="[0-9]{6}"
@@ -22,10 +29,10 @@ export default function ModuloOtp({ iniziale, operazioni, onVerificato, onAnnull
         <button className={stili.azione} disabled={otp.occupato || otp.codice.length !== 6}>
           {otp.occupato ? "Verifica in corso…" : "Conferma codice"}
         </button>
-        <button type="button" className={pulsante("secondario", "grande", { larghezzaPiena: true })}
+        {reinvio && <button type="button" className={pulsante("secondario", "grande", { larghezzaPiena: true })}
           disabled={otp.occupato || otp.attesa > 0} onClick={() => void otp.esegui(false)}>
           {otp.attesa > 0 ? `Reinvia tra ${otp.attesa} s` : "Invia un nuovo codice"}
-        </button>
+        </button>}
       </> : <button className={stili.azione} disabled={otp.occupato || otp.attesa > 0}>
         {otp.occupato ? "Invio in corso…" : otp.attesa > 0 ? `Invia tra ${otp.attesa} s` : "Invia codice"}
       </button>}

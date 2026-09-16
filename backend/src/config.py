@@ -69,6 +69,9 @@ class Impostazioni(BaseSettings):
     # Default vuoto e NESSUN validator: Impostazioni() non solleva mai.
     password_reset_token_pepper: str = ""
     session_token_pepper: str = ""
+    # Cifra a riposo i segreti degli authenticator (ADR 0009). Perderla
+    # significa far riattivare tutti: va nel backup dei segreti del server.
+    totp_chiave: str = ""
 
     # --- recupero password --------------------------------------------------
     password_reset_token_ttl_minutes: int = 60
@@ -98,6 +101,14 @@ class Impostazioni(BaseSettings):
     bcrypt_cost: int = 12
     password_min_length: int = 8
 
+    # --- passkey (WebAuthn, ADR 0009) ---------------------------------------
+    # RP ID = il dominio, senza schema ne' porta: le passkey restano legate a
+    # questo valore. Le origini ammesse, separate da virgole, devono averlo
+    # come host o come suffisso di dominio. In collaudo unistaging.ersaf.it.
+    webauthn_rp_id: str = "localhost"
+    webauthn_origini: str = "http://localhost:5173"
+    webauthn_nome: str = "Piattaforma Università"
+
     # --- rete ---------------------------------------------------------------
     cors_origins: str = "http://localhost:5173"
 
@@ -126,6 +137,10 @@ class Impostazioni(BaseSettings):
     @property
     def lista_cors_origins(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def lista_webauthn_origini(self) -> list[str]:
+        return [o.strip().rstrip("/") for o in self.webauthn_origini.split(",") if o.strip()]
 
     def _percorso(self, valore: str) -> Path:
         p = Path(valore)
@@ -180,6 +195,12 @@ def verifica_configurazione(imp: Impostazioni | None = None) -> None:
         "PASSWORD_RESET_TOKEN_PEPPER", imp.password_reset_token_pepper
     )
     problemi += _problemi_pepper("SESSION_TOKEN_PEPPER", imp.session_token_pepper)
+    problemi += _problemi_pepper("TOTP_CHIAVE", imp.totp_chiave)
+    if imp.totp_chiave and imp.totp_chiave in (imp.password_reset_token_pepper, imp.session_token_pepper):
+        problemi.append(
+            "TOTP_CHIAVE deve essere diversa dai pepper: cifra i segreti degli "
+            "authenticator, non firma token"
+        )
 
     if (
         imp.password_reset_token_pepper
@@ -228,6 +249,24 @@ def verifica_configurazione(imp: Impostazioni | None = None) -> None:
         problemi.append("LOGIN_ATTESA_MASSIMA_SECONDI non puo' superare la finestra")
     if "*" in imp.lista_cors_origins:
         problemi.append("CORS_ORIGINS deve elencare origini esplicite per le sessioni cookie")
+
+    rp_id = imp.webauthn_rp_id.strip().lower()
+    if not rp_id or "/" in rp_id or ":" in rp_id:
+        problemi.append("WEBAUTHN_RP_ID deve essere un nome di dominio, senza schema ne' porta")
+    if not imp.lista_webauthn_origini:
+        problemi.append("WEBAUTHN_ORIGINI deve elencare almeno un'origine")
+    for origine in imp.lista_webauthn_origini:
+        parti = urlsplit(origine)
+        host = (parti.hostname or "").lower()
+        if parti.scheme not in ("http", "https") or not host:
+            problemi.append(f"WEBAUTHN_ORIGINI: '{origine}' non e' un'origine http(s)")
+        elif rp_id and host != rp_id and not host.endswith("." + rp_id):
+            problemi.append(
+                f"WEBAUTHN_ORIGINI: l'host di '{origine}' non appartiene al dominio "
+                f"WEBAUTHN_RP_ID={imp.webauthn_rp_id}: le passkey non funzionerebbero"
+            )
+        elif parti.scheme == "http" and host not in {"localhost", "127.0.0.1", "::1"}:
+            problemi.append("WEBAUTHN_ORIGINI: le passkey richiedono HTTPS fuori da localhost")
     frontend = urlsplit(imp.frontend_base_url)
     if frontend.scheme == "http" and frontend.hostname not in {"localhost", "127.0.0.1", "::1"}:
         problemi.append("Le sessioni cookie richiedono HTTPS; HTTP e' ammesso solo su loopback")

@@ -10,4 +10,4 @@ export const QUERY_PRODOTTI = { ricerca: testo(), universita: testo("Tutte le un
 export const QUERY_PRATICHE = { ricerca: testo(), stato: id, percorso: id,
   studenti: { predefinito: [], leggi: valori => [...new Set(valori.filter(idValido))].slice(0, 100).map(Number) } };
 export const QUERY_ANAGRAFICA = { scheda: scelta(["dati-principali", "curriculum", "utente", "esami", "prevalutazioni"], "dati-principali") };
-export const QUERY_PROFILO = { scheda: scelta(["dati-principali", "utente"], "dati-principali") };
+export const QUERY_PROFILO = { scheda: scelta(["dati-principali", "utente", "sicurezza"], "dati-principali") };

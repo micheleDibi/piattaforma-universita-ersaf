@@ -2,8 +2,9 @@ import { Award, Building2, Check, Circle, GraduationCap, MapPin, User, UserCog, 
 
 export {
   ArrowLeft, ArrowUpFromLine, Award, Building2, ChevronRight, CircleAlert, CircleCheck, CircleUserRound,
-  Eye, EyeOff, FileText, GraduationCap, Info, LayoutDashboard, LoaderCircle,
-  LogOut, MapPin, Menu, Pencil, Plus, Search, SlidersHorizontal, Trash2, TriangleAlert, User, UserCog, Users,
+  Eye, EyeOff, FileText, GraduationCap, Info, KeyRound, LayoutDashboard, LoaderCircle,
+  LogOut, Mail, MapPin, Menu, Pencil, Plus, Search, SlidersHorizontal, Smartphone, Trash2, TriangleAlert,
+  User, UserCog, Users,
 } from "lucide-react";
 export { Check, Circle, X };
 
