@@ -83,7 +83,7 @@ export default function PannelloPratiche() {
             <h2 className="text-blue-700 font-semibold mb-3">
               {blocco.titolo}
             </h2>
-            <div className="flex gap-6 items-start">
+            <div className="flex gap-6 items-center">
               <img
                 src={blocco.logo}
                 alt={blocco.titolo}

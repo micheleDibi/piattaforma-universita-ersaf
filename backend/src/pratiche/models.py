@@ -314,6 +314,8 @@ class PraticaResponse(PraticaBase):
     cliente_nome_completo: Optional[str] = None
     pratica_stato_descrizione: Optional[str] = None
     listTesta_descrizione: Optional[str] = None
+    nome_universita_descrizione: Optional[str] = None
+    listino_tipoCorso_descrizione: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -336,5 +338,13 @@ class PraticaResponse(PraticaBase):
         listino_obj = getattr(data, "listino_testa", None)
         if listino_obj:
             item_dict["listTesta_descrizione"] = listino_obj.listTesta_descrizione
+
+        universita_obj = getattr(data, "universita", None)  
+        if universita_obj:
+            item_dict["nome_universita_descrizione"] = universita_obj.nome_universita_descrizione
+
+        tipo_corso_obj = getattr(data, "tipo_corso", None) 
+        if tipo_corso_obj:
+            item_dict["listino_tipoCorso_descrizione"] = tipo_corso_obj.listino_tipoCorso_descrizione
 
         return item_dict

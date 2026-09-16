@@ -1,6 +1,6 @@
 import { campo } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
-import { STUDENTI_PRATICHE, PERCORSI_PRATICHE } from "../config/filtriPratiche";
+import { STUDENTI_PRATICHE } from "../config/filtriPratiche";
 import SelezioneRicercabile from "./shared/SelezioneRicercabile";
 
 export default function FiltriPratiche({ filtri }) {
@@ -10,6 +10,16 @@ export default function FiltriPratiche({ filtri }) {
 
   return (
     <>
+      <label className="filtri-elenco__campo">
+        Numero pratica
+        <input
+          type="text"
+          className={campo()}
+          value={filtri.numeroPratica}
+          onChange={(e) => filtri.setNumeroPratica(e.target.value)}
+          placeholder="Cerca per numero pratica"
+        />
+      </label>
       <label className="filtri-elenco__campo">
         Stato
         <select
@@ -65,11 +75,6 @@ export default function FiltriPratiche({ filtri }) {
         configurazione={STUDENTI_PRATICHE}
         selezionati={filtri.studenti}
         onCambia={filtri.setStudenti}
-      />
-      <SelezioneRicercabile
-        configurazione={PERCORSI_PRATICHE}
-        selezionati={filtri.percorso ? [filtri.percorso] : []}
-        onCambia={(scelte) => filtri.setPercorso(scelte[0] ?? null)}
       />
     </>
   );

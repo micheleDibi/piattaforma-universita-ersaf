@@ -26,6 +26,8 @@ _RELAZIONI_ELENCO = (
     joinedload(Pratica.cliente),
     joinedload(Pratica.stato),
     joinedload(Pratica.listino_testa),
+    joinedload(Pratica.universita),
+    joinedload(Pratica.tipo_corso),
 )
 
 
@@ -68,7 +70,8 @@ def crea_pratica(pratica_in: PraticaCreate, db: Session = Depends(get_db)):
 @router.get("/", response_model=List[PraticaResponse])
 def lista_pratiche(filtri: Annotated[FiltriPratiche, Query()], db: Session = Depends(get_db)):
     return (query_filtrata(db, filtri).options(*_RELAZIONI_ELENCO)
-            .order_by(Pratica.pratica_id.desc()).offset(filtri.skip).limit(filtri.limit).all())
+            .order_by(Pratica.pratica_dataCreazione.desc(), Pratica.pratica_id.desc())
+            .offset(filtri.skip).limit(filtri.limit).all())
 
 
 # GET BY ID

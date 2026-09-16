@@ -21,8 +21,8 @@ export const QUERY_PRODOTTI = {
 };
 export const QUERY_PRATICHE = {
   ricerca: testo(),
+  numeroPratica: testo(),
   stato: id,
-  percorso: id,
   studenti: {
     predefinito: [],
     leggi: (valori) =>
