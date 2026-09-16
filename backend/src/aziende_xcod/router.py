@@ -1,5 +1,10 @@
+"""Endpoint di lettura e modifica del padre di un'azienda nella gerarchia
+aziende_xcod. Lista/ricerca/dettaglio delle aziende in se' vivono in
+src.aziende.routers; qui sta solo cio' che riguarda l'arco padre-figlia."""
+
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import datetime
 
@@ -9,7 +14,13 @@ from src.database import get_db
 from src.aziende.models import Azienda
 from src.aziende_xcod.models import AziendaXCod
 from src.aziende_xcod.schemas import AziendaXCodResponse, AziendaXCodCambiaPadre
-from src.aziende_xcod.servizi import discendenti_ids
+from src.aziende_xcod.servizi import (
+    discendenti_ids,
+    calcola_cascata_percentuali,
+    applica_cascata_percentuali,
+    descrivi_cascata,
+    valori_percentuali_di,
+)
 
 router = APIRouter(
     prefix="/aziende-xcod",
@@ -31,10 +42,11 @@ def leggi_padre(azienda_id: int, db: Session = Depends(get_db)):
     )
 
 
-@router.put("/{azienda_id}/padre", response_model=AziendaXCodResponse)
+@router.put("/{azienda_id}/padre")
 def cambia_padre(
     azienda_id: int,
     dati: AziendaXCodCambiaPadre,
+    conferma_reset: bool = Query(False),
     db: Session = Depends(get_db),
     utente_corrente=Depends(get_current_utente),
 ):
@@ -57,6 +69,22 @@ def cambia_padre(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Il nuovo padre è un discendente di questa azienda: creerebbe un ciclo.",
             )
+
+    # Regola 1 (reset a 0 invece del blocco): si simula lo spostamento sotto
+    # il NUOVO padre e si propaga a cascata sui discendenti. Se qualcosa
+    # andrebbe azzerato, si chiede conferma prima di scrivere qualunque
+    # cosa - sia il reset che il cambio padre stesso.
+    valori_attuali = valori_percentuali_di(db, azienda_id)
+    cascata = calcola_cascata_percentuali(db, azienda_id, valori_attuali, padre_id=nuovo_padre_id)
+
+    if cascata and not conferma_reset:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={"richiede_conferma": True, "reset": descrivi_cascata(db, cascata)},
+        )
+
+    if cascata:
+        applica_cascata_percentuali(db, azienda_id, valori_attuali, cascata)
 
     ora = datetime.datetime.utcnow()
     arco = (
@@ -82,4 +110,4 @@ def cambia_padre(
 
     db.commit()
     db.refresh(arco)
-    return arco
+    return AziendaXCodResponse.model_validate(arco).model_dump()

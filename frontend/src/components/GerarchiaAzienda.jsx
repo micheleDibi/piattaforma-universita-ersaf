@@ -4,6 +4,7 @@ import { leggiRuolo } from "../lib/sessione";
 import { pulsante } from "../config/styles/pulsante";
 import { etichetta as classiEtichetta } from "../config/styles/campo";
 import ModalCambiaPadreAzienda from "./ModalCambiaPadreAzienda.jsx";
+import AlertMessage from "./AlertMessage.jsx";
 
 export default function GerarchiaAzienda({ aziendaId }) {
   // undefined = in caricamento, null = nessun padre (azienda radice)
@@ -46,19 +47,42 @@ export default function GerarchiaAzienda({ aziendaId }) {
 
   // Niente <form>/onSubmit: questo componente vive dentro il <form> di
   // SchedaAzienda.jsx, e React non gestisce form annidati.
-  const cambiaPadre = async (aziendaSelezionata) => {
+  const cambiaPadre = async (aziendaSelezionata, conferma = false) => {
     setModaleAperta(false);
     setSalvataggio(true);
     setMessaggioSalvataggio("");
     try {
-      const risposta = await apiFetch(`/aziende-xcod/${aziendaId}/padre`, {
-        method: "PUT",
-        body: JSON.stringify({
-          nuovo_padre_id: aziendaSelezionata
-            ? aziendaSelezionata.azienda_id
-            : null,
-        }),
-      });
+      const query = conferma ? "?conferma_reset=true" : "";
+      const risposta = await apiFetch(
+        `/aziende-xcod/${aziendaId}/padre${query}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            nuovo_padre_id: aziendaSelezionata
+              ? aziendaSelezionata.azienda_id
+              : null,
+          }),
+        },
+      );
+
+      if (risposta.status === 409) {
+        const { reset } = await risposta.json();
+        const elenco = reset
+          .map(
+            (r) =>
+              `- ${r.azienda_ragione_sociale ?? `Azienda #${r.azienda_id}`}: ${r.campi.join(", ")}`,
+          )
+          .join("\n");
+        if (
+          window.confirm(
+            `Questa operazione azzererà le seguenti percentuali:\n\n${elenco}\n\nContinuare?`,
+          )
+        ) {
+          return cambiaPadre(aziendaSelezionata, true);
+        }
+        return;
+      }
+
       if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
       caricaPadre();
     } catch (err) {

@@ -217,17 +217,40 @@ export default function SchedaAziendaAttuatori({
     }));
   };
 
-  const salvaDettaglio = async () => {
+  const salvaDettaglio = async (conferma = false) => {
     setErrore("");
     setSalvataggioPercentuali(true);
     try {
       const corpo = Object.fromEntries(
         CAMPI_PERCENTUALI.map(([chiave]) => [chiave, dettaglio?.[chiave] ?? 0]),
       );
-      const risposta = await apiFetch(`/aziende/${aziendaId}/dettagli`, {
-        method: "PUT",
-        body: JSON.stringify(corpo),
-      });
+      const query = conferma ? "?conferma_reset=true" : "";
+      const risposta = await apiFetch(
+        `/aziende/${aziendaId}/dettagli${query}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(corpo),
+        },
+      );
+
+      if (risposta.status === 409) {
+        const { reset } = await risposta.json();
+        const elenco = reset
+          .map(
+            (r) =>
+              `- ${r.azienda_ragione_sociale ?? `Azienda #${r.azienda_id}`}: ${r.campi.join(", ")}`,
+          )
+          .join("\n");
+        if (
+          window.confirm(
+            `Questa operazione azzererà le seguenti percentuali:\n\n${elenco}\n\nContinuare?`,
+          )
+        ) {
+          return salvaDettaglio(true);
+        }
+        return;
+      }
+
       if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
       setDettaglio(await leggiJson(risposta));
     } catch (err) {
@@ -363,7 +386,7 @@ export default function SchedaAziendaAttuatori({
                   non deve inviare il form del cliente */}
               <button
                 type="button"
-                onClick={salvaDettaglio}
+                onClick={() => salvaDettaglio()}
                 disabled={salvataggioPercentuali}
                 className={pulsante("primario", "grande")}
               >
