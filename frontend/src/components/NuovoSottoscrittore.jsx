@@ -29,13 +29,16 @@ function NuovoSottoscrittore({ tipoUtente }) {
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
 
-  const [{ scheda: activeTab }, aggiornaQuery] = useQueryPagina(QUERY_ANAGRAFICA);
-  const setActiveTab = scheda => aggiornaQuery({ scheda }, { replace: false });
+  const [{ scheda: activeTab }, aggiornaQuery] =
+    useQueryPagina(QUERY_ANAGRAFICA);
+  const setActiveTab = (scheda) =>
+    aggiornaQuery({ scheda }, { replace: false });
   const pannello = useIngresso(activeTab);
 
   const labelTitolo =
     tipoUtente === "attuatore" ? "Attuatore" : "Sottoscrittore";
-  const risorsa = tipoUtente === "attuatore" ? PERCORSI.attuatori : PERCORSI.sottoscrittori;
+  const risorsa =
+    tipoUtente === "attuatore" ? PERCORSI.attuatori : PERCORSI.sottoscrittori;
   const { ritorno: rottaElenco } = useNavigazioneElenco(risorsa.elenco);
 
   const [lettura, setLettura] = useState({ loading: isEditMode, errore: null });
@@ -45,7 +48,11 @@ function NuovoSottoscrittore({ tipoUtente }) {
     if (isEditMode) {
       apiFetch(`/clienti/${id}`)
         .then((res) => {
-          if (!res.ok) throw Object.assign(new Error("Impossibile caricare l’anagrafica."), { status: res.status });
+          if (!res.ok)
+            throw Object.assign(
+              new Error("Impossibile caricare l’anagrafica."),
+              { status: res.status },
+            );
           return res.json();
         })
         .then((data) => {
@@ -107,7 +114,7 @@ function NuovoSottoscrittore({ tipoUtente }) {
           }));
         })
         .then(() => setLettura({ loading: false, errore: null }))
-        .catch(errore => setLettura({ loading: false, errore }));
+        .catch((errore) => setLettura({ loading: false, errore }));
     }
   }, [id, isEditMode]);
 
@@ -230,7 +237,10 @@ function NuovoSottoscrittore({ tipoUtente }) {
       }
 
       const creato = await leggiJson(response);
-      navigate(risorsa.dettaglio(creato.cliente_id), { replace: true, state: { elenco: rottaElenco } });
+      navigate(risorsa.dettaglio(creato.cliente_id), {
+        replace: true,
+        state: { elenco: rottaElenco },
+      });
     } catch (error) {
       console.error("Errore:", error);
       alert(error.message);
@@ -259,7 +269,8 @@ function NuovoSottoscrittore({ tipoUtente }) {
   };
 
   if (lettura.errore?.status === 404) return <PaginaNonTrovata />;
-  if (lettura.loading || lettura.errore) return <StatoCaricamentoDettaglio {...lettura} ritorno={rottaElenco} />;
+  if (lettura.loading || lettura.errore)
+    return <StatoCaricamentoDettaglio {...lettura} ritorno={rottaElenco} />;
 
   return (
     <div className={contenutoPagina("modulo")}>

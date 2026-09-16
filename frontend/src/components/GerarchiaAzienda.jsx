@@ -13,6 +13,9 @@ export default function GerarchiaAzienda({ aziendaId }) {
   const [salvataggio, setSalvataggio] = useState(false);
   const [messaggioSalvataggio, setMessaggioSalvataggio] = useState("");
   const [modaleAperta, setModaleAperta] = useState(false);
+  // undefined = nessuna conferma in sospeso. Puo' contenere null (valore
+  // valido: "rendi radice") o un oggetto azienda selezionata dal modale.
+  const [azionePendente, setAzionePendente] = useState(undefined);
 
   const eNazionale = leggiRuolo() === "nazionale";
 
@@ -66,24 +69,12 @@ export default function GerarchiaAzienda({ aziendaId }) {
       );
 
       if (risposta.status === 409) {
-        const { reset } = await risposta.json();
-        const elenco = reset
-          .map(
-            (r) =>
-              `- ${r.azienda_ragione_sociale ?? `Azienda #${r.azienda_id}`}: ${r.campi.join(", ")}`,
-          )
-          .join("\n");
-        if (
-          window.confirm(
-            `Questa operazione azzererà le seguenti percentuali:\n\n${elenco}\n\nContinuare?`,
-          )
-        ) {
-          return cambiaPadre(aziendaSelezionata, true);
-        }
+        setAzionePendente(aziendaSelezionata ?? null);
         return;
       }
 
       if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
+      setAzionePendente(undefined);
       caricaPadre();
     } catch (err) {
       setMessaggioSalvataggio(err.message);
@@ -119,6 +110,35 @@ export default function GerarchiaAzienda({ aziendaId }) {
 
       {messaggioSalvataggio && (
         <p className="mt-2 text-sm text-negativo">{messaggioSalvataggio}</p>
+      )}
+
+      {azionePendente !== undefined && (
+        <div className="mt-3 flex items-center justify-between gap-4 rounded-controllo border border-bordo p-3">
+          <AlertMessage
+            message={{
+              type: "warning",
+              text: "Alcune percentuali verranno azzerate. Continuare?",
+            }}
+            separato={false}
+          />
+          <div className="flex shrink-0 gap-3">
+            <button
+              type="button"
+              onClick={() => cambiaPadre(azionePendente, true)}
+              disabled={salvataggio}
+              className={pulsante("primario", "piccolo")}
+            >
+              Conferma
+            </button>
+            <button
+              type="button"
+              onClick={() => setAzionePendente(undefined)}
+              className={pulsante("discreto", "piccolo")}
+            >
+              Annulla
+            </button>
+          </div>
+        </div>
       )}
 
       <ModalCambiaPadreAzienda
