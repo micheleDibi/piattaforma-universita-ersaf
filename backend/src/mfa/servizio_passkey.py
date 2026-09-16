@@ -27,6 +27,7 @@ from webauthn.helpers.exceptions import InvalidAuthenticationResponse, InvalidRe
 from webauthn.helpers.structs import (
     AttestationConveyancePreference,
     AuthenticatorAttachment,
+    PublicKeyCredentialHint,
     AuthenticatorSelectionCriteria,
     PublicKeyCredentialDescriptor,
     ResidentKeyRequirement,
@@ -92,6 +93,10 @@ def opzioni_registrazione(db, cliente, utente, token: str) -> dict:
             user_verification=UserVerificationRequirement.REQUIRED,
         ),
         exclude_credentials=[PublicKeyCredentialDescriptor(id=p.pk_credential_id) for p in attive(db, utente.utente_id)],
+        # Con il solo `cross-platform` Windows apre la finestra sulla chiave USB e
+        # il telefono sta dietro "Cambia"; `hybrid` fa partire dal QR i browser
+        # che lo capiscono, gli altri lo ignorano.
+        hints=[PublicKeyCredentialHint.HYBRID],
     )
     return json.loads(options_to_json(opzioni))
 
@@ -130,7 +135,8 @@ def opzioni_autenticazione(db, utente, token: str) -> dict:
         allow_credentials=[PublicKeyCredentialDescriptor(id=p.pk_credential_id) for p in attive(db, utente.utente_id)],
         user_verification=UserVerificationRequirement.REQUIRED,
     )
-    return json.loads(options_to_json(opzioni))
+    # La libreria non ha ancora `hints` per l'autenticazione: si aggiunge al JSON.
+    return {**json.loads(options_to_json(opzioni)), "hints": [PublicKeyCredentialHint.HYBRID.value]}
 
 
 def autentica(db, utente, token: str, credenziale: dict) -> AuthPasskey | None:

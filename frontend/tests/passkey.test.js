@@ -32,9 +32,10 @@ test("senza PublicKeyCredential il browser non supporta le passkey", () => {
 });
 
 test("le opzioni del server diventano ArrayBuffer per il browser", () => {
-  const creazione = opzioniCreazione({ challenge: b64url.a(new Uint8Array([9, 8, 7])), rp: { id: "ersaf.example" },
+  const creazione = opzioniCreazione({ challenge: b64url.a(new Uint8Array([9, 8, 7])), rp: { id: "ersaf.example" }, hints: ["hybrid"],
     user: { id: b64url.a(new Uint8Array([1, 2])), name: "collaudo.prova" }, excludeCredentials: [{ id: b64url.a(new Uint8Array([5])), type: "public-key" }] });
   assert.deepEqual([...creazione.challenge], [9, 8, 7]);
+  assert.deepEqual(creazione.hints, ["hybrid"]);  // i suggerimenti passano intatti al browser
   assert.deepEqual([...creazione.user.id], [1, 2]);
   assert.deepEqual([...creazione.excludeCredentials[0].id], [5]);
   const richiesta = opzioniRichiesta({ challenge: b64url.a(new Uint8Array([3])), rpId: "ersaf.example", allowCredentials: [] });

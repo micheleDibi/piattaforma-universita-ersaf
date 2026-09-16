@@ -46,7 +46,7 @@ export const TESTI_SICUREZZA = {
     rimuovi: "Rimuovi",
     nonSupportata: "Questo browser non supporta le passkey.",
     passoPassword: "Conferma la tua password per iniziare.",
-    passoTelefono: "Il browser ti mostrerà un codice: inquadralo con il telefono e conferma con impronta, volto o PIN. Servono Bluetooth acceso e connessione su entrambi.",
+    passoTelefono: "Il browser ti mostrerà un codice da inquadrare con il telefono, poi confermi con impronta, volto o PIN. Se Windows propone una chiave USB, premi Cambia e scegli il telefono. Servono Bluetooth acceso su entrambi e connessione a internet.",
     avvia: "Continua con il telefono",
     passoNome: "Fatto. Dai un nome a questa passkey per riconoscerla.",
     nome: "Nome della passkey",

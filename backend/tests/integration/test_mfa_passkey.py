@@ -60,6 +60,7 @@ def test_registrazione_dal_profilo_e_login_con_la_passkey(client, db, mailer):
     assert opzioni["rp"]["id"] == "test.example.org"
     assert opzioni["authenticatorSelection"]["authenticatorAttachment"] == "cross-platform"
     assert opzioni["authenticatorSelection"]["userVerification"] == "required"
+    assert opzioni["hints"] == ["hybrid"]  # Windows parte dal telefono, non dalla chiave USB
     assert opzioni["user"]["name"] == persona.username
     assert [p["nome"] for p in stato["passkey"]] == ["iPhone di prova"]
     assert stato["passkey"][0]["sincronizzata"] is True
@@ -71,6 +72,7 @@ def test_registrazione_dal_profilo_e_login_con_la_passkey(client, db, mailer):
     assert sfida["metodo"] == "passkey" and sfida["metodi"] == ["passkey", "email"]
     assert [c["id"] for c in sfida["opzioni"]["allowCredentials"]] == [b64url(telefono.credential_id)]
     assert sfida["opzioni"]["rpId"] == "test.example.org"
+    assert sfida["opzioni"]["hints"] == ["hybrid"]
 
     entrata = client.post("/auth/mfa/verifica-passkey", json={
         "sfida": sfida["sfida"], "credenziale": telefono.autentica(sfida["opzioni"], ORIGINE),

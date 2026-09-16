@@ -29,7 +29,7 @@ export const TESTI_ACCESSO = {
   passkey: {
     usa: "Usa la passkey sul telefono",
     inCorso: "In attesa del telefono…",
-    istruzioni: "Il browser ti mostrerà un codice da inquadrare, oppure una notifica se il telefono è già collegato. Conferma con impronta, volto o PIN.",
+    istruzioni: "Il browser ti mostrerà un codice da inquadrare, oppure una notifica se il telefono è già collegato. Se Windows propone una chiave USB, premi Cambia e scegli il telefono. Conferma con impronta, volto o PIN.",
     nonSupportata: "Questo browser non supporta le passkey: scegli un altro metodo.",
     annullata: "Operazione annullata o non completata sul telefono. Riprova.",
     giaRegistrata: "Questa passkey è già registrata.",
