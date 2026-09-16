@@ -6,6 +6,7 @@ import PasswordDimenticata from "./components/PasswordDimenticata";
 import ReimpostaPassword from "./components/ReimpostaPassword";
 import GuscioApplicazione from "./components/shell/GuscioApplicazione";
 import RichiediSessione from "./components/shell/RichiediSessione";
+import SoloOspiti from "./components/shell/SoloOspiti";
 import Dashboard from "./components/Dashboard";
 import MioProfilo from "./components/MioProfilo";
 import ElencoClienti from "./components/ElencoClienti";
@@ -24,8 +25,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Pagine pubbliche, fuori dal guscio. */}
-        <Route path={ROTTE.accesso} element={<Login />} />
+        {/* Pagine pubbliche, fuori dal guscio; il login rimanda dentro chi ha una sessione valida. */}
+        <Route path={ROTTE.accesso} element={<SoloOspiti><Login /></SoloOspiti>} />
         <Route path={ROTTE.recuperoPassword} element={<PasswordDimenticata />} />
         <Route path={ROTTE.reimpostaPassword} element={<ReimpostaPassword />} />
 

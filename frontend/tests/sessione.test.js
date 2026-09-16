@@ -1,6 +1,6 @@
 import { beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
-import { accedi } from "../src/lib/accesso.js";
+import { accedi, sessioneEsistente } from "../src/lib/accesso.js";
 import { operazioniAccessoOtp, operazioniContattoOtp } from "../src/lib/otp.js";
 import { apiFetch, caricaSessione, messaggioErrore } from "../src/lib/api.js";
 import { logout } from "../src/lib/logout.js";
@@ -145,4 +145,26 @@ test("ritorno rifiuta URL esterni, pagine pubbliche e caratteri ambigui", () => 
 test("422 mantiene i dettagli dei campi nelle altre pagine", async () => {
   const risposta = json({ detail: [{ loc: ["body", "email"], msg: "Campo richiesto" }] }, 422);
   assert.equal(await messaggioErrore(risposta), "email: Campo richiesto");
+});
+
+test("chi riapre il sito con il cookie valido non rivede il form di accesso", async () => {
+  risposte.push(json(dati));
+  assert.equal(await sessioneEsistente(), true);
+  assert.ok(richieste[0].url.endsWith("/auth/session"));
+  assert.equal(richieste[0].credentials, "include");
+  assert.equal(haSessione(), true);
+  assert.equal(redirect.length, 0, "nessun rimbalzo al login");
+});
+
+test("senza cookie valido il form di accesso resta disponibile, senza rimbalzi", async () => {
+  risposte.push(json({ detail: "Sessione non valida o scaduta" }, 401));
+  assert.equal(await sessioneEsistente(), false);
+  assert.equal(haSessione(), false);
+  assert.equal(redirect.length, 0);
+});
+
+test("con la rete giu' la pagina di accesso mostra comunque il form", async () => {
+  risposte.push(new TypeError("Failed to fetch"));
+  assert.equal(await sessioneEsistente(), false);
+  assert.equal(haSessione(), false);
 });
