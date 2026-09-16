@@ -10,6 +10,7 @@ from src.otp.invio import genera_e_invia
 from src.otp.attivazione import prepara_attivazione, comunica_accesso
 from src.otp.schemas import ConfermaSfida
 from src.security.rete import ip_client
+from src.otp.models import ContattoVerificato
 
 router = APIRouter(prefix="/clienti", dependencies=[Depends(get_current_utente)])
 Tipo = Literal["email", "cellulare"]
@@ -20,11 +21,15 @@ class InvioContatto(BaseModel):
 
 
 def stato_contatti(db, cliente, utente):
-    return {tipo: {"valore": getattr(cliente, "cliente_" + tipo) or "",
-                   "verificato": gia_verificato(db, cliente, tipo)} for tipo in ("email", "cellulare")} | {
+    righe = {r.tipo: r for r in db.query(ContattoVerificato)
+             .filter(ContattoVerificato.cliente_id == cliente.cliente_id).all()}
+    return {tipo: {
+        "valore": getattr(cliente, "cliente_" + tipo) or "",
+        "verificato": gia_verificato(db, cliente, tipo),
+        "verificato_il": righe[tipo].verificato.isoformat() if tipo in righe else None,
+    } for tipo in ("email", "cellulare")} | {
         "attivazione": "in_attesa" if db.get(Attivazione, utente.utente_id) else
                        "attivo" if utente.utente_attivoSN == -1 else "disattivato"}
-
 
 @router.get("/{cliente_id}/contatti")
 def stato(cliente_id: int, db: Session = Depends(get_db)):

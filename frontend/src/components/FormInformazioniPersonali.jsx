@@ -5,14 +5,10 @@ import { titoloSezione } from "../config/styles/superficie";
 export default function FormInformazioniPersonali({ formData, handleChange }) {
   return (
     <div className="space-y-4">
-      <h3 className={titoloSezione()}>
-        Informazioni Personali
-      </h3>
+      <h3 className={titoloSezione()}>Informazioni Personali</h3>
 
       <div>
-        <label className={etichetta()}>
-          Codice Fiscale
-        </label>
+        <label className={etichetta()}>Codice Fiscale</label>
         <input
           type="text"
           name="codiceFiscale"
@@ -23,16 +19,16 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
       </div>
 
       <div>
-        <label className={etichetta()}>
-          Genere
-        </label>
+        <label className={etichetta()}>Genere</label>
         <select
           name="genere"
           value={formData.genere}
           onChange={handleChange}
           className={`${campo("comodo")} transition`}
         >
-          <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.genere}</option>
+          <option value="" data-segnaposto>
+            {SEGNAPOSTI_SELEZIONE.genere}
+          </option>
           <option value="uomo">uomo</option>
           <option value="donna">donna</option>
         </select>
@@ -41,7 +37,7 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className={etichetta()}>
-            Nome
+            Nome <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -49,11 +45,12 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
             value={formData.nome}
             onChange={handleChange}
             className={`${campo("comodo")} transition`}
+            required
           />
         </div>
         <div>
           <label className={etichetta()}>
-            Cognome
+            Cognome <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -61,13 +58,14 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
             value={formData.cognome}
             onChange={handleChange}
             className={`${campo("comodo")} transition`}
+            required
           />
         </div>
       </div>
 
       <div>
         <label className={etichetta()}>
-          Cittadinanza
+          Cittadinanza <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -75,13 +73,14 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
           value={formData.cittadinanza}
           onChange={handleChange}
           className={`${campo("comodo")} transition`}
+          required
         />
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div className="col-span-2">
           <label className={etichetta()}>
-            Luogo di Nascita
+            Luogo di Nascita <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -89,12 +88,11 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
             value={formData.luogoDiNascita}
             onChange={handleChange}
             className={`${campo("comodo")} transition`}
+            required
           />
         </div>
         <div>
-          <label className={etichetta()}>
-            Prov.
-          </label>
+          <label className={etichetta()}>Prov.</label>
           <input
             type="text"
             name="provDiNascita"
@@ -107,7 +105,7 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
 
       <div>
         <label className={etichetta()}>
-          Data di Nascita
+          Data di Nascita <span className="text-red-500">*</span>
         </label>
         <input
           type="date"
@@ -115,6 +113,7 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
           value={formData.dataDiNascita}
           onChange={handleChange}
           className={`${campo("comodo")} transition`}
+          required
         />
       </div>
     </div>

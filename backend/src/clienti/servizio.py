@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from src.auth.models import ATTIVO
 from src.clienti.models import Cliente
+from src.ruolo.models import Ruolo
 from src.security.password import (
     hash_password,
     verifica_policy_password,
@@ -42,8 +43,10 @@ class TipoUtente(str, Enum):
     ATTUATORE = "attuatore"
 
 
+# cliente_codice non compare piu' qui: e' generato dal backend a partire da
+# cliente_id (vedi crea_cliente_con_utente) e quindi unico per definizione.
 CAMPI_UNIVOCI_CLIENTE = (
-    ("cliente_codice", "Esiste già un cliente con questo codice."),
+    ("cliente_codice_fiscale", "Esiste già un cliente con questo codice fiscale."),
     ("cliente_email", "Esiste già un cliente registrato con questa email."),
     ("cliente_telefono", "Esiste già un cliente con questo numero di telefono."),
     ("cliente_cellulare", "Esiste già un cliente con questo numero di cellulare."),
@@ -65,7 +68,14 @@ ABILITAZIONI_SEMPRE_SPENTE = ("cliente_abilitazione_corsi_speciali",)
 # =============================================================================
 # Unicita'
 # =============================================================================
-def verifica_unicita_anagrafica(db: Session, dati: dict[str, Any]) -> None:
+def verifica_unicita_anagrafica(
+    db: Session, dati: dict[str, Any], escludi_cliente_id: int | None = None
+) -> None:
+    """Controlla l'unicita' dei campi sensibili.
+
+    escludi_cliente_id va passato dal PUT per non far scattare il conflitto
+    confrontando il cliente con se stesso quando non cambia nulla.
+    """
     condizioni = [
         getattr(Cliente, attributo) == dati[attributo]
         for attributo, _ in CAMPI_UNIVOCI_CLIENTE
@@ -74,7 +84,11 @@ def verifica_unicita_anagrafica(db: Session, dati: dict[str, Any]) -> None:
     if not condizioni:
         return
 
-    for esistente in db.query(Cliente).filter(or_(*condizioni)).all():
+    query = db.query(Cliente).filter(or_(*condizioni))
+    if escludi_cliente_id is not None:
+        query = query.filter(Cliente.cliente_id != escludi_cliente_id)
+
+    for esistente in query.all():
         for attributo, messaggio in CAMPI_UNIVOCI_CLIENTE:
             atteso = dati.get(attributo)
             if atteso and getattr(esistente, attributo) == atteso:
@@ -173,7 +187,9 @@ def payload_cliente(
         chiave: valore
         for chiave, valore in dati.items()
         if chiave not in CAMPI_UNIVERSITA
-        and chiave not in {"utente_username", "utente_password"}
+        # cliente_codice escluso a prescindere da cio' che manda il client:
+        # lo decide solo il backend, dopo il flush, da cliente_id.
+        and chiave not in {"utente_username", "utente_password", "cliente_codice"}
         and valore is not None
     }
     payload["utente_id"] = utente_id
@@ -217,11 +233,23 @@ def crea_cliente_con_utente(
         db, dati["cliente_nome"], dati["cliente_cognome"], autore_id
     )
 
+    if tipo_utente is TipoUtente.ATTUATORE and not dati.get("cliente_ruolo"):
+        ruolo_aderente = db.query(Ruolo).filter(Ruolo.ruolo_codice == "Aderente").first()
+        if ruolo_aderente:
+            dati["cliente_ruolo"] = ruolo_aderente.ruolo_id
+
     nuovo_cliente = Cliente(
         **payload_cliente(dati, tipo_utente, nuovo_utente.utente_id)
     )
     db.add(nuovo_cliente)
-    db.flush()  # genera cliente_id, indispensabile per il curriculum
+    db.flush()  # genera cliente_id, indispensabile per il curriculum e per il codice
+
+    # cliente_codice = CODICEFISCALE_ID quando c'e' il CF, altrimenti solo
+    # l'ID. Leggibile, e unico per definizione grazie a cliente_id.
+    cf = (nuovo_cliente.cliente_codice_fiscale or "").strip().upper()
+    nuovo_cliente.cliente_codice = (
+        f"{cf}_{nuovo_cliente.cliente_id}" if cf else str(nuovo_cliente.cliente_id)
+    )
 
     db.add(
         Universita(

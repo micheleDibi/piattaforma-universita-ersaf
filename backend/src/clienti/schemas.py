@@ -1,4 +1,5 @@
 from datetime import date
+from datetime import date as date_
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, field_validator, Field
 from src.aziende.schemas import AziendaResponse
@@ -35,7 +36,6 @@ class TipoDocumentoEnum(str, enum.Enum):
     def _missing_(cls, value):
         if value is None or str(value).strip() == "":
             return None
-        # Gestione case-insensitive per allineare eventuali varianti nel DB
         for member in cls:
             if member.value.lower() == str(value).strip().lower():
                 return member
@@ -43,18 +43,11 @@ class TipoDocumentoEnum(str, enum.Enum):
 
 
 def _normalizza_enum(v, info):
-    """Stringa vuota -> None, confronto senza maiuscole sui valori dell'enum.
-
-    Era un metodo di ClienteBase: ClienteUpdate ne aveva bisogno e duplicarlo
-    avrebbe ripetuto il difetto tipico di questo backend, la regola in due
-    copie corretta in una.
-    """
+    """Stringa vuota -> None, confronto senza maiuscole sui valori dell'enum."""
     if v is None or (isinstance(v, str) and v.strip() == ""):
         return None
-
     if isinstance(v, (TipoDocumentoEnum, SessoEnum)):
         return v
-
     atteso = (
         TipoDocumentoEnum
         if info.field_name == "cliente_tipoDocumento"
@@ -64,14 +57,35 @@ def _normalizza_enum(v, info):
     for membro in atteso:
         if membro.value.lower() == testo.lower():
             return membro
+    return v
 
+
+def _valida_codice_fiscale(v):
+    """Solo lunghezza. Usata SOLO negli schemi di scrittura (creazione e
+    modifica): mai su ClienteResponse, altrimenti un CF gia' presente nel
+    DB in formato non standard fa fallire la lettura di ogni cliente."""
+    if v is None or v.strip() == "":
+        return v
+    v = v.strip().upper()
+    if len(v) != 16:
+        raise ValueError("Codice fiscale non valido: deve essere lungo 16 caratteri.")
+    return v
+
+
+def _valida_scadenza_documento(v):
+    """Usata SOLO in scrittura, per lo stesso motivo: un documento gia'
+    scaduto nel DB e' un dato storico legittimo da poter comunque leggere
+    e mostrare, non un errore di validazione in lettura."""
+    if v is not None and v < date_.today():
+        raise ValueError("Il documento è scaduto: inserisci una data di scadenza valida.")
     return v
 
 
 class ClienteBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
-    cliente_codice: str
+
+    cliente_codice: Optional[str] = None
+    cliente_codice_fiscale: Optional[str] = None
     cliente_nome: str
     cliente_cognome: str
     cliente_email: Optional[str] = None
@@ -83,8 +97,7 @@ class ClienteBase(BaseModel):
     cliente_CAP: Optional[str] = None
     cliente_provincia: Optional[str] = None
     cliente_cellulare: Optional[str] = None
-    
-    # Reso opzionale alla base poiché viene generato programmaticamente nel backend
+
     utente_id: Optional[int] = None
     cliente_luogoNascita: str
     cliente_provinciaNascita: Optional[str] = None
@@ -114,32 +127,28 @@ class ClienteBase(BaseModel):
     cliente_abilitazione_corsi_speciali: Optional[int] = None
     cliente_abilitazione_a4u: Optional[int] = None
 
+    # Solo normalizzazione (stringa vuota -> None): innocua anche in lettura,
+    # non solleva mai errori sui dati storici.
     _valida_enum_vuoti = field_validator(
         "cliente_tipoDocumento", "cliente_sesso", mode="before"
     )(_normalizza_enum)
 
+    # NIENTE validator di CF e scadenza qui: ClienteResponse eredita da
+    # questa classe e verrebbe rotta dai dati storici gia' presenti nel DB.
+
+
 class ClienteCreate(ClienteBase):
-    pass
+    _valida_cf = field_validator("cliente_codice_fiscale")(_valida_codice_fiscale)
+    _valida_scadenza = field_validator("cliente_dataScadenzaDocumento")(_valida_scadenza_documento)
 
 
 class ClienteUpdate(UniversitaBase):
-    """Aggiornamento parziale: tutti i campi opzionali, curriculum compreso.
-
-    Il PUT riusava ClienteCreate con model_dump() senza exclude_unset, quindi
-    ogni campo non inviato veniva riscritto con il default dello schema:
-    utente_id tornava None su una colonna NOT NULL (500), cliente_ruolo tornava
-    0 declassando un attuatore a utente semplice, e azienda_id, attuatore_id e
-    tessera_id perdevano l'associazione senza dire nulla.
-
-    I campi universita_* ci sono perche' il form li invia: prima il PUT
-    validava contro ClienteCreate, che non li ha, Pydantic li scartava in
-    silenzio e rispondeva 200. Il curriculum si poteva scrivere solo alla
-    creazione, mai piu'.
-    """
+    """Aggiornamento parziale: tutti i campi opzionali, curriculum compreso."""
 
     model_config = ConfigDict(from_attributes=True)
 
     cliente_codice: Optional[str] = None
+    cliente_codice_fiscale: Optional[str] = None
     cliente_nome: Optional[str] = None
     cliente_cognome: Optional[str] = None
     cliente_email: Optional[str] = None
@@ -179,6 +188,11 @@ class ClienteUpdate(UniversitaBase):
     cliente_abilitazione_corsi_speciali: Optional[int] = None
     cliente_abilitazione_a4u: Optional[int] = None
 
+    # NIENTE validator di CF/scadenza qui: il frontend rimanda sempre tutti
+    # i campi, quindi validarli qui bloccherebbe ogni modifica su un
+    # cliente storico con documento gia' scaduto o CF malformato, anche
+    # quando l'utente non ha toccato quei campi. Il controllo "e' cambiato
+    # in peggio?" si fa nel router, confrontando col valore gia' salvato.
     _valida_enum_vuoti = field_validator(
         "cliente_tipoDocumento", "cliente_sesso", mode="before"
     )(_normalizza_enum)
@@ -194,20 +208,15 @@ class ClienteResponse(ClienteBase):
 
 
 class ClienteDettaglioResponse(ClienteResponse):
-    """Come ClienteResponse, piu' il curriculum formativo.
-
-    Sta a parte perche' `curriculum` e' una relazione lazy: metterlo in
-    ClienteResponse avrebbe aggiunto una query per riga all'elenco paginato.
-    Qui si legge una riga sola.
-    """
-
     curriculum: Optional[UniversitaResponse] = None
 
 
 class ClienteConUtenteCreate(ClienteBase, UniversitaBase):
-    # utente_id è già gestito come Optional in ClienteBase, non serve ridefinirlo
     utente_username: Optional[str] = None
     utente_password: Optional[str] = None
+
+    _valida_cf = field_validator("cliente_codice_fiscale")(_valida_codice_fiscale)
+    _valida_scadenza = field_validator("cliente_dataScadenzaDocumento")(_valida_scadenza_documento)
 
 
 class PermessiPraticheResponse(BaseModel):

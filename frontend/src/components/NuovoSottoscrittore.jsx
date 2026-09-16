@@ -17,12 +17,16 @@ import FormDocumento from "./FormDocumento";
 import FormResidenzaDomicilio from "./FormResidenzaDomicilio";
 import FormContatti from "./FormContatti";
 import IntestazionePagina from "./shared/IntestazionePagina";
+import AlertMessage from "./AlertMessage.jsx";
 import { ROTTE } from "../config/routes/rotte";
 import { contenutoPagina } from "../config/styles/pagina";
 import { pulsante } from "../config/styles/pulsante";
-import { scheda } from "../config/styles/superficie";
+import { campo, etichetta } from "../config/styles/campo";
+import { scheda, titoloSezione } from "../config/styles/superficie";
 import BarraSchede from "./shared/BarraSchede.jsx";
 import SchedaAziendaAttuatori from "./SchedaAziendaAttuatori";
+
+const RUOLI_ATTUATORE = ["Aderente", "Provinciale", "Regionale", "Nazionale"];
 
 function NuovoSottoscrittore({ tipoUtente }) {
   const { clienteId: id } = useParams();
@@ -43,6 +47,23 @@ function NuovoSottoscrittore({ tipoUtente }) {
 
   const [lettura, setLettura] = useState({ loading: isEditMode, errore: null });
   const [formData, setFormData] = useState(ANAGRAFICA_INIZIALE);
+  const [avviso, setAvviso] = useState(null);
+
+  // Ruoli disponibili per la select dell'attuatore. Non serve per i
+  // sottoscrittori, che restano sempre ruolo "Utente" (0).
+  const [ruoli, setRuoli] = useState([]);
+  const [ruoloSelezionato, setRuoloSelezionato] = useState("");
+
+  useEffect(() => {
+    if (tipoUtente !== "attuatore") return;
+    apiFetch("/ruoli/")
+      .then((res) => {
+        if (!res.ok) throw new Error("Errore nel recupero dei ruoli");
+        return res.json();
+      })
+      .then((data) => setRuoli(data))
+      .catch((err) => console.error("Errore nel recupero dei ruoli:", err));
+  }, [tipoUtente]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -62,9 +83,15 @@ function NuovoSottoscrittore({ tipoUtente }) {
           // sempre vuota.
           const uniData = data.curriculum || {};
 
+          if (data.cliente_ruolo != null) {
+            setRuoloSelezionato(String(data.cliente_ruolo));
+          }
+
           setFormData((prev) => ({
             ...prev,
-            codiceFiscale: data.cliente_codice || "",
+            // Letto dalla colonna dedicata: prima si leggeva da
+            // cliente_codice, che non e' il codice fiscale.
+            codiceFiscale: data.cliente_codice_fiscale || "",
             genere: data.cliente_sesso || "",
             nome: data.cliente_nome || "",
             cognome: data.cliente_cognome || "",
@@ -148,15 +175,21 @@ function NuovoSottoscrittore({ tipoUtente }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setAvviso(null);
     const utenteId = leggiUtenteId();
     if (utenteId === null) {
-      alert("Sessione scaduta. Rifai il login prima di salvare.");
+      setAvviso({
+        type: "error",
+        text: "Sessione scaduta. Rifai il login prima di salvare.",
+      });
       navigate(ROTTE.accesso);
       return;
     }
 
     const payloadAnagrafica = {
-      cliente_codice: formData.codiceFiscale || null,
+      // cliente_codice non si manda piu': lo genera il backend da
+      // cliente_id subito dopo la creazione.
+      cliente_codice_fiscale: formData.codiceFiscale || null,
       cliente_nome: formData.nome || null,
       cliente_cognome: formData.cognome || null,
       cliente_email: formData.email || null,
@@ -169,10 +202,21 @@ function NuovoSottoscrittore({ tipoUtente }) {
       cliente_provincia: formData.residenzaProvincia || null,
       cliente_cellulare: formData.cellulare || null,
       utente_id: utenteId,
-      // Solo in creazione, e solo 0: il ruolo lo assegna poi un
-      // amministratore dalla scheda utente. Mandarlo anche in modifica
-      // declassava a "Utente" chiunque si salvasse, attuatori compresi.
-      ...(isEditMode ? {} : { cliente_ruolo: 0 }),
+      // Sottoscrittori: sempre ruolo 0 ("Utente") in creazione, mai in
+      // modifica (lo assegna un amministratore dalla scheda utente).
+      // Attuatori: se in creazione l'operatore ha scelto un ruolo dalla
+      // select lo si manda; altrimenti si omette e il backend assegna
+      // "Aderente" di default. In modifica il ruolo si manda solo se
+      // l'operatore lo ha effettivamente cambiato dalla select.
+      ...(isEditMode
+        ? tipoUtente === "attuatore" && ruoloSelezionato
+          ? { cliente_ruolo: Number(ruoloSelezionato) }
+          : {}
+        : tipoUtente === "attuatore"
+          ? ruoloSelezionato
+            ? { cliente_ruolo: Number(ruoloSelezionato) }
+            : {}
+          : { cliente_ruolo: 0 }),
       cliente_luogoNascita: formData.luogoDiNascita || null,
       cliente_provinciaNascita: formData.provDiNascita || null,
       cliente_dataNascita: formData.dataDiNascita || null,
@@ -231,8 +275,14 @@ function NuovoSottoscrittore({ tipoUtente }) {
       }
 
       if (isEditMode) {
-        alert("Modifiche salvate con successo!");
-        navigate(rottaElenco);
+        navigate(rottaElenco, {
+          state: {
+            avviso: {
+              type: "success",
+              text: "Modifiche salvate con successo!",
+            },
+          },
+        });
         return;
       }
 
@@ -243,7 +293,7 @@ function NuovoSottoscrittore({ tipoUtente }) {
       });
     } catch (error) {
       console.error("Errore:", error);
-      alert(error.message);
+      setAvviso({ type: "error", text: error.message });
     }
   };
 
@@ -281,6 +331,7 @@ function NuovoSottoscrittore({ tipoUtente }) {
             tipoUtente === "attuatore" ? "Attuatori" : "Sottoscrittori",
         }}
       />
+      <AlertMessage message={avviso} />
       <div className={`${scheda()} schede overflow-hidden`}>
         <form onSubmit={handleSubmit}>
           <BarraSchede
@@ -310,6 +361,36 @@ function NuovoSottoscrittore({ tipoUtente }) {
                     handleChange={handleChange}
                   />
                 </div>
+
+                {tipoUtente === "attuatore" && (
+                  <>
+                    <hr className="border-bordo my-6" />
+                    <div className="space-y-4">
+                      <h3 className={titoloSezione()}>Ruolo</h3>
+                      <div className="max-w-xs">
+                        <label className={etichetta()}>Ruolo attuatore</label>
+                        <select
+                          name="ruolo"
+                          value={ruoloSelezionato}
+                          onChange={(e) => setRuoloSelezionato(e.target.value)}
+                          className={`${campo("comodo")} transition`}
+                        >
+                          <option value="">Aderente (default)</option>
+                          {ruoli
+                            .filter((r) =>
+                              RUOLI_ATTUATORE.includes(r.ruolo_codice),
+                            )
+                            .map((r) => (
+                              <option key={r.ruolo_id} value={r.ruolo_id}>
+                                {r.ruolo_codice}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                )}
+
                 <hr className="border-bordo my-6" />
                 <FormResidenzaDomicilio
                   formData={formData}

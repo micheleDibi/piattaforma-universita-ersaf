@@ -8,16 +8,16 @@ export default function FormDocumento({ formData, handleChange }) {
       <h3 className={titoloSezione()}>Documento</h3>
 
       <div>
-        <label className={etichetta()}>
-          Tipo Documento
-        </label>
+        <label className={etichetta()}>Tipo Documento</label>
         <select
           name="tipoDocumento"
           value={formData.tipoDocumento}
           onChange={handleChange}
           className={`${campo("comodo")} transition`}
         >
-          <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.documento}</option>
+          <option value="" data-segnaposto>
+            {SEGNAPOSTI_SELEZIONE.documento}
+          </option>
           <option value="Carta d'identità">Carta d'identità</option>
           <option value="Passaporto">Passaporto</option>
           <option value="Patente">Patente</option>
@@ -26,7 +26,7 @@ export default function FormDocumento({ formData, handleChange }) {
 
       <div>
         <label className={etichetta()}>
-          N° Documento
+          N° Documento <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -34,12 +34,13 @@ export default function FormDocumento({ formData, handleChange }) {
           value={formData.nDocumento}
           onChange={handleChange}
           className={`${campo("comodo")} transition`}
+          required
         />
       </div>
 
       <div>
         <label className={etichetta()}>
-          Comune di Rilascio
+          Comune di Rilascio <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -47,13 +48,14 @@ export default function FormDocumento({ formData, handleChange }) {
           value={formData.comuneDiRilascio}
           onChange={handleChange}
           className={`${campo("comodo")} transition`}
+          required
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className={etichetta()}>
-            Data Rilascio
+            Data Rilascio <span className="text-red-500">*</span>
           </label>
           <input
             type="date"
@@ -61,11 +63,12 @@ export default function FormDocumento({ formData, handleChange }) {
             value={formData.dataInizioRilascio}
             onChange={handleChange}
             className={`${campo("comodo")} transition`}
+            required
           />
         </div>
         <div>
           <label className={etichetta()}>
-            Data Scadenza
+            Data Scadenza <span className="text-red-500">*</span>
           </label>
           <input
             type="date"
@@ -73,6 +76,7 @@ export default function FormDocumento({ formData, handleChange }) {
             value={formData.dataScadenza}
             onChange={handleChange}
             className={`${campo("comodo")} transition`}
+            required
           />
         </div>
       </div>
