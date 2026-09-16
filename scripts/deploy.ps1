@@ -179,6 +179,15 @@ function Get-GitSha {
     return "$sha".Trim()
 }
 
+# Progressivo della versione: i commit raggiungibili da quello pubblicato. La storia di
+# main cresce soltanto (fast-forward e merge), quindi il numero non torna mai indietro e
+# lo stesso codice porta lo stesso numero su qualunque server.
+function Get-NumeroVersione([string] $Sha) {
+    $numero = & git -C $ProjectRoot rev-list --count $Sha
+    if ($LASTEXITCODE -ne 0 -or -not "$numero".Trim()) { Stop-WithError "conteggio dei commit fallito per $Sha" }
+    return "$numero".Trim()
+}
+
 function Test-DirtyTree {
     $stato = & git -C $ProjectRoot status --porcelain -- backend frontend db deploy
     return [bool] $stato
@@ -226,15 +235,21 @@ function Publish-Release([string] $Comando, [string[]] $Opzioni) {
         Write-Host "    ATTENZIONE: stai pubblicando $Ref, non main. Il collaudo restera' su questo" -ForegroundColor Yellow
         Write-Host '    codice finche'' qualcuno non ripubblica. Avvisa in chat.' -ForegroundColor Yellow
     }
-    $id = (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + $sha.Substring(0, 7)
+    # Un solo istante per l'id della release e per la data mostrata nell'applicazione.
+    $adesso = Get-Date
+    $invariante = [Globalization.CultureInfo]::InvariantCulture
+    $id = $adesso.ToString('yyyyMMdd-HHmmss', $invariante) + '-' + $sha.Substring(0, 7)
+    $versione = Get-NumeroVersione $sha
+    $aggiornata = $adesso.ToString("yyyy-MM-dd'T'HH':'mm':'sszzz", $invariante)
     $archivio = New-ReleaseArchive $id
     $dimensione = [math]::Round((Get-Item -LiteralPath $archivio).Length / 1KB)
-    Write-Note "release $id (git $($sha.Substring(0, 7)), $dimensione KB)"
+    Write-Note "release $id (git $($sha.Substring(0, 7)), versione $versione, $dimensione KB)"
     Write-Step 'Trasferimento sul server'
     $remoto = Send-Archive $archivio $id
     if ($Comando -eq 'build') { Write-Step 'Build remota delle immagini, nessun container toccato' }
     else { Write-Step 'Deploy remoto: build, migrazioni sul clone, avvio, verifica' }
-    Invoke-Remote (@($Comando, $remoto, $id, $sha, $sporco) + $Opzioni) | Out-Null
+    $datiVersione = @("--versione=$versione", "--aggiornata=$aggiornata")
+    Invoke-Remote (@($Comando, $remoto, $id, $sha, $sporco) + $Opzioni + $datiVersione) | Out-Null
     return $id
 }
 

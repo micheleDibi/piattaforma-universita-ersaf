@@ -42,7 +42,7 @@ cmd_deploy() {
     require_free_gib "$BASE" "$MIN_FREE_GIB_DEPLOY"
     precedente="$(compose_env_get RELEASE_TAG)"
     ACTIVE_ID="$id"
-    cmd_release "$archivio" "$id" "$sha" "$dirty"
+    cmd_release "$archivio" "$id" "$sha" "$dirty" "$@"
     prepara_notifiche
     db_up
     if [ "$primo_clone" = 1 ]; then

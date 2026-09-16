@@ -28,6 +28,11 @@ export function voceUscita() {
   return `${VOCE} text-testo-tenue hover:bg-interazione-hover hover:text-testo-forte`;
 }
 
+/** Versione e data dell'ultimo aggiornamento, sotto "Esci": discreta, allineata al testo delle voci. */
+export function notaVersione() {
+  return "mt-2 px-3 text-nota leading-relaxed text-testo-tenue";
+}
+
 /**
  * Testata del menu con il logo dell'applicazione. Alta quanto la barra
  * superiore da mobile, cosi' le due restano allineate passando da una all'altra.
