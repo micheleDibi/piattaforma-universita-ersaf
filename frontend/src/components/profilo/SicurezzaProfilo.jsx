@@ -11,18 +11,25 @@ import AttivazioneAuthenticator from "./AttivazioneAuthenticator.jsx";
 import DisattivazioneAuthenticator from "./DisattivazioneAuthenticator.jsx";
 import RimozionePasskey from "./RimozionePasskey.jsx";
 
+/**
+ * Un metodo: testata con icona e testi, contenuto (le passkey) e azioni.
+ * L'ordine nel DOM e' quello del mobile (testata, contenuto, azioni); da sm
+ * la griglia porta le azioni in alto a destra e stende il contenuto su tutta
+ * la larghezza, cosi' le righe delle passkey arrivano fino alla colonna dei
+ * pulsanti.
+ */
 function Metodo({ Icona, titolo, descrizione, stato, attivo, azioni, children }) {
   return (
     <li className={stili.riga}>
       <div className={stili.testata}>
         <Icona aria-hidden="true" className={stili.icona} />
-        <div className="min-w-0 flex-1">
+        <div className={stili.testo}>
           <h3 className={stili.nome}>{titolo}</h3>
           <p className={stili.descrizione}>{descrizione}</p>
           {stato && <p className={attivo ? stili.statoAttivo : stili.stato}>{stato}</p>}
-          {children}
         </div>
       </div>
+      {children && <div className={stili.contenutoMetodo}>{children}</div>}
       {azioni && <div className={stili.azioniMetodo}>{azioni}</div>}
     </li>
   );

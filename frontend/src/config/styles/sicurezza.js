@@ -11,8 +11,12 @@ export const STILI_SICUREZZA = {
   introduzione: "mt-1 text-sm leading-relaxed text-testo-tenue",
   proposto: "mt-3 text-sm font-medium text-testo-forte",
   elenco: "divide-y divide-bordo",
-  riga: "flex flex-col gap-4 py-5 first:pt-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between",
-  testata: "flex min-w-0 items-start gap-3",
+  // Griglia del metodo: una colonna su mobile; da sm testata | azioni in alto
+  // e contenuto (le passkey) sotto, su tutta la larghezza.
+  riga: "grid gap-4 py-5 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-6",
+  testata: "flex min-w-0 items-start gap-3 sm:col-start-1 sm:row-start-1",
+  testo: "min-w-0 flex-1",
+  contenutoMetodo: "pl-7.5 sm:col-span-2 sm:row-start-2",
   icona: "mt-0.5 size-icona shrink-0 text-testo-tenue",
   nome: "text-sm font-semibold text-testo-forte",
   descrizione: "mt-1 text-sm leading-relaxed text-testo-tenue",
@@ -20,7 +24,8 @@ export const STILI_SICUREZZA = {
   statoAttivo: "mt-2 text-sm font-medium text-positivo",
   // Su mobile le azioni vanno sotto il testo, allineate al titolo e non all'icona
   // (icona 4.5 + spazio 3 = 7.5); da sm stanno a destra.
-  azioniMetodo: "flex shrink-0 flex-wrap gap-2 pl-7.5 sm:pl-0",
+  // items-start e self-start: nella griglia i pulsanti tengono la loro altezza.
+  azioniMetodo: "flex flex-wrap items-start gap-2 self-start pl-7.5 sm:col-start-2 sm:row-start-1 sm:justify-end sm:pl-0",
   azioni: "flex shrink-0 flex-wrap gap-2",
   azionePrimaria: pulsante("primario"),
   azioneSecondaria: pulsante("secondario"),
@@ -44,7 +49,7 @@ export const STILI_SICUREZZA = {
   qrImmagine: "block size-44",
   chiave: "mt-1 block font-mono text-sm tracking-wider text-testo-forte [overflow-wrap:anywhere]",
   // Una passkey per riga: testo a sinistra che va a capo da solo, "Rimuovi" a destra.
-  elencoPasskey: "mt-3 space-y-2",
+  elencoPasskey: "space-y-2",
   passkey: "flex items-center gap-3 rounded-controllo border border-bordo bg-superficie px-3 py-2.5",
   passkeyTesto: "min-w-0 flex-1 space-y-0.5",
   passkeyNome: "flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-testo-forte [overflow-wrap:anywhere]",
