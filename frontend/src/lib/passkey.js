@@ -57,12 +57,13 @@ export function serializza(credenziale) {
   };
 }
 
-export async function creaPasskey(opzioni) {
-  return serializza(await navigator.credentials.create({ publicKey: opzioniCreazione(opzioni) }));
+// `signal` annulla la richiesta al browser quando chi l'ha aperta viene smontato.
+export async function creaPasskey(opzioni, signal) {
+  return serializza(await navigator.credentials.create({ publicKey: opzioniCreazione(opzioni), signal }));
 }
 
-export async function usaPasskey(opzioni) {
-  return serializza(await navigator.credentials.get({ publicKey: opzioniRichiesta(opzioni) }));
+export async function usaPasskey(opzioni, signal) {
+  return serializza(await navigator.credentials.get({ publicKey: opzioniRichiesta(opzioni), signal }));
 }
 
 /** Gli errori del browser diventano frasi: l'utente non deve leggere un nome di eccezione. */

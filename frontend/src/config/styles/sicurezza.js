@@ -2,8 +2,9 @@ import { campo, etichetta } from "./campo.js";
 import { pulsante } from "./pulsante.js";
 import { titoloSezione } from "./superficie.js";
 
-// Sezione Sicurezza del profilo: elenco dei metodi, moduli inline di
-// attivazione e disattivazione, riquadro del QR. Nessuno stile nei componenti.
+// Sezione Sicurezza del profilo: elenco dei metodi e finestre delle procedure
+// (attivazione e disattivazione dell'app, aggiunta e rimozione delle passkey).
+// Nessuno stile nei componenti.
 export const STILI_SICUREZZA = {
   sezione: "min-w-0 space-y-6",
   titoloSezione: titoloSezione(),
@@ -21,10 +22,18 @@ export const STILI_SICUREZZA = {
   azionePrimaria: pulsante("primario"),
   azioneSecondaria: pulsante("secondario"),
   azioneDiscreta: pulsante("discreto"),
-  modulo: "w-full space-y-4 rounded-superficie border border-bordo bg-superficie-tenue p-4 sm:p-5",
+  // Finestra di dialogo delle procedure.
+  dialogo: "dialogo__contenuto gap-5 overflow-y-auto",
+  dialogoTestata: "space-y-1",
+  dialogoTitolo: titoloSezione(),
+  dialogoDescrizione: "text-sm leading-relaxed text-testo-tenue",
+  modulo: "space-y-4",
   passi: "text-sm leading-relaxed text-testo",
+  attesa: "flex items-center gap-2 text-sm text-testo",
+  attesaIcona: "size-icona shrink-0 animate-spin text-primario",
   etichetta: etichetta(),
   campo: campo("comodo"),
+  qrRiquadro: "flex justify-center",
   qr: "inline-block rounded-superficie border border-bordo bg-superficie p-3",
   qrImmagine: "block size-44",
   chiave: "mt-1 block font-mono text-sm tracking-wider text-testo-forte [overflow-wrap:anywhere]",

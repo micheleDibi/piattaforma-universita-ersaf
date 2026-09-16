@@ -27,7 +27,7 @@ export const TESTI_ACCESSO = {
   },
   notaTotp: "Il codice cambia ogni 30 secondi: inserisci quello mostrato adesso.",
   passkey: {
-    usa: "Usa la passkey sul telefono",
+    riprova: "Riprova con il telefono",
     inCorso: "In attesa del telefono…",
     istruzioni: "Il browser ti mostrerà un codice da inquadrare, oppure una notifica se il telefono è già collegato. Se Windows propone una chiave USB, premi Cambia e scegli il telefono. Conferma con impronta, volto o PIN.",
     nonSupportata: "Questo browser non supporta le passkey: scegli un altro metodo.",

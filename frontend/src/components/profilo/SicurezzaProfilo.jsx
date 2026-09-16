@@ -31,7 +31,7 @@ function Metodo({ Icona, titolo, descrizione, stato, attivo, azioni, children })
 /**
  * I metodi del secondo fattore del Nazionale: stato di ciascuno e azioni.
  * L'email non si attiva qui, si verifica al login; authenticator e passkey
- * si aggiungono e tolgono con i moduli inline sotto l'elenco.
+ * si aggiungono e tolgono in finestre di dialogo, l'elenco resta com'e'.
  */
 export default function SicurezzaProfilo() {
   const { stato, errore, caricamento, ricarica } = useSicurezza();
@@ -68,7 +68,7 @@ export default function SicurezzaProfilo() {
       <ul className={stili.elenco}>
         <Metodo Icona={KeyRound} titolo={tp.titolo} descrizione={tp.descrizione}
           stato={stato.passkey.length === 0 ? tp.nessuna : null}
-          azioni={!modulo && <button type="button" className={stili.azionePrimaria} onClick={() => apri("passkey")}>{tp.aggiungi}</button>}>
+          azioni={<button type="button" className={stili.azionePrimaria} onClick={() => apri("passkey")}>{tp.aggiungi}</button>}>
           {stato.passkey.length > 0 && <ul className={stili.elencoPasskey}>
             {stato.passkey.map((p) => (
               <li key={p.id} className={stili.passkey}>
@@ -79,15 +79,15 @@ export default function SicurezzaProfilo() {
                       p.sincronizzata ? tp.sincronizzata : null].filter(Boolean).join(" · ")}
                   </p>
                 </div>
-                {!modulo && <button type="button" className={stili.azioneDiscreta} onClick={() => apri(p)}>{tp.rimuovi}</button>}
+                <button type="button" className={stili.azioneDiscreta} onClick={() => apri(p)}>{tp.rimuovi}</button>
               </li>
             ))}
           </ul>}
         </Metodo>
         <Metodo Icona={Smartphone} titolo={ta.titolo} descrizione={ta.descrizione} stato={statoTotp} attivo={stato.totp.attivo}
-          azioni={!modulo && (stato.totp.attivo
+          azioni={stato.totp.attivo
             ? <button type="button" className={stili.azioneSecondaria} onClick={() => apri("disattiva")}>{ta.disattiva}</button>
-            : <button type="button" className={stili.azionePrimaria} onClick={() => apri("attiva")}>{ta.attiva}</button>)} />
+            : <button type="button" className={stili.azionePrimaria} onClick={() => apri("attiva")}>{ta.attiva}</button>} />
         <Metodo Icona={Mail} titolo={testi.email.titolo} descrizione={testi.email.descrizione}
           stato={statoEmail} attivo={stato.email.verificata} />
       </ul>
