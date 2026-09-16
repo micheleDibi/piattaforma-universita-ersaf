@@ -83,9 +83,14 @@ rimuovi_regole_firewall() {  # <ip_server> <porta>
 }
 
 aggiorna_url_api() {  # <url_pubblico>
-    local porta; porta="$(web_port)"
+    local porta host; porta="$(web_port)"
+    host="${1#*://}"; host="${host%%/*}"; host="${host%%:*}"
     env_file_set "$SHARED/api.env" FRONTEND_BASE_URL "$1"
     env_file_set "$SHARED/api.env" CORS_ORIGINS "$1,http://localhost:$porta"
+    # Le passkey sono legate al dominio: RP ID e origine seguono l'URL pubblico
+    # (l'origine localhost non puo' starci: deve ricadere sotto il RP ID).
+    env_file_set "$SHARED/api.env" WEBAUTHN_RP_ID "$host"
+    env_file_set "$SHARED/api.env" WEBAUTHN_ORIGINI "$1"
     chmod 600 "$SHARED/api.env"
     log "URL pubblico dell'applicazione: $1 (il tunnel su localhost resta valido)"
 }
