@@ -253,8 +253,7 @@ function NuovoSottoscrittore({ tipoUtente }) {
     { id: "utente", label: "Utente" },
     ...(tipoUtente === "attuatore"
       ? [{ id: "azienda", label: "Azienda" }]
-      : []),
-    { id: "esami", label: "Esami" },
+      : [{ id: "esami", label: "Esami" }]),
   ];
 
   const handleCopyResidenza = () => {

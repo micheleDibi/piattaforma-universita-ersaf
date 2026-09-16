@@ -148,19 +148,23 @@ def leggi_clienti(
         query = query.filter(Ruolo.ruolo_codice == "Utente")
 
     if search:
-        search_term = f"{search}%"
+        parole = search.split()
         if solo_attuatori:
             query = query.outerjoin(Cliente.azienda)
-            query = query.filter(
-                (Cliente.cliente_nome.ilike(search_term))
-                | (Cliente.cliente_cognome.ilike(search_term))
-                | (Azienda.azienda_ragione_sociale.ilike(search_term))
-            )
+            for parola in parole:
+                termine = f"%{parola}%"
+                query = query.filter(
+                    (Cliente.cliente_nome.ilike(termine))
+                    | (Cliente.cliente_cognome.ilike(termine))
+                    | (Azienda.azienda_ragione_sociale.ilike(termine))
+                )
         else:
-            query = query.filter(
-                (Cliente.cliente_nome.ilike(search_term))
-                | (Cliente.cliente_cognome.ilike(search_term))
-            )
+            for parola in parole:
+                termine = f"%{parola}%"
+                query = query.filter(
+                    (Cliente.cliente_nome.ilike(termine))
+                    | (Cliente.cliente_cognome.ilike(termine))
+                )
 
     return query.order_by(Cliente.cliente_id.asc()).offset(skip).limit(limit).all()
 
