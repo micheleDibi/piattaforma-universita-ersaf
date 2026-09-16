@@ -8,6 +8,8 @@ cancellato dall'evento della migrazione 015 dopo un giorno.
 
 from __future__ import annotations
 
+import io
+
 import segno
 from fastapi import HTTPException
 from sqlalchemy import func
@@ -34,8 +36,20 @@ def stato_totp(db, utente_id: int) -> dict:
 
 
 def qr_svg(uri: str) -> str:
-    """QR come SVG inline, disegnato dal server: nessuna libreria nel browser."""
-    return segno.make(uri, error="m").svg_inline(scale=4, dark="#1e293b", light=None)
+    """QR come documento SVG completo, disegnato dal server: nessuna libreria nel browser.
+
+    Il browser lo carica come immagine (`<img src="data:image/svg+xml,...">`), e
+    un SVG caricato cosi' senza `xmlns` non viene disegnato: `svg_inline` omette
+    il namespace apposta, perche' pensa all'SVG incollato nell'HTML. Senza
+    width e height resta il viewBox, e la misura la decide lo stile. Sfondo
+    bianco pieno: le app inquadrano male i moduli su fondo trasparente.
+    """
+    buffer = io.BytesIO()
+    segno.make(uri, error="m").save(
+        buffer, kind="svg", xmldecl=False, svgns=True, nl=False, omitsize=True,
+        scale=4, dark="#1e293b", light="#ffffff",
+    )
+    return buffer.getvalue().decode("utf-8")
 
 
 def avvia_attivazione(db, utente) -> dict:

@@ -6,6 +6,7 @@ from __future__ import annotations
 import base64
 import re
 from datetime import timedelta
+from xml.etree import ElementTree
 
 import pytest
 from sqlalchemy import func, select, update
@@ -80,8 +81,12 @@ def test_attivazione_completa_poi_login_con_l_app_e_anti_replay(client, db, mail
 
     assert client.post("/auth/mfa/totp/attiva", headers=headers, json={"password": "sbagliata-lunga"}).status_code == 400
     segreto, avvio = _attiva_app(client, headers)
-    assert avvio["uri"].startswith("otpauth://totp/") and avvio["qr_svg"].lstrip().startswith("<svg")
-    assert avvio["segreto"] not in avvio["qr_svg"] or True  # il QR codifica l'URI, che contiene il segreto: e' atteso
+    assert avvio["uri"].startswith("otpauth://totp/")
+    # Il frontend lo carica come <img src="data:image/svg+xml,...">: serve un documento
+    # SVG completo, con il namespace, altrimenti il browser mostra un'immagine rotta.
+    radice = ElementTree.fromstring(avvio["qr_svg"])
+    assert radice.tag == "{http://www.w3.org/2000/svg}svg"
+    assert radice.get("viewBox") and radice.get("width") is None
 
     stato = client.get("/auth/mfa", headers=headers).json()
     assert stato["proposto"] == "totp" and stato["metodi"] == ["totp", "email"]
