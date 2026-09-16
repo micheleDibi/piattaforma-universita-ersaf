@@ -9,6 +9,7 @@ import { pulsante } from "../config/styles/pulsante";
 import { scheda } from "../config/styles/superficie";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 import CampiAzienda, { VUOTO_AZIENDA } from "./CampiAzienda.jsx";
+import AlertMessage from "./AlertMessage.jsx";
 
 const CAMPI_PERCENTUALI = [
   ["universita_ecampus_lauree", "eCampus - Lauree"],
@@ -56,6 +57,7 @@ export default function SchedaAziendaAttuatori({
   const [caricamento, setCaricamento] = useState(Boolean(aziendaId));
   const [errore, setErrore] = useState("");
   const [salvataggioPercentuali, setSalvataggioPercentuali] = useState(false);
+  const [confermaResetPendente, setConfermaResetPendente] = useState(false);
 
   const [modalitaRicerca, setModalitaRicerca] = useState(!aziendaId);
   const [piva, setPiva] = useState("");
@@ -234,24 +236,12 @@ export default function SchedaAziendaAttuatori({
       );
 
       if (risposta.status === 409) {
-        const { reset } = await risposta.json();
-        const elenco = reset
-          .map(
-            (r) =>
-              `- ${r.azienda_ragione_sociale ?? `Azienda #${r.azienda_id}`}: ${r.campi.join(", ")}`,
-          )
-          .join("\n");
-        if (
-          window.confirm(
-            `Questa operazione azzererà le seguenti percentuali:\n\n${elenco}\n\nContinuare?`,
-          )
-        ) {
-          return salvaDettaglio(true);
-        }
+        setConfermaResetPendente(true);
         return;
       }
 
       if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
+      setConfermaResetPendente(false);
       setDettaglio(await leggiJson(risposta));
     } catch (err) {
       setErrore(err.message);
@@ -381,7 +371,36 @@ export default function SchedaAziendaAttuatori({
                 </div>
               ))}
             </div>
-            <div className="flex justify-end mt-6">
+
+            <div className="flex flex-col items-end gap-3 mt-6">
+              {confermaResetPendente && (
+                <div className="flex w-full items-center justify-between gap-4 rounded-controllo border border-bordo p-3">
+                  <AlertMessage
+                    message={{
+                      type: "warning",
+                      text: "Alcune percentuali verranno azzerate. Continuare?",
+                    }}
+                    separato={false}
+                  />
+                  <div className="flex shrink-0 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => salvaDettaglio(true)}
+                      disabled={salvataggioPercentuali}
+                      className={pulsante("primario", "piccolo")}
+                    >
+                      Conferma
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfermaResetPendente(false)}
+                      className={pulsante("discreto", "piccolo")}
+                    >
+                      Annulla
+                    </button>
+                  </div>
+                </div>
+              )}
               {/* type="button": vive dentro il <form> di NuovoSottoscrittore,
                   non deve inviare il form del cliente */}
               <button

@@ -1,9 +1,15 @@
 /** Contratto URL del frontend. Le API hanno un catalogo separato. */
 export const ROTTE = Object.freeze({
-  accesso: "/", recuperoPassword: "/password-dimenticata",
-  reimpostaPassword: "/reimposta-password", dashboard: "/dashboard", profilo: "/profilo",
-  sottoscrittori: "/sottoscrittori", attuatori: "/attuatori", aziende: "/aziende",
-  pratiche: "/pratiche", prodotti: "/prodotti",
+  accesso: "/",
+  recuperoPassword: "/password-dimenticata",
+  reimpostaPassword: "/reimposta-password",
+  dashboard: "/dashboard",
+  profilo: "/profilo",
+  sottoscrittori: "/sottoscrittori",
+  attuatori: "/attuatori",
+  aziende: "/aziende",
+  pratiche: "/pratiche",
+  prodotti: "/prodotti",
 });
 export const ROTTA_INIZIALE = ROTTE.sottoscrittori;
 
@@ -13,7 +19,10 @@ export function idValido(id) {
 
 function risorsa(elenco, parametro, nuovo) {
   return Object.freeze({
-    elenco, parametro, nuovo: `${elenco}/${nuovo}`, modello: `${elenco}/:${parametro}`,
+    elenco,
+    parametro,
+    nuovo: `${elenco}/${nuovo}`,
+    modello: `${elenco}/:${parametro}`,
     dettaglio(id) {
       if (!idValido(id)) throw new TypeError("Identificativo non valido");
       return `${elenco}/${id}`;

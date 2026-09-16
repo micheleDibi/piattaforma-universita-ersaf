@@ -19,6 +19,7 @@ from src.clienti.schemas import (
     ClienteResponse,
     ClienteConUtenteCreate,
     ClienteUpdate,
+    PermessiPraticheResponse,
 )
 from src.clienti.servizio import (
     TipoUtente,
@@ -38,6 +39,22 @@ router = APIRouter(
     tags=["Clienti"],
     dependencies=[Depends(get_current_utente)],
 )
+
+@router.get("/permessi-pratiche", response_model=PermessiPraticheResponse)
+def permessi_pratiche_correnti(current_utente=Depends(get_current_utente)):
+    cliente: Cliente = current_utente.clienti
+    if cliente is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Nessun cliente associato a questo utente.",
+        )
+    return PermessiPraticheResponse(
+        abilPraticheUniv=bool(cliente.cliente_abilPraticheUniv),
+        ecampus=bool(cliente.cliente_abilitazione_ecampus),
+        link_campus=bool(cliente.cliente_abilitazione_link_campus),
+        corsi_speciali=bool(cliente.cliente_abilitazione_corsi_speciali),
+        a4u=bool(cliente.cliente_abilitazione_a4u),
+    )
 
 _CARICAMENTO_ELENCO = (
     joinedload(Cliente.azienda),
@@ -131,19 +148,23 @@ def leggi_clienti(
         query = query.filter(Ruolo.ruolo_codice == "Utente")
 
     if search:
-        search_term = f"{search}%"
+        parole = search.split()
         if solo_attuatori:
             query = query.outerjoin(Cliente.azienda)
-            query = query.filter(
-                (Cliente.cliente_nome.ilike(search_term))
-                | (Cliente.cliente_cognome.ilike(search_term))
-                | (Azienda.azienda_ragione_sociale.ilike(search_term))
-            )
+            for parola in parole:
+                termine = f"%{parola}%"
+                query = query.filter(
+                    (Cliente.cliente_nome.ilike(termine))
+                    | (Cliente.cliente_cognome.ilike(termine))
+                    | (Azienda.azienda_ragione_sociale.ilike(termine))
+                )
         else:
-            query = query.filter(
-                (Cliente.cliente_nome.ilike(search_term))
-                | (Cliente.cliente_cognome.ilike(search_term))
-            )
+            for parola in parole:
+                termine = f"%{parola}%"
+                query = query.filter(
+                    (Cliente.cliente_nome.ilike(termine))
+                    | (Cliente.cliente_cognome.ilike(termine))
+                )
 
     return query.order_by(Cliente.cliente_id.asc()).offset(skip).limit(limit).all()
 

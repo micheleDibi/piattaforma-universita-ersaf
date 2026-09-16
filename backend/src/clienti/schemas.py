@@ -208,3 +208,11 @@ class ClienteConUtenteCreate(ClienteBase, UniversitaBase):
     # utente_id è già gestito come Optional in ClienteBase, non serve ridefinirlo
     utente_username: Optional[str] = None
     utente_password: Optional[str] = None
+
+
+class PermessiPraticheResponse(BaseModel):
+    abilPraticheUniv: bool
+    ecampus: bool
+    link_campus: bool
+    corsi_speciali: bool
+    a4u: bool

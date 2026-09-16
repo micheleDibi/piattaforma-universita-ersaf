@@ -19,16 +19,41 @@ export default function ElencoPratiche() {
   const { apri } = useNavigazioneElenco(risorsa.elenco);
   const filtri = useFiltriPratiche();
   const pagina = usePagineRemote(filtri.query, paginaPratiche, true);
-  return <div className={contenutoPagina()}>
-    <IntestazioneElenco titolo="Pratiche"
-      azioni={<AzioneCrea onClick={() => apri(risorsa.nuovo)} etichetta="Nuova" etichettaEstesa="Nuova pratica" />}
-      ricerca={<CampoRicerca valore={filtri.ricerca} onCambia={filtri.setRicerca} segnaposto="Cerca per numero pratica" />}
-      filtri={{ contenuto: <FiltriPratiche filtri={filtri} />, attivi: filtri.attivi, onAzzera: filtri.azzera }} />
-    <div className={schedaElenco("corpo")} aria-busy={pagina.loading}>
-      <RigheElenco dati={pagina.elementi.map(rigaPratica)} modello={MODELLO_PRATICHE}
-        onApri={id => apri(risorsa.dettaglio(id))}
-        vuoto={!pagina.loading && !pagina.errore && "Nessuna pratica trovata."} />
-      <StatoPagineElenco pagina={pagina} />
+  return (
+    <div className={contenutoPagina()}>
+      <IntestazioneElenco
+        titolo="Pratiche"
+        azioni={
+          <AzioneCrea
+            onClick={() => apri(risorsa.nuovo)}
+            etichetta="Nuova"
+            etichettaEstesa="Nuova pratica"
+          />
+        }
+        ricerca={
+          <CampoRicerca
+            valore={filtri.ricerca}
+            onCambia={filtri.setRicerca}
+            segnaposto="Cerca per sottoscrittore"
+          />
+        }
+        filtri={{
+          contenuto: <FiltriPratiche filtri={filtri} />,
+          attivi: filtri.attivi,
+          onAzzera: filtri.azzera,
+        }}
+      />
+      <div className={schedaElenco("corpo")} aria-busy={pagina.loading}>
+        <RigheElenco
+          dati={pagina.elementi.map(rigaPratica)}
+          modello={MODELLO_PRATICHE}
+          onApri={(id) => apri(risorsa.dettaglio(id))}
+          vuoto={
+            !pagina.loading && !pagina.errore && "Nessuna pratica trovata."
+          }
+        />
+        <StatoPagineElenco pagina={pagina} />
+      </div>
     </div>
-  </div>;
+  );
 }
