@@ -45,7 +45,7 @@ export default function DisattivazioneAuthenticator({ onFatto, onAnnulla }) {
             onChange={(e) => setCodice(e.target.value.replace(/\D/g, "").slice(0, 6))} />
         </div>
         <div className={stili.azioni}>
-          <button type="submit" className={stili.azionePrimaria} disabled={occupato || codice.length !== 6}>
+          <button type="submit" className={stili.azionePericolo} disabled={occupato || codice.length !== 6}>
             {occupato ? testi.inCorso : t.disattivaConferma}
           </button>
           <button type="button" className={stili.azioneDiscreta} onClick={onAnnulla} disabled={occupato}>{testi.annulla}</button>

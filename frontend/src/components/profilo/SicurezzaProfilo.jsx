@@ -23,7 +23,7 @@ function Metodo({ Icona, titolo, descrizione, stato, attivo, azioni, children })
           {children}
         </div>
       </div>
-      {azioni && <div className={stili.azioni}>{azioni}</div>}
+      {azioni && <div className={stili.azioniMetodo}>{azioni}</div>}
     </li>
   );
 }
@@ -72,21 +72,23 @@ export default function SicurezzaProfilo() {
           {stato.passkey.length > 0 && <ul className={stili.elencoPasskey}>
             {stato.passkey.map((p) => (
               <li key={p.id} className={stili.passkey}>
-                <div>
-                  <p className={stili.passkeyNome}>{p.nome}</p>
-                  <p className={stili.passkeyDettagli}>
-                    {[tp.aggiuntaIl(dataAttivazione(p.creata_il)), p.ultimo_uso ? tp.ultimoUso(dataAttivazione(p.ultimo_uso)) : tp.maiUsata,
-                      p.sincronizzata ? tp.sincronizzata : null].filter(Boolean).join(" · ")}
+                <div className={stili.passkeyTesto}>
+                  <p className={stili.passkeyNome}>
+                    <span>{p.nome}</span>
+                    {p.sincronizzata && <span className={stili.passkeyEtichetta} title={tp.sincronizzataDettaglio}>{tp.sincronizzata}</span>}
                   </p>
+                  <p className={stili.passkeyDettagli}>{tp.aggiuntaIl(dataAttivazione(p.creata_il))}</p>
+                  <p className={stili.passkeyDettagli}>{p.ultimo_uso ? tp.ultimoUso(dataAttivazione(p.ultimo_uso)) : tp.maiUsata}</p>
                 </div>
-                <button type="button" className={stili.azioneDiscreta} onClick={() => apri(p)}>{tp.rimuovi}</button>
+                <button type="button" className={stili.azionePericoloPiccola} onClick={() => apri(p)}
+                  aria-label={tp.rimuoviNome(p.nome)}>{tp.rimuovi}</button>
               </li>
             ))}
           </ul>}
         </Metodo>
         <Metodo Icona={Smartphone} titolo={ta.titolo} descrizione={ta.descrizione} stato={statoTotp} attivo={stato.totp.attivo}
           azioni={stato.totp.attivo
-            ? <button type="button" className={stili.azioneSecondaria} onClick={() => apri("disattiva")}>{ta.disattiva}</button>
+            ? <button type="button" className={stili.azionePericolo} onClick={() => apri("disattiva")}>{ta.disattiva}</button>
             : <button type="button" className={stili.azionePrimaria} onClick={() => apri("attiva")}>{ta.attiva}</button>} />
         <Metodo Icona={Mail} titolo={testi.email.titolo} descrizione={testi.email.descrizione}
           stato={statoEmail} attivo={stato.email.verificata} />

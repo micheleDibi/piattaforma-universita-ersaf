@@ -18,10 +18,16 @@ export const STILI_SICUREZZA = {
   descrizione: "mt-1 text-sm leading-relaxed text-testo-tenue",
   stato: "mt-2 text-sm text-testo",
   statoAttivo: "mt-2 text-sm font-medium text-positivo",
+  // Su mobile le azioni vanno sotto il testo, allineate al titolo e non all'icona
+  // (icona 4.5 + spazio 3 = 7.5); da sm stanno a destra.
+  azioniMetodo: "flex shrink-0 flex-wrap gap-2 pl-7.5 sm:pl-0",
   azioni: "flex shrink-0 flex-wrap gap-2",
   azionePrimaria: pulsante("primario"),
   azioneSecondaria: pulsante("secondario"),
   azioneDiscreta: pulsante("discreto"),
+  // Azioni che tolgono un metodo: sempre rosse, anche nelle finestre di conferma.
+  azionePericolo: pulsante("pericolo"),
+  azionePericoloPiccola: pulsante("pericolo", "piccolo"),
   // Finestra di dialogo delle procedure.
   dialogo: "dialogo__contenuto gap-5 overflow-y-auto",
   dialogoTestata: "space-y-1",
@@ -37,8 +43,11 @@ export const STILI_SICUREZZA = {
   qr: "inline-block rounded-superficie border border-bordo bg-superficie p-3",
   qrImmagine: "block size-44",
   chiave: "mt-1 block font-mono text-sm tracking-wider text-testo-forte [overflow-wrap:anywhere]",
+  // Una passkey per riga: testo a sinistra che va a capo da solo, "Rimuovi" a destra.
   elencoPasskey: "mt-3 space-y-2",
-  passkey: "flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-controllo border border-bordo bg-superficie px-3 py-2",
-  passkeyNome: "text-sm font-medium text-testo-forte",
+  passkey: "flex items-center gap-3 rounded-controllo border border-bordo bg-superficie px-3 py-2.5",
+  passkeyTesto: "min-w-0 flex-1 space-y-0.5",
+  passkeyNome: "flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-testo-forte [overflow-wrap:anywhere]",
+  passkeyEtichetta: "inline-flex items-center rounded-full border border-bordo bg-superficie-tenue px-2 py-0.5 text-nota font-medium text-testo-tenue",
   passkeyDettagli: "text-nota text-testo-tenue",
 };

@@ -38,7 +38,7 @@ export default function RimozionePasskey({ passkey, onFatto, onAnnulla }) {
             value={password} onChange={(e) => setPassword(e.target.value)} className={stili.campo} />
         </div>
         <div className={stili.azioni}>
-          <button type="submit" className={stili.azionePrimaria} disabled={occupato}>{occupato ? testi.inCorso : t.rimuovi}</button>
+          <button type="submit" className={stili.azionePericolo} disabled={occupato}>{occupato ? testi.inCorso : t.rimuovi}</button>
           <button type="button" className={stili.azioneDiscreta} onClick={onAnnulla} disabled={occupato}>{testi.annulla}</button>
         </div>
       </form>
