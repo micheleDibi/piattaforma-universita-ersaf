@@ -73,3 +73,23 @@ def richiedi_ruolo_amministrativo(
             detail="Non hai i permessi per questa operazione.",
         )
     return ruolo
+
+
+def richiedi_nazionale(db: Session, utente: Utente, operazione: str) -> str:
+    """Solleva 403 se l'utente non e' nazionale. Restituisce il suo ruolo.
+
+    Non riusa richiedi_ruolo_amministrativo: quella ammette anche il
+    regionale, mentre qui (cambio di padre nella gerarchia aziende) la
+    regola e' "solo il nazionale".
+    """
+    ruolo = (ruolo_di(db, utente.utente_id) or "").lower()
+    if ruolo != "nazionale":
+        logger.warning(
+            "%s negata: utente_id=%s con ruolo=%s non e' nazionale",
+            operazione, utente.utente_id, ruolo,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo il nazionale può eseguire questa operazione.",
+        )
+    return ruolo

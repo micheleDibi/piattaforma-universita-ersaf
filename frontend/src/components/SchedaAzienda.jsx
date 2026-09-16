@@ -4,45 +4,14 @@ import useNavigazioneElenco from "../hooks/useNavigazioneElenco.js";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { apiFetch, messaggioErrore } from "../lib/api";
-// Alias: in questo file `campo` ed `etichetta` sono gia' un helper di rendering
-// e un parametro destrutturato, quindi le varianti arrivano con altro nome.
-import {
-  campo as classiCampo,
-  etichetta as classiEtichetta,
-} from "../config/styles/campo";
 import { contenutoPagina } from "../config/styles/pagina";
 import { pulsante } from "../config/styles/pulsante";
 import { scheda } from "../config/styles/superficie";
 import { ROTTE } from "../config/routes/rotte";
 import IntestazionePagina from "./shared/IntestazionePagina";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
-
-// obbligatori nel database (NOT NULL senza un default utile)
-const OBBLIGATORI = [
-  ["azienda_ragione_sociale", "Ragione sociale"],
-  ["azienda_partitaIVA", "Partita IVA"],
-  ["azienda_via", "Via"],
-  ["azienda_citta", "Città"],
-  ["azienda_CAP", "CAP"],
-  ["azienda_provincia", "Provincia"],
-];
-
-const FACOLTATIVI = [
-  ["azienda_civico", "Civico"],
-  ["azienda_codiceFiscale", "Codice fiscale"],
-  ["azienda_fatturazioneSDI", "Codice SDI"],
-  ["azienda_email", "Email"],
-  ["azienda_pec", "PEC"],
-  ["azienda_telefono", "Telefono"],
-  ["azienda_sitoWeb", "Sito web"],
-  ["azienda_iban", "IBAN"],
-  ["azienda_codice_bic", "Codice BIC"],
-  ["azienda_codice_nazionale", "Codice nazionale"],
-];
-
-const VUOTO = Object.fromEntries(
-  [...OBBLIGATORI, ...FACOLTATIVI].map(([campo]) => [campo, ""]),
-);
+import CampiAzienda, { VUOTO_AZIENDA } from "./CampiAzienda.jsx";
+import GerarchiaAzienda from "./GerarchiaAzienda.jsx";
 
 export default function SchedaAzienda() {
   const { aziendaId: id } = useParams();
@@ -51,7 +20,7 @@ export default function SchedaAzienda() {
   const inModifica = Boolean(id);
 
   const [erroreLettura, setErroreLettura] = useState(null);
-  const [dati, setDati] = useState(VUOTO);
+  const [dati, setDati] = useState(VUOTO_AZIENDA);
   const [caricamento, setCaricamento] = useState(inModifica);
   const [errore, setErrore] = useState("");
   const [salvataggio, setSalvataggio] = useState(false);
@@ -67,10 +36,8 @@ export default function SchedaAzienda() {
       })
       .then((azienda) => {
         if (annullato) return;
-        // Le colonne nullable arrivano null: negli input serve la stringa
-        // vuota, altrimenti React passa da controllato a non controllato.
         setDati({
-          ...VUOTO,
+          ...VUOTO_AZIENDA,
           ...Object.fromEntries(
             Object.entries(azienda).map(([k, v]) => [k, v ?? ""]),
           ),
@@ -96,8 +63,6 @@ export default function SchedaAzienda() {
     setErrore("");
     setSalvataggio(true);
 
-    // In modifica si manda solo cio' che e' valorizzato: il PUT usa
-    // exclude_unset, quindi i campi omessi restano quelli che sono.
     const corpo = Object.fromEntries(
       Object.entries(dati).filter(([, valore]) => valore !== ""),
     );
@@ -128,27 +93,6 @@ export default function SchedaAzienda() {
       />
     );
 
-  const campo = ([nome, etichetta], obbligatorio) => (
-    <div key={nome} className="flex flex-col">
-      <label
-        htmlFor={nome}
-        className={classiEtichetta()}
-      >
-        {etichetta.toUpperCase()}
-        {obbligatorio && <span className="text-negativo"> *</span>}
-      </label>
-      <input
-        id={nome}
-        name={nome}
-        type="text"
-        required={obbligatorio}
-        value={dati[nome]}
-        onChange={aggiorna}
-        className={classiCampo("comodo")}
-      />
-    </div>
-  );
-
   return (
     <div className={contenutoPagina("modulo")}>
       <IntestazionePagina
@@ -162,11 +106,10 @@ export default function SchedaAzienda() {
           </div>
         )}
 
-        <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
-          {OBBLIGATORI.map((c) => campo(c, true))}
-          {FACOLTATIVI.map((c) => campo(c, false))}
+        <div className="mb-8">
+          <CampiAzienda dati={dati} onChange={aggiorna} />
         </div>
-
+        {inModifica && <GerarchiaAzienda aziendaId={id} />}
         <div className="flex gap-3">
           <button
             type="submit"

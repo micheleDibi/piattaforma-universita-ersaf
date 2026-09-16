@@ -16,6 +16,7 @@ from src.notifiche.config_sms import ConfigSMS
 # configurazione di SQLAlchemy.
 from src.pratiche.models import Pratica  # noqa: F401
 from src.aziende.models import Azienda  # noqa: F401
+from src.aziende_xcod.models import AziendaXCod  # noqa: F401
 from src.clienti.models import Cliente  # noqa: F401
 from src.ruolo.models import Ruolo  # noqa: F401
 from src.utenti.models import Utente  # noqa: F401
@@ -35,6 +36,7 @@ from src.otp.contatti import router as otp_contatti_router
 from src.otp.accesso import router as otp_accesso_router
 from src.auth.routers import router as auth_router
 from src.aziende.routers import router as azienda_router
+from src.aziende_xcod.router import router as aziende_xcod_router
 from src.clienti.routers import router as cliente_router
 from src.ruolo.routers import router as ruolo_router
 from src.utenti.routers import router as utente_router
@@ -104,6 +106,7 @@ app.include_router(auth_router)
 app.include_router(otp_accesso_router)
 app.include_router(otp_contatti_router)
 app.include_router(azienda_router)
+app.include_router(aziende_xcod_router)
 app.include_router(universita_router)
 app.include_router(listini_testa_router)
 app.include_router(pratiche_router)

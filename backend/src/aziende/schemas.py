@@ -71,3 +71,32 @@ class AziendaUpdate(BaseModel):
 
 class AziendaResponse(AziendaBase):
     azienda_id: int
+
+
+
+class AderenteDettaglioBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    universita_ecampus_lauree: int = 0
+    universita_ecampus_master: int = 0
+    universita_link_lauree: int = 0
+    universita_link_master: int = 0
+    universita_SSML_lauree: int = 0
+    universita_SSML_master: int = 0
+    universita_A4U_master: int = 0
+    universita_A4U_perfezionamenti: int = 0
+
+
+class AderenteDettaglioUpdate(AderenteDettaglioBase):
+    """Il form invia sempre tutti e otto i campi insieme (sono percentuali
+    correlate), quindi qui non serve exclude_unset come in AziendaUpdate:
+    un PUT che ne omette uno lo azzera intenzionalmente."""
+    pass
+
+
+class AderenteDettaglioResponse(AderenteDettaglioBase):
+    # None finche' l'azienda non ha ancora un dettaglio salvato: la GET
+    # restituisce comunque zeri "virtuali" per popolare il form, senza
+    # scrivere una riga vuota nel database alla prima apertura della scheda.
+    aderente_dettaglio_id: Optional[int] = None
+    azienda_id: int
