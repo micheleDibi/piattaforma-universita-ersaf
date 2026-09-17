@@ -1,5 +1,4 @@
 import logging
-from datetime import date
 from typing import List, Optional
 
 from fastapi import (
@@ -21,11 +20,14 @@ from src.clienti.schemas import (
     ClienteConUtenteCreate,
     ClienteUpdate,
     PermessiPraticheResponse,
+    _valida_codice_fiscale,
+    _valida_email,
 )
 from src.clienti.servizio import (
     TipoUtente,
     crea_cliente_con_utente,
     verifica_unicita_anagrafica,
+    CAMPI_UNIVOCI_CLIENTE,
 )
 
 from src.database import get_db
@@ -41,6 +43,71 @@ router = APIRouter(
     tags=["Clienti"],
     dependencies=[Depends(get_current_utente)],
 )
+
+# Etichette leggibili per i campi dichiarati univoci in CAMPI_UNIVOCI_CLIENTE
+# (src/clienti/servizio.py), usate solo per comporre il messaggio di
+# anomalia "duplicato con: ...". Se in futuro cambia l'insieme dei campi
+# univoci, questa mappa va tenuta allineata.
+_ETICHETTE_CAMPI_UNIVOCI = {
+    "cliente_codice_fiscale": "Codice Fiscale",
+    "cliente_email": "Email",
+    "cliente_telefono": "Telefono",
+    "cliente_cellulare": "Cellulare",
+    "cliente_documento": "Numero documento",
+}
+
+
+def _mappa_duplicati(db: Session, attributo: str) -> dict[str, list[tuple[int, str]]]:
+    """Per un campo univoco, raggruppa tutti i clienti che condividono lo
+    stesso valore (valori vuoti esclusi): valore -> lista di (id, nome completo).
+    Query su tutta la tabella, non solo sulle righe della pagina corrente,
+    perche' due duplicati potrebbero trovarsi su pagine diverse dell'elenco."""
+    colonna = getattr(Cliente, attributo)
+    righe = db.query(Cliente.cliente_id, colonna, Cliente.cliente_nome, Cliente.cliente_cognome).all()
+    mappa: dict[str, list[tuple[int, str]]] = {}
+    for cliente_id, valore, nome, cognome in righe:
+        valore_pulito = (valore or "").strip()
+        if not valore_pulito:
+            continue
+        nome_completo = f"{nome or ''} {cognome or ''}".strip() or f"cliente #{cliente_id}"
+        mappa.setdefault(valore_pulito, []).append((cliente_id, nome_completo))
+    return mappa
+
+
+def _annota_anomalie(db: Session, clienti: list[Cliente]) -> None:
+    """..."""
+    mappe_duplicati = {
+        attributo: _mappa_duplicati(db, attributo)
+        for attributo in _ETICHETTE_CAMPI_UNIVOCI
+    }
+
+    for cliente in clienti:
+        anomalie: list[str] = []
+
+        cf = (cliente.cliente_codice_fiscale or "").strip()
+        if cf:
+            try:
+                _valida_codice_fiscale(cf)
+            except ValueError as errore:
+                anomalie.append(str(errore))
+
+        email = (cliente.cliente_email or "").strip()
+        if email:
+            try:
+                _valida_email(email)
+            except ValueError as errore:
+                anomalie.append(str(errore))
+
+        for attributo, etichetta in _ETICHETTE_CAMPI_UNIVOCI.items():
+            valore = (getattr(cliente, attributo) or "").strip()
+            if not valore:
+                continue
+            omonimi = [nome for cid, nome in mappe_duplicati[attributo].get(valore, []) if cid != cliente.cliente_id]
+            if omonimi:
+                anomalie.append(f"{etichetta} duplicato con: {', '.join(omonimi)}")
+
+        cliente.anomalie = anomalie
+
 
 @router.get("/permessi-pratiche", response_model=PermessiPraticheResponse)
 def permessi_pratiche_correnti(current_utente=Depends(get_current_utente)):
@@ -168,13 +235,17 @@ def leggi_clienti(
                     | (Cliente.cliente_cognome.ilike(termine))
                 )
 
-    return query.order_by(Cliente.cliente_id.asc()).offset(skip).limit(limit).all()
+    risultati = query.order_by(Cliente.cliente_id.asc()).offset(skip).limit(limit).all()
+    _annota_anomalie(db, risultati)
+    return risultati
 
 
 #GET BY ID
 @router.get("/{cliente_id}", response_model=ClienteDettaglioResponse)
 def leggi_cliente(cliente_id: int, db: Session = Depends(get_db)):
-    return _cliente_o_404(db, cliente_id, con_curriculum=True)
+    cliente = _cliente_o_404(db, cliente_id, con_curriculum=True)
+    _annota_anomalie(db, [cliente])
+    return cliente
 
 
 #PUT
@@ -203,33 +274,26 @@ def aggiorna_cliente(
 
     verifica_unicita_anagrafica(db, campi_cliente, escludi_cliente_id=cliente_id)
 
-    # Il frontend rimanda sempre tutti i campi del form, non solo quelli
-    # modificati: validare CF/scadenza a livello di schema bloccherebbe ogni
-    # PUT su un cliente storico che ha gia' un documento scaduto o un CF
-    # malformato, anche quando l'operatore non ha toccato quei campi.
-    # Si controlla quindi solo se il valore inviato e' DIVERSO da quello
-    # gia' salvato: un peggioramento nuovo si blocca, un dato storico
-    # invariato passa.
-    if "cliente_dataScadenzaDocumento" in campi_cliente:
-        nuova_scadenza = campi_cliente["cliente_dataScadenzaDocumento"]
-        if (
-            nuova_scadenza is not None
-            and nuova_scadenza != db_cliente.cliente_dataScadenzaDocumento
-            and nuova_scadenza < date.today()
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="Il documento è scaduto: inserisci una data di scadenza valida.",
-            )
-
+    # Stesso principio della Partita IVA sulle aziende: un campo si valida
+    # SOLO se e' stato davvero cambiato rispetto al valore gia' salvato. Un
+    # PUT che rimanda invariato un CF o un'email storicamente sporchi non
+    # deve fallire solo per questo; se pero' l'operatore lo sta modificando,
+    # il nuovo valore deve essere conforme.
     if "cliente_codice_fiscale" in campi_cliente:
         nuovo_cf = campi_cliente["cliente_codice_fiscale"]
         if nuovo_cf and nuovo_cf != db_cliente.cliente_codice_fiscale:
-            if len(nuovo_cf.strip()) != 16:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                    detail="Codice fiscale non valido: deve essere lungo 16 caratteri.",
-                )
+            try:
+                campi_cliente["cliente_codice_fiscale"] = _valida_codice_fiscale(nuovo_cf)
+            except ValueError as errore:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(errore))
+
+    if "cliente_email" in campi_cliente:
+        nuova_email = campi_cliente["cliente_email"]
+        if nuova_email and nuova_email != db_cliente.cliente_email:
+            try:
+                campi_cliente["cliente_email"] = _valida_email(nuova_email)
+            except ValueError as errore:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(errore))
 
     CAMPI_STRINGA_NOT_NULL = {
         "cliente_codice", "cliente_nome", "cliente_cognome", "cliente_email",
@@ -289,4 +353,5 @@ def aggiorna_cliente(
         )
 
     db.refresh(db_cliente)
+    _annota_anomalie(db, [db_cliente])
     return db_cliente

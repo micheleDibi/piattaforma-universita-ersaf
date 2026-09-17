@@ -23,6 +23,7 @@ export function rigaCliente(item, { attuatori, mostraAzienda }) {
       nominativo,
       nome: testo(item.cliente_nome),
       cognome: testo(item.cliente_cognome),
+      avviso: item.anomalie ?? [],
       ...(attuatori ? { ruolo: testo(item.ruolo?.ruolo_codice) } : {}),
       ...(mostraAzienda
         ? { azienda: testo(item.azienda?.azienda_ragione_sociale) }
@@ -61,7 +62,7 @@ export function rigaPratica(item) {
       numero,
       cliente: testo(item.cliente_nome_completo),
       corso: testo(item.listTesta_descrizione),
-      dataCreazione: formattaData(item.pratica_dataCreazione), // MODIFICATO
+      dataCreazione: formattaData(item.pratica_dataCreazione),
       stato: testo(item.pratica_stato_descrizione),
     },
   };

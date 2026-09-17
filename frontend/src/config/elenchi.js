@@ -25,14 +25,9 @@ const universita = {
   icona: "universita",
 };
 const tipo = { id: "tipo", etichetta: "Tipo di corso", icona: "tipo" };
-const avviso = { id: "avviso", etichetta: "", rilievo: "avviso" };
-
-// NUOVE — servono solo a MODELLO_PRATICHE. Nomi distinti da "universita"/"tipo"
-// sopra: quelle sono per MODELLO_PRODOTTI e usano id "universita"/"tipo" che
-// puntano a campi diversi (nome_universita vs listino_tipoCorso_descrizione).
 const dataCreazione = {
   id: "dataCreazione",
-  etichetta: "Data creazione",
+  etichetta: "Data di creazione",
   icona: "data",
 };
 
@@ -53,6 +48,7 @@ export function modelloClienti({ attuatori, mostraAzienda }) {
     ampiezza: mostraAzienda ? "articolata" : "semplice",
     colonne: [nome, cognome, ...riferimenti].map(colonna),
     mobile: [nominativo, ...riferimenti],
+    avvisoDopo: "cognome",
   };
 }
 
@@ -72,6 +68,7 @@ export const MODELLO_AZIENDE = {
     { ...azienda, etichetta: "Ragione sociale", rilievo: "principale" },
     sede,
   ],
+  avvisoDopo: "azienda",
 };
 
 export const MODELLO_PRATICHE = {
