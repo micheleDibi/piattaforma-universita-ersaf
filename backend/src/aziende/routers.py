@@ -251,7 +251,7 @@ def aggiorna_azienda(
         azienda.azienda_codiceFiscale = _valida_codice_fiscale(azienda.azienda_codiceFiscale)
     except ValueError as errore:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(errore))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(errore))
 
     db.commit()
     db.refresh(azienda)

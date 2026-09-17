@@ -25,7 +25,6 @@ const universita = {
   icona: "universita",
 };
 const tipo = { id: "tipo", etichetta: "Tipo di corso", icona: "tipo" };
-const avviso = { id: "avviso", etichetta: "", rilievo: "avviso" };
 
 // NUOVE — servono solo a MODELLO_PRATICHE. Nomi distinti da "universita"/"tipo"
 // sopra: quelle sono per MODELLO_PRODOTTI e usano id "universita"/"tipo" che

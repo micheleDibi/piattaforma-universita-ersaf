@@ -163,7 +163,7 @@ async def gestisci_errori_validazione(request: Request, exc: RequestValidationEr
 
     logger.info("validazione fallita su %s %s: %s", request.method, request.url.path, dettaglio)
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content={"detail": dettaglio},
     )
 
