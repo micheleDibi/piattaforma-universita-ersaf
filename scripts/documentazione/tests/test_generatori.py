@@ -174,7 +174,7 @@ def test_commenti_degli_esempi(tmp_path):
         "A=1",
         "B=2",
         "C=3",
-        "# Solo D, collaudo su https://collaudo.azienda.it",
+        "# Solo D, collaudo su https://collaudo.esempio.it",
         "D=4",
         "",
         "E=5",

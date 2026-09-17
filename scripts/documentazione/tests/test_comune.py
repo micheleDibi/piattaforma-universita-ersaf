@@ -58,8 +58,8 @@ def test_risolvi():
 
 
 def test_redigi():
-    testo = ("scrivi a nome.cognome@esempio.it o vai su https://collaudo.azienda.it, "
-             "db mysql://utente:segreta@db/x, ip 192.0.2.10, locale 127.0.0.1, "
+    testo = ("scrivi a nome.cognome@esempio.it o vai su https://collaudo.esempio.it, "
+             "db mysql://utente:parola@db/x, ip 192.0.2.10, locale 127.0.0.1, "
              "localhost e example.com restano, niente root:parola e porta localhost:5173")
     atteso = ("scrivi a <email> o vai su https://<dominio>, db mysql://<credenziali>@db/x, "
               "ip <ip>, locale 127.0.0.1, localhost e example.com restano, niente <credenziali> e porta "
