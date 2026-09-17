@@ -137,7 +137,9 @@ def componi(radice: Path, dati: dict) -> str:
         righe += [f"| `{n}` | {_dove(d)} |" for n, d in sorted(altre_backend.items())]
     righe += [
         "", "## Deploy (`compose.env` sul server)", "",
-        "Gestito dagli script di deploy; non contiene segreti.", "",
+        "Gestito dagli script di deploy; non contiene segreti. Le variabili senza descrizione non "
+        "compaiono in `deploy/compose.env.example`: le scrivono gli script quando servono, e il loro "
+        "significato è in [deploy](../deploy.md).", "",
         "| Variabile | Dove | Descrizione |", "|---|---|---|",
     ]
     righe += [f"| `{n}` | {_dove(d)} | {cella(esempio_deploy.get(n, ''))} |" for n, d in sorted(deploy.items())]

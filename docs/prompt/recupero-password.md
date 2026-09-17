@@ -1,25 +1,35 @@
 # Prompt — Recupero password (piattaforma-universita-ersaf)
 
+> Istantanea del 04/09/2026: è il prompt con cui è stato chiesto a un agente di costruire il recupero password. Non descrive lo stato attuale del progetto: per quello vedi la [documentazione](../README.md).
+
+> I conteggi presi dal dump e il nome dello schema sono stati rimossi da questo testo, perché il repository è pubblico: al loro posto ci sono descrizioni qualitative. Le decisioni e i vincoli di allora non cambiano.
+
 > Da incollare a un agente di sviluppo. Scritto dopo l'ispezione del codice e del
-> dump: i numeri e i nomi dei simboli sono reali, non vanno riverificati da zero.
+> dump: i nomi dei simboli sono reali, non vanno riverificati da zero.
 > Analisi completa in `docs/ANALISI-progetto.md`.
+
+> Nota (17/09/2026): `docs/ANALISI-progetto.md` non esiste più. Il suo contenuto, aggiornato, è distribuito nei documenti tecnici, a partire da [Sicurezza](../tecnica/sicurezza.md) e [Architettura](../tecnica/architettura.md).
 
 ---
 
 ## 0. Contesto già accertato — non riscoprirlo
 
 Repo: FastAPI + SQLAlchemy 2.0 (`backend/`), React 19 + Vite + Tailwind
-(`frontend/`), MariaDB 10.11 (`admin_entedb`, 171 tabelle ereditate da una
+(`frontend/`), MariaDB 10.11 (`<schema>`, con molte tabelle ereditate da una
 piattaforma Instant Developer ancora in produzione).
 **Branch di partenza: `Login`.** Lavora su un branch nuovo che parte da lì.
 
+> Nota (17/09/2026): il ramo `Login` era il punto di partenza di allora. Il flusso di lavoro attuale, con un ramo personale e una pull request verso `main`, è in [Convenzioni](../tecnica/convenzioni.md).
+
 Quello che **non esiste** e che questa task deve costruire:
 
-- **hashing**: le 4.771 password in `utenti.utente_password` sono **in chiaro**;
+- **hashing**: le password in `utenti.utente_password` sono **in chiaro**;
   `utenti.utente_salt` è un UUID mai usato;
 - **sessioni**: l'auth è l'header `x-utente-id`, un intero non firmato;
 - **invio email**: nessun SMTP, nessuna libreria;
 - **rate limiting**, **migrazioni**, **test**, **`requirements.txt`**.
+
+> Nota (17/09/2026): oggi tutti questi elementi esistono: hash bcrypt (`backend/src/security/password.py`), sessioni revocabili (`backend/src/security/sessioni.py`), invio email (`backend/src/notifiche/`), limiti sui tentativi, migrazioni (`db/migrations/`), test e `backend/requirements.txt`. L'autenticazione non usa più `x-utente-id`: la sessione viaggia in un cookie HttpOnly e le richieste che modificano dati portano un token CSRF. Vedi [Sicurezza](../tecnica/sicurezza.md).
 
 Convenzione legacy pervasiva: **`-1` = TRUE, `0` = FALSE** (es. `utente_attivoSN`).
 
@@ -32,8 +42,12 @@ le *query di riferimento* che l'applicazione deve usare (revoca, validazione,
 consumo atomico, conteggio rate limit). Applicale in ordine su un DB di sviluppo
 dopo aver eseguito `db/diagnostica/000_diagnostica_pre_migrazione.sql`.
 
+> Nota (17/09/2026): le migrazioni oggi vanno oltre la 008 e non sono più solo DDL: la 009 aggiorna un flag degli utenti, la 011, la 012 e la 014 inseriscono o aggiornano modelli email. Elenco e anomalie in [Migrazioni](../tecnica/riferimenti/migrazioni.md); regole operative in [db/README.md](../../db/README.md).
+
 Se ti servono altre modifiche allo schema, aggiungi `db/migrations/008_*.sql`
 con il rispettivo `db/rollback/008_*_down.sql`. Non modificare le 001–006.
+
+> Nota (17/09/2026): la 008 esiste (`db/migrations/008_esito_errore_interno.sql`) e dopo di lei ne sono state aggiunte altre. Vedi [Migrazioni](../tecnica/riferimenti/migrazioni.md).
 
 ### Decisioni già prese — non richiederle di nuovo
 
@@ -51,23 +65,33 @@ con il rispettivo `db/rollback/008_*_down.sql`. Non modificare le 001–006.
 
 ## 1. Vincoli sui dati — determinano il comportamento, non sono note a margine
 
-Misurati sul dump, non stimati:
+Misurati sul dump, non stimati. I conteggi sono stati rimossi da questo testo:
+per rifarli serve il dump, che non sta nel repository.
 
-- **869 utenti non hanno alcuna riga `clienti`** → nessuna email raggiungibile.
+- **una parte consistente degli utenti non ha alcuna riga `clienti`** → nessuna email raggiungibile.
   Sono anche le righe su cui `/auth/login` **restituisce oggi un 500**
   (`user.clienti.ruolo.ruolo_codice` su `clienti = None`). Vanno gestite.
-- **`utenti.utente_username` NON ha `UNIQUE` nel DB** (6 duplicati, incluso `/`),
-  malgrado `models.py` dichiari `unique=True`. Non assumere mai che uno username
-  identifichi un solo utente.
-- **`clienti.cliente_email` non è univoca**: 40 valori condivisi su 105 clienti
-  (fino a 11 clienti sullo stesso indirizzo). **20 attuatori** hanno un'email
-  condivisa con un altro cliente.
-- 43 email vuote, 10 malformate. **1 attuatore** non ha email valida.
-- **19 attuatori hanno `utente_attivoSN = 0`** (disattivati).
+
+  > Nota (17/09/2026): il 500 è stato corretto. Un utente senza riga `clienti` riceve lo stesso 401 delle credenziali errate (`backend/src/auth/accesso.py`).
+
+- **`utenti.utente_username` NON ha `UNIQUE` nel DB** (alcuni username sono
+  duplicati, e fra i valori c'è anche `/`), malgrado `models.py` dichiari
+  `unique=True`. Non assumere mai che uno username identifichi un solo utente.
+
+  > Nota (17/09/2026): il modello non dichiara più `unique=True` sullo username (`backend/src/utenti/models.py`). Il login rifiuta gli username presenti su più righe.
+
+- **`clienti.cliente_email` non è univoca**: molti indirizzi sono condivisi fra
+  più clienti, in qualche caso da parecchi. Fra questi ci sono **attuatori** che
+  hanno l'email in comune con un altro cliente.
+- Ci sono email **vuote** e email **malformate**, e c'è almeno un attuatore
+  senza email valida.
+- **Alcuni attuatori hanno `utente_attivoSN = 0`** (disattivati).
 - `clienti` ha **solo la PRIMARY KEY**: la migrazione 005 aggiunge gli indici.
   La query deve confrontare la **colonna nuda** (`WHERE cliente_email = :param`)
   con il parametro normalizzato lato Python — `LOWER(TRIM(colonna))` annulla
   l'indice. La collation `utf8mb4_unicode_ci` è già case-insensitive.
+
+  > Nota (17/09/2026): con la 005 applicata, `clienti` ha anche gli indici su email, utente e ruolo (`db/migrations/005_indici_e_integrita.sql`). Dal codice non si può sapere su quali database sia già applicata.
 
 ---
 
@@ -79,6 +103,8 @@ Misurati sul dump, non stimati:
 `fastapi`, `uvicorn[standard]`, `sqlalchemy>=2`, `pymysql`, `python-dotenv`,
 `pydantic[email]`, `passlib[bcrypt]`, `bcrypt`, `aiosmtplib` (o `fastapi-mail`),
 `pytest`, `httpx`.
+
+> Nota (17/09/2026): `backend/requirements.txt` esiste e il progetto si installa. Il file esclude di proposito `passlib` (bcrypt si usa direttamente) e `aiosmtplib` (l'invio usa `smtplib` in un task in background). Vedi [Sviluppo locale](../tecnica/sviluppo-locale.md).
 
 **b) `backend/src/security/password.py`**
 - `hash_password(pw) -> str` — bcrypt, cost 12.
@@ -105,6 +131,8 @@ sessioni nate **prima** dell'ultimo cambio password, come difesa in profondità
 se la revoca massiva fallisse.
 Aggiorna `Login.jsx`: oggi salva `utente_id` in `localStorage`.
 
+> Nota (17/09/2026): niente `Authorization: Bearer` e niente `localStorage`. Il token di sessione viaggia in un cookie HttpOnly. Il login restituisce un token CSRF, che l'interfaccia tiene solo in memoria e rimanda nelle richieste che modificano dati. Vedi [Sicurezza](../tecnica/sicurezza.md).
+
 **e) `backend/src/notifiche/email.py`** — invio SMTP da variabili `.env`
 (`SMTP_HOST/PORT/USER/PASSWORD/FROM`, `TLS`). **Non** leggere le credenziali
 dalla tabella `mail`, che le contiene in chiaro. I template vivono in
@@ -119,6 +147,8 @@ di consegna SMTP non deve entrare nel tempo di risposta.
 `SESSION_TTL_HOURS=12`, `FRONTEND_BASE_URL`, `SMTP_*`.
 I due pepper devono essere ≥32 byte casuali. **L'app deve rifiutarsi di
 partire** se mancano o sono i valori di esempio.
+
+> Nota (17/09/2026): `SESSION_TTL_HOURS` non esiste più. La sessione è scorrevole e la regolano `SESSION_INATTIVITA_GIORNI` e `SESSION_DURATA_MASSIMA_GIORNI` (14 e 90 giorni con la configurazione predefinita). I segreti controllati all'avvio sono tre: i due pepper e `TOTP_CHIAVE`, tutti diversi fra loro. Vedi [Configurazione](../tecnica/riferimenti/configurazione.md).
 
 ### 2.2 Endpoint
 
@@ -144,7 +174,7 @@ Ordine obbligatorio delle operazioni:
    | **>1 utente idoneo** sulla stessa email | `identificativo_ambiguo` | **no** |
    | limite superato | `rate_limited_ip` / `rate_limited_account` | no |
 
-   L'esito ambiguo è obbligatorio: con 20 attuatori che condividono l'email,
+   L'esito ambiguo è obbligatorio: con più attuatori che condividono l'email,
    inviare a tutti significa mandare a Tizio il link di reset di Caio.
 5. solo su `email_inviata`: revoca i token precedenti e inserisci il nuovo
    (query [A] della 002), **nella stessa transazione**; poi accoda l'invio.
@@ -175,12 +205,17 @@ In un'unica transazione:
 
 Non autenticare l'utente: la risposta porta al login (requisito 16).
 
+> Nota (17/09/2026): i "requisiti" numerati citati qui e più sotto non sono elencati in nessun documento del repository.
+
 ### 2.3 Policy password
 
 Allineata a NIST SP 800-63B: **lunghezza, non composizione obbligatoria**.
 
 - minimo **12** caratteri, massimo **72 byte** (limite bcrypt — è un vincolo
   tecnico reale, non una preferenza);
+
+  > Nota (17/09/2026): il minimo oggi è di 8 caratteri con la configurazione predefinita (`PASSWORD_MIN_LENGTH`, che l'avvio non accetta sotto 8); il massimo resta di 72 byte. Vedi [Sicurezza](../tecnica/sicurezza.md).
+
 - rifiuta le password uguali all'username o all'email;
 - rifiuta una blocklist minima (`password`, `ersaf`, `123456789012`, …);
 - **stesse regole lato client e lato server**, con le regole visibili a schermo
@@ -191,6 +226,8 @@ Allineata a NIST SP 800-63B: **lunghezza, non composizione obbligatoria**.
 
 Due rotte nuove in `App.jsx`: `/password-dimenticata` e `/reimposta-password`.
 Il link in `Login.jsx` è oggi uno stub con `console.log`: collegalo.
+
+> Nota (17/09/2026): il link non è più uno stub: porta alla pagina di recupero password.
 
 **Pagina di richiesta** — campo email + "Invia" + "Torna al login". Dopo l'invio
 mostra il messaggio generico **e disabilita il pulsante**, sempre, anche in
@@ -228,9 +265,9 @@ Il messaggio identico non basta se qualcos'altro differisce:
 
 Non sono extra: senza il primo, il lavoro sull'indistinguibilità è inutile.
 
-1. **`/auth/login` restituisce 500 sugli 869 utenti orfani** — gestisci
+1. **`/auth/login` restituisce 500 sugli utenti senza riga `clienti`** — gestisci
    `clienti = None` e restituisci lo stesso 401 di una password sbagliata.
-2. **Il login non controlla `utente_attivoSN`** — i 21 utenti disattivati
+2. **Il login non controlla `utente_attivoSN`** — gli utenti disattivati
    accedono. Blocca, con lo stesso 401 generico.
 3. **`PUT /utenti/{id}` scrive `utente_password` in chiaro** via `setattr`
    ciclico. Togli la password da quello schema: si cambia solo dai flussi
@@ -239,6 +276,8 @@ Non sono extra: senza il primo, il lavoro sull'indistinguibilità è inutile.
 5. **`Login.jsx` non gestisce `requires_2fa`** e scrive `"undefined"` in
    `localStorage`.
 
+> Nota (17/09/2026): i cinque punti sono stati corretti. Gli utenti senza riga `clienti` e quelli disattivati ricevono lo stesso 401 delle credenziali errate; lo schema di `PUT /utenti/{id}` non contiene più la password; il login non porta più a `/nazionale` e un indirizzo sconosciuto mostra una pagina "non trovata"; il login gestisce `requires_2fa` e non scrive nulla in `localStorage`.
+
 ---
 
 ## 4. Test
@@ -246,6 +285,8 @@ Non sono extra: senza il primo, il lavoro sull'indistinguibilità è inutile.
 Nel repo non esiste nulla: crea `backend/tests/` con `pytest` + `httpx`, DB di
 test separato (SQLite non basta — servono `INET6_ATON` e il comportamento
 MariaDB: usa un DB MariaDB dedicato o marca i test che lo richiedono).
+
+> Nota (17/09/2026): oggi i test esistono: `backend/tests/` con pytest, dove i test che richiedono MariaDB sono marcati `mariadb` e usano un database usa-e-getta, e `frontend/tests/` con il test runner di Node. Vedi [Test](../tecnica/test.md).
 
 Casi che devono esistere:
 
@@ -278,7 +319,9 @@ svuotato; il login successivo passa dal ramo bcrypt.
 ## 5. Fuori perimetro
 
 Non toccare: la tabella legacy `utente_session` (la usa la piattaforma Instant
-Developer); il flusso 2FA per il ruolo Nazionale; le altre 165 tabelle.
+Developer); il flusso 2FA per il ruolo Nazionale; tutte le altre tabelle ereditate.
+
+> Nota (17/09/2026): il secondo fattore per il ruolo Nazionale oggi esiste (`backend/src/mfa/`). La tabella `utente_session` resta esclusa. Vedi [Sicurezza](../tecnica/sicurezza.md).
 
 **Non** eseguire migrazioni contro un database di produzione.
 
@@ -293,19 +336,30 @@ completato un reset (§2.2). Se pensi che serva altro, chiedi.
 ## 6. Criteri di accettazione
 
 - [ ] Il branch parte da `Login`.
+
+  > Nota (17/09/2026): vedi la nota sul ramo di partenza al §0.
+
 - [ ] `pip install -r backend/requirements.txt` e l'app parte con un `.env` nuovo.
 - [ ] L'app **si rifiuta di partire** se i pepper mancano o sono i valori d'esempio.
 - [ ] Le migrazioni 001–006 girano su un DB pulito, sono idempotenti e i rollback
       riportano allo stato iniziale.
+
+  > Nota (17/09/2026): oggi la suite applica e riesegue tutte le migrazioni, poi esegue i rollback presenti (`backend/tests/db/test_migrazioni.py`). La 014 non ha un rollback e quello della 009 non fa nulla. Vedi [Migrazioni](../tecnica/riferimenti/migrazioni.md).
+
 - [ ] I quattro scenari di richiesta producono risposte identiche byte per byte.
 - [ ] Un token consumato due volte cambia la password una volta sola.
 - [ ] Dopo il reset, ogni sessione preesistente riceve 401.
 - [ ] `grep -riE "token|password" backend/logs/` non trova valori sensibili.
 - [ ] Nessuna password in chiaro scritta da nessun percorso di codice.
 - [ ] Nessuno script o comando che modifichi in blocco le righe di `utenti`.
+
+  > Nota (17/09/2026): la migrazione 009 aggiorna in blocco `utente_attivoSN` sulle righe che valevano 1. Le password restano escluse da ogni aggiornamento in blocco, e un test lo sorveglia.
+
 - [ ] Un utente che non fa login mantiene la riga invariata e continua ad accedere.
 - [ ] La suite `pytest` passa; i casi del §4 sono tutti presenti.
 - [ ] `docs/ANALISI-progetto.md` aggiornato con ciò che è stato effettivamente fatto.
+
+  > Nota (17/09/2026): `docs/ANALISI-progetto.md` non esiste più: vedi la [documentazione](../README.md).
 
 ---
 
@@ -317,7 +371,10 @@ scegliere da solo — indicando cosa hai trovato e quali sono le alternative.
 
 ## 8. Prima di scrivere qualsiasi codice
 
-`dump.sql` (5,3 GB) è untracked ma **non ignorato**. Contiene password in
-chiaro, codici fiscali, numeri di documento e date di nascita di ~3.900 persone.
+`dump.sql` è untracked ma **non ignorato**, e pesa parecchi gigabyte. Contiene
+password in chiaro, codici fiscali, numeri di documento e date di nascita di
+tutte le persone in anagrafica.
 Aggiungilo a `.gitignore` e verifica con `git status` che non compaia. Un
 `git add -A` distratto lo committa in modo permanente.
+
+> Nota (17/09/2026): `dump.sql` oggi è ignorato: `.gitignore` esclude tutti i file `.sql`, tranne quelli sotto `db/`.

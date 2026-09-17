@@ -81,7 +81,9 @@ def test_componi_operazioni_e_modelli():
     assert "- **Risposta**: `200` `X`" in testo and "422" not in testo.split("## Modelli")[1]
     assert "- **Risposta**: `204` nessun contenuto" in testo
     assert "`200` application/pdf" in testo
-    assert "## Senza categoria" in testo and "sfida di accesso" in testo
+    dati["openapi"]["paths"]["/pdf"]["get"]["responses"]["200"]["content"] = {"application/json": {"schema": {}}}
+    assert "`200` schema non dichiarato" in api.componi(dati)
+    assert "## Altre operazioni" in testo and "sfida di accesso" in testo
     assert "| `a` | `integer` | sì |\n| `b` | `string` | no |" in testo
     assert 'Valori: "uno" | "due".' in testo and "ValidationError" not in testo
     dati["accessi"].pop("get /pdf")

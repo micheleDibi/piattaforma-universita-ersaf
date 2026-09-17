@@ -102,10 +102,12 @@ def _risposte(operazione: dict) -> str:
             parti.append(f"`{codice}` nessun contenuto")
             continue
         for media, contenuto in sorted(contenuti.items()):
-            if media == "application/json":
-                parti.append(f"`{codice}` `{tipo(contenuto.get('schema', {}))}`")
-            else:
+            if media != "application/json":
                 parti.append(f"`{codice}` {media}")
+                continue
+            resa = tipo(contenuto.get("schema", {}))
+            # Le rotte senza response_model non dichiarano la forma della risposta.
+            parti.append(f"`{codice}` schema non dichiarato" if resa == "qualsiasi" else f"`{codice}` `{resa}`")
     return ", ".join(parti) or "—"
 
 
@@ -145,7 +147,7 @@ def componi(dati: dict) -> str:
             chiave = f"{metodo} {percorso}"
             if chiave not in accessi:
                 raise ErroreGeneratore(f"accesso sconosciuto per {chiave}")
-            tag = (operazione.get("tags") or ["Senza categoria"])[0]
+            tag = (operazione.get("tags") or ["Altre operazioni"])[0]
             gruppi.setdefault(tag, []).append((percorso, metodo, operazione))
 
     righe = [intestazione("Riferimento delle API", "`backend/src/main.py` (OpenAPI dell'applicazione)").rstrip(), ""]

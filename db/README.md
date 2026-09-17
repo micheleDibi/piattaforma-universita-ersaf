@@ -1,8 +1,18 @@
 # Migrazioni database — piattaforma-universita-ersaf
 
-Target: **MariaDB 10.11** (`admin_entedb`), InnoDB, `utf8mb4_unicode_ci`.
-Tutte le migrazioni sono state applicate, rieseguite e annullate con successo su
-MariaDB 10.11.14, la stessa versione del dump di produzione.
+Target: **MariaDB 10.11**, InnoDB, `utf8mb4_unicode_ci`.
+
+La suite applica tutte le migrazioni su un database di prova costruito da
+`db/test/schema_base.sql`, le riesegue e poi esegue i rollback presenti
+(`backend/tests/db/test_migrazioni.py`): le migrazioni da sole non creano le
+tabelle legacy su cui lavorano. La 014 non ha un rollback: prima di applicarla
+si salva una copia dei modelli email che aggiorna, se sono stati
+personalizzati, e per tornare indietro si ripristina quella copia.
+
+Questo file contiene le regole operative: come si applicano le migrazioni, cosa
+fare quando una fallisce, cosa controllare prima. Il contesto — com'è fatto lo
+schema, perché le migrazioni sono file SQL, i debiti tecnici — è in
+[database e migrazioni](../docs/tecnica/database-e-migrazioni.md).
 
 ## Struttura
 
@@ -12,20 +22,17 @@ db/
 │   ├── 000_diagnostica_pre_migrazione.sql           da eseguire per prima
 │   └── 010_stato_migrazione_password.sql            avanzamento del rehash pigro
 ├── migrations/                                      da applicare in ordine numerico
-│   ├── 001_password_hashing.sql
-│   ├── 002_password_reset_token.sql
-│   ├── 003_rate_limiting.sql
-│   ├── 004_sessioni.sql
-│   ├── 005_indici_e_integrita.sql
-│   ├── 006_template_email.sql
-│   └── 008_esito_errore_interno.sql          il 007 non esiste, non è un buco
-└── rollback/                                        annullamento, ordine inverso
+├── rollback/                                        annullamento, ordine inverso
+└── test/                                            database della suite di test, NON una migrazione
 ```
+
+L'elenco delle migrazioni e dei rollback, con le anomalie di numerazione e i
+rollback mancanti, è in [Migrazioni](../docs/tecnica/riferimenti/migrazioni.md).
 
 ## Ordine di esecuzione
 
 ```bash
-mariadb -u <user> -p admin_entedb < db/diagnostica/000_diagnostica_pre_migrazione.sql | tee diag_$(date +%F).txt
+mariadb -u <user> -p <database> < db/diagnostica/000_diagnostica_pre_migrazione.sql | tee diag_$(date +%F).txt
 
 # Il glob prende TUTTE le migrazioni in ordine numerico: non elencarle a mano,
 # è così che si dimentica l'ultima.
@@ -34,25 +41,48 @@ for f in db/migrations/*.sql; do
 done
 ```
 
-**Nessuna migrazione modifica o cancella i dati esistenti.** Le 001–008 sono
-solo DDL (colonne, tabelle, indici) più l'inserimento di due template email.
+In collaudo le migrazioni le applica lo script di deploy, che tiene un proprio
+registro con nome e impronta di ogni file già applicato e si ferma se un file
+registrato è cambiato: vedi [deploy](../docs/tecnica/deploy.md). Applicare a
+mano le migrazioni su quel database lascia il registro indietro, e il deploy
+successivo le riapplica — riscrivendo i modelli email personalizzati.
 
-> ⚠️ **`db/test/` non è una migrazione.** `db/test/schema_base.sql` fa
-> `DROP TABLE` su `utenti`, `clienti`, `aziende`, `ruoli` e `messaggi_email`:
-> serve a costruire da zero il database usa-e-getta della suite di test, e
-> **cancella i dati** se eseguito su un database vero. Non compare nel glob
-> qui sopra proprio per questo. Applicando le migrazioni a mano, non toccare
-> quella cartella.
-Le password si convertono una riga alla volta, al login del singolo utente:
-chi non accede resta intatto. L'avanzamento si segue con
-`db/diagnostica/010_stato_migrazione_password.sql`.
+**Nessuna migrazione tocca le password esistenti**, ma non tutte sono solo DDL:
+
+- la 009 aggiorna `utente_attivoSN` sulle righe di `utenti` che valevano 1, e
+  il suo rollback non le riporta indietro;
+- la 006, la 011, la 012 e la 014 inseriscono o aggiornano modelli email in
+  `messaggi_email`;
+- gli eventi di pulizia creati dalle migrazioni cancellano periodicamente le
+  righe scadute o più vecchie della finestra di conservazione, solo nelle
+  tabelle create dalle migrazioni stesse.
+
+Le password si convertono una riga alla volta, al login del singolo utente o
+alla conferma di un recupero password: chi non fa né l'uno né l'altro resta
+intatto. Come si segue l'avanzamento è più sotto.
+
+> **`db/test/` non è una migrazione.** `db/test/schema_base.sql` cancella e
+> ricrea le tabelle legacy su cui lavorano le migrazioni e i test di accesso,
+> fra cui `utenti` e `clienti`, reinserendo solo le righe dei ruoli: serve a
+> costruire da zero il database usa-e-getta della suite di test, e **cancella
+> i dati** se eseguito su un database vero. Non compare nel glob qui sopra
+> proprio per questo. Applicando le migrazioni a mano, non toccare quella
+> cartella.
 
 ## Se una migrazione fallisce
 
-Il client si ferma al primo errore, quindi il file che fallisce non lascia
-nulla applicato a metà: si corregge la causa e si rilancia lo stesso comando.
-Le migrazioni sono idempotenti, quindi rieseguire quelle già passate non fa
-danni.
+Il client si ferma al primo errore, ma i DDL di MariaDB fanno commit implicito:
+le istruzioni del file che precedono l'errore restano applicate. Vale anche
+dentro uno `START TRANSACTION` scritto nel file — la 003 e la 004 lo aprono, e
+il primo `CREATE TABLE` lo chiude — e gli eventi di pulizia che quei due file
+creano stanno comunque dopo il `COMMIT`. Dopo un errore va quindi verificato
+cosa è già passato.
+
+Si corregge la causa e si rilancia lo stesso comando: le migrazioni sono
+idempotenti, quindi la riesecuzione non danneggia lo schema. Fanno eccezione i
+modelli email: la 006, la 011, la 012 e la 014 riscrivono oggetto e testo dei
+propri modelli, quindi una riesecuzione cancella le modifiche fatte a quei
+testi dopo l'applicazione.
 
 ### 005 — `ERROR 1709: Index column size too large. The maximum column size is 767 bytes`
 
@@ -128,41 +158,48 @@ SELECT INDEX_NAME, GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX) AS colonne
 
 Il database non è MariaDB. `ADD COLUMN IF NOT EXISTS` e `ADD INDEX IF NOT
 EXISTS` esistono solo in MariaDB: su MySQL 8 o 9 sono un errore di sintassi.
-Queste migrazioni richiedono MariaDB, come la produzione.
+Queste migrazioni richiedono MariaDB: il collaudo (`deploy/compose.yml`) e il
+container dei test (`db/test/docker-compose.test.yml`) usano la serie 10.11.
 
 ## Proprietà garantite
 
-| Proprietà | Stato |
+Le prime quattro righe le sorveglia la suite, e solo quando gira contro un
+MariaDB reale: quei test portano il marcatore `mariadb` e altrimenti vengono
+saltati (`backend/pytest.ini`).
+
+| Proprietà | Come è verificata |
 |---|---|
-| Idempotenza (riesecuzione senza errori) | verificata sulle 001–006 |
-| Rollback pulito e ri-applicazione | verificato |
-| Consumo del token monouso e atomico | verificato (`ROW_COUNT()` = 1, poi 0 al replay) |
-| Revoca sessioni al cambio password | verificato |
-| Indice usato dalla lookup per email | verificato (`EXPLAIN` → `ref` su `ix_clienti_email`) |
+| Idempotenza (riesecuzione senza errori né cambi di schema) | `backend/tests/db/test_migrazioni.py` |
+| Rollback dello schema allo stato iniziale | `backend/tests/db/test_migrazioni.py`, con tutti i rollback presenti (per la 009 e la 014 vedi sopra). Confronta lo schema, non i dati |
+| Consumo del token monouso e atomico | `backend/tests/integration/test_reset_concorrenza.py` |
+| Revoca di tutte le sessioni alla conferma del reset | `backend/tests/integration/test_reset_token.py`, `backend/tests/integration/test_sessioni.py` |
+| Indice usato dalla lookup per email | nessun test la sorveglia: è una verifica fatta a mano quando è stata scritta la 005 |
 
 ## Perché file .sql e non Alembic
 
-Il progetto oggi non ha né Alembic né `requirements.txt`, e lo schema di
-produzione non è gestito da migrazioni: è quello ereditato dalla piattaforma
-Instant Developer (171 tabelle). Introdurre Alembic significherebbe generare un
-baseline da 171 tabelle prima di poter scrivere la prima migrazione utile.
-Questi file sono la via più breve; se in seguito si adotta Alembic, si parte da
-uno `stamp head` sullo schema post-006.
+Il progetto non usa Alembic (le dipendenze sono in `backend/requirements.txt`),
+e lo schema di produzione non è gestito da migrazioni: è quello ereditato dalla
+piattaforma Instant Developer. Introdurre Alembic significherebbe generare un
+baseline da tutte le tabelle ereditate prima di poter scrivere la prima
+migrazione utile. Questi file sono la via più breve; se in seguito si adotta
+Alembic, si parte da uno `stamp head` sullo schema che risulta dopo l'ultima
+migrazione applicata.
 
 ## Prima di andare in produzione
 
 1. Backup completo **verificato** (prova il restore, non fidarti del dump).
 2. Applicare su una copia e rieseguire la diagnostica.
 3. `005` lascia deliberatamente due cose a mano: le chiavi esterne su `clienti`
-   e la `UNIQUE` su `utenti.utente_username` (6 duplicati da bonificare).
+   e la `UNIQUE` su `utenti.utente_username` (prima vanno bonificati i duplicati).
 4. `event_scheduler` deve essere `ON` perché gli eventi di retention girino:
    `SHOW VARIABLES LIKE 'event_scheduler';`
 
 ## Il debito che resta aperto
 
-Finché esiste `utenti.utente_password`, il database contiene password in chiaro
-per ogni utente che non ha ancora rifatto login. È una scelta consapevole: la
-conversione è graduale e non rompe nessuno. Quando
-`010_stato_migrazione_password.sql` mostrerà pochi utenti rimasti, si potrà
-decidere cosa farne — ma è una decisione da prendere con i numeri davanti, e
-non esiste in questa cartella nessuno script che la esegua.
+La colonna in chiaro `utenti.utente_password` e il rehash pigro sono spiegati
+in [database e migrazioni](../docs/tecnica/database-e-migrazioni.md).
+
+Qui la parte operativa: l'avanzamento si segue con
+`db/diagnostica/010_stato_migrazione_password.sql`. Quando mostrerà pochi
+utenti rimasti si potrà decidere cosa fare della colonna, con i numeri davanti.
+In questa cartella non esiste nessuno script che la elimini.
