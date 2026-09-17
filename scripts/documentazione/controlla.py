@@ -335,16 +335,20 @@ def esegui(argomenti: list[str] | None = None, radice=RADICE) -> int:
         if opzioni.comando in ("contenuti", "tutto"):
             errori += controlla_contenuti(radice, file)
             eseguiti.append("contenuti")
-        richieste = opzioni.comando == "pr" or (opzioni.base is not None or opzioni.merge)
-        if opzioni.comando in ("pr", "tutto") and richieste:
-            base = (base_effettiva(radice, opzioni.base or "", opzioni.head) if opzioni.merge
-                    else opzioni.base)
-            if not base:
-                segnala("serve --base con il commit di base della pull request (con --merge basta che "
-                        "--head sia un commit di merge)", titolo="Argomenti non validi")
-                return 2
-            errori += controlla_pr(radice, base, opzioni.head, _etichette(opzioni.etichette))
-            eseguiti.append("pull request")
+        # Solo "pr" e "tutto" hanno --base, --head, --merge ed --etichette: gli altri
+        # sottocomandi non devono leggerli. Con "tutto" i controlli sulla pull request
+        # si saltano se non e' stato chiesto nulla.
+        if opzioni.comando in ("pr", "tutto"):
+            richieste = opzioni.comando == "pr" or opzioni.base is not None or opzioni.merge
+            if richieste:
+                base = (base_effettiva(radice, opzioni.base or "", opzioni.head) if opzioni.merge
+                        else opzioni.base)
+                if not base:
+                    segnala("serve --base con il commit di base della pull request (con --merge basta che "
+                            "--head sia un commit di merge)", titolo="Argomenti non validi")
+                    return 2
+                errori += controlla_pr(radice, base, opzioni.head, _etichette(opzioni.etichette))
+                eseguiti.append("pull request")
     except ErroreGit as errore:
         segnala(f"comando git non riuscito: {errore}", titolo="Errore interno")
         return 2

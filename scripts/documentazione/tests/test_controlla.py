@@ -287,3 +287,18 @@ def test_frammento_in_sottocartella(repo):
     repo.scrivi("changelog/non-pubblicato/archivio/2026-09-18-x.md", FRAMMENTO_VALIDO)
     errori = controlla.controlla_frammenti(repo.percorso, ["changelog/non-pubblicato/archivio/2026-09-18-x.md"])
     assert len(errori) == 1 and "senza sottocartelle" in errori[0].messaggio
+
+
+@pytest.mark.parametrize("comando", ["frammenti", "link", "mappa", "contenuti"])
+def test_ogni_sottocomando_si_esegue_da_solo(repo, capsys, comando):
+    """I sottocomandi senza --base non devono leggere gli argomenti della pull request."""
+    base(repo)
+    assert controlla.esegui([comando], radice=repo.percorso) == 0
+    assert capsys.readouterr().out.startswith(f"Controlli eseguiti: {comando}.")
+
+
+def test_tutto_senza_base_salta_solo_la_pull_request(repo, capsys):
+    base(repo)
+    assert controlla.esegui(["tutto"], radice=repo.percorso) == 0
+    uscita = capsys.readouterr().out
+    assert "frammenti, link, mappa, contenuti" in uscita and "pull request" not in uscita
