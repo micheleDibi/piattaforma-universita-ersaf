@@ -46,7 +46,10 @@ def testo(valore) -> str:
         return "" if valore == DATA_SEGNAPOSTO else valore.strftime("%d/%m/%Y")
     if isinstance(valore, Decimal):
         return importo(valore)
-    pulito = " ".join(str(valore).split())
+    # Caratteri di controllo e invisibili (NUL negli esami del gestionale, spazi a
+    # larghezza zero): nessun font li disegna e il PDF/A li rifiuta.
+    visibile = "".join(c for c in str(valore) if c.isspace() or unicodedata.category(c) not in ("Cc", "Cf"))
+    pulito = " ".join(visibile.split())
     return pulito if any(c.isalnum() for c in pulito) else ""
 
 

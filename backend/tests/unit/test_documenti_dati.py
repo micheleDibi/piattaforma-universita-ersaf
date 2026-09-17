@@ -22,6 +22,9 @@ from src.documenti.modelli import normalizza
     ("/", ""),  # segnaposto del gestionale per "testo mancante"
     (" - ", ""),
     ("s.n.", "s.n."),
+    ("L-LIN/12" + chr(0), "L-LIN/12"),  # NUL salvato dal gestionale in coda al settore dell'esame
+    ("Via" + chr(0x200B) + "Roma" + chr(9) + "Nord", "ViaRoma Nord"),
+    (chr(0), ""),
 ])
 def test_testo_per_il_modulo(valore, atteso):
     assert formato.testo(valore) == atteso
