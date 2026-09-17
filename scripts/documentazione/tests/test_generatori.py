@@ -209,7 +209,10 @@ def _frontend_di_prova(tmp_path, app_jsx: str):
     finto = tmp_path / "frontend"
     (finto / "src/config").mkdir(parents=True)
     shutil.copy(reale / "package.json", finto / "package.json")
-    (finto / "node_modules").symlink_to(reale / "node_modules", target_is_directory=True)
+    try:
+        (finto / "node_modules").symlink_to(reale / "node_modules", target_is_directory=True)
+    except OSError:
+        pytest.skip("collegamenti simbolici non consentiti su questo sistema")
     shutil.copytree(reale / "src/config/routes", finto / "src/config/routes")
     shutil.copy(reale / "src/config/icone.js", finto / "src/config/icone.js")
     (finto / "src/App.jsx").write_text(app_jsx, encoding="utf-8")

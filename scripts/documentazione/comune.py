@@ -41,9 +41,12 @@ def git_bytes(*argomenti, cwd=RADICE, controlla=True, timeout=None, ambiente=Non
     env.update(AMBIENTE_GIT)
     if ambiente:
         env.update(ambiente)
-    esito = subprocess.run(
-        ["git", *argomenti], cwd=str(cwd), env=env, capture_output=True, timeout=timeout,
-    )
+    try:
+        esito = subprocess.run(
+            ["git", *argomenti], cwd=str(cwd), env=env, capture_output=True, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        raise ErroreGit(argomenti, -1, "", f"nessuna risposta entro {timeout} secondi") from None
     if controlla and esito.returncode != 0:
         raise ErroreGit(argomenti, esito.returncode, esito.stdout.decode("utf-8", "replace"),
                         esito.stderr.decode("utf-8", "replace"))

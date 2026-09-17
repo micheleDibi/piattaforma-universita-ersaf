@@ -1,6 +1,8 @@
 param(
-    [ValidateSet('Unit', 'Backend', 'Frontend', 'All')]
-    [string] $Gate = 'Unit'
+    [ValidateSet('Unit', 'Backend', 'Frontend', 'All', 'Docs')]
+    [string] $Gate = 'Unit',
+    # Solo per -Gate Docs: etichette della PR, separate da virgole (vedi docs/tecnica/documentazione.md).
+    [string] $Etichette = ''
 )
 
 Set-StrictMode -Version Latest
@@ -36,7 +38,7 @@ try {
     $env:EMAIL_BACKEND = 'memoria'
     $env:ERSAF_ENV = 'test'
     if ($Gate -in @('Unit', 'Backend', 'All')) {
-        if (-not (Test-Path -LiteralPath $Python)) { throw 'Creare prima backend/.venv: docs/development.md' }
+        if (-not (Test-Path -LiteralPath $Python)) { throw 'Creare prima backend/.venv: docs/tecnica/sviluppo-locale.md' }
         $Backend = Join-Path $ProjectRoot 'backend'
         if ($Gate -eq 'Unit') {
             Invoke-ProjectGate 'backend-unit' $Backend { & $Python -m pytest tests/unit }
@@ -50,6 +52,20 @@ try {
         Invoke-ProjectGate 'frontend-test' $Frontend { npm.cmd test }
         Invoke-ProjectGate 'frontend-build' $Frontend { npm.cmd run build }
         Invoke-ProjectGate 'frontend-lint' $Frontend { npm.cmd run lint }
+    }
+    # Documentazione: test degli strumenti, pagine generate, frammenti, link, mappa e
+    # documenti collegati rispetto a origin/main. Non fa parte di All.
+    if ($Gate -eq 'Docs') {
+        if (-not (Test-Path -LiteralPath $Python)) { throw 'Creare prima backend/.venv: docs/tecnica/sviluppo-locale.md' }
+        if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw 'Serve Node.js: docs/tecnica/sviluppo-locale.md' }
+        if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot 'frontend\node_modules'))) {
+            throw 'Eseguire prima npm ci in frontend: docs/tecnica/sviluppo-locale.md'
+        }
+        Invoke-ProjectGate 'docs-test' $ProjectRoot { & $Python -X warn_default_encoding -m pytest scripts/documentazione/tests }
+        Invoke-ProjectGate 'docs-genera' $ProjectRoot { & $Python scripts/documentazione/genera.py --verifica }
+        Invoke-ProjectGate 'docs-controlli' $ProjectRoot {
+            & $Python scripts/documentazione/controlla.py tutto --base origin/main "--etichette=$Etichette"
+        }
     }
 }
 finally {

@@ -15,6 +15,18 @@ cmd_status() {
     log "email su file: $(ls -1 "$STATE/email" 2>/dev/null | wc -l) messaggi in $STATE/email"
 }
 
+# cmd_release_info <id> - sola lettura: i dati di una release che servono al
+# timbro del changelog (scripts/documentazione/timbra_changelog.py). Stampa solo
+# queste chiavi: operatore e data restano sul server.
+cmd_release_info() {
+    local id="${1:-}" file
+    [[ "$id" =~ ^[0-9]{8}-[0-9]{6}-[0-9a-f]{7}$ ]] || die "id di release non valido: '$id'"
+    file="$RELEASES/$id/RELEASE_INFO"
+    [ -r "$file" ] || die "RELEASE_INFO assente per la release $id"
+    grep -E '^(release|git_sha|albero_modificato|versione|aggiornata)=' "$file" || true
+    printf 'ultima_versione=%s\n' "$(ultima_versione)"
+}
+
 # cmd_logs <servizio> [righe]
 cmd_logs() {
     require_installed
