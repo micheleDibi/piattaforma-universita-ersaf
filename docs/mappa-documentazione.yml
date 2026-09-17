@@ -1,0 +1,162 @@
+# Quali documenti rileggere quando cambia il codice.
+#
+# Se una pull request tocca un file che corrisponde a uno dei `percorsi` di una
+# regola e non modifica nessuno dei suoi `documenti`, il controllo CI fallisce
+# e indica quali documenti controllare. Se non c'è nulla da aggiornare si usa
+# l'etichetta `documentazione-invariata`. Spiegazione completa:
+# docs/tecnica/documentazione.md.
+#
+# Pattern: `*` non attraversa le cartelle, `**` sì; niente graffe, un pattern
+# per riga, sempre fra virgolette. Ogni pattern deve trovare almeno un file.
+# I documenti generati (docs/tecnica/riferimenti/) non si elencano: li
+# controlla genera.py --verifica.
+
+regole:
+  - nome: Accesso e sicurezza
+    percorsi:
+      - "backend/src/auth/**"
+      - "backend/src/security/**"
+      - "backend/src/mfa/**"
+      - "backend/src/otp/**"
+      - "backend/src/profilo/**"
+      - "frontend/src/components/accesso/**"
+      - "frontend/src/components/profilo/**"
+      - "frontend/src/components/Login.jsx"
+      - "frontend/src/components/PasswordDimenticata.jsx"
+      - "frontend/src/components/ReimpostaPassword.jsx"
+      - "frontend/src/components/MioProfilo.jsx"
+      - "frontend/src/lib/api.js"
+      - "frontend/src/lib/sessione.js"
+      - "frontend/src/lib/accesso.js"
+      - "frontend/src/lib/passkey.js"
+      - "frontend/src/lib/otp.js"
+      - "frontend/src/lib/secondoFattore.js"
+      - "frontend/src/lib/passwordPolicy.js"
+      - "frontend/src/lib/recuperoPassword.js"
+      - "frontend/src/lib/resetToken.js"
+      - "frontend/src/lib/ritornoAccesso.js"
+      - "frontend/src/lib/logout.js"
+    documenti:
+      - docs/tecnica/sicurezza.md
+      - docs/funzionale/accesso-e-sicurezza.md
+
+  - nome: Sottoscrittori e attuatori
+    percorsi:
+      - "backend/src/clienti/**"
+      - "backend/src/utenti/**"
+      - "backend/src/universita/**"
+      - "backend/src/esami/**"
+      - "frontend/src/components/ElencoClienti.jsx"
+      - "frontend/src/components/NuovoSottoscrittore.jsx"
+      - "frontend/src/components/SchedaUtente.jsx"
+      - "frontend/src/components/SchedaCurriculumFormativo.jsx"
+      - "frontend/src/components/SezioneTitoli.jsx"
+      - "frontend/src/components/ImmatricolazioniIscrizioni.jsx"
+      - "frontend/src/components/AbilitazioniProfessionali.jsx"
+      - "frontend/src/components/Invalidita.jsx"
+      - "frontend/src/components/Form*.jsx"
+      - "frontend/src/components/ModalCambiaPadre.jsx"
+      - "frontend/src/components/CredenzialiCreate.jsx"
+      - "frontend/src/components/contatti/**"
+    documenti:
+      - docs/funzionale/sottoscrittori-e-attuatori.md
+
+  - nome: Ruoli, menu e pagine
+    percorsi:
+      - "backend/src/ruolo/**"
+      - "backend/src/auth/autorizzazioni.py"
+      - "frontend/src/App.jsx"
+      - "frontend/src/config/routes/rotte.js"
+      - "frontend/src/config/routes/percorsi.js"
+      - "frontend/src/components/shell/**"
+    documenti:
+      - docs/funzionale/ruoli-e-permessi.md
+
+  - nome: Aziende
+    percorsi:
+      - "backend/src/aziende/**"
+      - "backend/src/aziende_xcod/**"
+      - "frontend/src/components/*Aziend*.jsx"
+    documenti:
+      - docs/funzionale/aziende.md
+
+  - nome: Pratiche
+    percorsi:
+      - "backend/src/pratiche/**"
+      - "backend/src/pratiche_*/**"
+      - "backend/src/documenti/**"
+      - "frontend/src/components/*Pratic*.jsx"
+      - "frontend/src/components/pratiche/**"
+      - "frontend/src/components/Dashboard.jsx"
+      - "frontend/src/lib/pratiche.js"
+      - "frontend/src/lib/configPratiche.js"
+      - "frontend/src/lib/praticaForm.js"
+      - "frontend/src/lib/schedaPratica.js"
+      - "frontend/src/lib/documentoPratica.js"
+      - "frontend/src/lib/opzioniPratica.js"
+    documenti:
+      - docs/funzionale/pratiche.md
+
+  - nome: Prodotti formativi
+    percorsi:
+      - "backend/src/listini_*/**"
+      - "backend/src/listino_tipoCorso/**"
+      - "backend/src/nome_universita/**"
+      - "frontend/src/components/*Prodott*.jsx"
+      - "frontend/src/lib/prodottoPayload.js"
+    documenti:
+      - docs/funzionale/prodotti-formativi.md
+
+  - nome: Architettura e ambiente
+    percorsi:
+      - "backend/src/database.py"
+      - "backend/src/config.py"
+      - "backend/src/logging_config.py"
+      - "backend/src/errori.py"
+      - "backend/src/comune/**"
+      - "backend/src/notifiche/**"
+      - "backend/requirements.txt"
+      - "frontend/package.json"
+      - "frontend/vite.config.js"
+    documenti:
+      - docs/tecnica/architettura.md
+      - docs/tecnica/sviluppo-locale.md
+
+  - nome: Test
+    percorsi:
+      - "backend/pytest.ini"
+      - "backend/tests/conftest.py"
+      - "db/test/**"
+    documenti:
+      - docs/tecnica/test.md
+
+  - nome: Deploy
+    percorsi:
+      - "deploy/**"
+      - "scripts/deploy.ps1"
+      - "backend/Dockerfile"
+      - "frontend/Dockerfile"
+      - "frontend/nginx.conf"
+    documenti:
+      - docs/tecnica/deploy.md
+
+  - nome: Convenzioni del frontend
+    percorsi:
+      - "frontend/eslint.config.js"
+    documenti:
+      - docs/tecnica/convenzioni.md
+
+  - nome: Verifica locale
+    percorsi:
+      - "scripts/verify-local.ps1"
+    documenti:
+      - docs/tecnica/sviluppo-locale.md
+      - docs/tecnica/test.md
+
+  - nome: Strumenti della documentazione
+    percorsi:
+      - "scripts/documentazione/**"
+      - ".github/workflows/**"
+      - "changelog/MODELLO.md"
+    documenti:
+      - docs/tecnica/documentazione.md
