@@ -153,6 +153,7 @@ def dati_pratica(db: Session, pratica: Pratica) -> tuple[dict, dict[str, bytes]]
         "corso": _corso(pratica.listino_testa),
         "generalita": _generalita(generalita_di(db, pratica.cliente_id)),
         "esami": esami_di(db, pratica.cliente_id),
+        "azienda": {"citta": _descrizione(pratica.azienda, "azienda_citta")},
     }
     firma = immagine_firma(pratica.pratica_firma)
     return dati, ({"firma": firma} if firma else {})

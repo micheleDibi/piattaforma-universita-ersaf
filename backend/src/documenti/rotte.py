@@ -15,6 +15,7 @@ from src.database import get_db
 from src.documenti import modelli as registro
 from src.documenti.dati import dati_pratica
 from src.documenti.motore import ComposizioneFallita, ModelloAssente, componi_pdf
+from src.aziende.models import Azienda
 from src.listini_testa.models import ListinoTestaDB
 from src.pratiche.models import Pratica
 
@@ -31,6 +32,8 @@ def _pratica(db: Session, pratica_id: int) -> Pratica:
         db.query(Pratica)
         .options(
             joinedload(Pratica.cliente),
+            # Solo la citta' (il luogo delle firme): non il logo, che e' un binario.
+            joinedload(Pratica.azienda).load_only(Azienda.azienda_citta),
             listino.joinedload(ListinoTestaDB.universita),
             listino.joinedload(ListinoTestaDB.tipo_corso),
             listino.joinedload(ListinoTestaDB.durata_laurea),

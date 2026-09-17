@@ -12,6 +12,7 @@ from src.database import Base, engine
 from src.documenti import modelli as registro
 from src.documenti import motore
 from src.documenti.dati import dati_pratica
+from src.aziende.models import Azienda
 from src.esami.models import Esame
 from src.listini_testa.models import ListinoTestaDB
 from src.pratiche.models import Pratica
@@ -110,6 +111,19 @@ def test_un_errore_di_composizione_non_espone_dettagli(client, pratica, con_mode
     assert "Della Valle" not in risposta.text
     assert any("composizione del documento fallita" in r.getMessage() for r in caplog.records)
     assert not any("Della Valle" in r.getMessage() for r in caplog.records)
+
+
+def test_il_luogo_delle_firme_e_la_citta_dell_azienda_della_pratica(db, pratica):
+    assert dati_pratica(db, pratica)[0]["azienda"] == {"citta": ""}
+    azienda = Azienda(azienda_ragione_sociale="Centro Studi Aurora", azienda_partitaIVA="01234567890",
+                      azienda_via="Via Roma", azienda_citta="Santa Maria Capua Vetere", azienda_CAP="81055",
+                      azienda_provincia="CE")
+    db.add(azienda)
+    db.flush()
+    pratica.azienda_id = azienda.azienda_id
+    db.commit()
+    db.refresh(pratica)
+    assert dati_pratica(db, pratica)[0]["azienda"] == {"citta": "Santa Maria Capua Vetere"}
 
 
 def test_i_dati_comuni_hanno_gli_esami_in_ordine_e_la_firma_senza_intestazione(db, pratica):

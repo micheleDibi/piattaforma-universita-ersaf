@@ -14,7 +14,8 @@ from src.documenti.impaginazione import (
 # Riga "Luogo, Data, Firma" comune alle pagine 4, 5 e 6.
 FIRMA_AUTOCERTIFICAZIONE = luogo_data_firma(274.66, (23.88, 82.63), (91.44, 117.69), (131.06, 196.09))
 
-REGOLAMENTO = Pagina("pagina-02.jpg", luogo_data_firma(274.66, (22.01, 77.72), (92.79, 119.04), (127.68, 194.23)))
+# Come nei PDF del gestionale: sul regolamento la data e la firma, ma non il luogo.
+REGOLAMENTO = Pagina("pagina-02.jpg", (Testo("firma.data", 92.79, 119.04, 274.66, CENTRO), Firma(127.68, 194.23, 274.66)))
 
 PRIVACY = Pagina("pagina-03.jpg", (
     Casella("privacy.consenso", 64.69, 266.02, 2.2), Casella("privacy.diniego", 105.49, 266.02, 2.2),
@@ -136,7 +137,7 @@ AUTENTICAZIONE_FOTO = Pagina("pagina-06.jpg", (
 
 # Il contratto usa linee di trattini bassi: le quote sono il fondo dei trattini.
 CONTRATTO_STUDENTE = Pagina("pagina-07.jpg", (
-    Testo("nominativo", 32.2, 121.9, 124.97), Testo("cittadinanza", 143.4, 194.4, 124.97),
+    Testo("nome_cognome", 32.2, 121.9, 124.97), Testo("cittadinanza", 143.4, 194.4, 124.97),
     Testo("nascita.luogo", 24.8, 147.9, 129.88), Testo("nascita.provincia", 150.1, 162.6, 129.88, CENTRO),
     *data("nascita", 129.88, (167.1, 174.8), (175.9, 182.7), (183.8, 194.4)),
     Testo("residenza.via", 33.3, 114.0, 134.79), Testo("residenza.civico", 115.7, 124.5, 134.79, CENTRO),
@@ -152,7 +153,18 @@ CONTRATTO_FIRME = Pagina("pagina-10.jpg", (
     Firma(22.35, 99.06, 253.66, 14.0),  # approvazione specifica delle clausole
 ))
 
+# Come nei PDF del gestionale: il numero pratica in alto a destra, su ogni pagina tranne il regolamento.
+NUMERO_PRATICA = Testo("pratica.numero", 165.5, 200.0, 15.6)
+
+
+def con_numero_pratica(pagina: Pagina, numero: Testo = NUMERO_PRATICA) -> Pagina:
+    return Pagina(pagina.sfondo, (numero, *pagina.campi))
+
+
 PAGINE_SUCCESSIVE = (
-    REGOLAMENTO, PRIVACY, AUTOCERTIFICAZIONE_DICHIARAZIONI, AUTOCERTIFICAZIONE_CARRIERA,
-    AUTENTICAZIONE_FOTO, CONTRATTO_STUDENTE, CONTRATTO_CLAUSOLE, CONTRATTO_OBBLIGHI, CONTRATTO_FIRME,
+    REGOLAMENTO,
+    *(con_numero_pratica(pagina) for pagina in (
+        PRIVACY, AUTOCERTIFICAZIONE_DICHIARAZIONI, AUTOCERTIFICAZIONE_CARRIERA, AUTENTICAZIONE_FOTO,
+        CONTRATTO_STUDENTE, CONTRATTO_CLAUSOLE, CONTRATTO_OBBLIGHI, CONTRATTO_FIRME,
+    )),
 )

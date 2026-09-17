@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.documenti.ecampus.pagine import PAGINE_SUCCESSIVE
+from src.documenti.ecampus.pagine import PAGINE_SUCCESSIVE, con_numero_pratica
 from src.documenti.ecampus.valori import valori
 from src.documenti.impaginazione import CENTRO, DESTRA, Casella, Pagina, Testo, data, impagina, luogo_data_firma
 
@@ -35,7 +35,8 @@ DOMANDA = Pagina("pagina-01.jpg", (
     *luogo_data_firma(265.85, (23.88, 82.63), (91.44, 117.69), (131.06, 196.09)),
 ))
 
-PAGINE = (DOMANDA, *PAGINE_SUCCESSIVE)
+# Sulla prima pagina il numero sta un poco piu' in basso, sopra le righe delle matricole.
+PAGINE = (con_numero_pratica(DOMANDA, Testo("pratica.numero", 164.5, 200.0, 16.6)), *PAGINE_SUCCESSIVE)
 
 
 def arricchisci(dati: dict) -> dict:

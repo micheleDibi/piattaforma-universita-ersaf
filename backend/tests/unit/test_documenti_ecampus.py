@@ -15,10 +15,11 @@ USCITE = ("trasferimento_rinuncia", "trasferimento", "rinuncia", "decadenza")
 TORINO = {"indirizzo": "Corso Vittorio Emanuele II", "civico": "8/B", "cap": "10123", "comune": "Torino", "provincia": "TO"}
 
 
-def dati_pratica(*, pratica=None, cliente=None, corso=None, generalita=None, esami=()) -> dict:
-    """I dati comuni come li prepara src.documenti.dati: pratica, cliente e corso si
-    modificano voce per voce, la scheda universitaria e gli esami si sostituiscono."""
+def dati_pratica(*, pratica=None, cliente=None, corso=None, generalita=None, esami=(), azienda=None) -> dict:
+    """I dati comuni come li prepara src.documenti.dati: pratica, cliente, corso e azienda
+    si modificano voce per voce, la scheda universitaria e gli esami si sostituiscono."""
     return {
+        "azienda": {"citta": "Santa Maria Capua Vetere", **(azienda or {})},
         "pratica": {"numero": "000045", "anno_accademico": "2026/2027", "data_creazione": "17/09/2026",
                     "prezzo": "2.500,00", "sede_erogazione": "",
                     "rinnovo": {"primo_anno": False, "secondo_anno": False, "terzo_anno": False}, **(pratica or {})},
@@ -62,6 +63,17 @@ def test_le_posizioni_stanno_nel_foglio_e_le_pagine_esistono():
             else:
                 assert 0 < campo.x0 < campo.x1 < 210 and 0 < campo.y < 297
     assert len(pagine.RIGHE_TABELLA_ESAMI) == RIGHE_ESAMI
+
+
+def test_come_nei_pdf_del_gestionale():
+    v = valori(dati_pratica())
+    assert (v["firma.luogo"], v["pratica.numero"], v["nome_cognome"]) == ("Santa Maria Capua Vetere", "000045", "Maria Della Valle")
+    assert v["privacy.consenso"] and not v["privacy.diniego"]
+    assert v["servizi.non_aderisce"] and not v["servizi.aderisce"]
+    chiavi = [{getattr(campo, "chiave", None) for campo in pagina.campi} for pagina in laurea.PAGINE]
+    assert ["pratica.numero" in pagina for pagina in chiavi] == [True, False] + [True] * 8
+    assert ["firma.luogo" in pagina for pagina in chiavi] == [True, False, True, True, True, True, False, False, False, True]
+    assert valori(dati_pratica(azienda={"citta": ""}))["firma.luogo"] == ""
 
 
 @pytest.mark.parametrize(("sesso", "atteso"), [("uomo", {"m"}), ("donna", {"f"}), ("F", {"f"}), ("", set()), ("/", set())])

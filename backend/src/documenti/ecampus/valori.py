@@ -7,6 +7,10 @@ con tre differenze volute:
   immatricolazione c'era: qui vale quando non c'e' ne' data ne' rinnovo;
 - un dato che manca lascia la casella vuota invece di dichiarare il contrario
   (diploma non conseguito, iscrizione altrove).
+
+Come nei PDF che il gestionale generava: il luogo delle firme e' la citta'
+dell'azienda della pratica, il numero pratica sta in alto a destra, il contratto
+riporta nome e cognome in quest'ordine e due caselle sono sempre barrate.
 """
 
 from __future__ import annotations
@@ -103,7 +107,7 @@ def _anagrafica(cliente: dict) -> dict:
     nascita = {"luogo": cliente["luogo_nascita"], "provincia": cliente["provincia_nascita"], **parti_data(cliente["data_nascita"])}
     return {
         "cognome": cliente["cognome"], "nome": cliente["nome"],
-        "nominativo": " ".join(v for v in (cliente["cognome"], cliente["nome"]) if v),
+        "nome_cognome": " ".join(v for v in (cliente["nome"], cliente["cognome"]) if v),
         "codice_fiscale": cliente["codice_fiscale"].upper(), "cittadinanza": cliente["cittadinanza"],
         "sesso.m": sesso == "m", "sesso.f": sesso == "f",
         **piatto("nascita", nascita),
@@ -230,11 +234,19 @@ def _esami(esami: list[dict]) -> dict:
 
 
 def _senza_dati() -> dict:
-    """Voci del modulo che il gestionale non raccoglie: restano vuote finche' non si sa da dove leggerle."""
+    """Voci che il gestionale non raccoglie e che non compilava neanche nei suoi PDF."""
     return {
-        "firma.luogo": "", "nascita.stato": "", "curriculum": "", "servizi_integrativi": "",
-        "corso_innovativo.si": False, "corso_innovativo.no": False, "servizi.aderisce": False, "servizi.non_aderisce": False,
-        "privacy.consenso": False, "privacy.diniego": False, "diploma.statale": False, "diploma.paritario": False,
+        "nascita.stato": "", "curriculum": "", "servizi_integrativi": "",
+        "corso_innovativo.si": False, "corso_innovativo.no": False,
+        "diploma.statale": False, "diploma.paritario": False,
+    }
+
+
+def _scelte_fisse() -> dict:
+    """Caselle che i PDF del gestionale barravano sempre, senza un dato che le decidesse."""
+    return {
+        "privacy.consenso": True, "privacy.diniego": False,
+        "servizi.aderisce": False, "servizi.non_aderisce": True,
     }
 
 
@@ -255,5 +267,8 @@ def valori(dati: dict) -> dict:
         **_certificazioni(generalita),
         **_esami(dati["esami"]),
         **_senza_dati(),
+        **_scelte_fisse(),
+        "pratica.numero": pratica["numero"],
+        "firma.luogo": dati["azienda"]["citta"],
         "firma.data": pratica["data_creazione"],
     }
