@@ -22,6 +22,7 @@ export {
   CircleUserRound,
   Eye,
   EyeOff,
+  FileDown,
   FileText,
   GraduationCap,
   Info,

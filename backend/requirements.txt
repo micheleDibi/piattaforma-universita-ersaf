@@ -53,3 +53,7 @@ pytest>=8.0
 # httpx: con `filterwarnings = error` nel pytest.ini quella deprecazione
 # fermerebbe la suite, quindi si installa quello giusto.
 httpx2>=2.12
+
+# Composizione dei documenti delle pratiche (PDF/A) con Typst: wheel abi3
+# senza librerie di sistema, stesso risultato su Windows e nel container.
+typst>=0.15,<0.16

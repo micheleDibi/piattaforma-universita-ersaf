@@ -4,6 +4,7 @@ import { contenutoPagina } from "../config/styles/pagina.js";
 import { pulsante } from "../config/styles/pulsante.js";
 import { STILI_PRATICA as stili } from "../config/styles/pratica.js";
 import useSchedaPratica from "../hooks/useSchedaPratica.js";
+import { useDocumentoPratica } from "../hooks/useDocumentoPratica.js";
 import useNavigazioneElenco from "../hooks/useNavigazioneElenco.js";
 import IntestazionePagina from "./shared/IntestazionePagina.jsx";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
@@ -11,11 +12,13 @@ import AlertMessage from "./AlertMessage.jsx";
 import PaginaNonTrovata from "./PaginaNonTrovata.jsx";
 import RelazioniPratica from "./pratiche/RelazioniPratica.jsx";
 import DatiPratica from "./pratiche/DatiPratica.jsx";
+import AzioneDocumento from "./pratiche/AzioneDocumento.jsx";
 
 export default function SchedaPratica() {
   const { praticaId } = useParams();
   const navigate = useNavigate();
   const form = useSchedaPratica(praticaId);
+  const documento = useDocumentoPratica(praticaId);
   const { ritorno } = useNavigazioneElenco(PERCORSI.pratiche.elenco);
   const invia = async evento => {
     evento.preventDefault();
@@ -26,7 +29,9 @@ export default function SchedaPratica() {
   if (form.status === 404) return <PaginaNonTrovata />;
   return <div className={contenutoPagina("modulo")}>
     <IntestazionePagina titolo={praticaId ? `Pratica ${form.dati.pratica_numero || ""}` : "Nuova pratica"}
-      indietro={{ rotta: ritorno, etichetta: "Pratiche" }} />
+      indietro={{ rotta: ritorno, etichetta: "Pratiche" }}
+      azioni={<AzioneDocumento documento={documento} numero={form.dati.pratica_numero} />} />
+    <AlertMessage message={documento.errore ? { type: "error", text: documento.errore } : null} />
     {form.loading ? <IndicatoreCaricamento messaggio="Caricamento della pratica…" centrato />
       : form.errore ? <><AlertMessage message={{ type: "error", text: form.errore }} /><button className={pulsante("secondario")} onClick={form.riprova}>Riprova</button></>
       : <form className={stili.modulo} onSubmit={invia}>

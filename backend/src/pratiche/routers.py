@@ -6,6 +6,7 @@ from src.auth.dipendenze import get_current_utente
 from src.database import get_db
 from src.pratiche.filtri import FiltriPratiche, query_filtrata
 from src.pratiche.opzioni import router as opzioni_router
+from src.documenti.rotte import router as documento_router
 from src.pratiche.models import Pratica, PraticaCreate, PraticaResponse, PraticaUpdate
 
 # Stessa scelta di aziende/routers.py: autenticazione a livello di router,
@@ -17,6 +18,8 @@ router = APIRouter(
 )
 
 router.include_router(opzioni_router)
+# PDF della pratica: stesso prefisso e stessa autenticazione del dettaglio.
+router.include_router(documento_router)
 
 # joinedload sulle relazioni che PraticaResponse.estrai_relazioni legge per
 # popolare cliente_nome_completo / pratica_stato_descrizione / listTesta_descrizione.
