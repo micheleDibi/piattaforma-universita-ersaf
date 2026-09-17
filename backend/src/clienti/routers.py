@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 from typing import List, Optional
 
 from fastapi import (
@@ -24,6 +25,7 @@ from src.clienti.schemas import (
 from src.clienti.servizio import (
     TipoUtente,
     crea_cliente_con_utente,
+    verifica_unicita_anagrafica,
 )
 
 from src.database import get_db
@@ -198,6 +200,36 @@ def aggiorna_cliente(
         for chiave, valore in inviati.items()
         if not chiave.startswith("universita_")
     }
+
+    verifica_unicita_anagrafica(db, campi_cliente, escludi_cliente_id=cliente_id)
+
+    # Il frontend rimanda sempre tutti i campi del form, non solo quelli
+    # modificati: validare CF/scadenza a livello di schema bloccherebbe ogni
+    # PUT su un cliente storico che ha gia' un documento scaduto o un CF
+    # malformato, anche quando l'operatore non ha toccato quei campi.
+    # Si controlla quindi solo se il valore inviato e' DIVERSO da quello
+    # gia' salvato: un peggioramento nuovo si blocca, un dato storico
+    # invariato passa.
+    if "cliente_dataScadenzaDocumento" in campi_cliente:
+        nuova_scadenza = campi_cliente["cliente_dataScadenzaDocumento"]
+        if (
+            nuova_scadenza is not None
+            and nuova_scadenza != db_cliente.cliente_dataScadenzaDocumento
+            and nuova_scadenza < date.today()
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="Il documento è scaduto: inserisci una data di scadenza valida.",
+            )
+
+    if "cliente_codice_fiscale" in campi_cliente:
+        nuovo_cf = campi_cliente["cliente_codice_fiscale"]
+        if nuovo_cf and nuovo_cf != db_cliente.cliente_codice_fiscale:
+            if len(nuovo_cf.strip()) != 16:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail="Codice fiscale non valido: deve essere lungo 16 caratteri.",
+                )
 
     CAMPI_STRINGA_NOT_NULL = {
         "cliente_codice", "cliente_nome", "cliente_cognome", "cliente_email",

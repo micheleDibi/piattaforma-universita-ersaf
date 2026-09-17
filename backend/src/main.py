@@ -48,6 +48,7 @@ from src.listini_testa.routers import router as listini_testa_router
 from src.pratiche.routers import router as pratiche_router
 from src.profilo.routers import router as profilo_router
 from src.listino_tipoCorso.routers import router as listini_tipi_corsi_router
+from fastapi.exceptions import RequestValidationError
 
 logger = logging.getLogger(NOME_LOGGER)
 
@@ -134,6 +135,36 @@ async def gestisci_integrity_error(request: Request, exc: IntegrityError):
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": "I dati inviati violano un vincolo di integrità."},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def gestisci_errori_validazione(request: Request, exc: RequestValidationError):
+    """Pydantic/FastAPI restituiscono di default un 422 con 'loc', 'msg'
+    prefissato da 'Value error, ' e altri dettagli tecnici (nome del campo,
+    struttura annidata). Qui si estraggono tutti i messaggi pensati per
+    l'utente - quelli scritti nei nostri field_validator/model_validator
+    sollevando ValueError - ripuliti dal prefisso tecnico e uniti in un
+    unico testo, cosi' un submit con piu' campi non validi mostra subito
+    tutti i problemi invece di farli scoprire uno alla volta a colpi di
+    invio. Il formato resta {"detail": ...} come le HTTPException sollevate
+    a mano nel resto del backend."""
+    messaggi = []
+    for errore in exc.errors():
+        testo = errore.get("msg", "Dati non validi.")
+        if testo.startswith("Value error, "):
+            testo = testo[len("Value error, "):]
+        messaggi.append(testo)
+
+    # Piu' errori sullo stesso campo (raro, ma possibile con piu'
+    # validator) non vanno ripetuti identici nel messaggio finale.
+    messaggi_unici = list(dict.fromkeys(messaggi))
+    dettaglio = "; ".join(messaggi_unici)
+
+    logger.info("validazione fallita su %s %s: %s", request.method, request.url.path, dettaglio)
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": dettaglio},
     )
 
 

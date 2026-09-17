@@ -1,16 +1,27 @@
 import { ChevronRight, ICONE_CAMPI_ELENCO } from "../../config/icone.js";
+import AvvisoTooltip from "./AvvisoTooltip.jsx";
 
 export default function ListaElenco({ dati, modello, onApri }) {
-  const campoPrincipale = modello.mobile.find((c) => c.rilievo === "principale") || modello.mobile[0];
+  const campoPrincipale =
+    modello.mobile.find((c) => c.rilievo === "principale") || modello.mobile[0];
   const campiTecnici = modello.mobile.filter(
-    (c) => c.id !== campoPrincipale?.id && (c.rilievo === "codice" || c.rilievo === "stato")
+    (c) =>
+      c.id !== campoPrincipale?.id &&
+      (c.rilievo === "codice" || c.rilievo === "stato"),
   );
   const campiMetadati = modello.mobile.filter(
-    (c) => c.id !== campoPrincipale?.id && c.rilievo !== "codice" && c.rilievo !== "stato"
+    (c) =>
+      c.id !== campoPrincipale?.id &&
+      c.rilievo !== "codice" &&
+      c.rilievo !== "stato",
   );
 
   return (
-    <ul className="elenco-adattivo__lista" aria-label={modello.etichetta} role="list">
+    <ul
+      className="elenco-adattivo__lista"
+      aria-label={modello.etichetta}
+      role="list"
+    >
       {dati.map((riga) => (
         <li
           key={riga.id}
@@ -26,20 +37,28 @@ export default function ListaElenco({ dati, modello, onApri }) {
           aria-label={`Visualizza ${riga.nomeAzione}`}
         >
           <dl className="elenco-adattivo__corpo">
-            {campoPrincipale && (() => {
-              const valoreGrezzo = riga.campi[campoPrincipale.id];
-              const valoreMostrato = (valoreGrezzo && valoreGrezzo !== "-")
-                ? valoreGrezzo
-                : (modello.id === "pratiche" ? `Pratica #${riga.id}` : (riga.nomeAzione && riga.nomeAzione !== "-" ? riga.nomeAzione : "Elemento"));
-              return (
-                <div className="elenco-adattivo__principale">
-                  <dt className="sr-only">{campoPrincipale.etichetta}</dt>
-                  <dd className="elenco-adattivo__valore-principale">
-                    {valoreMostrato}
-                  </dd>
-                </div>
-              );
-            })()}
+            {campoPrincipale &&
+              (() => {
+                const valoreGrezzo = riga.campi[campoPrincipale.id];
+                const valoreMostrato =
+                  valoreGrezzo && valoreGrezzo !== "-"
+                    ? valoreGrezzo
+                    : modello.id === "pratiche"
+                      ? `Pratica #${riga.id}`
+                      : riga.nomeAzione && riga.nomeAzione !== "-"
+                        ? riga.nomeAzione
+                        : "Elemento";
+                const avviso = riga.campi.avviso;
+                return (
+                  <div className="elenco-adattivo__principale flex items-center gap-2">
+                    <dt className="sr-only">{campoPrincipale.etichetta}</dt>
+                    <dd className="elenco-adattivo__valore-principale">
+                      {valoreMostrato}
+                    </dd>
+                    {avviso?.length > 0 && <AvvisoTooltip messaggi={avviso} />}
+                  </div>
+                );
+              })()}
 
             {campiTecnici.length > 0 && (
               <div className="elenco-adattivo__fascia-tecnica">
@@ -47,17 +66,24 @@ export default function ListaElenco({ dati, modello, onApri }) {
                   const valore = riga.campi[campo.id];
                   if (!valore || valore === "-") return null;
                   return (
-                    <div key={campo.id} className="elenco-adattivo__tecnico-item">
+                    <div
+                      key={campo.id}
+                      className="elenco-adattivo__tecnico-item"
+                    >
                       <dt className="sr-only">{campo.etichetta}</dt>
                       {campo.rilievo === "stato" ? (
-                        <dd className="elenco-adattivo__badge" data-tono={riga.tonoStato}>
-                          <span className="elenco-adattivo__badge-punto" aria-hidden="true" />
+                        <dd
+                          className="elenco-adattivo__badge"
+                          data-tono={riga.tonoStato}
+                        >
+                          <span
+                            className="elenco-adattivo__badge-punto"
+                            aria-hidden="true"
+                          />
                           <span>{valore}</span>
                         </dd>
                       ) : (
-                        <dd className="elenco-adattivo__codice">
-                          {valore}
-                        </dd>
+                        <dd className="elenco-adattivo__codice">{valore}</dd>
                       )}
                     </div>
                   );
@@ -70,11 +96,18 @@ export default function ListaElenco({ dati, modello, onApri }) {
                 {campiMetadati.map((campo) => {
                   const valore = riga.campi[campo.id];
                   if (!valore || valore === "-") return null;
-                  const Icona = campo.icona ? ICONE_CAMPI_ELENCO[campo.icona] : null;
+                  const Icona = campo.icona
+                    ? ICONE_CAMPI_ELENCO[campo.icona]
+                    : null;
                   return (
                     <div key={campo.id} className="elenco-adattivo__metadato">
                       <dt className="sr-only">{campo.etichetta}</dt>
-                      {Icona && <Icona className="elenco-adattivo__metadato-icona" aria-hidden="true" />}
+                      {Icona && (
+                        <Icona
+                          className="elenco-adattivo__metadato-icona"
+                          aria-hidden="true"
+                        />
+                      )}
                       <dd className="elenco-adattivo__metadato-testo">
                         {valore}
                       </dd>

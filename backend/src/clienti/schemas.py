@@ -1,4 +1,6 @@
+import re
 from datetime import date
+from datetime import date as date_
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, field_validator, Field
 from src.aziende.schemas import AziendaResponse
@@ -35,7 +37,6 @@ class TipoDocumentoEnum(str, enum.Enum):
     def _missing_(cls, value):
         if value is None or str(value).strip() == "":
             return None
-        # Gestione case-insensitive per allineare eventuali varianti nel DB
         for member in cls:
             if member.value.lower() == str(value).strip().lower():
                 return member
@@ -43,18 +44,11 @@ class TipoDocumentoEnum(str, enum.Enum):
 
 
 def _normalizza_enum(v, info):
-    """Stringa vuota -> None, confronto senza maiuscole sui valori dell'enum.
-
-    Era un metodo di ClienteBase: ClienteUpdate ne aveva bisogno e duplicarlo
-    avrebbe ripetuto il difetto tipico di questo backend, la regola in due
-    copie corretta in una.
-    """
+    """Stringa vuota -> None, confronto senza maiuscole sui valori dell'enum."""
     if v is None or (isinstance(v, str) and v.strip() == ""):
         return None
-
     if isinstance(v, (TipoDocumentoEnum, SessoEnum)):
         return v
-
     atteso = (
         TipoDocumentoEnum
         if info.field_name == "cliente_tipoDocumento"
@@ -64,14 +58,79 @@ def _normalizza_enum(v, info):
     for membro in atteso:
         if membro.value.lower() == testo.lower():
             return membro
+    return v
 
+
+# =============================================================================
+# Codice Fiscale: struttura (con omocodia) + carattere di controllo ufficiale
+# =============================================================================
+# Le 7 posizioni numeriche del CF possono contenere, in caso di omocodia,
+# una lettera al posto della cifra (l'Agenzia delle Entrate sostituisce le
+# cifre con L,M,N,P,Q,R,S,T,U,V partendo dall'ultima posizione numerica).
+# La regex quindi accetta sia cifra sia lettera in quelle posizioni.
+_CF_PATTERN = re.compile(
+    r"^[A-Z]{6}[0-9A-Z]{2}[A-EHLMPR-T][0-9A-Z]{2}[A-Z][0-9A-Z]{3}[A-Z]$"
+)
+
+_CF_DISPARI = {
+    "0": 1, "1": 0, "2": 5, "3": 7, "4": 9, "5": 13, "6": 15, "7": 17, "8": 19, "9": 21,
+    "A": 1, "B": 0, "C": 5, "D": 7, "E": 9, "F": 13, "G": 15, "H": 17, "I": 19, "J": 21,
+    "K": 2, "L": 4, "M": 18, "N": 20, "O": 11, "P": 3, "Q": 6, "R": 8, "S": 12, "T": 14,
+    "U": 16, "V": 10, "W": 22, "X": 25, "Y": 24, "Z": 23,
+}
+_CF_PARI = {
+    "0": 0, "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9,
+    "A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "F": 5, "G": 6, "H": 7, "I": 8, "J": 9,
+    "K": 10, "L": 11, "M": 12, "N": 13, "O": 14, "P": 15, "Q": 16, "R": 17, "S": 18, "T": 19,
+    "U": 20, "V": 21, "W": 22, "X": 23, "Y": 24, "Z": 25,
+}
+_CF_RESTO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+def _valida_codice_fiscale(v):
+    """Controllo completo, omocodia inclusa: struttura + ricalcolo del
+    carattere di controllo con le tabelle ufficiali. Le 7 posizioni
+    numeriche possono contenere una lettera di omocodia al posto della
+    cifra: il calcolo del checksum usa comunque le tabelle _CF_DISPARI/
+    _CF_PARI, che assegnano un valore sia alle cifre sia alle lettere,
+    quindi non serve "tradurre" la lettera prima di calcolare il controllo.
+
+    Si assume cittadinanza italiana: nessuna gestione di codici fiscali o
+    documenti di identificazione esteri."""
+    if v is None or v.strip() == "":
+        return v
+    v = v.strip().upper()
+
+    if len(v) != 16:
+        raise ValueError("Codice fiscale non valido: deve essere lungo 16 caratteri.")
+
+    if not _CF_PATTERN.match(v):
+        raise ValueError("Codice fiscale non valido: formato non conforme.")
+
+    somma = 0
+    for i, carattere in enumerate(v[:15]):
+        # Posizioni dispari (1a, 3a, ... 15a, contate da 1): indici pari in
+        # Python (0, 2, 4, ...).
+        somma += _CF_DISPARI[carattere] if i % 2 == 0 else _CF_PARI[carattere]
+
+    atteso = _CF_RESTO[somma % 26]
+    if atteso != v[15]:
+        raise ValueError("Codice fiscale non valido: carattere di controllo errato.")
+
+    return v
+
+
+def _valida_scadenza_documento(v):
+    if v is not None and v < date_.today():
+        raise ValueError("Il documento è scaduto: inserisci una data di scadenza valida.")
     return v
 
 
 class ClienteBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
-    cliente_codice: str
+
+    cliente_codice: Optional[str] = None
+    cliente_codice_fiscale: Optional[str] = None
     cliente_nome: str
     cliente_cognome: str
     cliente_email: Optional[str] = None
@@ -83,8 +142,7 @@ class ClienteBase(BaseModel):
     cliente_CAP: Optional[str] = None
     cliente_provincia: Optional[str] = None
     cliente_cellulare: Optional[str] = None
-    
-    # Reso opzionale alla base poiché viene generato programmaticamente nel backend
+
     utente_id: Optional[int] = None
     cliente_luogoNascita: str
     cliente_provinciaNascita: Optional[str] = None
@@ -114,32 +172,36 @@ class ClienteBase(BaseModel):
     cliente_abilitazione_corsi_speciali: Optional[int] = None
     cliente_abilitazione_a4u: Optional[int] = None
 
+    # Solo normalizzazione (stringa vuota -> None): innocua anche in lettura,
+    # non solleva mai errori sui dati storici. NIENTE validator di CF o
+    # scadenza qui: ClienteResponse eredita da questa classe e verrebbe
+    # rotta dai dati storici gia' presenti nel DB.
     _valida_enum_vuoti = field_validator(
         "cliente_tipoDocumento", "cliente_sesso", mode="before"
     )(_normalizza_enum)
 
+
 class ClienteCreate(ClienteBase):
-    pass
+    _valida_cf = field_validator("cliente_codice_fiscale")(_valida_codice_fiscale)
+    _valida_scadenza = field_validator("cliente_dataScadenzaDocumento")(_valida_scadenza_documento)
 
 
 class ClienteUpdate(UniversitaBase):
     """Aggiornamento parziale: tutti i campi opzionali, curriculum compreso.
 
-    Il PUT riusava ClienteCreate con model_dump() senza exclude_unset, quindi
-    ogni campo non inviato veniva riscritto con il default dello schema:
-    utente_id tornava None su una colonna NOT NULL (500), cliente_ruolo tornava
-    0 declassando un attuatore a utente semplice, e azienda_id, attuatore_id e
-    tessera_id perdevano l'associazione senza dire nulla.
-
-    I campi universita_* ci sono perche' il form li invia: prima il PUT
-    validava contro ClienteCreate, che non li ha, Pydantic li scartava in
-    silenzio e rispondeva 200. Il curriculum si poteva scrivere solo alla
-    creazione, mai piu'.
+    Niente validator di CF/scadenza a livello di schema: il frontend
+    rimanda sempre tutti i campi del form, non solo quelli modificati.
+    Validarli qui bloccherebbe ogni PUT su un cliente storico che ha gia'
+    un CF o una scadenza non conformi ai nuovi controlli, anche quando
+    l'operatore non ha toccato quei campi. Il controllo si fa nel router,
+    confrontando col valore gia' salvato: un peggioramento nuovo si
+    blocca, un dato storico invariato passa.
     """
 
     model_config = ConfigDict(from_attributes=True)
 
     cliente_codice: Optional[str] = None
+    cliente_codice_fiscale: Optional[str] = None
     cliente_nome: Optional[str] = None
     cliente_cognome: Optional[str] = None
     cliente_email: Optional[str] = None
@@ -205,9 +267,11 @@ class ClienteDettaglioResponse(ClienteResponse):
 
 
 class ClienteConUtenteCreate(ClienteBase, UniversitaBase):
-    # utente_id è già gestito come Optional in ClienteBase, non serve ridefinirlo
     utente_username: Optional[str] = None
     utente_password: Optional[str] = None
+
+    _valida_cf = field_validator("cliente_codice_fiscale")(_valida_codice_fiscale)
+    _valida_scadenza = field_validator("cliente_dataScadenzaDocumento")(_valida_scadenza_documento)
 
 
 class PermessiPraticheResponse(BaseModel):

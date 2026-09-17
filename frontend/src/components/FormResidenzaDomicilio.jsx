@@ -18,7 +18,7 @@ export default function FormResidenzaDomicilio({
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-2">
             <label className={etichetta()}>
-              Indirizzo
+              Indirizzo <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -26,11 +26,12 @@ export default function FormResidenzaDomicilio({
               value={formData.residenzaIndirizzo}
               onChange={handleChange}
               className={`${campo("comodo")} transition`}
+              required
             />
           </div>
           <div>
             <label className={etichetta()}>
-              Civico
+              Civico <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -38,12 +39,13 @@ export default function FormResidenzaDomicilio({
               value={formData.residenzaCivico}
               onChange={handleChange}
               className={`${campo("comodo")} transition`}
+              required
             />
           </div>
         </div>
         <div>
           <label className={etichetta()}>
-            Comune
+            Comune <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -51,13 +53,12 @@ export default function FormResidenzaDomicilio({
             value={formData.residenzaComune}
             onChange={handleChange}
             className={`${campo("comodo")} transition`}
+            required
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={etichetta()}>
-              CAP
-            </label>
+            <label className={etichetta()}>CAP</label>
             <input
               type="text"
               name="residenzaCap"
@@ -67,9 +68,7 @@ export default function FormResidenzaDomicilio({
             />
           </div>
           <div>
-            <label className={etichetta()}>
-              Provincia
-            </label>
+            <label className={etichetta()}>Provincia</label>
             <input
               type="text"
               name="residenzaProvincia"
@@ -85,11 +84,17 @@ export default function FormResidenzaDomicilio({
             onClick={esegui}
             disabled={stato === "attesa"}
             data-esito={stato}
-            className={pulsante("ausiliario", "normale", { larghezzaPiena: true })}
+            className={pulsante("ausiliario", "normale", {
+              larghezzaPiena: true,
+            })}
           >
-            {stato === "eseguita" ? TESTI_COPIA.confermaResidenza : "Copia Residenza in Domicilio"}
+            {stato === "eseguita"
+              ? TESTI_COPIA.confermaResidenza
+              : "Copia Residenza in Domicilio"}
           </button>
-          <span role="status" className="sr-only">{stato === "eseguita" ? TESTI_COPIA.confermaResidenza : ""}</span>
+          <span role="status" className="sr-only">
+            {stato === "eseguita" ? TESTI_COPIA.confermaResidenza : ""}
+          </span>
         </div>
       </div>
 
@@ -98,9 +103,7 @@ export default function FormResidenzaDomicilio({
         <h3 className={titoloSezione()}>Domicilio</h3>
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-2">
-            <label className={etichetta()}>
-              Indirizzo Domicilio
-            </label>
+            <label className={etichetta()}>Indirizzo Domicilio</label>
             <input
               type="text"
               name="domicilioIndirizzo"
@@ -110,9 +113,7 @@ export default function FormResidenzaDomicilio({
             />
           </div>
           <div>
-            <label className={etichetta()}>
-              Civico
-            </label>
+            <label className={etichetta()}>Civico</label>
             <input
               type="text"
               name="domicilioCivico"
@@ -123,9 +124,7 @@ export default function FormResidenzaDomicilio({
           </div>
         </div>
         <div>
-          <label className={etichetta()}>
-            Comune
-          </label>
+          <label className={etichetta()}>Comune</label>
           <input
             type="text"
             name="domicilioComune"
@@ -136,9 +135,7 @@ export default function FormResidenzaDomicilio({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={etichetta()}>
-              CAP
-            </label>
+            <label className={etichetta()}>CAP</label>
             <input
               type="text"
               name="domicilioCap"
@@ -148,9 +145,7 @@ export default function FormResidenzaDomicilio({
             />
           </div>
           <div>
-            <label className={etichetta()}>
-              Provincia
-            </label>
+            <label className={etichetta()}>Provincia</label>
             <input
               type="text"
               name="domicilioProvincia"
