@@ -2,8 +2,9 @@ import { useRef } from "react";
 import { useTestataElenco } from "../../hooks/useTestataElenco.js";
 import FiltriElenco from "./FiltriElenco.jsx";
 
-/** Titolo, ricerca e azioni restano gli stessi nodi anche durante l'aggancio. */
-export default function IntestazioneElenco({ titolo, azioni, ricerca, filtri }) {
+/** Titolo, ricerca e azioni restano gli stessi nodi anche durante l'aggancio.
+ * La legenda, facoltativa, si nasconde quando la testata e' agganciata. */
+export default function IntestazioneElenco({ titolo, azioni, ricerca, filtri, legenda }) {
   const soglia = useRef(null);
   const testata = useRef(null);
   useTestataElenco(soglia, testata);
@@ -19,6 +20,7 @@ export default function IntestazioneElenco({ titolo, azioni, ricerca, filtri }) 
             {filtri && <FiltriElenco {...filtri} />}
           </search>
           <div className="testata-elenco__azioni">{azioni}</div>
+          {legenda && <div className="testata-elenco__legenda">{legenda}</div>}
         </header>
       </div>
     </>

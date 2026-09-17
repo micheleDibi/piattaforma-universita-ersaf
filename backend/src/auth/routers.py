@@ -45,6 +45,7 @@ from src.auth.servizio_reset import (
     stato_token,
     username_e_email,
 )
+from src.auth.visibilita import utente_visibile, visibilita_di
 from src.config import get_impostazioni
 from src.database import get_db
 from src.notifiche.backend_invio import Mailer, get_mailer
@@ -270,6 +271,14 @@ def login_as(
     )
 
     # --- chi viene impersonato ----------------------------------------------
+    # Prima di qualunque altro controllo sul bersaglio: il ramo "Nazionale"
+    # qui sotto risponde 403 con un testo suo, e messo prima rivelerebbe il
+    # ruolo di utenti che il chiamante non vede. Il 404 e' lo stesso di un id
+    # inesistente.
+    vis = visibilita_di(db, current_utente)
+    if not vis.nazionale and not utente_visibile(db, vis, utente_id):
+        raise _bersaglio_non_impersonabile()
+
     utente = db.get(Utente, utente_id)
     if utente is None:
         raise _bersaglio_non_impersonabile()

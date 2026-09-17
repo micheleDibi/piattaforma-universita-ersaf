@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from src.aziende.models import Azienda
 from src.clienti.models import Cliente
 from src.otp.identita import versione
 from src.otp.models import ContattoVerificato
@@ -52,12 +53,16 @@ def crea_utente(
     password_chiaro: str | None = None,
     password_hash: str | None = None,
     attivo: int = ATTIVO,
+    padre: int | None = None,
 ) -> Utente:
     """Crea una riga `utenti`.
 
-    utente_created_by / utente_updated_by / utente_padre restano a NULL: la
-    tabella ha due chiavi esterne verso se stessa e su un database vuoto
-    qualunque valore diverso da NULL fallirebbe.
+    utente_created_by / utente_updated_by restano a NULL: la tabella ha due
+    chiavi esterne verso se stessa e su un database vuoto qualunque valore
+    diverso da NULL fallirebbe. `utente_padre` invece non ha chiave esterna nel
+    database, quindi `padre` puo' essere qualunque intero, anche un utente che
+    non esiste: e' proprio uno dei casi che la regola di visibilita' deve
+    reggere.
 
     `utente_password` e' NOT NULL: quando non c'e' una password legacy si
     scrive '', che e' anche cio' che il codice scrive dopo il rehash.
@@ -69,7 +74,7 @@ def crea_utente(
         utente_password_hash=password_hash,
         utente_password_algo="bcrypt" if password_hash else "legacy_plaintext",
         utente_attivoSN=attivo,
-        utente_padre=None,
+        utente_padre=padre,
         utente_created_by=None,
         utente_updated_by=None,
         utente_salt=str(uuid.uuid4()),
@@ -88,6 +93,7 @@ def crea_cliente(
     ruolo: int = RUOLO_ADERENTE,
     nome: str = "Mario",
     cognome: str = "Rossi",
+    azienda_id: int | None = None,
 ) -> Cliente:
     numero = next(_contatore)
     cliente = Cliente(
@@ -114,6 +120,7 @@ def crea_cliente(
         cliente_dataScadenzaDocumento="1999-12-31",
         cliente_sesso="",
         cliente_ruolo=ruolo,
+        azienda_id=azienda_id,
         cliente_abilPraticheUniv=0,
         cliente_abilitazione_ecampus=0,
         cliente_abilitazione_link_campus=0,
@@ -136,6 +143,8 @@ def crea_attuatore(
     password_chiaro: str | None = None,
     password_hash: str | None = None,
     nome: str = "Mario",
+    padre: int | None = None,
+    azienda_id: int | None = None,
 ) -> Attuatore:
     """Utente piu' cliente: la coppia che il recupero password deve trovare."""
     utente = crea_utente(
@@ -144,9 +153,11 @@ def crea_attuatore(
         password_chiaro=password_chiaro,
         password_hash=password_hash,
         attivo=attivo,
+        padre=padre,
     )
     cliente = crea_cliente(
-        db, utente_id=utente.utente_id, email=email, ruolo=ruolo, nome=nome
+        db, utente_id=utente.utente_id, email=email, ruolo=ruolo, nome=nome,
+        azienda_id=azienda_id,
     )
     return Attuatore(
         utente_id=utente.utente_id,
@@ -155,6 +166,23 @@ def crea_attuatore(
         email=email,
         password_chiaro=password_chiaro,
     )
+
+
+def crea_azienda(db: Session, *, ragione_sociale: str | None = None) -> Azienda:
+    """Un'azienda con le sole colonne NOT NULL di `aziende`."""
+    numero = next(_contatore)
+    azienda = Azienda(
+        azienda_ragione_sociale=ragione_sociale or f"Azienda di prova {numero}",
+        azienda_partitaIVA=f"{numero:011d}",
+        azienda_via="Via di prova",
+        azienda_citta="Milano",
+        azienda_CAP="20100",
+        azienda_provincia="MI",
+    )
+    db.add(azienda)
+    db.commit()
+    db.refresh(azienda)
+    return azienda
 
 
 def crea_utente_orfano(db: Session, **kwargs) -> Utente:
@@ -168,9 +196,15 @@ def verifica_email(db: Session, cliente_id: int) -> None:
     come farebbe la conferma di un codice dalla scheda cliente. Senza questa
     riga un Nazionale al login riceve il codice di verifica dell'email, non
     l'OTP di login (ADR 0009)."""
+    verifica_contatto(db, cliente_id, "email")
+
+
+def verifica_contatto(db: Session, cliente_id: int, tipo: str) -> None:
+    """Segna come verificato il valore ATTUALE del contatto (`email` o
+    `cellulare`): se poi il valore cambia, la verifica non vale piu'."""
     cliente = db.get(Cliente, cliente_id)
     db.merge(ContattoVerificato(
-        cliente_id=cliente_id, tipo="email", versione=versione(cliente, "email"),
+        cliente_id=cliente_id, tipo=tipo, versione=versione(cliente, tipo),
         verificato=db.scalar(select(func.now())),
     ))
     db.commit()

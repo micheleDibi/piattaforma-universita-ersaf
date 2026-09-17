@@ -75,7 +75,11 @@ def test_con_email_verificata_il_login_manda_l_otp_di_login(client, db, mailer):
 def test_la_verifica_avviata_da_un_operatore_non_apre_una_sessione(client, db, mailer):
     """Una sfida `email` della scheda cliente certifica il contatto, non autentica."""
     persona = _nazionale(db)
-    _, headers = _operatore(client, db)
+    operatore, headers = _operatore(client, db)
+    # L'operatore puo' avviare la verifica solo su un cliente che vede: qui il
+    # Nazionale e' suo figlio.
+    db.get(Utente, persona.utente_id).utente_padre = operatore.utente_id
+    db.commit()
     avvio = client.post(f"/clienti/{persona.cliente_id}/contatti/email/genera-otp",
                         headers=headers, json={"valore": persona.email})
     assert avvio.status_code == 200, avvio.text

@@ -127,7 +127,9 @@ def test_anagrafica_rimossa_dopo_login_restituisce_errore_gestito(client, db):
 
 def test_impersonificazione_sostituisce_nome_e_profilo(client, db):
     amministratore = crea_profilo(db, ruolo=f.RUOLO_REGIONALE)
-    bersaglio = f.crea_attuatore(db, email="elena@example.org", nome="Elena")
+    # Figlia dell'amministratore: si impersona solo chi si vede.
+    bersaglio = f.crea_attuatore(db, email="elena@example.org", nome="Elena",
+                                 padre=amministratore.utente_id)
     login = accedi(client, amministratore)
     risposta = client.post(f"/auth/login-as/{bersaglio.utente_id}", headers={"X-CSRF-Token": login["csrf_token"]})
     assert risposta.status_code == 200

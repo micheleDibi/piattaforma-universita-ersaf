@@ -301,6 +301,22 @@ class PraticaUpdate(BaseModel):
     pratica_pathFile_rateizzazione: Optional[str] = Field(default=None, max_length=255)
 
 
+class EmittenteBreve(BaseModel):
+    """I dati dell'aderente emittente che servono alla scheda pratica.
+
+    Stanno nella risposta della pratica perche' la scheda deve mostrare
+    l'emittente anche quando non e' fra i clienti che l'utente vede: prima il
+    frontend lo chiedeva a GET /clienti/{id}, che con il filtro di visibilita'
+    risponderebbe 404 e farebbe fallire l'intera scheda. Oggetto annidato e non
+    campi piatti: `cliente_id` di primo livello e' lo studente.
+    """
+
+    cliente_id: int
+    cliente_nome: Optional[str] = None
+    cliente_cognome: Optional[str] = None
+    cliente_codice: Optional[str] = None
+
+
 class PraticaResponse(PraticaBase):
     pratica_id: int
     pratica_created_at: Optional[datetime] = None
@@ -316,6 +332,7 @@ class PraticaResponse(PraticaBase):
     listTesta_descrizione: Optional[str] = None
     nome_universita_descrizione: Optional[str] = None
     listino_tipoCorso_descrizione: Optional[str] = None
+    emittente: Optional[EmittenteBreve] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -346,5 +363,14 @@ class PraticaResponse(PraticaBase):
         tipo_corso_obj = getattr(data, "tipo_corso", None) 
         if tipo_corso_obj:
             item_dict["listino_tipoCorso_descrizione"] = tipo_corso_obj.listino_tipoCorso_descrizione
+
+        emittente_obj = getattr(data, "cliente_emittente_aderente", None)
+        if emittente_obj:
+            item_dict["emittente"] = {
+                "cliente_id": emittente_obj.cliente_id,
+                "cliente_nome": emittente_obj.cliente_nome,
+                "cliente_cognome": emittente_obj.cliente_cognome,
+                "cliente_codice": emittente_obj.cliente_codice,
+            }
 
         return item_dict

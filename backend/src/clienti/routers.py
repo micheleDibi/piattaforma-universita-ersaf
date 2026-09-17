@@ -9,9 +9,16 @@ from fastapi import (
     Query,
     status,
 )
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import select
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from src.auth.dipendenze import get_current_utente
+from src.auth.visibilita import (
+    Visibilita,
+    cliente_visibile_o_404,
+    filtra_clienti,
+    visibilita_corrente,
+)
 
 from src.aziende.models import Azienda
 from src.clienti.models import Cliente
@@ -25,13 +32,18 @@ from src.clienti.schemas import (
 from src.clienti.servizio import (
     TipoUtente,
     crea_cliente_con_utente,
+    verifica_ruolo_assegnabile,
     verifica_unicita_anagrafica,
 )
 
 from src.database import get_db
 
 from src.ruolo.models import Ruolo
-from src.universita.models import Universita
+from src.universita.models import (
+    CAMPI_DIPLOMA_NUMERO,
+    CAMPI_DIPLOMA_TESTO,
+    Universita,
+)
 from src.utenti.models import Utente
 
 logger = logging.getLogger("ersaf.clienti")
@@ -66,6 +78,16 @@ _CARICAMENTO_ELENCO = (
 )
 
 
+# Solo per l'elenco dei sottoscrittori: una query per pagina su `universita`,
+# con le sole colonne che servono a Cliente.diploma_completo. Gli altri elenchi
+# non la caricano, e per loro il campo resta None senza alcuna query.
+_CARICAMENTO_DIPLOMA = selectinload(Cliente.universita).load_only(
+    Universita.universita_id,
+    Universita.cliente_id,
+    *(getattr(Universita, campo) for campo in CAMPI_DIPLOMA_TESTO + CAMPI_DIPLOMA_NUMERO),
+)
+
+
 def _cliente_o_404(db: Session, cliente_id: int, con_curriculum: bool = False) -> Cliente:
     caricamento = list(_CARICAMENTO_ELENCO)
     if con_curriculum:
@@ -91,9 +113,11 @@ def crea_cliente_e_utente(
     tipo_utente: TipoUtente = TipoUtente.SOTTOSCRITTORE,
     db: Session = Depends(get_db),
     current_utente=Depends(get_current_utente),
+    vis: Visibilita = Depends(visibilita_corrente),
 ):
     """Crea in una transazione la riga utenti (disattivata), la riga clienti
     e il curriculum. L'utente si attiva dopo la verifica di email e cellulare."""
+    verifica_ruolo_assegnabile(db, vis, current_utente, dati.cliente_ruolo)
     try:
         esito = crea_cliente_con_utente(
             db, dati.model_dump(), tipo_utente, current_utente.utente_id
@@ -132,8 +156,12 @@ def leggi_clienti(
     solo_attuatori: bool = False,
     solo_utenti: bool = False,
     db: Session = Depends(get_db),
+    vis: Visibilita = Depends(visibilita_corrente),
 ):
-    query = db.query(Cliente).options(*_CARICAMENTO_ELENCO)
+    # Il filtro di visibilita' sta in SQL e prima di ORDER BY/LIMIT: il
+    # frontend considera che ci siano altre pagine se ne arrivano esattamente
+    # 40, e un filtro applicato dopo la paginazione romperebbe lo scroll.
+    query = filtra_clienti(db.query(Cliente).options(*_CARICAMENTO_ELENCO), vis)
 
     if ruolo_codice or solo_attuatori or solo_utenti:
         query = query.join(Ruolo, Cliente.cliente_ruolo == Ruolo.ruolo_id)
@@ -148,6 +176,7 @@ def leggi_clienti(
         )
     elif solo_utenti:
         query = query.filter(Ruolo.ruolo_codice == "Utente")
+        query = query.options(_CARICAMENTO_DIPLOMA)
 
     if search:
         parole = search.split()
@@ -173,7 +202,15 @@ def leggi_clienti(
 
 #GET BY ID
 @router.get("/{cliente_id}", response_model=ClienteDettaglioResponse)
-def leggi_cliente(cliente_id: int, db: Session = Depends(get_db)):
+def leggi_cliente(
+    cliente_id: int,
+    db: Session = Depends(get_db),
+    vis: Visibilita = Depends(visibilita_corrente),
+):
+    # Controllo separato e non dentro _cliente_o_404: con il curriculum la
+    # query carica una collezione e SQLAlchemy la avvolge in una subquery.
+    # Stesso testo dell'id inesistente, cosi' la risposta non rivela nulla.
+    cliente_visibile_o_404(db, vis, cliente_id, "Cliente non trovato")
     return _cliente_o_404(db, cliente_id, con_curriculum=True)
 
 
@@ -184,8 +221,22 @@ def aggiorna_cliente(
     modifiche: ClienteUpdate,
     db: Session = Depends(get_db),
     current_utente=Depends(get_current_utente),
+    vis: Visibilita = Depends(visibilita_corrente),
 ):
     from src.otp.servizio import blocca_cliente
+
+    # Prima di blocca_cliente, che prende i lock: su un cliente non visibile
+    # non deve succedere nulla. Il testo e' quello che blocca_cliente da' per
+    # un id inesistente, cosi' le due risposte coincidono.
+    cliente_visibile_o_404(db, vis, cliente_id, "Anagrafica non trovata.")
+    if "cliente_ruolo" in modifiche.model_fields_set:
+        riga = db.execute(
+            select(Cliente.utente_id, Cliente.cliente_ruolo)
+            .where(Cliente.cliente_id == cliente_id)
+        ).first()
+        verifica_ruolo_assegnabile(
+            db, vis, current_utente, modifiche.cliente_ruolo, riga
+        )
     blocca_cliente(db, cliente_id)
     db_cliente = _cliente_o_404(db, cliente_id, con_curriculum=True)
 
@@ -289,4 +340,11 @@ def aggiorna_cliente(
         )
 
     db.refresh(db_cliente)
+    # refresh() ricarica la relazione `universita` solo se l'istanza ricorda le
+    # opzioni con cui e' nata, e questo dipende da quando il garbage collector
+    # ha liberato quella creata da blocca_cliente. Senza questa lettura
+    # diploma_completo uscirebbe a volte None, perche' la risposta lo legge
+    # prima di `curriculum`. Non costa query: la serializzazione del
+    # curriculum la farebbe comunque.
+    db_cliente.curriculum
     return db_cliente

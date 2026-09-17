@@ -19,8 +19,15 @@ export default function GerarchiaAzienda({ aziendaId }) {
 
   const eNazionale = leggiRuolo() === "nazionale";
 
-  const caricaPadre = () => {
+  // Nuova azienda, nessun errore residuo: si azzera durante il render, non
+  // nell'effetto che carica il padre.
+  const [aziendaIdMostrata, setAziendaIdMostrata] = useState(aziendaId);
+  if (aziendaId !== aziendaIdMostrata) {
+    setAziendaIdMostrata(aziendaId);
     setErrore("");
+  }
+
+  const caricaPadre = () => {
     apiFetch(`/aziende-xcod/${aziendaId}/padre`)
       .then(async (risposta) => {
         if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
@@ -75,6 +82,7 @@ export default function GerarchiaAzienda({ aziendaId }) {
 
       if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
       setAzionePendente(undefined);
+      setErrore("");
       caricaPadre();
     } catch (err) {
       setMessaggioSalvataggio(err.message);

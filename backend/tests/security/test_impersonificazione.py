@@ -17,6 +17,7 @@ import pytest
 from src.security.password import hash_password
 from src.security.sessioni import valida_sessione
 from tests.support import factories as f
+from tests.support.scenari import accedi, accedi_nazionale
 from tests.support.sessioni import token_cookie, intestazioni_sessione
 
 pytestmark = pytest.mark.mariadb
@@ -59,8 +60,9 @@ def test_un_ruolo_non_amministrativo_non_puo_impersonare(client, db):
 
 
 def test_un_regionale_puo_impersonare_e_riceve_una_sessione_valida(client, db):
-    _, intestazione = _sessione(client, db, f.RUOLO_REGIONALE)
-    bersaglio = f.crea_attuatore(db, email=next(_email), ruolo=f.RUOLO_ADERENTE)
+    chiamante, intestazione = _sessione(client, db, f.RUOLO_REGIONALE)
+    bersaglio = f.crea_attuatore(db, email=next(_email), ruolo=f.RUOLO_ADERENTE,
+                                 padre=chiamante.utente_id)
 
     risposta = client.post(
         f"/auth/login-as/{bersaglio.utente_id}", headers=intestazione
@@ -78,9 +80,10 @@ def test_un_regionale_puo_impersonare_e_riceve_una_sessione_valida(client, db):
 def test_non_si_impersona_un_utente_disattivato(client, db):
     """Il login normale passa da verifica_credenziali, che rifiuta gli utenti
     spenti. Qui non c'e' password da verificare: il controllo va ripetuto."""
-    _, intestazione = _sessione(client, db, f.RUOLO_REGIONALE)
+    chiamante, intestazione = _sessione(client, db, f.RUOLO_REGIONALE)
     bersaglio = f.crea_attuatore(
-        db, email=next(_email), ruolo=f.RUOLO_ADERENTE, attivo=f.DISATTIVO
+        db, email=next(_email), ruolo=f.RUOLO_ADERENTE, attivo=f.DISATTIVO,
+        padre=chiamante.utente_id,
     )
 
     risposta = client.post(
@@ -94,8 +97,9 @@ def test_non_si_impersona_un_utente_disattivato(client, db):
     "ruolo", [f.RUOLO_SOTTOSCRITTORE, f.RUOLO_CONSULENTE, f.RUOLO_OPERATORE]
 )
 def test_non_si_impersona_chi_non_potrebbe_accedere(client, db, ruolo):
-    _, intestazione = _sessione(client, db, f.RUOLO_REGIONALE)
-    bersaglio = f.crea_attuatore(db, email=next(_email), ruolo=ruolo)
+    chiamante, intestazione = _sessione(client, db, f.RUOLO_REGIONALE)
+    bersaglio = f.crea_attuatore(db, email=next(_email), ruolo=ruolo,
+                                 padre=chiamante.utente_id)
 
     risposta = client.post(
         f"/auth/login-as/{bersaglio.utente_id}", headers=intestazione
@@ -107,8 +111,9 @@ def test_non_si_impersona_chi_non_potrebbe_accedere(client, db, ruolo):
 def test_non_si_ottiene_una_sessione_nazionale_scavalcando_il_2fa(client, db):
     """login-as non aveva il ramo requires_2fa che il login ha: era la strada
     per ottenere proprio la sessione che il login nega."""
-    _, intestazione = _sessione(client, db, f.RUOLO_REGIONALE)
-    bersaglio = f.crea_attuatore(db, email=next(_email), ruolo=f.RUOLO_NAZIONALE)
+    chiamante, intestazione = _sessione(client, db, f.RUOLO_REGIONALE)
+    bersaglio = f.crea_attuatore(db, email=next(_email), ruolo=f.RUOLO_NAZIONALE,
+                                 padre=chiamante.utente_id)
 
     risposta = client.post(
         f"/auth/login-as/{bersaglio.utente_id}", headers=intestazione
@@ -128,7 +133,8 @@ def test_un_utente_inesistente_non_distingue_dagli_altri_rifiuti(client, db):
 
 def test_l_impersonificazione_lascia_una_traccia(client, db, caplog):
     chiamante, intestazione = _sessione(client, db, f.RUOLO_REGIONALE)
-    bersaglio = f.crea_attuatore(db, email=next(_email), ruolo=f.RUOLO_ADERENTE)
+    bersaglio = f.crea_attuatore(db, email=next(_email), ruolo=f.RUOLO_ADERENTE,
+                                 padre=chiamante.utente_id)
 
     with caplog.at_level("WARNING", logger="ersaf.auth"):
         client.post(f"/auth/login-as/{bersaglio.utente_id}", headers=intestazione)
@@ -137,3 +143,52 @@ def test_l_impersonificazione_lascia_una_traccia(client, db, caplog):
     assert tracce, "l'operazione deve essere tracciata"
     assert str(chiamante.utente_id) in tracce[-1]
     assert str(bersaglio.utente_id) in tracce[-1]
+
+
+# =============================================================================
+# Visibilita' del bersaglio
+# =============================================================================
+INESISTENTE = "/auth/login-as/999999"
+
+
+def _impersona(client, bersaglio, intestazione):
+    return client.post(f"/auth/login-as/{bersaglio.utente_id}", headers=intestazione)
+
+
+def test_un_regionale_impersona_solo_chi_vede(client, db):
+    azienda = f.crea_azienda(db)
+    regionale, intestazione = accedi(client, db, azienda_id=azienda.azienda_id)
+    collega = f.crea_attuatore(db, email=next(_email), azienda_id=azienda.azienda_id)
+    figlio_del_collega = f.crea_attuatore(db, email=next(_email), padre=collega.utente_id)
+    estraneo = f.crea_attuatore(db, email=next(_email))
+
+    inesistente = client.post(INESISTENTE, headers=intestazione)
+    for nascosto in (collega, estraneo):
+        risposta = _impersona(client, nascosto, intestazione)
+        assert risposta.status_code == 404
+        assert risposta.json() == inesistente.json()
+    # Per ultimo: un login-as riuscito sostituisce la sessione del chiamante.
+    assert _impersona(client, figlio_del_collega, intestazione).status_code == 200
+
+
+def test_un_nazionale_non_visibile_non_rivela_il_ruolo(client, db):
+    """Visibile: il 403 specifico del Nazionale. Non visibile: il 404 di
+    sempre, che non dice nulla sul ruolo."""
+    regionale, intestazione = accedi(client, db)
+    discendente = f.crea_attuatore(db, email=next(_email), ruolo=f.RUOLO_NAZIONALE,
+                                   padre=regionale.utente_id)
+    estraneo = f.crea_attuatore(db, email=next(_email), ruolo=f.RUOLO_NAZIONALE)
+
+    assert _impersona(client, discendente, intestazione).status_code == 403
+    risposta = _impersona(client, estraneo, intestazione)
+    assert risposta.status_code == 404
+    assert risposta.json() == client.post(INESISTENTE, headers=intestazione).json()
+
+
+def test_il_nazionale_impersona_chiunque(client, db, mailer):
+    estraneo = f.crea_attuatore(db, email=next(_email), ruolo=f.RUOLO_ADERENTE)
+    _, intestazione = accedi_nazionale(client, db, mailer)
+    risposta = _impersona(client, estraneo, intestazione)
+    assert risposta.status_code == 200, risposta.text
+    assert risposta.json()["utente_id"] == estraneo.utente_id
+

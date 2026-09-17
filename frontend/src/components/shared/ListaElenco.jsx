@@ -1,19 +1,23 @@
+import { useId } from "react";
 import { ChevronRight, ICONE_CAMPI_ELENCO } from "../../config/icone.js";
 import AvvisoTooltip from "./AvvisoTooltip.jsx";
+import IndicatoriStato from "./IndicatoriStato.jsx";
+import { campoIndicatori, idIndicatori } from "../../lib/righeElenco.js";
+
+const RILIEVI_TECNICI = ["codice", "stato", "indicatori"];
+const vuoto = (valore) =>
+  Array.isArray(valore) ? valore.length === 0 : !valore || valore === "-";
 
 export default function ListaElenco({ dati, modello, onApri }) {
+  const base = useId();
+  const indicatori = campoIndicatori(modello.mobile);
   const campoPrincipale =
     modello.mobile.find((c) => c.rilievo === "principale") || modello.mobile[0];
   const campiTecnici = modello.mobile.filter(
-    (c) =>
-      c.id !== campoPrincipale?.id &&
-      (c.rilievo === "codice" || c.rilievo === "stato"),
+    (c) => c.id !== campoPrincipale?.id && RILIEVI_TECNICI.includes(c.rilievo),
   );
   const campiMetadati = modello.mobile.filter(
-    (c) =>
-      c.id !== campoPrincipale?.id &&
-      c.rilievo !== "codice" &&
-      c.rilievo !== "stato",
+    (c) => c.id !== campoPrincipale?.id && !RILIEVI_TECNICI.includes(c.rilievo),
   );
 
   return (
@@ -35,6 +39,7 @@ export default function ListaElenco({ dati, modello, onApri }) {
           tabIndex={0}
           role="button"
           aria-label={`Visualizza ${riga.nomeAzione}`}
+          aria-describedby={idIndicatori(base, riga, indicatori)}
         >
           <dl className="elenco-adattivo__corpo">
             {campoPrincipale &&
@@ -64,14 +69,21 @@ export default function ListaElenco({ dati, modello, onApri }) {
               <div className="elenco-adattivo__fascia-tecnica">
                 {campiTecnici.map((campo) => {
                   const valore = riga.campi[campo.id];
-                  if (!valore || valore === "-") return null;
+                  if (vuoto(valore)) return null;
                   return (
                     <div
                       key={campo.id}
                       className="elenco-adattivo__tecnico-item"
                     >
                       <dt className="sr-only">{campo.etichetta}</dt>
-                      {campo.rilievo === "stato" ? (
+                      {campo.rilievo === "indicatori" ? (
+                        <dd>
+                          <IndicatoriStato
+                            indicatori={valore}
+                            id={idIndicatori(base, riga, indicatori)}
+                          />
+                        </dd>
+                      ) : campo.rilievo === "stato" ? (
                         <dd
                           className="elenco-adattivo__badge"
                           data-tono={riga.tonoStato}
@@ -95,7 +107,7 @@ export default function ListaElenco({ dati, modello, onApri }) {
               <div className="elenco-adattivo__metadati">
                 {campiMetadati.map((campo) => {
                   const valore = riga.campi[campo.id];
-                  if (!valore || valore === "-") return null;
+                  if (vuoto(valore)) return null;
                   const Icona = campo.icona
                     ? ICONE_CAMPI_ELENCO[campo.icona]
                     : null;

@@ -104,6 +104,32 @@ def test_migrazioni_su_database_pulito(database_vergine):
     }
 
 
+def test_indici_della_visibilita(database_vergine):
+    """La 016 aggiunge i due indici su cui poggia la CTE di visibilita':
+    senza, ogni passo della ricorsione scansiona tutta `utenti`."""
+    esegui_file_sql(database_vergine, SCHEMA_BASE)
+    for migrazione in MIGRAZIONI:
+        esegui_file_sql(database_vergine, migrazione)
+
+    motore = sa.create_engine(database_vergine)
+    try:
+        with motore.connect() as connessione:
+            righe = connessione.execute(sa.text(
+                "SELECT TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX, COLUMN_NAME "
+                "FROM information_schema.STATISTICS "
+                "WHERE TABLE_SCHEMA = DATABASE() "
+                "AND INDEX_NAME IN ('ix_utenti_padre', 'ix_clienti_azienda_utente')"
+            )).all()
+    finally:
+        motore.dispose()
+
+    assert sorted(tuple(r) for r in righe) == [
+        ("clienti", "ix_clienti_azienda_utente", 1, "azienda_id"),
+        ("clienti", "ix_clienti_azienda_utente", 2, "utente_id"),
+        ("utenti", "ix_utenti_padre", 1, "utente_padre"),
+    ]
+
+
 def test_migrazioni_idempotenti(database_vergine):
     """Riapplicarle sopra se stesse non deve produrre errori ne' cambiare lo
     schema: e' cio' che rende sicuro rieseguire uno script interrotto a meta'.

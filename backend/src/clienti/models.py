@@ -1,6 +1,6 @@
 from src.otp.models import ContattoVerificato
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey, Date, text
+from sqlalchemy import String, Integer, ForeignKey, Date, text, inspect as sa_inspect
 from datetime import  date
 from src.database import Base 
 from typing import Optional, List
@@ -114,6 +114,20 @@ class Cliente(Base):
     def _contatto_verificato(self, tipo):
         from src.otp.identita import versione
         return any(r.tipo == tipo and r.versione == versione(self, tipo) for r in self.verifiche_contatti)
+
+    @property
+    def diploma_completo(self) -> Optional[bool]:
+        """Se il curriculum ha i dati del diploma completi.
+
+        None quando la relazione `universita` non e' stata caricata: leggere
+        questo campo non deve mai provocare una query per riga. L'elenco dei
+        sottoscrittori la carica per l'intera pagina; per gli attuatori resta
+        None, e il frontend non la mostra.
+        """
+        if "universita" in sa_inspect(self).unloaded:
+            return None
+        curriculum = self.curriculum
+        return curriculum is not None and curriculum.diploma_completo
 
     @property
     def email_verificata(self) -> bool:
