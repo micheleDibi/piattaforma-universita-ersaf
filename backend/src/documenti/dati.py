@@ -4,27 +4,40 @@ Tutto arriva come testo gia' formattato: il modello posiziona stringhe e non
 deve sapere di date, importi o valori mancanti. Le scelte condizionali (quale
 crocetta disegnare) le aggiunge ogni modello sopra questi dati comuni.
 
-Il database del gestionale usa segnaposto invece di NULL: '' per i testi e
-1999-12-31 per le date. Qui diventano stringa vuota, cosi' non finiscono
+Il database del gestionale usa segnaposto invece di NULL: '' o "/" per i testi
+e 1999-12-31 per le date. Qui diventano stringa vuota, cosi' non finiscono
 stampati nel modulo.
 """
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from src.documenti.firma import immagine_firma
+from src.esami.models import Esame
 from src.pratiche.models import Pratica
 from src.universita.models import Universita
 
 DATA_SEGNAPOSTO = date(1999, 12, 31)
 
 
+def normalizza(valore) -> str:
+    """Minuscole, senza accenti, spazi e punteggiatura: 'Carta d'Identità' -> 'cartadidentita'."""
+    if valore is None:
+        return ""
+    scomposto = unicodedata.normalize("NFKD", str(valore))
+    senza_accenti = "".join(c for c in scomposto if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]", "", senza_accenti.casefold())
+
+
 def testo(valore) -> str:
-    """Stringa pulita; None e segnaposto diventano ''."""
+    """Stringa pulita; None e segnaposto (anche testi senza lettere ne' cifre) diventano ''."""
     if valore is None:
         return ""
     if isinstance(valore, datetime):
@@ -33,7 +46,8 @@ def testo(valore) -> str:
         return "" if valore == DATA_SEGNAPOSTO else valore.strftime("%d/%m/%Y")
     if isinstance(valore, Decimal):
         return importo(valore)
-    return " ".join(str(valore).split())
+    pulito = " ".join(str(valore).split())
+    return pulito if any(c.isalnum() for c in pulito) else ""
 
 
 def importo(valore: Decimal | float | int | None) -> str:
@@ -57,6 +71,18 @@ def generalita_di(db: Session, cliente_id: int) -> Universita | None:
         select(Universita).where(Universita.cliente_id == cliente_id)
         .order_by(Universita.universita_id.desc()).limit(1)
     )
+
+
+def esami_di(db: Session, cliente_id: int) -> list[dict]:
+    """Gli esami gia' sostenuti dal cliente, dal piu' vecchio."""
+    esami = db.scalars(
+        select(Esame).where(Esame.cliente_id == cliente_id).order_by(Esame.esame_data, Esame.esame_id)
+    )
+    return [
+        {"insegnamento": testo(e.esame_insegnamento), "data": testo(e.esame_data), "ssd": testo(e.esame_ssd),
+         "voto": testo(e.esame_voto), "cfu": testo(e.esame_cfu), "universita": testo(e.esame_universita)}
+        for e in esami
+    ]
 
 
 def _cliente(cliente) -> dict:
@@ -126,6 +152,7 @@ def dati_pratica(db: Session, pratica: Pratica) -> tuple[dict, dict[str, bytes]]
         "cliente": _cliente(pratica.cliente),
         "corso": _corso(pratica.listino_testa),
         "generalita": _generalita(generalita_di(db, pratica.cliente_id)),
+        "esami": esami_di(db, pratica.cliente_id),
     }
-    allegati = {"firma": pratica.pratica_firma} if pratica.pratica_firma else {}
-    return dati, allegati
+    firma = immagine_firma(pratica.pratica_firma)
+    return dati, ({"firma": firma} if firma else {})

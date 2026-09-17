@@ -19,6 +19,9 @@ from src.documenti.modelli import normalizza
     (date(1999, 12, 31), ""),  # segnaposto del gestionale per "data mancante"
     (Decimal("1250.5"), "1.250,50"),
     (0, "0"),
+    ("/", ""),  # segnaposto del gestionale per "testo mancante"
+    (" - ", ""),
+    ("s.n.", "s.n."),
 ])
 def test_testo_per_il_modulo(valore, atteso):
     assert formato.testo(valore) == atteso

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,8 @@ from sqlalchemy import delete
 from src.database import Base, engine
 from src.documenti import modelli as registro
 from src.documenti import motore
+from src.documenti.dati import dati_pratica
+from src.esami.models import Esame
 from src.listini_testa.models import ListinoTestaDB
 from src.pratiche.models import Pratica
 from src.security.password import hash_password
@@ -20,6 +23,9 @@ pytestmark = pytest.mark.mariadb
 MODELLI_DI_PROVA = Path(__file__).parents[1] / "support" / "modelli"
 ID = 900101  # righe di decodifica proprie: non si scontrano con altri scenari
 ENTE, TIPO_CORSO = "Università di Prova", "Laurea di prova"
+# Intestazione con cui il gestionale salvava la firma: "BLOBpng" e zeri fino a 16 byte.
+INTESTAZIONE_FIRMA = b"BLOBpng" + bytes(9)
+FIRMA_PNG = bytes([0x89]) + b"PNG"
 
 
 @pytest.fixture
@@ -64,6 +70,13 @@ def con_modello(monkeypatch):
     return registra
 
 
+def _rinomina(db, tabella: str, **valori):
+    """Cambia la descrizione di una riga di decodifica dello scenario."""
+    tabella_db = Base.metadata.tables[tabella]
+    db.execute(tabella_db.update().where(list(tabella_db.primary_key)[0] == ID).values(**valori))
+    db.commit()
+
+
 def test_senza_modello_il_documento_non_e_disponibile(client, pratica):
     assert client.get(f"/pratiche/{pratica.pratica_id}/documento/disponibile").json() == {"disponibile": False, "nome_file": None}
     risposta = client.get(f"/pratiche/{pratica.pratica_id}/documento")
@@ -97,3 +110,29 @@ def test_un_errore_di_composizione_non_espone_dettagli(client, pratica, con_mode
     assert "Della Valle" not in risposta.text
     assert any("composizione del documento fallita" in r.getMessage() for r in caplog.records)
     assert not any("Della Valle" in r.getMessage() for r in caplog.records)
+
+
+def test_i_dati_comuni_hanno_gli_esami_in_ordine_e_la_firma_senza_intestazione(db, pratica):
+    for insegnamento, giorno in (("Psicologia generale", date(2017, 6, 20)), ("Pedagogia generale", date(2017, 6, 11))):
+        db.add(Esame(esame_insegnamento=insegnamento, esame_cfu=8, esame_voto=28, esame_data=giorno, esame_ssd="M-PED/01",
+                     esame_corsoDiLaurea="Scienze dell'educazione", esame_ordinamento="DM 270/04",
+                     esame_universita="Università degli Studi di Pavia", cliente_id=pratica.cliente_id))
+    pratica.pratica_firma = INTESTAZIONE_FIRMA + png_pieno()
+    db.commit()
+    try:
+        dati, allegati = dati_pratica(db, pratica)
+        assert [(e["insegnamento"], e["data"], e["voto"]) for e in dati["esami"]] == [
+            ("Pedagogia generale", "11/06/2017", "28"), ("Psicologia generale", "20/06/2017", "28")]
+        assert allegati["firma"].startswith(FIRMA_PNG)
+    finally:
+        db.execute(delete(Esame).where(Esame.cliente_id == pratica.cliente_id))
+        db.commit()
+
+
+def test_una_pratica_ecampus_lauree_scarica_il_modulo_completo(client, db, pratica):
+    _rinomina(db, "nome_universita", nome_universita_descrizione="Università Telematica eCampus")
+    _rinomina(db, "listini_tipicorsi", listino_tipoCorso_descrizione="LAUREE")
+    assert client.get(f"/pratiche/{pratica.pratica_id}/documento/disponibile").json()["disponibile"] is True
+    risposta = client.get(f"/pratiche/{pratica.pratica_id}/documento")
+    assert risposta.status_code == 200, risposta.text
+    assert b"/Count 10" in risposta.content and b"pdfaid" in risposta.content

@@ -53,6 +53,26 @@ def test_la_cartella_di_lavoro_non_resta_e_la_cache_segue_il_modello(modelli):
     assert dopo[1] != prima[1]  # nessuna cache vecchia
 
 
+def test_i_file_comuni_si_importano_e_la_cache_li_segue(modelli):
+    comune = modelli / motore.CARTELLA_COMUNE
+    comune.mkdir()
+    (comune / "saluto.typ").write_text('#let saluto = "Buongiorno"', encoding="utf-8")
+    modulo = modelli / "prova" / "modulo.typ"
+    righe = ['#import "/_comune/saluto.typ": saluto', modulo.read_text(encoding="utf-8"), "#saluto"]
+    modulo.write_text("\n".join(righe), encoding="utf-8")
+    prima = motore.componi_png("prova", {"nome": "Maria"}, cartella_modelli=modelli, ppi=40)
+    (comune / "saluto.typ").write_text('#let saluto = "Buonasera a tutte e a tutti"', encoding="utf-8")
+    dopo = motore.componi_png("prova", {"nome": "Maria"}, cartella_modelli=modelli, ppi=40)
+    assert dopo[0] == prima[0] and dopo[1] != prima[1]
+
+
+def test_un_modello_non_si_chiama_come_la_cartella_comune(modelli):
+    (modelli / motore.CARTELLA_COMUNE).mkdir()
+    (modelli / motore.CARTELLA_COMUNE / motore.FILE_MODULO).write_text("Non sono un modello", encoding="utf-8")
+    with pytest.raises(motore.ModelloAssente):
+        motore.componi_pdf(motore.CARTELLA_COMUNE, {}, cartella_modelli=modelli)
+
+
 @pytest.mark.parametrize("nome", ["assente", "../prova", "Prova", "prova/../prova", ""])
 def test_modello_assente_o_nome_non_valido(modelli, nome):
     with pytest.raises(motore.ModelloAssente):

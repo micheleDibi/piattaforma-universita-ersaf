@@ -11,20 +11,12 @@ documento: il frontend nasconde il pulsante.
 from __future__ import annotations
 
 import re
-import unicodedata
 from dataclasses import dataclass, field
 from typing import Callable
 
+from src.documenti.dati import normalizza
+from src.documenti.ecampus import laurea as ecampus_laurea
 from src.pratiche.models import Pratica
-
-
-def normalizza(valore) -> str:
-    """Minuscole, senza accenti, spazi e punteggiatura: 'Carta d'Identità' -> 'cartadidentita'."""
-    if valore is None:
-        return ""
-    scomposto = unicodedata.normalize("NFKD", str(valore))
-    senza_accenti = "".join(c for c in scomposto if not unicodedata.combining(c))
-    return re.sub(r"[^a-z0-9]", "", senza_accenti.casefold())
 
 
 def _identita(dati: dict) -> dict:
@@ -46,7 +38,9 @@ class Modello:
 
 
 # I moduli si aggiungono qui man mano che vengono calibrati sulle immagini.
-MODELLI: tuple[Modello, ...] = ()
+MODELLI: tuple[Modello, ...] = (
+    Modello(ecampus_laurea.NOME, "Università Telematica eCampus", "Lauree", ecampus_laurea.arricchisci),
+)
 
 
 def modello_per(pratica: Pratica, modelli: tuple[Modello, ...] | None = None) -> Modello | None:

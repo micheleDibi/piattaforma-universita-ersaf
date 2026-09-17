@@ -3,6 +3,8 @@
 Un modello e' una cartella in `modelli/`: `modulo.typ` piu' le immagini delle
 pagine. Il modulo riceve i dati come JSON in `sys.inputs.dati`; i binari (per
 ora la firma) arrivano come file e il loro percorso sta in `dati.allegati`.
+I file comuni a tutti i modelli stanno in `modelli/_comune/`: la composizione li
+copia accanto al modulo, che li importa con `#import "/_comune/..."`.
 
 Typst legge solo file sotto la radice indicata e il container dell'API e' in
 sola lettura tranne /tmp: gli asset del modello si copiano una volta in una
@@ -27,6 +29,7 @@ import typst
 CARTELLA_MODELLI = Path(__file__).parent / "modelli"
 CARTELLA_FONT = Path(__file__).parent / "font"
 FILE_MODULO = "modulo.typ"
+CARTELLA_COMUNE = "_comune"
 # PDF/A-2b: archiviabile, font incorporati, ammette la trasparenza della firma.
 STANDARD_PDF = ["a-2b"]
 _NOME_VALIDO = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -59,12 +62,14 @@ def estensione_immagine(contenuto: bytes | None) -> str | None:
     return None
 
 
-def _impronta(cartella: Path) -> str:
-    """Cambia quando cambia un file del modello: la cache non resta mai vecchia."""
+def _impronta(*cartelle: Path) -> str:
+    """Cambia quando cambia un file del modello o dei comuni: la cache non resta mai vecchia."""
     impronta = hashlib.sha256()
-    for file in sorted(p for p in cartella.rglob("*") if p.is_file()):
-        stato = file.stat()
-        impronta.update(f"{file.relative_to(cartella).as_posix()}:{stato.st_size}:{stato.st_mtime_ns}\n".encode())
+    for cartella in cartelle:
+        for file in sorted(p for p in cartella.rglob("*") if p.is_file()):
+            stato = file.stat()
+            nome = f"{cartella.name}/{file.relative_to(cartella).as_posix()}"
+            impronta.update(f"{nome}:{stato.st_size}:{stato.st_mtime_ns}\n".encode())
     return impronta.hexdigest()[:16]
 
 
@@ -72,14 +77,18 @@ def _radice(modello: str, cartella_modelli: Path | None) -> Path:
     if not _NOME_VALIDO.match(modello):
         raise ModelloAssente(modello)
     # Letta a ogni chiamata, non fissata come default: i test la sostituiscono.
-    sorgente = (cartella_modelli or CARTELLA_MODELLI) / modello
+    base = cartella_modelli or CARTELLA_MODELLI
+    sorgente, comune = base / modello, base / CARTELLA_COMUNE
     if not (sorgente / FILE_MODULO).is_file():
         raise ModelloAssente(modello)
-    radice = Path(tempfile.gettempdir()) / "documenti-pratiche" / f"{modello}-{_impronta(sorgente)}"
+    cartelle = (sorgente, comune) if comune.is_dir() else (sorgente,)
+    radice = Path(tempfile.gettempdir()) / "documenti-pratiche" / f"{modello}-{_impronta(*cartelle)}"
     with _blocco_cache:
         if not (radice / FILE_MODULO).is_file():
             parziale = radice.with_name(f"{radice.name}.{uuid.uuid4().hex}")
             shutil.copytree(sorgente, parziale)
+            if comune.is_dir():
+                shutil.copytree(comune, parziale / CARTELLA_COMUNE)
             try:
                 parziale.rename(radice)
             except OSError:  # un altro processo l'ha creata nel frattempo

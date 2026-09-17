@@ -57,3 +57,6 @@ httpx2>=2.12
 # Composizione dei documenti delle pratiche (PDF/A) con Typst: wheel abi3
 # senza librerie di sistema, stesso risultato su Windows e nel container.
 typst>=0.15,<0.16
+# La firma salvata dal gestionale sta su una tela quasi quadrata: Pillow la
+# ritaglia sul tratto prima di metterla nel modulo.
+Pillow>=12,<13
