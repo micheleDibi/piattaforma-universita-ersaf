@@ -60,14 +60,20 @@ def test_risolvi():
 def test_redigi():
     testo = ("scrivi a nome.cognome@esempio.it o vai su https://collaudo.azienda.it, "
              "db mysql://utente:segreta@db/x, ip 192.0.2.10, locale 127.0.0.1, "
-             "localhost e example.com restano")
+             "localhost e example.com restano, niente root:parola e porta localhost:5173")
     atteso = ("scrivi a <email> o vai su https://<dominio>, db mysql://<credenziali>@db/x, "
-              "ip <ip>, locale 127.0.0.1, localhost e example.com restano")
+              "ip <ip>, locale 127.0.0.1, localhost e example.com restano, niente <credenziali> e porta "
+              "localhost:5173")
     assert redigi(testo) == atteso
 
 
+def test_redigi_percorsi_del_server():
+    assert redigi("copia in /srv/app/shared/compose.env, non in backend/var/x") == (
+        "copia in <percorso-server>, non in backend/var/x")
+
+
 def test_normalizza():
-    assert normalizza("﻿a\r\nb\rc\n") == "a\nb\nc\n"
+    assert normalizza("\ufeffa\r\nb\rc\n") == "a\nb\nc\n"
 
 
 def test_elenco_file_segue_git(repo):

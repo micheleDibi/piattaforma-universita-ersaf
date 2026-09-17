@@ -22,7 +22,7 @@ def test_frammento_valido():
 
 
 def test_crlf_e_bom_accettati():
-    frammenti.analizza(NOME, "﻿" + FRAMMENTO_VALIDO.replace("\n", "\r\n"))
+    frammenti.analizza(NOME, "\ufeff" + FRAMMENTO_VALIDO.replace("\n", "\r\n"))
 
 
 @pytest.mark.parametrize("nome", [

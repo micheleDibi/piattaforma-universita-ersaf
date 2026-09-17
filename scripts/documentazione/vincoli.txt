@@ -1,0 +1,11 @@
+# Versioni fissate per generare docs/tecnica/riferimenti/ in modo identico in
+# locale e in CI: l'OpenAPI e i modelli cambiano forma fra una versione e
+# l'altra. genera.py si rifiuta di partire se quelle installate sono diverse.
+# Si usa come vincolo (-c), non come elenco di dipendenze: l'applicazione resta
+# governata da backend/requirements.txt.
+fastapi==0.141.1
+starlette==1.6.0
+pydantic==2.13.5
+pydantic-core==2.46.5
+pydantic-settings==2.15.0
+SQLAlchemy==2.0.52

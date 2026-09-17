@@ -1,0 +1,3 @@
+# Dipendenze degli strumenti della documentazione, oltre a backend/requirements.txt.
+# Installazione: pip install -r backend/requirements.txt -r scripts/documentazione/requisiti.txt -c scripts/documentazione/vincoli.txt
+PyYAML==6.0.3

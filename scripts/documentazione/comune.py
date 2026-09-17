@@ -85,7 +85,7 @@ def scrivi(percorso, testo: str) -> None:
 
 def normalizza(testo: str) -> str:
     """LF e niente BOM: i checkout Windows con autocrlf non devono contare."""
-    if testo.startswith("﻿"):
+    if testo.startswith("\ufeff"):
         testo = testo[1:]
     return testo.replace("\r\n", "\n").replace("\r", "\n")
 
@@ -200,6 +200,8 @@ def risolvi(da_file: str, destinazione: str) -> str | None:
 # =============================================================================
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 _CREDENZIALI = re.compile(r"(?<=://)[^/\s:@]+:[^/\s@]+@")
+_CREDENZIALI_NUDE = re.compile(r"\b(?:root|admin|utente|user):[^\s@/,.;]+", re.IGNORECASE)
+_PERCORSO_SERVER = re.compile(r"(?<![\w.])/(?:srv|opt|home|root|var/lib)/[^\s,;)]+")
 _IPV4 = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 _DOMINIO = re.compile(
     r"\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:it|com|net|org|eu|io|info|biz|cloud|dev|app)\b",
@@ -210,6 +212,8 @@ _DOMINI_AMMESSI = re.compile(r"(?:^|\.)(?:example\.(?:com|net|org)|localhost)$",
 
 def redigi(testo: str) -> str:
     testo = _CREDENZIALI.sub("<credenziali>@", testo)
+    testo = _CREDENZIALI_NUDE.sub("<credenziali>", testo)
+    testo = _PERCORSO_SERVER.sub("<percorso-server>", testo)
     testo = _EMAIL.sub("<email>", testo)
     testo = _IPV4.sub(lambda m: m.group(0) if m.group(0).startswith("127.") else "<ip>", testo)
     return _DOMINIO.sub(lambda m: m.group(0) if _DOMINI_AMMESSI.search(m.group(0)) else "<dominio>", testo)
