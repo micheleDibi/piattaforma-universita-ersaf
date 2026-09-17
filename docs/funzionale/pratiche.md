@@ -234,8 +234,10 @@ non riesce a verificare la disponibilità, il pulsante non compare.
 
 Premendo "Scarica PDF", il pulsante diventa "Preparazione del PDF…" e resta
 bloccato fino alla fine. Il file si salva con il nome "pratica-" seguito dal
-numero della pratica. Nel nome, i caratteri diversi da lettere, cifre,
-trattino e trattino basso diventano trattini.
+numero della pratica e dall'estensione ".pdf". Nel nome, i caratteri diversi
+da lettere, cifre, trattino e trattino basso diventano trattini; se il numero
+manca o è fatto solo di caratteri non ammessi, al suo posto compare il numero
+interno della pratica.
 
 Il documento è in formato PDF/A, adatto all'archiviazione a lungo termine.
 

@@ -211,3 +211,79 @@ def test_riga_di_comando(repo, ramo, capsys, monkeypatch):
     assert controlla.esegui(argomenti + ["--merge"], radice=repo.percorso) == 1
     capsys.readouterr()
     assert controlla.esegui(["pr", "--base", "inesistente"], radice=repo.percorso) == 2
+
+
+# --- contenuti: il repository e' pubblico ------------------------------------
+def test_controllo_contenuti(repo):
+    repo.scrivi("docs/pulito.md", "# Pulito\n\nScrivi a nome@esempio.it, loopback 127.0.0.1.\n")
+    repo.scrivi("docs/sporco.md", "\n".join([
+        "# Sporco",
+        "Il collaudo risponde su esempio.ersaf.it.",
+        "Server interno: nodo.rete.local.",
+        "Indirizzo 192.0.2.10 e percorso /srv/app/shared.",
+        "Posta a persona@azienda.it e credenziali root:parola.",
+        "",
+        "Comando ammesso: TEST_DATABASE_URL=mysql+pymysql://ersaf:ersaf@127.0.0.1:3307/ersaf_test",
+    ]) + "\n")
+    file = ["docs/pulito.md", "docs/sporco.md"]
+    errori = controlla.controlla_contenuti(repo.percorso, file)
+    assert {e.file for e in errori} == {"docs/sporco.md"}
+    categorie = [e.messaggio.split(" in un documento")[0] for e in errori]
+    assert categorie == ["dominio dell'ente", "nome di rete interna", "indirizzo IP",
+                         "percorso del server", "indirizzo email", "credenziali"]
+    assert {e.riga for e in errori} == {2, 3, 4, 5}
+
+
+def test_contenuti_dentro_tutto(repo, capsys):
+    base(repo)
+    repo.scrivi("docs/tecnica/sicurezza.md", "# Sicurezza\n\n## Limiti noti\n\nServer 192.0.2.10.\n")
+    repo.commit()
+    assert controlla.esegui(["tutto"], radice=repo.percorso) == 1
+    uscita = capsys.readouterr().out
+    assert "indirizzo IP in un documento" in uscita
+    assert "1 problema trovato." in uscita
+    assert "Controlli eseguiti: frammenti, link, mappa, contenuti." in uscita
+
+
+def test_riepilogo_dice_quali_controlli_sono_stati_eseguiti(repo, capsys):
+    base(repo)
+    assert controlla.esegui(["tutto"], radice=repo.percorso) == 0
+    assert "Controlli eseguiti: frammenti, link, mappa, contenuti. Documentazione in ordine." in capsys.readouterr().out
+    assert controlla.esegui(["tutto", "--base", "HEAD"], radice=repo.percorso) == 0
+    assert "frammenti, link, mappa, contenuti, pull request" in capsys.readouterr().out
+
+
+def test_base_vuota_non_passa_in_silenzio(repo, capsys):
+    sha = base(repo)
+    repo.git("switch", "-q", "-c", "pr")
+    repo.scrivi("backend/src/auth/accesso.py", "x = 2\n")
+    repo.commit()
+    assert controlla.esegui(["tutto", "--base", ""], radice=repo.percorso) == 2
+    assert "serve --base" in capsys.readouterr().out
+    assert controlla.esegui(["pr", "--base", ""], radice=repo.percorso) == 2
+    capsys.readouterr()
+    # Con --merge la base si ricava dal commit di merge, anche senza --base.
+    repo.git("switch", "-q", "--detach", "main")
+    repo.git("merge", "-q", "--no-ff", "-m", "merge", "pr")
+    assert controlla.esegui(["tutto", "--merge"], radice=repo.percorso) == 1
+    uscita = capsys.readouterr().out
+    assert "non aggiunge un frammento valido" in uscita
+    assert "pull request" in uscita
+    assert sha
+
+
+def test_messaggio_per_il_frammento_non_committato(repo, capsys):
+    sha = base(repo)
+    repo.git("switch", "-q", "-c", "pr")
+    repo.scrivi("backend/src/altro/modulo.py", "y = 2\n")
+    repo.commit()
+    repo.scrivi(FRAMMENTO, FRAMMENTO_VALIDO)
+    assert controlla.esegui(["pr", "--base", sha], radice=repo.percorso) == 1
+    uscita = capsys.readouterr().out
+    assert "contano solo le modifiche committate" in uscita and FRAMMENTO in uscita
+
+
+def test_frammento_in_sottocartella(repo):
+    repo.scrivi("changelog/non-pubblicato/archivio/2026-09-18-x.md", FRAMMENTO_VALIDO)
+    errori = controlla.controlla_frammenti(repo.percorso, ["changelog/non-pubblicato/archivio/2026-09-18-x.md"])
+    assert len(errori) == 1 and "senza sottocartelle" in errori[0].messaggio

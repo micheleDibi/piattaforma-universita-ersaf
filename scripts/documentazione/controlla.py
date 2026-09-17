@@ -25,7 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from comune import (  # noqa: E402
     RADICE, ErroreGit, ancore, elenco_file, git, git_bytes, git_riuscito, leggi, risolvi,
-    righe_fuori_dal_codice, segnala,
+    righe_fuori_dal_codice, segnala, sospetti,
 )
 import frammenti  # noqa: E402
 
@@ -34,6 +34,9 @@ ETICHETTA_DOCUMENTAZIONE_INVARIATA = "documentazione-invariata"
 # Le cartelle il cui cambiamento richiede un frammento (esclusi i .md).
 RICHIEDONO_FRAMMENTO = ("backend/src/", "frontend/src/", "db/", "deploy/")
 CHANGELOG = "CHANGELOG.md"
+# Eccezione dichiarata: il database di test e' usa-e-getta e le sue credenziali
+# servono nei comandi copiabili (vedi docs/tecnica/test.md).
+AMMESSI_NEI_TESTI = ("mysql+pymysql://ersaf:ersaf@127.0.0.1:3307/ersaf_test",)
 
 
 @dataclass(frozen=True)
@@ -52,8 +55,11 @@ def controlla_frammenti(radice, file: list[str]) -> list[Errore]:
     for percorso in file:
         if not frammenti.e_frammento(percorso):
             if percorso.startswith(frammenti.CARTELLA + "/") and posixpath.basename(percorso) not in frammenti.ESCLUSI:
-                errori.append(Errore("nella cartella dei frammenti sono ammessi solo file .md",
-                                     percorso, titolo="Frammento non valido"))
+                dentro = posixpath.dirname(percorso) != frammenti.CARTELLA
+                errori.append(Errore(
+                    f"i frammenti stanno direttamente in {frammenti.CARTELLA}/, senza sottocartelle"
+                    if dentro else "nella cartella dei frammenti sono ammessi solo file .md",
+                    percorso, titolo="Frammento non valido"))
             continue
         try:
             frammenti.analizza(posixpath.basename(percorso), leggi(Path(radice) / percorso))
@@ -133,6 +139,28 @@ def controlla_link(radice, file: list[str]) -> list[Errore]:
 
 
 # =============================================================================
+# Contenuti: il repository e' pubblico
+# =============================================================================
+def controlla_contenuti(radice, file: list[str]) -> list[Errore]:
+    """Nessun dato sensibile nei documenti e nei frammenti: il testo dei
+    frammenti finisce in CHANGELOG.md senza passare da nessun altro controllo."""
+    errori = []
+    for percorso in file:
+        if not percorso.endswith(".md") or "node_modules/" in percorso:
+            continue
+        for numero, riga in enumerate(leggi(Path(radice) / percorso).split("\n"), start=1):
+            pulita = riga
+            for ammesso in AMMESSI_NEI_TESTI:
+                pulita = pulita.replace(ammesso, "")
+            for categoria, valore in sospetti(pulita):
+                errori.append(Errore(
+                    f"{categoria} in un documento: {valore!r}. Il repository e' pubblico: usa un "
+                    "segnaposto o un valore di esempio (vedi CLAUDE.md).",
+                    percorso, numero, "Dato sensibile in un documento"))
+    return errori
+
+
+# =============================================================================
 # Mappa
 # =============================================================================
 def controlla_mappa(radice, file: list[str]) -> list[Errore]:
@@ -197,6 +225,14 @@ def _frammento_valido_in(radice, head: str, percorso: str) -> bool:
     return True
 
 
+def _frammento_valido_sul_disco(radice, percorso: str) -> bool:
+    try:
+        frammenti.analizza(posixpath.basename(percorso), leggi(Path(radice) / percorso))
+    except (OSError, frammenti.FrammentoNonValido):
+        return False
+    return True
+
+
 def controlla_pr(radice, base: str, head: str, etichette: set[str]) -> list[Errore]:
     import mappa
 
@@ -226,10 +262,18 @@ def controlla_pr(radice, base: str, head: str, etichette: set[str]) -> list[Erro
                   and _frammento_valido_in(radice, head, m.percorso)]
         if not validi:
             esempi = ", ".join(sorgenti[:5]) + (" e altri" if len(sorgenti) > 5 else "")
+            # Caso tipico del controllo in locale: il frammento c'e' ma non e' ancora committato.
+            non_committati = [p for p in elenco_file(radice)
+                              if frammenti.e_frammento(p)
+                              and not git_riuscito("cat-file", "-e", f"{head}:{p}", cwd=radice)
+                              and _frammento_valido_sul_disco(radice, p)]
+            nota = (f" Sul disco c'e' {non_committati[0]}, ma qui contano solo le modifiche "
+                    "committate: esegui git add e git commit del frammento."
+                    if non_committati else "")
             errori.append(Errore(
                 "la PR modifica il codice (" + esempi + ") ma non aggiunge un frammento valido in "
                 "changelog/non-pubblicato/ (formato in changelog/MODELLO.md). Se la modifica non "
-                f"va raccontata, usa l'etichetta '{ETICHETTA_SENZA_CHANGELOG}'.",
+                f"va raccontata, usa l'etichetta '{ETICHETTA_SENZA_CHANGELOG}'." + nota,
                 titolo="Frammento di changelog mancante"))
 
     # Documenti collegati.
@@ -262,11 +306,12 @@ def _etichette(valore: str | None) -> set[str]:
 def esegui(argomenti: list[str] | None = None, radice=RADICE) -> int:
     parser = argparse.ArgumentParser(description="Controlli della documentazione")
     sotto = parser.add_subparsers(dest="comando", required=True)
-    for nome in ("frammenti", "link", "mappa"):
+    for nome in ("frammenti", "link", "mappa", "contenuti"):
         sotto.add_parser(nome)
     for nome in ("pr", "tutto"):
         p = sotto.add_parser(nome)
-        p.add_argument("--base", required=(nome == "pr"), help="commit di base della PR")
+        p.add_argument("--base", default=None, help="commit di base della PR; con --merge si "
+                                                     "ricava dal primo genitore di --head")
         p.add_argument("--head", default="HEAD", help="commit finale (predefinito HEAD)")
         p.add_argument("--etichette", default="", help="etichette della PR, separate da virgole")
         p.add_argument("--merge", action="store_true",
@@ -277,25 +322,41 @@ def esegui(argomenti: list[str] | None = None, radice=RADICE) -> int:
     try:
         file = elenco_file(radice)
         errori: list[Errore] = []
+        eseguiti = []
         if opzioni.comando in ("frammenti", "tutto"):
             errori += controlla_frammenti(radice, file)
+            eseguiti.append("frammenti")
         if opzioni.comando in ("link", "tutto"):
             errori += controlla_link(radice, file)
+            eseguiti.append("link")
         if opzioni.comando in ("mappa", "tutto"):
             errori += controlla_mappa(radice, file)
-        if opzioni.comando == "pr" or (opzioni.comando == "tutto" and opzioni.base):
-            base = base_effettiva(radice, opzioni.base, opzioni.head) if opzioni.merge else opzioni.base
+            eseguiti.append("mappa")
+        if opzioni.comando in ("contenuti", "tutto"):
+            errori += controlla_contenuti(radice, file)
+            eseguiti.append("contenuti")
+        richieste = opzioni.comando == "pr" or (opzioni.base is not None or opzioni.merge)
+        if opzioni.comando in ("pr", "tutto") and richieste:
+            base = (base_effettiva(radice, opzioni.base or "", opzioni.head) if opzioni.merge
+                    else opzioni.base)
+            if not base:
+                segnala("serve --base con il commit di base della pull request (con --merge basta che "
+                        "--head sia un commit di merge)", titolo="Argomenti non validi")
+                return 2
             errori += controlla_pr(radice, base, opzioni.head, _etichette(opzioni.etichette))
+            eseguiti.append("pull request")
     except ErroreGit as errore:
         segnala(f"comando git non riuscito: {errore}", titolo="Errore interno")
         return 2
 
     for errore in errori:
         segnala(errore.messaggio, errore.file, errore.riga, errore.titolo)
+    elenco = ", ".join(eseguiti)
     if errori:
-        print(f"{len(errori)} problemi trovati.")
+        print("1 problema trovato." if len(errori) == 1 else f"{len(errori)} problemi trovati.")
+        print(f"Controlli eseguiti: {elenco}.")
         return 1
-    print("Documentazione in ordine.")
+    print(f"Controlli eseguiti: {elenco}. Documentazione in ordine.")
     return 0
 
 

@@ -79,7 +79,7 @@ jobs:
           }
           if ($errori) { exit 1 }
 
-      - name: Frammenti, link, mappa e documenti collegati
+      - name: Frammenti, link, mappa, contenuti e documenti collegati
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           ETICHETTE: ${{ join(github.event.pull_request.labels.*.name, ',') }}

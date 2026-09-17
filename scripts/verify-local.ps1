@@ -26,7 +26,7 @@ function Invoke-ProjectGate($Name, $Directory, $Action) {
     finally { Pop-Location }
 }
 
-# I test ricostruiscono tabelle e fanno TRUNCATE. La destinazione è fissa e
+# I test ricostruiscono tabelle e fanno TRUNCATE. La destinazione e' fissa e
 # usa-e-getta; non ereditare TEST_DATABASE_URL o il backend email della shell.
 $SavedEnvironment = @{}
 foreach ($Name in @('TEST_DATABASE_URL', 'EMAIL_BACKEND', 'ERSAF_ENV')) {

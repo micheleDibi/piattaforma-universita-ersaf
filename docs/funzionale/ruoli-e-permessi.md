@@ -42,7 +42,7 @@ Anche un sottoscrittore riceve le credenziali quando il suo account si attiva. I
 | Profilo, schede "Dati principali" e "Utente" | sì | sì |
 | Profilo, scheda "Sicurezza" | sì | no |
 
-Nota: Attuatori, Aziende e Prodotti formativi sono nascosti solo dal menu; chi conosce l'indirizzo apre le pagine e il server non controlla il ruolo; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Nota: le voci nascoste non proteggono le pagine. Attuatori e Prodotti formativi si aprono digitando l'indirizzo e il server non controlla il ruolo. Anche la pagina Aziende si apre, ma lì il server applica la regola di visibilità descritta più sotto, per cui l'elenco risulta vuoto. Vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 Le **Pratiche** non sono nel menu di nessuno: si aprono dalla Dashboard. I pulsanti della Dashboard sono attivi solo se la persona collegata ha l'abilitazione generale alle pratiche universitarie e quella dell'ateneo. Vedi [Pratiche](pratiche.md).
 
@@ -102,7 +102,7 @@ Nota: la protezione non copre il codice via email, perché nessun controllo di r
 ## Visibilità delle aziende
 
 - Il **Nazionale** vede tutte le aziende.
-- Gli **altri** vedono la propria azienda e tutte quelle che le stanno sotto nella gerarchia: le figlie, le figlie delle figlie e così via.
+- Gli **altri** dovrebbero vedere la propria azienda e tutte quelle che le stanno sotto nella gerarchia: le figlie, le figlie delle figlie e così via. In questa versione, però, il server non riconosce l'azienda di chi lavora, quindi chi non è Nazionale non vede alcuna azienda nelle pagine Aziende e nella scheda Azienda di un attuatore. Il proprio profilo continua a mostrare il nome dell'azienda associata.
 - Chi **non ha un'azienda** associata non ne vede nessuna.
 - Un'azienda non visibile di norma si comporta come se non esistesse: compare "Azienda non trovata.".
 
@@ -126,7 +126,7 @@ Nota: il server non limita per ruolo né per gerarchia la lettura di sottoscritt
 La scheda "Utente" di ogni persona ha la tendina **"Ruolo"** con tutti e sette i ruoli. La schermata e il suo salvataggio sono descritti in [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md). Qui contano solo le regole di permesso:
 
 - il **ruolo** lo può cambiare qualunque utente collegato, su qualunque scheda, compresa la propria;
-- **nome utente, stato e utente padre** li può cambiare solo chi modifica la propria scheda, oppure un Regionale o un Nazionale. Agli altri il server risponde "Non hai i permessi per modificare un altro utente.";
+- **nome utente, stato e utente padre** li può cambiare solo chi modifica la propria scheda, oppure un Regionale o un Nazionale. Agli altri il server risponde "Non hai i permessi per modificare un altro utente.". Attenzione: il salvataggio è già andato a metà, perché il ruolo viene salvato per primo. Dopo quel messaggio il ruolo risulta cambiato e il resto no;
 - cambiare ruolo sposta la persona da un elenco all'altro: il ruolo Utente la porta fra i Sottoscrittori, un ruolo da attuatore fra gli Attuatori.
 
 Nota: né l'interfaccia né il server limitano chi può assegnare un ruolo; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).

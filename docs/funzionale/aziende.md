@@ -26,7 +26,9 @@ Un'azienda non visibile si comporta come un'azienda inesistente: le ricerche
 non la trovano e il suo indirizzo mostra «Pagina non trovata».
 
 In questa versione il server non riconosce l'azienda di chi lavora. Chi non è
-Nazionale non vede quindi alcuna azienda, come se non ne avesse una.
+Nazionale non vede quindi alcuna azienda nelle pagine Aziende e nella scheda
+Azienda di un attuatore, come se non ne avesse una. Il proprio profilo
+continua a mostrare il nome dell'azienda associata.
 
 Nota: la regola della propria azienda e delle discendenti oggi non produce effetti; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 

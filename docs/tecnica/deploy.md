@@ -78,7 +78,7 @@ Se il server venisse reinstallato, la chiave host scritta nello script (variabil
 - `install`:
   - se le credenziali della sorgente non sono ancora registrate, si ferma per chiederle (codice remoto 10, `deploy/remote/20-install.sh:122-123`);
   - chiede conferma prima di clonare.
-- `configure-source` registra le credenziali di lettura del database sorgente. Servono solo al dump, che è in sola lettura: meglio un utente senza privilegi di scrittura, ma lo script non lo verifica e si limita a consigliarlo (`deploy/remote/40-db.sh:4-7`).
+- `configure-source` registra le credenziali di lettura del database sorgente. Servono solo al dump, che è in sola lettura: meglio un utente senza privilegi di scrittura, ma lo script non lo verifica e si limita a consigliarlo (`scripts/deploy.ps1:379`; la regola del dump in sola lettura è in `deploy/remote/40-db.sh:4-11`).
 - `rollback`:
   - non annulla le migrazioni già applicate (`deploy/remote/70-deploy.sh:86`);
   - scambia la release attiva con la precedente, quindi un secondo `rollback` torna alla release di partenza (`deploy/remote/70-deploy.sh:84`).
@@ -368,7 +368,7 @@ python scripts/documentazione/timbra_changelog.py --ref=origin/main --versione=N
 
 ## Modificare gli script di deploy
 
-- **Solo caratteri ASCII** in `scripts/deploy.ps1` e in `deploy/remote/*.sh`. Windows PowerShell 5.1 legge un `.ps1` senza BOM con la codifica di sistema, e i caratteri accentati si rovinerebbero.
+- **Solo caratteri ASCII** in `scripts/deploy.ps1`, `scripts/verify-local.ps1` e `deploy/remote/*.sh`. Windows PowerShell 5.1 legge un `.ps1` senza BOM con la codifica di sistema, e i caratteri accentati si rovinerebbero. Un test lo verifica.
 - **Sintassi** compatibile con Windows PowerShell 5.1.
 - **Fine riga:** `.gitattributes` impone LF per gli `.sh` e CRLF per i `.ps1`.
 - **Struttura degli script remoti:**

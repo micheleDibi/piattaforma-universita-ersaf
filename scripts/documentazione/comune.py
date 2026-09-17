@@ -199,27 +199,76 @@ def risolvi(da_file: str, destinazione: str) -> str | None:
 
 
 # =============================================================================
-# Redazione dei valori che non devono finire in un repository pubblico
+# Valori che non devono finire in un repository pubblico
 # =============================================================================
-_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
-_CREDENZIALI = re.compile(r"(?<=://)[^/\s:@]+:[^/\s@]+@")
-_CREDENZIALI_NUDE = re.compile(r"\b(?:root|admin|utente|user):[^\s@/,.;]+", re.IGNORECASE)
-_PERCORSO_SERVER = re.compile(r"(?<![\w.])/(?:srv|opt|home|root|var/lib)/[^\s,;)]+")
+# I segnaposto usano le parentesi quadre: in Markdown `<dominio>` sarebbe un tag
+# HTML, che GitHub scarta silenziosamente portandosi via il testo redatto.
+_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)*")
+_CREDENZIALI = re.compile(r"(?<=://)[^\s:@/]+:[^\s@]+@")
+_CREDENZIALI_NUDE = re.compile(r"\b(?:root|admin|utente|user):[^\s@/,;]+", re.IGNORECASE)
+_PERCORSO_SERVER = re.compile(r"(?<![\w.])/(?:srv|opt|home|root|data|mnt|etc|var/lib)/[^\s,;)`]+")
 _IPV4 = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
-_DOMINIO = re.compile(
-    r"\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:it|com|net|org|eu|io|info|biz|cloud|dev|app)\b",
-    re.IGNORECASE,
-)
-_DOMINI_AMMESSI = re.compile(r"(?:^|\.)(?:example\.(?:com|net|org)|localhost)$", re.IGNORECASE)
+# Candidati IPv6: si tengono solo quelli con `::` o una cifra esadecimale
+# alfabetica, altrimenti un'ora come 18:40:00 verrebbe redatta.
+_IPV6 = re.compile(r"(?<![\w:])(?:[0-9a-f]{1,4})?(?::{1,2}[0-9a-f]{1,4}){2,7}(?![\w:])", re.IGNORECASE)
+# Suffissi di rete interna: sono quelli che non devono comparire.
+SUFFISSI_INTERNI = ("local", "lan", "internal", "intranet", "corp", "localdomain", "priv", "home")
+_PUBBLICI = ("it", "com", "net", "org", "eu", "io", "info", "biz", "cloud", "dev", "app", "gov", "edu")
+_DOMINIO = re.compile(r"\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:" + "|".join(_PUBBLICI + SUFFISSI_INTERNI) + r")\b",
+                      re.IGNORECASE)
+_DOMINI_AMMESSI = re.compile(
+    r"(?:^|\.)(?:example\.(?:com|net|org)|esempio\.(?:it|com|net|org)|localhost|invalid|test)$",
+    re.IGNORECASE)
+# Il dominio dell'ente: nei documenti non ci va, nemmeno come host di collaudo.
+_DOMINIO_ENTE = re.compile(r"\b[a-z0-9-]+\.ersaf\.it\b|\bersaf\.it\b", re.IGNORECASE)
+LOOPBACK = "127.0.0.1"
+
+
+def _ipv6(valore: str) -> bool:
+    return "::" in valore or any(c in "abcdef" for c in valore.lower())
 
 
 def redigi(testo: str) -> str:
-    testo = _CREDENZIALI.sub("<credenziali>@", testo)
-    testo = _CREDENZIALI_NUDE.sub("<credenziali>", testo)
-    testo = _PERCORSO_SERVER.sub("<percorso-server>", testo)
-    testo = _EMAIL.sub("<email>", testo)
-    testo = _IPV4.sub(lambda m: m.group(0) if m.group(0).startswith("127.") else "<ip>", testo)
-    return _DOMINIO.sub(lambda m: m.group(0) if _DOMINI_AMMESSI.search(m.group(0)) else "<dominio>", testo)
+    """Sostituisce con un segnaposto i valori che non vanno pubblicati.
+
+    La usano i generatori sui commenti e sulle intestazioni che copiano nelle
+    pagine di docs/tecnica/riferimenti/. Preferisce redigere troppo.
+    """
+    testo = _CREDENZIALI.sub("[credenziali]@", testo)
+    testo = _CREDENZIALI_NUDE.sub("[credenziali]", testo)
+    testo = _PERCORSO_SERVER.sub("[percorso-server]", testo)
+    testo = _EMAIL.sub("[email]", testo)
+    testo = _IPV4.sub(lambda m: m.group(0) if m.group(0) == LOOPBACK else "[ip]", testo)
+    testo = _IPV6.sub(lambda m: "[ip]" if _ipv6(m.group(0)) else m.group(0), testo)
+    return _DOMINIO.sub(
+        lambda m: m.group(0) if _DOMINI_AMMESSI.search(m.group(0)) else "[dominio]", testo)
+
+
+_CATEGORIE = (
+    ("indirizzo email", _EMAIL, lambda v: not _DOMINI_AMMESSI.search(v.split("@")[-1])),
+    ("indirizzo IP", _IPV4, lambda v: v != LOOPBACK),
+    ("indirizzo IPv6", _IPV6, _ipv6),
+    ("credenziali", _CREDENZIALI, lambda v: True),
+    ("credenziali", _CREDENZIALI_NUDE, lambda v: True),
+    ("percorso del server", _PERCORSO_SERVER, lambda v: True),
+    ("nome di rete interna", _DOMINIO,
+     lambda v: v.rsplit(".", 1)[-1].lower() in SUFFISSI_INTERNI),
+    ("dominio dell'ente", _DOMINIO_ENTE, lambda v: True),
+)
+
+
+def sospetti(testo: str) -> list[tuple[str, str]]:
+    """(categoria, valore) dei dati che in un repository pubblico non vanno
+    scritti nei documenti. Piu' stretta di `redigi`: qui i falsi positivi
+    bloccherebbero una pull request, quindi si cercano solo le categorie
+    inequivocabili."""
+    trovati = []
+    for categoria, regex, ammesso in _CATEGORIE:
+        for corrispondenza in regex.finditer(testo):
+            valore = corrispondenza.group(0)
+            if ammesso(valore):
+                trovati.append((categoria, valore))
+    return trovati
 
 
 # =============================================================================

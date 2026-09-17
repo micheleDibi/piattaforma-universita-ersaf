@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from comune import ancore, corrisponde, elenco_file, normalizza, redigi, risolvi, slug_github
+from comune import (ancore, corrisponde, elenco_file, normalizza, redigi, risolvi, slug_github,
+                    sospetti)
 
 
 @pytest.mark.parametrize(("percorso", "pattern", "atteso"), [
@@ -57,19 +58,46 @@ def test_risolvi():
     assert risolvi("README.md", "docs/") == "docs"
 
 
-def test_redigi():
-    testo = ("scrivi a nome.cognome@esempio.it o vai su https://collaudo.esempio.it, "
-             "db mysql://utente:parola@db/x, ip 192.0.2.10, locale 127.0.0.1, "
-             "localhost e example.com restano, niente root:parola e porta localhost:5173")
-    atteso = ("scrivi a <email> o vai su https://<dominio>, db mysql://<credenziali>@db/x, "
-              "ip <ip>, locale 127.0.0.1, localhost e example.com restano, niente <credenziali> e porta "
-              "localhost:5173")
+def test_redigi_non_usa_parentesi_angolari():
+    """In Markdown [dominio] sarebbe un tag HTML: GitHub lo scarterebbe
+    portandosi via proprio il testo redatto."""
+    reso = redigi("host collaudo.rete.lan, ip 192.0.2.10, posta a nome@esempio.org, /srv/app/x")
+    assert "<" not in reso and ">" not in reso
+    assert reso.count("[") == 4
+
+
+@pytest.mark.parametrize(("testo", "atteso"), [
+    ("host collaudo.rete.local", "host [dominio]"),
+    ("host server.rete.lan", "host [dominio]"),
+    ("copia in /data/app/shared/x", "copia in [percorso-server]"),
+    ("copia in /mnt/deploy/x", "copia in [percorso-server]"),
+    ("non backend/var/email_dev", "non backend/var/email_dev"),
+    ("loopback 127.0.0.1 e altro 127.53.0.9", "loopback 127.0.0.1 e altro [ip]"),
+    ("ipv6 fd00:abcd::12", "ipv6 [ip]"),
+    ("ora 2026-09-17T18:40:00+02:00", "ora 2026-09-17T18:40:00+02:00"),
+    ("mysql://utente:pa/ss@host.interno.it/db", "mysql://[credenziali]@[dominio]/db"),
+    ("utente root:Segreta.2026", "utente [credenziali]"),
+    ("posta noreply@ersaf", "posta [email]"),
+    ("modulo src.config e file api.md", "modulo src.config e file api.md"),
+    ("esempio.it e example.org restano", "esempio.it e example.org restano"),
+])
+def test_redigi_casi(testo, atteso):
     assert redigi(testo) == atteso
 
 
-def test_redigi_percorsi_del_server():
-    assert redigi("copia in /srv/app/shared/compose.env, non in backend/var/x") == (
-        "copia in <percorso-server>, non in backend/var/x")
+@pytest.mark.parametrize(("testo", "categorie"), [
+    ("scrivi a nome.cognome@esempio.org", []),
+    ("scrivi a nome.cognome@azienda.it", ["indirizzo email"]),
+    ("collaudo su esempio.ersaf.it", ["dominio dell'ente"]),
+    ("host collaudo.rete.local", ["nome di rete interna"]),
+    ("react.dev e github.com nei link", []),
+    ("il server risponde su 192.0.2.10", ["indirizzo IP"]),
+    ("loopback 127.0.0.1", []),
+    ("percorso /srv/app/shared", ["percorso del server"]),
+    ("versione 1.2.3 alle 18:40:00", []),
+])
+def test_sospetti(testo, categorie):
+    assert [c for c, _ in sospetti(testo)] == categorie
 
 
 def test_normalizza():

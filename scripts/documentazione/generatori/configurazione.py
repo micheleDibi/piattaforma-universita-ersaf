@@ -82,7 +82,9 @@ def _dove(percorsi: set[str]) -> str:
 def _tabella_backend(voci: list[dict], descrizioni: dict[str, str]) -> list[str]:
     righe = ["| Variabile | Tipo | Predefinito | Obbligatoria | Descrizione |", "|---|---|---|---|---|"]
     for voce in voci:
-        predefinito = voce["predefinito"]
+        # I predefiniti vengono dal codice: se contengono un host, un indirizzo
+        # o un percorso del server non devono comparire per esteso.
+        predefinito = redigi(voce["predefinito"])
         resa = predefinito if predefinito.startswith("(") or predefinito == "—" else f"`{predefinito}`"
         righe.append(
             f"| `{voce['variabile']}` | {cella(voce['tipo'])} | {cella(resa)} | {cella(voce['obbligatoria'])} "

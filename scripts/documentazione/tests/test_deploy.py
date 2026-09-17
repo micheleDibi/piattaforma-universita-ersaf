@@ -51,13 +51,10 @@ def server(tmp_path):
 def test_script_ascii_senza_bom():
     """Windows PowerShell 5.1 legge i file senza BOM come cp1252: un carattere
     non ASCII in una stringa può rompere l'analisi dell'intero script."""
-    for percorso in [RADICE / "scripts" / "deploy.ps1", *REMOTI]:
+    for percorso in [RADICE / "scripts" / "deploy.ps1", RADICE / "scripts" / "verify-local.ps1", *REMOTI]:
         dati = percorso.read_bytes()
         assert not dati.startswith(b"\xef\xbb\xbf"), percorso
         assert all(b < 128 for b in dati), percorso
-    for riga in (RADICE / "scripts" / "verify-local.ps1").read_bytes().split(b"\n"):
-        if any(b > 127 for b in riga):
-            assert riga.lstrip().startswith(b"#"), riga
 
 
 @richiede_bash
@@ -106,14 +103,26 @@ def _funzione(nome: str) -> str:
     return corrispondenza.group(1)
 
 
+# Funzioni di deploy.ps1 che terminano il processo: chiamarle dal timbro
+# riporterebbe il deploy a uscire con 1 quando il changelog non riesce.
+TERMINANO = ("Stop-WithError", "Invoke-Remote(?!Output)", "Invoke-Preflight", "Confirm-Typed",
+             "Test-LocalTools", "Test-Vpn", "Test-ConnessioneCompleta", "Publish-Release")
+
+
 def test_timbro_non_termina_mai_il_deploy():
     """Controlli statici sul codice PowerShell del timbro (qui non si esegue)."""
     for nome in ("Invoke-RemoteOutput", "Find-PythonTimbro", "Invoke-TimbroChangelog"):
         corpo = _funzione(nome)
-        assert "Stop-WithError" not in corpo and not re.search(r"(?<![.\w])exit\b", corpo), nome
+        assert not re.search(r"(?<![.\w])exit\b", corpo), nome
+        for vietata in TERMINANO:
+            assert not re.search(rf"(?<![-\w]){vietata}\b", corpo), (nome, vietata)
         assert "$ErrorActionPreference = 'Continue'" in corpo, nome
     corpo = _funzione("Invoke-TimbroChangelog")
     assert "try {" in corpo and "catch {" in corpo
+    # Il comando manuale deve restare incollabile anche con spazi nel percorso.
+    assert '(@("& `"$($python[0])`"")' in _funzione("Invoke-TimbroChangelog")
+    # Tutte le corrispondenze del PATH, non solo la prima.
+    assert "Select-Object -First 1" not in _funzione("Find-PythonTimbro")
     assert "\"--aggiornata=$($info['aggiornata'])\"" in corpo
     assert "$Ref -ne 'origin/main'" in corpo
     for sintassi_ps7 in ("??", "&&", "||", " ? "):

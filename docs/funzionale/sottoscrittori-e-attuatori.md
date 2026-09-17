@@ -88,8 +88,9 @@ Nella scheda Dati Principali:
   cittadinanza, luogo e provincia di nascita, data di nascita.
 - **Documento**: tipo (carta d'identità, passaporto, patente), numero, comune
   di rilascio, data di rilascio, data di scadenza.
-- **Ruolo**, solo per gli attuatori: tendina «Ruolo attuatore» con Aderente,
-  Provinciale, Regionale e Nazionale. La voce iniziale è «Aderente (default)».
+- **Ruolo**, solo per gli attuatori: tendina «Ruolo attuatore» con la voce
+  iniziale «Aderente (default)», seguita da Aderente, Regionale, Provinciale e
+  Nazionale, nell'ordine in cui i ruoli sono registrati.
 - **Residenza** e **Domicilio**: indirizzo, civico, comune, CAP, provincia.
   «Copia Residenza in Domicilio» copia i cinque campi della residenza su
   quelli del domicilio.
@@ -187,7 +188,8 @@ Un clic sull'elenco apre la scheda, con il titolo «Modifica sottoscrittore» o
 
 In fondo ci sono «Annulla» e «Salva Modifiche». Questo «Salva Modifiche»
 salva Dati Principali, Curriculum Formativo, l'azienda collegata e le
-Abilitazioni. Poi torna all'elenco con «Modifiche salvate con successo!».
+Abilitazioni. Poi torna all'elenco, senza mostrare alcun messaggio di
+conferma.
 
 ### Dati Principali
 
@@ -197,8 +199,8 @@ diverse:
 - tutti i campi sono facoltativi: un campo di testo obbligatorio svuotato
   viene salvato vuoto. Una data obbligatoria svuotata invece fa fallire il
   salvataggio: dalla scheda Dati Principali il browser lo impedisce, da
-  un'altra scheda la richiesta arriva al server e torna con «Salvataggio non
-  riuscito. Riprova, e se persiste segnala l'errore.»;
+  un'altra scheda la richiesta arriva al server e a video compare «Servizio
+  temporaneamente non disponibile. Riprova tra poco.»;
 - il codice fiscale, se cambia, deve essere lungo 16 caratteri; struttura e
   carattere di controllo non vengono ricontrollati;
 - la scadenza del documento, se cambia, non può essere già passata;
@@ -263,8 +265,14 @@ sono descritti in [Ruoli e permessi](ruoli-e-permessi.md). Nella stessa pagina
 è descritto il pulsante «Accedi con questo utente», che compare qui per un
 utente attivo con un ruolo da attuatore.
 
-Restano tre comportamenti propri di questa pagina:
+Quando il salvataggio di questa scheda riesce, la pagina resta aperta e mostra
+«Modifiche salvate con successo!».
 
+Restano quattro comportamenti propri di questa pagina:
+
+- se chi salva non può modificare nome utente, stato e utente padre, il ruolo
+  viene comunque salvato per primo: dopo il messaggio di errore il ruolo
+  risulta cambiato e il resto no;
 - il «Salva Modifiche» in fondo alla pagina è visibile anche da qui, ma non
   salva nome utente, stato e utente padre. Per un attuatore rimanda invece il
   ruolo scelto nei Dati Principali: se il ruolo è stato cambiato da questa

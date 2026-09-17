@@ -151,7 +151,7 @@ def test_anomalie_calcolate(tmp_path):
     elenco, anomalie = migrazioni.leggi_migrazioni(tmp_path)
     assert [(m.numero, m.rollback, m.rollback_regolare) for m in elenco] == [
         (1, "001_uno_down.sql", True), (3, "003_tre.sql", False), (4, None, False)]
-    assert elenco[1].descrizione == "Tre, scrivere a <email>"
+    assert elenco[1].descrizione == "Tre, scrivere a [email]"
     assert anomalie == [
         "`db/migrations/Nome_Strano.sql`: nome fuori dallo schema `NNN_nome.sql`.",
         "Il numero 002 non è usato.",
@@ -174,14 +174,21 @@ def test_commenti_degli_esempi(tmp_path):
         "A=1",
         "B=2",
         "C=3",
-        "# Solo D, collaudo su https://collaudo.esempio.it",
+        "# Solo D, collaudo su https://collaudo.rete.local",
         "D=4",
         "",
         "E=5",
         "# In fondo, senza variabile",
     ]), encoding="utf-8")
     assert configurazione.commenti_esempio(esempio) == {
-        "A": "Descrive A e cita B.", "B": "Descrive A e cita B.", "D": "Solo D, collaudo su https://<dominio>"}
+        "A": "Descrive A e cita B.", "B": "Descrive A e cita B.", "D": "Solo D, collaudo su https://[dominio]"}
+
+
+def test_i_predefiniti_passano_dalla_redazione():
+    dati = {"impostazioni": [{"variabile": "HOST", "tipo": "testo", "predefinito": "collaudo.rete.local",
+                              "obbligatoria": "no", "campo": "host"}], "sms": []}
+    testo = configurazione.componi(RADICE, dati)
+    assert "collaudo.rete.local" not in testo and "`[dominio]`" in testo
 
 
 @lento

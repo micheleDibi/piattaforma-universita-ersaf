@@ -422,7 +422,7 @@ Nota: un lavoro in corso, non ancora unito a main, riguarda la visibilità dei c
 - **Cambio di ruolo e sessioni aperte.**
   - La validazione della sessione non controlla il ruolo.
   - Un ruolo revocato o cambiato ha effetto solo al nuovo accesso: chi perde l'accesso resta collegato, e chi diventa Nazionale usa la sessione precedente senza il secondo fattore, che è applicato solo al login.
-  - `security/sessioni.py:73-101`; `auth/accesso.py:62-82`.
+  - `security/sessioni.py:74-102`; `auth/accesso.py:62-82`.
 - **Tentativi sul secondo fattore.**
   - Il limite di cinque tentativi vale per singola sfida e non limita il numero complessivo di codici provati dopo una password corretta.
   - Il commento del codice dice il contrario (`otp/servizio.py:81-83`).

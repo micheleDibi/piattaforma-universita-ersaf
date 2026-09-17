@@ -54,7 +54,7 @@ Le modifiche che arrivano su main senza pull request non passano dalla CI: il fr
 | `migrazioni.md` | Intestazioni di `db/migrations/` e file di `db/rollback/`; le anomalie sono calcolate. |
 | `configurazione.md` | Campi di `backend/src/config.py` e `backend/src/notifiche/config_sms.py`, commenti dei file `.env.example`, variabili lette dagli script di deploy e dal frontend. L'obbligatorietà si ricava dalla verifica di avvio con valori finti. |
 
-Nessuna pagina contiene valori reali: i segreti compaiono come "—", e dai commenti vengono tolti indirizzi email, IP, domini e credenziali. Un commento di `.env.example` descrive la variabile che lo segue; le variabili successive del gruppo lo ereditano solo se il commento le nomina.
+Nessuna pagina contiene valori reali: i segreti compaiono come "—", e da commenti, intestazioni e valori predefiniti vengono tolti indirizzi email, IP, domini, credenziali e percorsi del server, sostituiti da segnaposto fra parentesi quadre. Un commento di `.env.example` descrive la variabile che lo segue; le variabili successive del gruppo lo ereditano solo se il commento le nomina.
 
 Comandi, dalla radice del repository:
 
@@ -88,6 +88,7 @@ Il workflow [documentazione.yml](../../.github/workflows/documentazione.yml) gir
    - **frammenti**: ogni file in `changelog/non-pubblicato/` rispetta il formato;
    - **link**: i link relativi fra file Markdown puntano a file esistenti (maiuscole comprese) e a titoli esistenti, con le ancore calcolate come le calcola GitHub;
    - **mappa**: la mappa è valida, i documenti esistono e ogni pattern trova almeno un file;
+   - **contenuti**: in nessun file Markdown compaiono indirizzi email, indirizzi IP diversi dal loopback, nomi di rete interna, domini dell'ente, credenziali o percorsi del server, perché il repository è pubblico; l'unica eccezione dichiarata è l'URL del database di test usa-e-getta;
    - **frammento obbligatorio**: se la pull request tocca `backend/src/`, `frontend/src/`, `db/` o `deploy/` (esclusi i `.md`), deve aggiungere o modificare un frammento valido;
    - **documenti collegati**: se tocca un file coperto da una regola della mappa, deve modificare almeno uno dei documenti di quella regola; il messaggio dice quali;
    - **registro protetto**: la pull request non può modificare `CHANGELOG.md` né cancellare o rinominare frammenti; lo fa solo il timbro.
@@ -127,7 +128,7 @@ Limiti da conoscere:
 
 ## In locale
 
-Su Windows il gate `Docs` esegue gli stessi controlli della CI:
+Su Windows il gate `Docs` esegue i controlli della CI sulla documentazione (test degli strumenti, pagine generate, frammenti, link, mappa, contenuti e requisiti della pull request). Restano solo in CI il controllo di sintassi degli script PowerShell e la ripetizione dei test del timbro con Python 3.10:
 
 ```powershell
 powershell -NoProfile -File scripts\verify-local.ps1 -Gate Docs
@@ -141,6 +142,8 @@ python -X warn_default_encoding -m pytest scripts/documentazione/tests
 python scripts/documentazione/genera.py --verifica
 python scripts/documentazione/controlla.py tutto --base origin/main
 ```
+
+Senza `--base` i controlli della pull request non vengono eseguiti: l'ultima riga elenca sempre quali controlli sono girati.
 
 In locale il controllo della pull request confronta i commit del ramo con `origin/main` (va aggiornato con `git fetch`): le modifiche non ancora committate non contano. Le etichette si passano con `--etichette`.
 

@@ -274,20 +274,21 @@ function Invoke-RemoteOutput {
 # che esiste ma non esegue nulla, e le versioni troppo vecchie.
 function Find-PythonTimbro {
     foreach ($candidato in @(@('py', '-3'), @('python'), @('python3'))) {
-        $comando = Get-Command $candidato[0] -CommandType Application -ErrorAction SilentlyContinue |
-            Select-Object -First 1
-        if (-not $comando) { continue }
         $opzioni = @($candidato | Select-Object -Skip 1)
-        $precedente = $ErrorActionPreference
-        $ErrorActionPreference = 'Continue'
-        try {
-            & $comando.Path @opzioni -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>$null |
-                Out-Null
-            $codice = $LASTEXITCODE
+        # Tutte le corrispondenze nel PATH, non solo la prima: l'alias del
+        # Microsoft Store puo' precedere un Python vero.
+        foreach ($comando in @(Get-Command $candidato[0] -CommandType Application -ErrorAction SilentlyContinue)) {
+            $precedente = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
+            try {
+                & $comando.Path @opzioni -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>$null |
+                    Out-Null
+                $codice = $LASTEXITCODE
+            }
+            catch { $codice = 1 }
+            finally { $ErrorActionPreference = $precedente }
+            if ($codice -eq 0) { return ,(@($comando.Path) + $opzioni) }
         }
-        catch { $codice = 1 }
-        finally { $ErrorActionPreference = $precedente }
-        if ($codice -eq 0) { return ,(@($comando.Path) + $opzioni) }
     }
     return $null
 }
@@ -328,7 +329,7 @@ function Invoke-TimbroChangelog {
         if ($info['albero_modificato'] -ne 'false') { throw 'la release non viene da un commit' }
         $python = Find-PythonTimbro
         if (-not $python) { throw 'Python 3.10 o successivo non trovato su questo PC' }
-        $interprete = $python -join ' '
+        $interprete = (@("& `"$($python[0])`"") + @($python | Select-Object -Skip 1)) -join ' '
         # Una sola stringa per opzione: Windows PowerShell 5.1 scarta gli argomenti vuoti.
         $argomenti = @($script, '--ref=origin/main', "--versione=$($info['versione'])",
             "--aggiornata=$($info['aggiornata'])", "--sha=$($info['git_sha'])",
