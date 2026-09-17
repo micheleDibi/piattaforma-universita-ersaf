@@ -13,6 +13,28 @@ import usePagineRemote from "../hooks/usePagineRemote";
 import { contenutoPagina } from "../config/styles/pagina";
 import { schedaElenco } from "../config/styles/tabella";
 import StatoPagineElenco from "./shared/StatoPagineElenco.jsx";
+import { BLOCCHI_PRATICHE } from "../lib/configPratiche.js";
+
+function costruisciTitolo(filtri) {
+  const blocco = BLOCCHI_PRATICHE.find(
+    (b) => String(b.nomeUniversitaId) === String(filtri.universita),
+  );
+  if (!blocco) return "Elenco Pratiche";
+
+  const idsTipoCorso = filtri.tipoSelezionato
+    ? [filtri.tipoSelezionato]
+    : filtri.tipoCorso;
+  const descrizioniTipoCorso = filtri.tipiCorso
+    .filter((t) =>
+      idsTipoCorso.map(String).includes(String(t.listino_tipoCorso_id)),
+    )
+    .map((t) => t.listino_tipoCorso_descrizione)
+    .join(" / ");
+
+  return descrizioniTipoCorso
+    ? `Elenco Pratiche - ${blocco.titolo} - ${descrizioniTipoCorso}`
+    : `Elenco Pratiche - ${blocco.titolo}`;
+}
 
 export default function ElencoPratiche() {
   const risorsa = PERCORSI.pratiche;
@@ -22,7 +44,7 @@ export default function ElencoPratiche() {
   return (
     <div className={contenutoPagina()}>
       <IntestazioneElenco
-        titolo="Pratiche"
+        titolo={costruisciTitolo(filtri)}
         azioni={
           <AzioneCrea
             onClick={() => apri(risorsa.nuovo)}

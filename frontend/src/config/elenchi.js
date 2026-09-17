@@ -8,7 +8,7 @@ const cognome = { id: "cognome", etichetta: "Cognome", rilievo: "principale" };
 const ruolo = { id: "ruolo", etichetta: "Ruolo", icona: "ruolo" };
 const azienda = { id: "azienda", etichetta: "Azienda", icona: "azienda" };
 const sede = { id: "sede", etichetta: "Sede", icona: "sede" };
-const numero = { id: "numero", etichetta: "Numero", rilievo: "principale" };
+const numero = { id: "numero", etichetta: "Codice", rilievo: "principale" };
 const cliente = {
   id: "cliente",
   etichetta: "Sottoscrittore",
@@ -25,20 +25,11 @@ const universita = {
   icona: "universita",
 };
 const tipo = { id: "tipo", etichetta: "Tipo di corso", icona: "tipo" };
+const avviso = { id: "avviso", etichetta: "", rilievo: "avviso" };
 
 // NUOVE — servono solo a MODELLO_PRATICHE. Nomi distinti da "universita"/"tipo"
 // sopra: quelle sono per MODELLO_PRODOTTI e usano id "universita"/"tipo" che
 // puntano a campi diversi (nome_universita vs listino_tipoCorso_descrizione).
-const praticaUniversita = {
-  id: "universita",
-  etichetta: "Università",
-  icona: "universita",
-};
-const tipoCorso = {
-  id: "tipoCorso",
-  etichetta: "Tipo di corso",
-  icona: "tipo",
-};
 const dataCreazione = {
   id: "dataCreazione",
   etichetta: "Data creazione",
@@ -87,16 +78,8 @@ export const MODELLO_PRATICHE = {
   id: "pratiche",
   etichetta: "Pratiche",
   ampiezza: "articolata",
-  colonne: [
-    numero,
-    cliente,
-    praticaUniversita,
-    tipoCorso,
-    corso,
-    dataCreazione,
-    stato,
-  ].map(colonna),
-  mobile: [numero, stato, cliente, praticaUniversita, corso],
+  colonne: [numero, dataCreazione, cliente, corso, stato].map(colonna),
+  mobile: [numero, dataCreazione, cliente, corso, stato],
 };
 
 export const MODELLO_PRODOTTI = {

@@ -45,6 +45,7 @@ export const QUERY_ANAGRAFICA = {
       "utente",
       "esami",
       "prevalutazioni",
+      "abilitazioni", // NUOVO
     ],
     "dati-principali",
   ),

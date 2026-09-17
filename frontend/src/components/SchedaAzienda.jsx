@@ -12,6 +12,7 @@ import IntestazionePagina from "./shared/IntestazionePagina";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 import CampiAzienda, { VUOTO_AZIENDA } from "./CampiAzienda.jsx";
 import GerarchiaAzienda from "./GerarchiaAzienda.jsx";
+import { TriangleAlert } from "../config/icone.js";
 
 export default function SchedaAzienda() {
   const { aziendaId: id } = useParams();
@@ -21,6 +22,7 @@ export default function SchedaAzienda() {
 
   const [erroreLettura, setErroreLettura] = useState(null);
   const [dati, setDati] = useState(VUOTO_AZIENDA);
+  const [anomalie, setAnomalie] = useState([]);
   const [caricamento, setCaricamento] = useState(inModifica);
   const [errore, setErrore] = useState("");
   const [salvataggio, setSalvataggio] = useState(false);
@@ -31,7 +33,10 @@ export default function SchedaAzienda() {
     let annullato = false;
     apiFetch(`/aziende/${id}`)
       .then(async (risposta) => {
-        if (!risposta.ok) throw Object.assign(new Error(await messaggioErrore(risposta)), { status: risposta.status });
+        if (!risposta.ok)
+          throw Object.assign(new Error(await messaggioErrore(risposta)), {
+            status: risposta.status,
+          });
         return risposta.json();
       })
       .then((azienda) => {
@@ -42,6 +47,7 @@ export default function SchedaAzienda() {
             Object.entries(azienda).map(([k, v]) => [k, v ?? ""]),
           ),
         });
+        setAnomalie(azienda.anomalie ?? []);
         setCaricamento(false);
       })
       .catch((err) => {
@@ -82,7 +88,10 @@ export default function SchedaAzienda() {
   };
 
   if (erroreLettura?.status === 404) return <PaginaNonTrovata />;
-  if (erroreLettura) return <StatoCaricamentoDettaglio errore={erroreLettura} ritorno={ritorno} />;
+  if (erroreLettura)
+    return (
+      <StatoCaricamentoDettaglio errore={erroreLettura} ritorno={ritorno} />
+    );
 
   if (caricamento)
     return (
@@ -100,6 +109,19 @@ export default function SchedaAzienda() {
         indietro={{ rotta: ritorno, etichetta: "Aziende" }}
       />
       <form onSubmit={invia} className={`${scheda()} p-6 sm:p-8`}>
+        {anomalie.length > 0 && (
+          <div className="mb-6 flex items-start gap-2 rounded-controllo border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+            <TriangleAlert
+              className="size-icona shrink-0 text-amber-500"
+              aria-hidden="true"
+            />
+            <ul className="list-disc pl-4">
+              {anomalie.map((testo) => (
+                <li key={testo}>{testo}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         {errore && (
           <div className="mb-6 whitespace-pre-line rounded-controllo border border-negativo/30 bg-negativo-tenue p-4 text-sm text-negativo">
             {errore}

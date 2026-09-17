@@ -1,5 +1,15 @@
 const testo = (valore) => String(valore ?? "").trim() || "-";
 
+function formattaData(valore) {
+  if (!valore) return "-";
+  const data = new Date(valore);
+  if (Number.isNaN(data.getTime())) return "-";
+  const giorno = String(data.getDate()).padStart(2, "0");
+  const mese = String(data.getMonth() + 1).padStart(2, "0");
+  const anno = data.getFullYear();
+  return `${giorno}-${mese}-${anno}`;
+}
+
 export function rigaCliente(item, { attuatori, mostraAzienda }) {
   const nominativo =
     [item.cliente_nome, item.cliente_cognome]
@@ -34,7 +44,11 @@ export function rigaAzienda(item) {
   return {
     id: item.azienda_id,
     nomeAzione: azienda,
-    campi: { azienda, sede: [via, localita].filter(Boolean).join(", ") || "-" },
+    campi: {
+      azienda,
+      sede: [via, localita].filter(Boolean).join(", ") || "-",
+      avviso: item.anomalie ?? [],
+    },
   };
 }
 
@@ -46,10 +60,8 @@ export function rigaPratica(item) {
     campi: {
       numero,
       cliente: testo(item.cliente_nome_completo),
-      universita: testo(item.nome_universita_descrizione),
-      tipoCorso: testo(item.listino_tipoCorso_descrizione),
       corso: testo(item.listTesta_descrizione),
-      dataCreazione: item.pratica_dataCreazione ?? "-",
+      dataCreazione: formattaData(item.pratica_dataCreazione), // MODIFICATO
       stato: testo(item.pratica_stato_descrizione),
     },
   };

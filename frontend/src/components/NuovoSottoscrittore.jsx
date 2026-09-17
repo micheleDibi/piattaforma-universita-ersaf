@@ -25,6 +25,8 @@ import { campo, etichetta } from "../config/styles/campo";
 import { scheda, titoloSezione } from "../config/styles/superficie";
 import BarraSchede from "./shared/BarraSchede.jsx";
 import SchedaAziendaAttuatori from "./SchedaAziendaAttuatori";
+import SchedaAbilitazioniPratiche from "./SchedaAbilitazioniPratiche";
+import { useSessione } from "../hooks/useSessione.js";
 
 const RUOLI_ATTUATORE = ["Aderente", "Provinciale", "Regionale", "Nazionale"];
 
@@ -32,6 +34,11 @@ function NuovoSottoscrittore({ tipoUtente }) {
   const { clienteId: id } = useParams();
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
+
+  const ruoloCodice = useSessione()?.ruoloCodice;
+  const isNazionale = ruoloCodice === "nazionale";
+  const mostraAbilitazioni =
+    tipoUtente === "attuatore" && isNazionale && isEditMode;
 
   const [{ scheda: activeTab }, aggiornaQuery] =
     useQueryPagina(QUERY_ANAGRAFICA);
@@ -128,6 +135,18 @@ function NuovoSottoscrittore({ tipoUtente }) {
             // e' la colonna grezza della tabella clienti. Serve alla scheda
             // Azienda per sapere quale azienda caricare.
             azienda_id: data.azienda_id ?? null,
+
+            // I 5 flag di abilitazione pratiche. Letti sempre (anche se solo
+            // la scheda Abilitazioni li mostra), cosi' il payload di salvataggio
+            // li ha gia' pronti anche se l'utente nazionale non apre mai la tab.
+            cliente_abilPraticheUniv: data.cliente_abilPraticheUniv ?? 0,
+            cliente_abilitazione_ecampus:
+              data.cliente_abilitazione_ecampus ?? 0,
+            cliente_abilitazione_link_campus:
+              data.cliente_abilitazione_link_campus ?? 0,
+            cliente_abilitazione_corsi_speciali:
+              data.cliente_abilitazione_corsi_speciali ?? 0,
+            cliente_abilitazione_a4u: data.cliente_abilitazione_a4u ?? 0,
 
             ...Object.keys(prev)
               .filter((k) => k.startsWith("universita_"))
@@ -233,6 +252,23 @@ function NuovoSottoscrittore({ tipoUtente }) {
       cliente_CAPDomicilio: formData.domicilioCap || null,
       cliente_provinciaDomicilio: formData.domicilioProvincia || null,
       azienda_id: formData.azienda_id ?? null,
+
+      // I 5 flag di abilitazione: mandati solo se e' un attuatore, l'utente
+      // loggato e' nazionale e siamo in modifica (unico caso in cui la scheda
+      // esiste ed e' scrivibile). Un sottoscrittore o un utente non nazionale
+      // non deve rimandare al backend questi campi, anche solo con i valori
+      // invariati letti in lettura.
+      ...(mostraAbilitazioni
+        ? {
+            cliente_abilPraticheUniv: formData.cliente_abilPraticheUniv,
+            cliente_abilitazione_ecampus: formData.cliente_abilitazione_ecampus,
+            cliente_abilitazione_link_campus:
+              formData.cliente_abilitazione_link_campus,
+            cliente_abilitazione_corsi_speciali:
+              formData.cliente_abilitazione_corsi_speciali,
+            cliente_abilitazione_a4u: formData.cliente_abilitazione_a4u,
+          }
+        : {}),
     };
 
     const curriculumKeys = Object.keys(formData).filter((key) =>
@@ -304,6 +340,9 @@ function NuovoSottoscrittore({ tipoUtente }) {
     ...(tipoUtente === "attuatore"
       ? [{ id: "azienda", label: "Azienda" }]
       : [{ id: "esami", label: "Esami" }]),
+    ...(mostraAbilitazioni
+      ? [{ id: "abilitazioni", label: "Abilitazioni" }]
+      : []),
   ];
 
   const handleCopyResidenza = () => {
@@ -419,6 +458,13 @@ function NuovoSottoscrittore({ tipoUtente }) {
                 clienteId={id}
                 onCambiaAziendaId={(nuovoId) =>
                   setFormData((prev) => ({ ...prev, azienda_id: nuovoId }))
+                }
+              />
+            ) : activeTab === "abilitazioni" && mostraAbilitazioni ? (
+              <SchedaAbilitazioniPratiche
+                formData={formData}
+                onCambia={(chiave, valore) =>
+                  setFormData((prev) => ({ ...prev, [chiave]: valore }))
                 }
               />
             ) : (
