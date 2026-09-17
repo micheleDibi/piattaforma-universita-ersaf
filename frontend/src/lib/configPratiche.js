@@ -5,6 +5,7 @@
 import logoA4U from "../assets/avatar-4-university-logo.png";
 import eCampus from "../assets/ecampus_Logo.png";
 import LinkC from "../assets/LinkCampus_Logo_NUOVO.png";
+import SSMLogo from "../assets/ssml_lamezia.png";
 
 export const BLOCCHI_PRATICHE = [
   {
@@ -76,7 +77,7 @@ export const BLOCCHI_PRATICHE = [
     chiave: "ssml",
     flagPermesso: "corsi_speciali",
     titolo: "SSML Lamezia Terme",
-    logo: "/loghi/ssml.png",
+    logo: SSMLogo,
     nomeUniversitaId: 3,
     pulsanti: [
       {

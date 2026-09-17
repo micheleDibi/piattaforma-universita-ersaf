@@ -8,7 +8,9 @@ export default function FormInformazioniPersonali({ formData, handleChange }) {
       <h3 className={titoloSezione()}>Informazioni Personali</h3>
 
       <div>
-        <label className={etichetta()}>Codice Fiscale</label>
+        <label className={etichetta()}>
+          Codice Fiscale <span className="text-red-500">*</span>
+        </label>
         <input
           type="text"
           name="codiceFiscale"

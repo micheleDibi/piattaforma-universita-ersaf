@@ -9,6 +9,7 @@ import { campo, etichetta } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
 import { titoloSezione } from "../config/styles/superficie";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
+import AlertMessage from "./AlertMessage.jsx";
 
 export default function SchedaUtente() {
   const { clienteId: id } = useParams();
@@ -21,6 +22,7 @@ export default function SchedaUtente() {
   const [ruoloId, setRuoloId] = useState("");
   const [attivoSN, setAttivoSN] = useState(-1);
   const [saving, setSaving] = useState(false);
+  const [avviso, setAvviso] = useState(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -66,7 +68,10 @@ export default function SchedaUtente() {
     // due coincidono solo in 377 clienti su 3.906.
     const padreUtenteId = attuatoreSelezionato.utente?.utente_id;
     if (!padreUtenteId) {
-      alert("L'attuatore selezionato non ha un utente associato.");
+      setAvviso({
+        type: "error",
+        text: "L'attuatore selezionato non ha un utente associato.",
+      });
       return;
     }
 
@@ -91,11 +96,15 @@ export default function SchedaUtente() {
 
   const handleSave = async () => {
     if (!id) return;
+    setAvviso(null);
     // Number("") vale 0, cioe' il ruolo "Utente", che non accede: senza questa
     // guardia bastava salvare con la tendina non selezionata per chiudere
     // fuori l'utente.
     if (ruoloId === "" || ruoloId === null) {
-      alert("Seleziona un ruolo prima di salvare.");
+      setAvviso({
+        type: "error",
+        text: "Seleziona un ruolo prima di salvare.",
+      });
       return;
     }
 
@@ -129,9 +138,9 @@ export default function SchedaUtente() {
       }
 
       setCliente(clienteAggiornato);
-      alert("Modifiche salvate con successo!");
+      setAvviso({ type: "success", text: "Modifiche salvate con successo!" });
     } catch (err) {
-      alert(err.message);
+      setAvviso({ type: "error", text: err.message });
     } finally {
       setSaving(false);
     }
@@ -155,7 +164,7 @@ export default function SchedaUtente() {
       salvaSessione(dati ?? {});
       window.location.href = ROTTA_INIZIALE;
     } catch (err) {
-      alert(err.message);
+      setAvviso({ type: "error", text: err.message });
     }
   };
 
@@ -210,15 +219,12 @@ export default function SchedaUtente() {
 
   return (
     <div className="w-full text-testo font-sans">
-      <h2 className={titoloSezione("separato")}>
-        Dettagli Utente e Ruolo
-      </h2>
+      <h2 className={titoloSezione("separato")}>Dettagli Utente e Ruolo</h2>
+      <AlertMessage message={avviso} />
       <div className="mb-8">
         <div className="grid grid-cols-2 gap-5 mb-4">
           <div className="flex flex-col">
-            <label className={etichetta()}>
-              UTENTE USERNAME
-            </label>
+            <label className={etichetta()}>UTENTE USERNAME</label>
             <input
               type="text"
               value={username}
@@ -247,15 +253,15 @@ export default function SchedaUtente() {
 
         <div className="grid grid-cols-2 gap-5 mb-4">
           <div className="flex flex-col">
-            <label className={etichetta()}>
-              RUOLO
-            </label>
+            <label className={etichetta()}>RUOLO</label>
             <select
               value={ruoloId}
               onChange={(e) => setRuoloId(e.target.value)}
               className={campo("comodo")}
             >
-              <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.ruolo}</option>
+              <option value="" data-segnaposto>
+                {SEGNAPOSTI_SELEZIONE.ruolo}
+              </option>
               <option value="0">Utente</option>
               <option value="1">Aderente</option>
               <option value="2">Regionale</option>
@@ -267,9 +273,7 @@ export default function SchedaUtente() {
           </div>
 
           <div className="flex flex-col">
-            <label className={etichetta()}>
-              UTENTE PADRE
-            </label>
+            <label className={etichetta()}>UTENTE PADRE</label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -290,9 +294,7 @@ export default function SchedaUtente() {
 
         <div className="grid grid-cols-2 gap-5 mb-4">
           <div className="flex flex-col">
-            <label className={etichetta()}>
-              DATA CREAZIONE
-            </label>
+            <label className={etichetta()}>DATA CREAZIONE</label>
             <input
               type="text"
               readOnly
@@ -306,9 +308,7 @@ export default function SchedaUtente() {
           </div>
 
           <div className="flex flex-col">
-            <label className={etichetta()}>
-              ULTIMO AGGIORNAMENTO
-            </label>
+            <label className={etichetta()}>ULTIMO AGGIORNAMENTO</label>
             <input
               type="text"
               readOnly
@@ -324,9 +324,7 @@ export default function SchedaUtente() {
 
         <div className="grid grid-cols-2 gap-5 mb-4">
           <div className="flex flex-col">
-            <label className={etichetta()}>
-              AGGIORNATO DA
-            </label>
+            <label className={etichetta()}>AGGIORNATO DA</label>
             <input
               type="text"
               readOnly

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import secrets
+import string
 import uuid
 from datetime import date
 from enum import Enum
@@ -43,8 +44,6 @@ class TipoUtente(str, Enum):
     ATTUATORE = "attuatore"
 
 
-# cliente_codice non compare piu' qui: e' generato dal backend a partire da
-# cliente_id (vedi crea_cliente_con_utente) e quindi unico per definizione.
 CAMPI_UNIVOCI_CLIENTE = (
     ("cliente_codice_fiscale", "Esiste già un cliente con questo codice fiscale."),
     ("cliente_email", "Esiste già un cliente registrato con questa email."),
@@ -95,6 +94,21 @@ def verifica_unicita_anagrafica(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST, detail=messaggio
                 )
+
+
+# =============================================================================
+# Codice cliente
+# =============================================================================
+def genera_codice_cliente(db: Session, lunghezza: int = 20) -> str:
+    """Codice cliente casuale, univoco, 20 caratteri (riempie esattamente
+    la colonna cliente_codice). Nessun legame con dati anagrafici o con
+    cliente_id: elimina ogni problema di lunghezza legato alla crescita
+    dell'id nel tempo."""
+    alfabeto = string.ascii_uppercase + string.digits
+    while True:
+        candidato = "".join(secrets.choice(alfabeto) for _ in range(lunghezza))
+        if not db.query(Cliente).filter(Cliente.cliente_codice == candidato).first():
+            return candidato
 
 
 # =============================================================================
@@ -188,7 +202,7 @@ def payload_cliente(
         for chiave, valore in dati.items()
         if chiave not in CAMPI_UNIVERSITA
         # cliente_codice escluso a prescindere da cio' che manda il client:
-        # lo decide solo il backend, dopo il flush, da cliente_id.
+        # lo decide solo il backend, generandolo casualmente.
         and chiave not in {"utente_username", "utente_password", "cliente_codice"}
         and valore is not None
     }
@@ -233,6 +247,10 @@ def crea_cliente_con_utente(
         db, dati["cliente_nome"], dati["cliente_cognome"], autore_id
     )
 
+    # Un attuatore creato senza ruolo esplicito finiva su cliente_ruolo=0
+    # ("Utente"), sparendo dall'elenco attuatori e comparendo tra i
+    # sottoscrittori. Se non arriva un ruolo dal client, si assegna
+    # "Aderente" di default.
     if tipo_utente is TipoUtente.ATTUATORE and not dati.get("cliente_ruolo"):
         ruolo_aderente = db.query(Ruolo).filter(Ruolo.ruolo_codice == "Aderente").first()
         if ruolo_aderente:
@@ -241,15 +259,14 @@ def crea_cliente_con_utente(
     nuovo_cliente = Cliente(
         **payload_cliente(dati, tipo_utente, nuovo_utente.utente_id)
     )
-    db.add(nuovo_cliente)
-    db.flush()  # genera cliente_id, indispensabile per il curriculum e per il codice
+    # Codice random di 20 caratteri, generato prima dell'insert: non
+    # dipende da cliente_id ne' dal codice fiscale, quindi nessun rischio
+    # di superare la lunghezza della colonna qualunque sia il valore
+    # dell'id o del CF.
+    nuovo_cliente.cliente_codice = genera_codice_cliente(db)
 
-    # cliente_codice = CODICEFISCALE_ID quando c'e' il CF, altrimenti solo
-    # l'ID. Leggibile, e unico per definizione grazie a cliente_id.
-    cf = (nuovo_cliente.cliente_codice_fiscale or "").strip().upper()
-    nuovo_cliente.cliente_codice = (
-        f"{cf}_{nuovo_cliente.cliente_id}" if cf else str(nuovo_cliente.cliente_id)
-    )
+    db.add(nuovo_cliente)
+    db.flush()  # genera cliente_id, indispensabile per il curriculum
 
     db.add(
         Universita(
