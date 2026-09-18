@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -82,6 +83,21 @@ def test_modello_assente_o_nome_non_valido(modelli, nome):
 def test_un_errore_del_modello_diventa_composizione_fallita(modelli):
     with pytest.raises(motore.ComposizioneFallita):
         motore.componi_pdf("prova", {}, cartella_modelli=modelli)  # manca dati.nome
+
+
+@pytest.mark.parametrize("errore", [
+    subprocess.TimeoutExpired("compilatore", 60, output=b"dato privato"),
+    subprocess.CalledProcessError(-9, "compilatore", stderr=b"dato privato"),
+])
+def test_compilatore_interrotto_non_espone_dati_e_rimuove_gli_allegati(modelli, monkeypatch, errore):
+    def fallisce(_):
+        raise errore
+
+    monkeypatch.setattr(motore, "compila_pdf", fallisce)
+    with pytest.raises(motore.ComposizioneFallita) as esito:
+        motore.componi_pdf("prova", {"nome": "dato privato"}, {"firma": png_pieno()}, cartella_modelli=modelli)
+    assert "dato privato" not in str(esito.value)
+    assert not list(motore._radice("prova", modelli).glob("richiesta-*"))
 
 
 @pytest.mark.parametrize(("contenuto", "atteso"), [

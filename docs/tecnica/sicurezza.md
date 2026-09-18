@@ -728,3 +728,11 @@ nessun nome o esistenza di anagrafiche non visibili viene riportato negli avvisi
 Le query cercano solo i valori delle righe richieste, non caricano tutta la
 tabella a ogni pagina. I test di regressione coprono dettaglio non visibile,
 duplicati fuori pagina e fuori portata, e accesso Nazionale.
+
+### Risorse della generazione PDF
+
+Il compilatore PDF gira in un processo breve, una compilazione alla volta
+per processo API e con timeout di 60 secondi. Le cache native non restano
+nell'API tra documenti diversi. Interruzioni e timeout restituiscono l'errore
+generico di composizione e cancellano i file temporanei della richiesta;
+stdout/stderr del processo non vengono riportati nei log applicativi.

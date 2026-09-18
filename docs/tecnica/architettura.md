@@ -286,6 +286,10 @@ Le verifiche sono in `tests/unit/test_documenti_moduli.py`,
   temporanea, perché il container dell'API è in sola lettura tranne `/tmp`;
 - i dati arrivano a Typst come JSON; la firma arriva come file in una
   sottocartella cancellata alla fine;
+- per i PDF, `esecuzione.py` avvia `compilatore.py` in un processo breve:
+  le cache native vengono liberate alla sua uscita. Le compilazioni sono
+  serializzate per processo API e limitate a 60 secondi; dati su stdin,
+  risultato binario su stdout, nessun dato negli argomenti di processo;
 - i font vengono solo da `documenti/font/`, mai dal sistema, così il PDF è
   uguale su ogni macchina;
 - l'uscita è PDF/A-2b; `componi_png` produce le pagine in PNG per controllare a

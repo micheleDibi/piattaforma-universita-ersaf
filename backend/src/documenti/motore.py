@@ -19,12 +19,15 @@ import hashlib
 import json
 import re
 import shutil
+import subprocess
 import tempfile
 import threading
 import uuid
 from pathlib import Path
 
 import typst
+
+from src.documenti.esecuzione import compila_pdf
 
 CARTELLA_MODELLI = Path(__file__).parent / "modelli"
 CARTELLA_FONT = Path(__file__).parent / "font"
@@ -111,10 +114,15 @@ def _componi(modello: str, dati: dict, allegati: dict[str, bytes] | None, cartel
         ingressi = {"dati": json.dumps({**dati, "allegati": percorsi}, ensure_ascii=False, default=str)}
         font = [str(CARTELLA_FONT)] if CARTELLA_FONT.is_dir() else []
         try:
-            return typst.compile(str(radice / FILE_MODULO), root=str(radice), font_paths=font,
-                                 ignore_system_fonts=True, sys_inputs=ingressi, **uscita)
+            opzioni = dict(input=str(radice / FILE_MODULO), root=str(radice), font_paths=font,
+                           ignore_system_fonts=True, sys_inputs=ingressi, **uscita)
+            if uscita.get("format") == "pdf":
+                return compila_pdf(opzioni)
+            return typst.compile(**opzioni)
         except typst.TypstError as errore:
             raise ComposizioneFallita(str(errore)) from errore
+        except (subprocess.SubprocessError, OSError, ValueError):
+            raise ComposizioneFallita("Il compilatore PDF non ha completato la richiesta.") from None
     finally:
         shutil.rmtree(lavoro, ignore_errors=True)
 
