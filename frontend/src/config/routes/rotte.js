@@ -30,6 +30,7 @@ export const VOCI_MENU = [
     rotta: ROTTE.aziende,
     etichetta: "Aziende",
     icona: Building2,
+    nascondiAderente: true,
   },
   {
     rotta: ROTTE.prodotti,
@@ -42,5 +43,10 @@ export const VOCI_MENU = [
 /** Riceve il ruolo gia normalizzato dalla sessione; condiviso da desktop e mobile. */
 export function vociMenuPerRuolo(ruoloCodice) {
   const nazionale = ruoloCodice === "nazionale";
-  return VOCI_MENU.filter((voce) => !voce.soloNazionale || nazionale);
+  const aderente = ruoloCodice === "aderente";
+  return VOCI_MENU.filter((voce) => {
+    if (voce.soloNazionale && !nazionale) return false;
+    if (voce.nascondiAderente && aderente) return false;
+    return true;
+  });
 }
