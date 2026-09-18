@@ -17,7 +17,9 @@ Azioni (-Action):
   preflight         controlli in sola lettura, locali e remoti
   install           prima installazione: directory, segreti, build, clone del database (dump in
                     sola lettura dalla sorgente), migrazioni sul clone, avvio e verifica
-  deploy            aggiornamento dell'applicazione da origin/main; i dati del clone restano intatti (default)
+  deploy            aggiornamento dell'applicazione da origin/main; i dati del clone restano intatti (default).
+                    A deploy riuscito di origin/main scrive la versione in CHANGELOG.md
+                    (docs/tecnica/deploy.md, sezione sul timbro del changelog).
   build             costruisce le immagini sul server senza toccare i container in esercizio
   refresh-clone     ricrea il clone dalla sorgente: operazione esplicita, chiede conferma
   configure-source  registra sul server le credenziali di lettura del database originale
@@ -249,6 +251,123 @@ function Show-Access {
     Write-Host "  poi aprire http://localhost:$LocalPort nel browser."
 }
 
+# ---------------------------------------------------------------- changelog
+
+# Come Invoke-Remote, ma restituisce le righe dello stdout e non chiama mai
+# Stop-WithError: un errore arriva come eccezione e lo gestisce chi chiama.
+function Invoke-RemoteOutput {
+    param([Parameter(Mandatory)] [string[]] $Arguments)
+    $bundle = Get-RemoteBundle
+    $comando = "$RemoteSanitizer | bash -s -- " + ($Arguments -join ' ')
+    $precedente = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $righe = @($bundle | & ssh @SshOptions $SshHost $comando | ForEach-Object { "$_" })
+        $codice = $LASTEXITCODE
+    }
+    finally { $ErrorActionPreference = $precedente }
+    if ($codice -ne 0) { throw "comando remoto '$($Arguments[0])' terminato con codice $codice" }
+    return $righe
+}
+
+# Primo interprete Python 3.10 o successivo: esclude l'alias del Microsoft Store,
+# che esiste ma non esegue nulla, e le versioni troppo vecchie.
+function Find-PythonTimbro {
+    foreach ($candidato in @(@('py', '-3'), @('python'), @('python3'))) {
+        $opzioni = @($candidato | Select-Object -Skip 1)
+        # Tutte le corrispondenze nel PATH, non solo la prima: l'alias del
+        # Microsoft Store puo' precedere un Python vero.
+        foreach ($comando in @(Get-Command $candidato[0] -CommandType Application -ErrorAction SilentlyContinue)) {
+            $precedente = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
+            try {
+                & $comando.Path @opzioni -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>$null |
+                    Out-Null
+                $codice = $LASTEXITCODE
+            }
+            catch { $codice = 1 }
+            finally { $ErrorActionPreference = $precedente }
+            if ($codice -eq 0) { return ,(@($comando.Path) + $opzioni) }
+        }
+    }
+    return $null
+}
+
+# Dopo un deploy riuscito di origin/main scrive la versione in CHANGELOG.md con
+# scripts/documentazione/timbra_changelog.py. Non fa mai fallire il deploy.
+function Invoke-TimbroChangelog {
+    param([object[]] $Uscita)
+    $id = @($Uscita) | Where-Object { $_ -is [string] -and $_ -match '^\d{8}-\d{6}-[0-9a-f]{7}$' } |
+        Select-Object -Last 1
+    if (-not $id) {
+        Write-Host "`nChangelog: id della release non disponibile, timbro non eseguito." -ForegroundColor Yellow
+        return
+    }
+    if ($Ref -ne 'origin/main') {
+        $pubblicato = if ($Ref) { $Ref } else { "l'albero di lavoro" }
+        Write-Host "`nDeploy di prova ($pubblicato): il numero di versione e' stato consumato ma non viene scritto in CHANGELOG.md." -ForegroundColor Yellow
+        return
+    }
+    Write-Step 'Changelog: timbro della versione pubblicata'
+    $script = Join-Path $ProjectRoot 'scripts\documentazione\timbra_changelog.py'
+    $info = @{}
+    $interprete = 'python'
+    try {
+        foreach ($riga in (Invoke-RemoteOutput @('release-info', $id))) {
+            if ($riga -match '^(release|git_sha|albero_modificato|versione|aggiornata|ultima_versione)=(.*)$') {
+                $info[$Matches[1]] = $Matches[2].Trim()
+            }
+        }
+        foreach ($chiave in @('release', 'git_sha', 'albero_modificato', 'versione', 'aggiornata', 'ultima_versione')) {
+            if (-not $info.ContainsKey($chiave)) { throw "RELEASE_INFO senza la chiave $chiave" }
+        }
+        if ($info['release'] -ne $id) { throw "RELEASE_INFO di un'altra release ($($info['release']))" }
+        if ($info['git_sha'] -notmatch '^[0-9a-f]{40}$' -or -not $info['git_sha'].StartsWith($id.Substring($id.Length - 7))) {
+            throw 'commit non valido in RELEASE_INFO'
+        }
+        if ($info['versione'] -notmatch '^\d+$') { throw 'numero di versione non valido in RELEASE_INFO' }
+        if ($info['albero_modificato'] -ne 'false') { throw 'la release non viene da un commit' }
+        $python = Find-PythonTimbro
+        if (-not $python) { throw 'Python 3.10 o successivo non trovato su questo PC' }
+        $interprete = (@("& `"$($python[0])`"") + @($python | Select-Object -Skip 1)) -join ' '
+        # Una sola stringa per opzione: Windows PowerShell 5.1 scarta gli argomenti vuoti.
+        $argomenti = @($script, '--ref=origin/main', "--versione=$($info['versione'])",
+            "--aggiornata=$($info['aggiornata'])", "--sha=$($info['git_sha'])",
+            "--ultima-versione=$($info['ultima_versione'])")
+        $variabili = @{ PYTHONUTF8 = '1'; GIT_TERMINAL_PROMPT = '0'; GCM_INTERACTIVE = 'never' }
+        $salvate = @{}
+        $precedente = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+            foreach ($nome in $variabili.Keys) {
+                $salvate[$nome] = [Environment]::GetEnvironmentVariable($nome, 'Process')
+                [Environment]::SetEnvironmentVariable($nome, $variabili[$nome], 'Process')
+            }
+            $opzioni = @($python | Select-Object -Skip 1)
+            & $python[0] @opzioni @argomenti | Out-Host
+            $codice = $LASTEXITCODE
+        }
+        finally {
+            $ErrorActionPreference = $precedente
+            foreach ($nome in $salvate.Keys) { [Environment]::SetEnvironmentVariable($nome, $salvate[$nome], 'Process') }
+        }
+        if ($codice -ne 0) {
+            Write-Host "ATTENZIONE: changelog non aggiornato (codice $codice): vedi i messaggi sopra e docs/tecnica/deploy.md. Il deploy e' riuscito comunque." -ForegroundColor Yellow
+        }
+    }
+    catch {
+        Write-Host "`nATTENZIONE: changelog non aggiornato ($($_.Exception.Message)). Il deploy e' riuscito comunque." -ForegroundColor Yellow
+        Write-Host '  Per completare il changelog, da un clone con diritti di scrittura su main:' -ForegroundColor Yellow
+        $versione = if ($info.ContainsKey('versione')) { $info['versione'] } else { '<N>' }
+        $aggiornata = if ($info.ContainsKey('aggiornata')) { $info['aggiornata'] } else { '<ISO>' }
+        $sha = if ($info.ContainsKey('git_sha')) { $info['git_sha'] } else { '<SHA>' }
+        Write-Host "  $interprete `"$script`" --ref=origin/main --versione=$versione --aggiornata=$aggiornata --sha=$sha" -ForegroundColor Yellow
+        if (-not $info.ContainsKey('git_sha')) {
+            Write-Host "  Numero e ora sono quelli in fondo al menu dell'applicazione; lo sha si ricava con: git rev-parse $($id.Substring($id.Length - 7))" -ForegroundColor Yellow
+        }
+    }
+}
+
 # ---------------------------------------------------------------- sorgente (credenziali)
 
 function Format-CnfValue([string] $Valore) {
@@ -426,13 +545,15 @@ switch ($Action) {
         Confirm-Typed 'CLONA' ("L'installazione legge il database originale ${SourceHost}/$SourceDb con mariadb-dump in sola " +
             "lettura (snapshot consistente, nessun lock e nessuna scrittura) e lo importa nel clone sul server. " +
             "Se il clone esiste gia' non viene toccato. Durata indicativa: 10-30 minuti.")
-        Publish-Release 'deploy' @('--primo-clone') | Out-Null
+        $uscita = Publish-Release 'deploy' @('--primo-clone')
         Show-Access
+        Invoke-TimbroChangelog -Uscita $uscita
     }
     'deploy' {
         Test-ConnessioneCompleta
-        Publish-Release 'deploy' @() | Out-Null
+        $uscita = Publish-Release 'deploy' @()
         Show-Access
+        Invoke-TimbroChangelog -Uscita $uscita
     }
     'build' {
         Test-ConnessioneCompleta

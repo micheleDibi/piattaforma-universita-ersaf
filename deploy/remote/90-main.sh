@@ -21,6 +21,7 @@ main() {
         verify)       require_installed; cmd_verify;;
         rollback)     require_installed; acquire_lock; cmd_rollback;;
         status)       cmd_status;;
+        release-info) require_installed; cmd_release_info "$@";;
         logs)         cmd_logs "$@";;
         stop)         cmd_stop;;
         start)        cmd_start;;

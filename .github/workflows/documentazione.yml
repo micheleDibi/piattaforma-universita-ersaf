@@ -1,0 +1,109 @@
+# Controlli della documentazione sulle pull request verso main.
+#
+# Nessun segreto, nessun database: si installano le dipendenze e si lanciano
+# gli script di scripts/documentazione/, gli stessi del gate Docs di
+# scripts/verify-local.ps1. Spiegazione completa: docs/tecnica/documentazione.md.
+#
+# Nessun workflow gira sui push a main: i commit "Changelog: Versione N" che il
+# timbro del deploy invia direttamente non devono trovare ostacoli.
+
+name: Documentazione
+
+on:
+  pull_request:
+    branches: [main]
+    # labeled/unlabeled: aggiungere o togliere un'etichetta di esenzione
+    # rilancia il controllo con le etichette aggiornate.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentazione-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  documentazione:
+    name: Documentazione e changelog
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Codice della pull request unito a main
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            scripts/documentazione/requisiti.txt
+            scripts/documentazione/vincoli.txt
+
+      - name: Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Dipendenze
+        run: |
+          python -m pip install -r backend/requirements.txt \
+            -r scripts/documentazione/requisiti.txt \
+            -c scripts/documentazione/vincoli.txt
+          npm ci --ignore-scripts --prefix frontend
+
+      - name: Test degli strumenti
+        run: python -X warn_default_encoding -m pytest scripts/documentazione/tests
+
+      - name: Pagine generate allineate al codice
+        run: python scripts/documentazione/genera.py --verifica
+
+      - name: Sintassi degli script PowerShell
+        shell: pwsh
+        run: |
+          $errori = $false
+          foreach ($file in @('scripts/deploy.ps1', 'scripts/verify-local.ps1')) {
+            $problemi = $null
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file).Path, [ref] $null, [ref] $problemi) | Out-Null
+            foreach ($problema in $problemi) {
+              Write-Output "::error file=$file,line=$($problema.Extent.StartLineNumber)::$($problema.Message)"
+              $errori = $true
+            }
+          }
+          if ($errori) { exit 1 }
+
+      - name: Frammenti, link, mappa, contenuti e documenti collegati
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          ETICHETTE: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: >-
+          python scripts/documentazione/controlla.py tutto
+          --base "$BASE_SHA" --merge --etichette "$ETICHETTE"
+
+  timbro-python-310:
+    name: Timbro con Python 3.10 senza dipendenze
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Python 3.10
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+
+      # Il timbro gira sul PC di chi pubblica, con la sola libreria standard.
+      - name: Test del timbro e dei frammenti
+        run: |
+          python -m pip install pytest
+          python -X warn_default_encoding -m pytest scripts/documentazione/tests/test_timbra.py \
+            scripts/documentazione/tests/test_frammenti.py scripts/documentazione/tests/test_comune.py
