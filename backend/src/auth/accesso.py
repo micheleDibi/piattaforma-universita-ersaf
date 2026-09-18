@@ -65,8 +65,9 @@ def login(creds: LoginRequest, request: Request, response: Response, db: Session
     prenotazione = prenota_tentativo(creds.utente_username, ip_client(request))
     utente, ruolo = _identita_ammessa(db, creds)
     if (ruolo or "").lower() == "nazionale":
+        # Import locali: src.otp e src.mfa importano emetti_sessione da qui.
+        from src.mfa.metodi import avvia_secondo_fattore
         from src.otp.servizio import blocca_cliente
-        from src.otp.invio import genera_e_invia
         versione_password = utente.utente_password_hash or utente.utente_password
         cliente = cliente_principale(db, utente.utente_id)
         contesto = blocca_cliente(db, cliente.cliente_id)
@@ -74,9 +75,11 @@ def login(creds: LoginRequest, request: Request, response: Response, db: Session
                 or versione_password != (contesto[1].utente_password_hash or contesto[1].utente_password)
                 or (codice_ruolo(db, contesto[0].cliente_ruolo) or "").lower() != "nazionale"):
             raise _credenziali_errate()
-        sfida = genera_e_invia(db, contesto, "login", (utente.utente_id, ip_client(request)))
+        # Il metodo lo propone il server, per priorita' fra quelli posseduti;
+        # senza metodi parte la verifica dell'email (ADR 0009).
+        risposta = avvia_secondo_fattore(db, contesto, (utente.utente_id, ip_client(request)))
         azzera_account(prenotazione)
-        return {"requires_2fa": True, **sfida}
+        return risposta
 
     dati = emetti_sessione(db, utente, ruolo, request, response)
     azzera_account(prenotazione)

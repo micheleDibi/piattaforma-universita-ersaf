@@ -29,6 +29,15 @@ export function voceUscita() {
 }
 
 /**
+ * Versione e data dell'ultimo aggiornamento: in fondo all'elenco delle voci,
+ * sopra la linea che le separa da profilo e uscita. Il rientro (padding del menu
+ * + padding della voce) la allinea alle icone.
+ */
+export function notaVersione() {
+  return "shrink-0 px-6 pb-3 text-nota leading-relaxed text-testo-tenue";
+}
+
+/**
  * Testata del menu con il logo dell'applicazione. Alta quanto la barra
  * superiore da mobile, cosi' le due restano allineate passando da una all'altra.
  */

@@ -8,8 +8,7 @@ import { STILI_ACCESSO as stili } from "../config/styles/accesso.js";
 import PaginaAccesso from "./accesso/PaginaAccesso.jsx";
 import CampoPassword from "./accesso/CampoPassword.jsx";
 import AlertMessage from "./AlertMessage.jsx";
-import ModuloOtp from "./accesso/ModuloOtp.jsx";
-import { operazioniAccessoOtp } from "../lib/otp.js";
+import PassoSecondoFattore from "./accesso/PassoSecondoFattore.jsx";
 
 export default function Login() {
   const { username, setUsername, password, setPassword, error, avviso, loading, attesa, limiteRaggiunto, handleSubmit, sfida, setSfida, completa } = useAccesso();
@@ -17,9 +16,13 @@ export default function Login() {
   const messaggio = limiteRaggiunto
     ? { type: attesa > 0 ? "warning" : "info", text: attesa > 0 ? error : testi.attesaTerminata }
     : error ? { type: "error", text: error } : avviso ? { type: "warning", text: avviso } : null;
-  if (sfida) return <PaginaAccesso titolo="Verifica il tuo accesso" descrizione="Inserisci il codice che ti abbiamo inviato via email.">
-    <ModuloOtp iniziale={sfida} operazioni={operazioniAccessoOtp} onVerificato={completa} onAnnulla={() => setSfida(null)} />
-  </PaginaAccesso>;
+  if (sfida) {
+    // Il server dice quale passo e': il metodo proposto, o la verifica dell'email.
+    const passo = testi.passi[sfida.metodo] ?? testi.passi.email;
+    return <PaginaAccesso titolo={passo.titolo} descrizione={passo.descrizione}>
+      <PassoSecondoFattore sfida={sfida} onCambia={setSfida} onVerificato={completa} onAnnulla={() => setSfida(null)} />
+    </PaginaAccesso>;
+  }
   return (
     <PaginaAccesso titolo={testi.titolo} descrizione={testi.descrizione}>
       {contesto && <p role="status" className={stili.contesto}>{contesto}</p>}

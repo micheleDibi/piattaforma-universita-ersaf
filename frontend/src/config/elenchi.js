@@ -25,6 +25,10 @@ const universita = {
   icona: "universita",
 };
 const tipo = { id: "tipo", etichetta: "Tipo di corso", icona: "tipo" };
+
+// NUOVE — servono solo a MODELLO_PRATICHE. Nomi distinti da "universita"/"tipo"
+// sopra: quelle sono per MODELLO_PRODOTTI e usano id "universita"/"tipo" che
+// puntano a campi diversi (nome_universita vs listino_tipoCorso_descrizione).
 const dataCreazione = {
   id: "dataCreazione",
   etichetta: "Data di creazione",

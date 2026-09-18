@@ -26,9 +26,24 @@ def destinazione(cliente, tipo: str) -> str:
     return email
 
 
+# Verifica dell'email avviata dal login di un Nazionale senza alcun metodo:
+# vale come sfida di accesso (lega la password) e, confermata, certifica
+# l'email in otp_contatti. Distinta dal tipo `email` della scheda cliente,
+# che un operatore avvia per conto altrui e che non deve aprire sessioni.
+VERIFICA_EMAIL = "email_accesso"
+# Le sfide di accesso legano la password: cambiarla le invalida. `totp` e
+# `passkey` non spediscono nulla, il segreto sta sul telefono (src/mfa).
+TIPI_ACCESSO = ("login", VERIFICA_EMAIL, "totp", "passkey")
+
+
+def contatto_di(tipo: str) -> str:
+    """Il contatto che una sfida certifica: `email_accesso` certifica l'email."""
+    return "email" if tipo == VERIFICA_EMAIL else tipo
+
+
 def versione(cliente, tipo: str, utente=None) -> str:
     valore = cliente.cliente_cellulare if tipo == "cellulare" else cliente.cliente_email
-    epoch = (utente.utente_password_hash or utente.utente_password) if tipo == "login" else ""
+    epoch = (utente.utente_password_hash or utente.utente_password) if tipo in TIPI_ACCESSO else ""
     return impronta(f"contatto:{cliente.cliente_id}:{tipo}:{valore}:{epoch}")
 
 

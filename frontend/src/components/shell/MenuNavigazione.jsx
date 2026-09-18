@@ -6,10 +6,12 @@ import {
 } from "../../config/routes/rotte";
 import {
   iconaNavigazione,
+  notaVersione,
   testataMenu,
   voceNavigazione,
   voceUscita,
 } from "../../config/styles/navigazione";
+import { VERSIONE_APPLICAZIONE } from "../../lib/versione.js";
 import { useSessione } from "../../hooks/useSessione.js";
 import TileProfilo from "../profilo/TileProfilo.jsx";
 import { logout } from "../../lib/logout";
@@ -71,6 +73,11 @@ export default function MenuNavigazione({ onNaviga }) {
           );
         })}
       </nav>
+
+      <div className={notaVersione()}>
+        <p>{VERSIONE_APPLICAZIONE.versione}</p>
+        {VERSIONE_APPLICAZIONE.aggiornamento && <p>{VERSIONE_APPLICAZIONE.aggiornamento}</p>}
+      </div>
 
       <div className="border-t border-bordo p-3">
         <TileProfilo onNaviga={onNaviga} />

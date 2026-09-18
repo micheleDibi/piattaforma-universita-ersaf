@@ -4,14 +4,23 @@ import { queryPratiche } from "../src/lib/pratiche.js";
 import { cambiaSelezione } from "../src/lib/selezioneRicercabile.js";
 import { creaPaginazione } from "../src/lib/pagineRemote.js";
 
-test("query conserva numero, stato, percorso e tutti gli ID cliente", () => {
-  const query = new URL(queryPratiche({ ricerca: " A&B ", stato: "2", studenti: [{ id: 7 }, { id: 19 }], percorso: { id: 40 } }), "https://example.org");
+const SENZA_FILTRI = { ricerca: "", numeroPratica: "", stato: "", studenti: [], universita: "", tipoCorso: [], tipoSelezionato: "" };
+
+test("query conserva ricerca, numero pratica, stato, universita', tipi di corso e tutti gli ID cliente", () => {
+  const query = new URL(queryPratiche({ ...SENZA_FILTRI, ricerca: " A&B ", numeroPratica: " 000045 ", stato: "2",
+    studenti: [{ id: 7 }, { id: 19 }], universita: "5", tipoCorso: [3, 8] }), "https://example.org");
   assert.equal(query.searchParams.get("search"), "A&B");
-  assert.deepEqual(query.searchParams.getAll("studenti"), ["7", "19"]);
+  assert.equal(query.searchParams.get("numero_pratica"), "000045");
   assert.equal(query.searchParams.get("pratica_stato_id"), "2");
-  assert.equal(query.searchParams.get("percorso_id"), "40");
-  const vuota = queryPratiche({ ricerca: "", stato: "", studenti: [], percorso: null });
-  assert.equal(vuota, "/pratiche/?limit=40");
+  assert.deepEqual(query.searchParams.getAll("studenti"), ["7", "19"]);
+  assert.equal(query.searchParams.get("nome_universita_id"), "5");
+  assert.deepEqual(query.searchParams.getAll("listino_tipo_corso_id"), ["3", "8"]);
+  assert.equal(queryPratiche(SENZA_FILTRI), "/pratiche/?limit=40");
+});
+
+test("un tipo di corso selezionato prevale sull'elenco dei tipi", () => {
+  const query = new URL(queryPratiche({ ...SENZA_FILTRI, tipoCorso: [3, 8], tipoSelezionato: "8" }), "https://example.org");
+  assert.deepEqual(query.searchParams.getAll("listino_tipo_corso_id"), ["8"]);
 });
 
 test("selezioni indipendenti dai risultati e rimozione per ID anche con omonimi", () => {

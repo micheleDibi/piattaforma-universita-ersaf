@@ -33,10 +33,15 @@ def scenario(client, db):
                 listino_tipo_id=900001, listino_tipoCorso_id=900001, nome_universita_id=900001) for n in range(3)]
     db.add_all(percorsi)
     db.flush()
-    for n, (studente, stato, percorso) in enumerate([(0, 900001, 0), (1, 900001, 0), (0, 900002, 1), (1, 900002, 0)]):
+    # (studente, stato, percorso, universita', tipo di corso) per FILTRO-0..3. La data di
+    # creazione e' la stessa per tutte: l'ordine dell'elenco ricade sull'id decrescente.
+    righe = [(0, 900001, 0, 900001, 900001), (1, 900001, 0, 900001, 900002),
+             (0, 900002, 1, 900002, 900001), (1, 900002, 0, 900001, 900001)]
+    for n, (studente, stato, percorso, universita, tipo_corso) in enumerate(righe):
         db.add(Pratica(pratica_numero=f"FILTRO-{n}", cliente_id=studenti[studente].cliente_id,
             cliente_emittente_aderente_id=account.cliente_id, pratica_stato_id=stato,
-            listTesta_id=percorsi[percorso].listTesta_id, nome_universita_id=900001))
+            listTesta_id=percorsi[percorso].listTesta_id, nome_universita_id=universita,
+            listino_tipo_corso_id=tipo_corso))
     db.commit()
     assert client.post("/auth/login", json={"utente_username": account.username, "utente_password": "test-filtri"}).status_code == 200
     yield studenti, percorsi
@@ -52,15 +57,31 @@ def numeri(client, params):
     return [r["pratica_numero"] for r in response.json()]
 
 
-def test_filtri_combinati_or_studenti_and_stato_percorso_numero(client, scenario):
-    studenti, percorsi = scenario
-    params = [("studenti", s.cliente_id) for s in studenti[:2]] + [
-        ("pratica_stato_id", 900001), ("percorso_id", percorsi[0].listTesta_id), ("search", "FILTRO")]
+def test_filtri_combinati_or_studenti_and_stato_universita_tipo_numero(client, scenario):
+    studenti, _ = scenario
+    anna_bruno = [("studenti", s.cliente_id) for s in studenti[:2]]
+    params = anna_bruno + [("pratica_stato_id", 900001), ("nome_universita_id", 900001), ("numero_pratica", "FILTRO")]
     assert numeri(client, params) == ["FILTRO-1", "FILTRO-0"]
     assert numeri(client, params + [("skip", 1), ("limit", 1)]) == ["FILTRO-0"]
     assert numeri(client, [("studenti", studenti[0].cliente_id)] * 2) == ["FILTRO-2", "FILTRO-0"]
     assert numeri(client, {"cliente_id": studenti[0].cliente_id}) == ["FILTRO-2", "FILTRO-0"]
-    assert numeri(client, {"percorso_id": percorsi[2].listTesta_id}) == []
+    # Tipi di corso: piu' valori in OR tra loro, in AND con gli altri filtri.
+    assert numeri(client, anna_bruno + [("listino_tipo_corso_id", 900002)]) == ["FILTRO-1"]
+    assert numeri(client, anna_bruno + [("listino_tipo_corso_id", 900001), ("listino_tipo_corso_id", 900002),
+                                        ("pratica_stato_id", 900002)]) == ["FILTRO-3", "FILTRO-2"]
+    assert numeri(client, anna_bruno + [("nome_universita_id", 900002)]) == ["FILTRO-2"]
+    assert numeri(client, anna_bruno + [("numero_pratica", "FILTRO-3")]) == ["FILTRO-3"]
+
+
+def test_ricerca_libera_su_nome_e_cognome_del_cliente(client, scenario):
+    studenti, _ = scenario
+    anna_bruno = [("studenti", s.cliente_id) for s in studenti[:2]]
+    assert numeri(client, anna_bruno + [("search", "anna")]) == ["FILTRO-2", "FILTRO-0"]
+    # Ogni parola deve trovarsi nel nome o nel cognome dello stesso cliente.
+    assert numeri(client, anna_bruno + [("search", "Ricerca Bruno")]) == ["FILTRO-3", "FILTRO-1"]
+    assert numeri(client, anna_bruno + [("search", "Anna Bruno")]) == []
+    # Il numero di pratica non si cerca piu' dalla ricerca libera ma con numero_pratica.
+    assert numeri(client, anna_bruno + [("search", "FILTRO")]) == []
 
 
 def test_lookup_ricerca_paginata_solo_anagrafiche_associate(client, scenario):
@@ -82,6 +103,9 @@ def test_lookup_protetti(client, path):
     assert client.get(path).status_code == 401
 
 
-@pytest.mark.parametrize("query", ["studenti=-1", "percorso_id=0", "limit=201", "skip=-1", "pratica_stato_id=0"])
+@pytest.mark.parametrize("query", [
+    "studenti=-1", "limit=201", "skip=-1", "pratica_stato_id=0", "nome_universita_id=0",
+    "listino_tipo_corso_id=0", "&".join(["listino_tipo_corso_id=1"] * 11), "numero_pratica=" + "9" * 46,
+])
 def test_parametri_invalidi(client, scenario, query):
     assert client.get(f"/pratiche/?{query}").status_code == 422

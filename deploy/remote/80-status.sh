@@ -31,6 +31,7 @@ cmd_start() {
     require_installed
     acquire_lock
     db_up
+    completa_api_env
     compose_active up -d --no-build api web
     cmd_verify
 }

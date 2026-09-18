@@ -42,7 +42,7 @@ cmd_deploy() {
     require_free_gib "$BASE" "$MIN_FREE_GIB_DEPLOY"
     precedente="$(compose_env_get RELEASE_TAG)"
     ACTIVE_ID="$id"
-    cmd_release "$archivio" "$id" "$sha" "$dirty"
+    cmd_release "$archivio" "$id" "$sha" "$dirty" "$@"
     prepara_notifiche
     db_up
     if [ "$primo_clone" = 1 ]; then
@@ -55,8 +55,11 @@ cmd_deploy() {
         cmd_migrate
     fi
     attiva_release "$id"
+    # Chiavi di api.env comparse con questa release: senza, l'API non partirebbe.
+    completa_api_env
     # cmd_verify termina con die: in subshell il fallimento torna qui e scatta il rollback.
     if avvia_app && ( cmd_verify ); then
+        registra_versione "$id"
         cmd_prune
         log "deploy completato: release $id (git $sha)"
         return 0

@@ -39,9 +39,24 @@ bcrypt>=4.0,<5
 # Client HTTPS Skebby con timeout e trasporto sostituibile nei test.
 httpx>=0.27,<1
 
+# QR code dell'attivazione dell'authenticator, generato dal server come SVG:
+# puro Python, senza dipendenze, cosi' il frontend non ne aggiunge nessuna.
+segno>=1.6,<2
+
+# Passkey (WebAuthn): opzioni di registrazione e autenticazione, verifica
+# delle risposte dell'autenticatore. Porta con se' cbor2, pyOpenSSL e pyasn1.
+webauthn>=3,<4
+
 # --- test -------------------------------------------------------------------
 pytest>=8.0
 # TestClient di starlette 1.3 usa httpx2 e segnala come deprecato l'uso di
 # httpx: con `filterwarnings = error` nel pytest.ini quella deprecazione
 # fermerebbe la suite, quindi si installa quello giusto.
 httpx2>=2.12
+
+# Composizione dei documenti delle pratiche (PDF/A) con Typst: wheel abi3
+# senza librerie di sistema, stesso risultato su Windows e nel container.
+typst>=0.15,<0.16
+# La firma salvata dal gestionale sta su una tela quasi quadrata: Pillow la
+# ritaglia sul tratto prima di metterla nel modulo.
+Pillow>=12,<13

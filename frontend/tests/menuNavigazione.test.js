@@ -2,9 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { vociMenuPerRuolo } from "../src/config/routes/rotte.js";
 
-test("il Nazionale vede tutti gli elenchi gestionali nel menu condiviso", () => {
+test("il Nazionale vede gli elenchi gestionali nel menu condiviso; le pratiche stanno nella dashboard", () => {
   assert.deepEqual(vociMenuPerRuolo("nazionale").map((voce) => voce.rotta), [
-    "/dashboard", "/sottoscrittori", "/attuatori", "/aziende", "/pratiche", "/prodotti",
+    "/dashboard", "/sottoscrittori", "/attuatori", "/aziende", "/prodotti",
   ]);
 });
 

@@ -226,7 +226,12 @@ function Publish-Release([string] $Comando, [string[]] $Opzioni) {
         Write-Host "    ATTENZIONE: stai pubblicando $Ref, non main. Il collaudo restera' su questo" -ForegroundColor Yellow
         Write-Host '    codice finche'' qualcuno non ripubblica. Avvisa in chat.' -ForegroundColor Yellow
     }
-    $id = (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + $sha.Substring(0, 7)
+    # Un solo istante per l'id della release e per la data mostrata nell'applicazione.
+    $adesso = Get-Date
+    $invariante = [Globalization.CultureInfo]::InvariantCulture
+    $id = $adesso.ToString('yyyyMMdd-HHmmss', $invariante) + '-' + $sha.Substring(0, 7)
+    # Il numero di versione lo assegna il server (contatore delle pubblicazioni).
+    $aggiornata = $adesso.ToString("yyyy-MM-dd'T'HH':'mm':'sszzz", $invariante)
     $archivio = New-ReleaseArchive $id
     $dimensione = [math]::Round((Get-Item -LiteralPath $archivio).Length / 1KB)
     Write-Note "release $id (git $($sha.Substring(0, 7)), $dimensione KB)"
@@ -234,7 +239,7 @@ function Publish-Release([string] $Comando, [string[]] $Opzioni) {
     $remoto = Send-Archive $archivio $id
     if ($Comando -eq 'build') { Write-Step 'Build remota delle immagini, nessun container toccato' }
     else { Write-Step 'Deploy remoto: build, migrazioni sul clone, avvio, verifica' }
-    Invoke-Remote (@($Comando, $remoto, $id, $sha, $sporco) + $Opzioni) | Out-Null
+    Invoke-Remote (@($Comando, $remoto, $id, $sha, $sporco) + $Opzioni + @("--aggiornata=$aggiornata")) | Out-Null
     return $id
 }
 

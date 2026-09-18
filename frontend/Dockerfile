@@ -8,6 +8,11 @@ COPY . .
 # servita da nginx, che le gira all'API (vedi nginx.conf).
 ARG VITE_API_BASE_URL=/api
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+# Progressivo e data della release, mostrati in fondo al menu. Dichiarati dopo
+# npm ci: cambiano a ogni deploy e non devono invalidare le dipendenze in cache.
+ARG VITE_VERSIONE=
+ARG VITE_AGGIORNATA_IL=
+ENV VITE_VERSIONE=${VITE_VERSIONE} VITE_AGGIORNATA_IL=${VITE_AGGIORNATA_IL}
 RUN npm run build
 
 # Fase 2: server statico non privilegiato (uid 101, porta 8080).

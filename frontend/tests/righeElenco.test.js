@@ -2,6 +2,16 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { rigaCliente, rigaAzienda, rigaPratica, rigaProdotto } from "../src/lib/righeElenco.js";
 import { modelloClienti, MODELLO_AZIENDE, MODELLO_PRATICHE, MODELLO_PRODOTTI } from "../src/config/elenchi.js";
+import { ICONE_CAMPI_ELENCO } from "../src/config/icone.js";
+
+test("ogni icona indicata dai campi degli elenchi esiste nel catalogo", () => {
+  const modelli = [MODELLO_AZIENDE, MODELLO_PRATICHE, MODELLO_PRODOTTI, modelloClienti({ attuatori: true, mostraAzienda: true })];
+  for (const modello of modelli) {
+    for (const campo of [...modello.mobile, ...modello.colonne.flatMap((c) => c.campi)]) {
+      if (campo.icona) assert.ok(ICONE_CAMPI_ELENCO[campo.icona], `${modello.id}.${campo.id}: icona "${campo.icona}" assente`);
+    }
+  }
+});
 
 test("nome e cognome separati e nominativo mobile conservano ID cliente e campi parziali", () => {
   const item = { cliente_id: 14, utente_id: 9, cliente_nome: " Maria Alessandra ", cliente_cognome: "Della Valle" };

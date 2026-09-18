@@ -43,13 +43,17 @@ test("l'azzeramento prodotti elimina tutti i filtri in una transazione e conserv
   assert.deepEqual(leggiQuery(url, QUERY_PRODOTTI), { ricerca: "corso", universita: "Tutte le università", tipo: "Tutti i tipi", attivo: "Tutti" });
 });
 test("Pratiche conserva ID multipli senza etichette, scarta invalidi e duplicati", () => {
-  const url = aggiornaQuery("", { ricerca: "A&B", stato: "2", studenti: [17, 23], percorso: "42" }, QUERY_PRATICHE);
+  const filtri = { ricerca: "A&B", numeroPratica: "000045", stato: "2", studenti: [17, 23],
+    universita: "5", tipoCorso: [3, 8], filtroInterno: "1", tipoSelezionato: "8" };
+  const url = aggiornaQuery("", filtri, QUERY_PRATICHE);
   const q = leggiQuery(url, QUERY_PRATICHE);
-  assert.deepEqual(q, { ricerca: "A&B", stato: "2", studenti: [17, 23], percorso: "42" });
-  const api = queryPratiche({ ...q, studenti: q.studenti.map(id => ({ id })), percorso: { id: Number(q.percorso) } });
+  assert.deepEqual(q, filtri);
+  const api = queryPratiche({ ...q, studenti: q.studenti.map(id => ({ id })) });
   assert.deepEqual(new URL(api, "http://locale").searchParams.getAll("studenti"), ["17", "23"]);
   assert.deepEqual(leggiQuery("?studenti=17&studenti=17&studenti=-1&studenti=x&stato=0", QUERY_PRATICHE).studenti, [17]);
-  assert.equal(leggiQuery("?stato=abc&percorso=0", QUERY_PRATICHE).percorso, "");
+  const invalidi = leggiQuery("?stato=abc&universita=0&tipoCorso=3&tipoCorso=3&tipoCorso=x&filtroInterno=2&tipoSelezionato=-4", QUERY_PRATICHE);
+  assert.deepEqual([invalidi.stato, invalidi.universita, invalidi.filtroInterno, invalidi.tipoSelezionato], ["", "", "", ""]);
+  assert.deepEqual(invalidi.tipoCorso, [3]);
 });
 test("le query frontend preservano i contratti API esistenti", () => {
   const clienti = new URL(queryClienti({ ricerca: "Rossi", ruolo: "Nazionale" }, { soloUtenti: true }), "http://locale");

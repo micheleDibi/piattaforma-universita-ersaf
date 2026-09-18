@@ -32,6 +32,9 @@ PUBBLICHE = {
     # Senza sessione: richiedono la sfida segreta emessa dopo la password.
     ("POST", "/auth/verifica-otp"),
     ("POST", "/auth/rigenera-otp"),
+    ("POST", "/auth/mfa/verifica-totp"),
+    ("POST", "/auth/mfa/verifica-passkey"),
+    ("POST", "/auth/mfa/metodo"),
     ("POST", "/auth/logout"),
     ("POST", "/auth/password-reset/request"),
     ("GET", "/auth/password-reset/validate"),
@@ -104,7 +107,7 @@ def test_l_header_legacy_non_autentica_piu(client):
     assert risposta.status_code == 401
 
 
-@pytest.mark.parametrize("rotta", ["verifica-otp", "rigenera-otp"])
+@pytest.mark.parametrize("rotta", ["verifica-otp", "rigenera-otp", "mfa/verifica-totp"])
 def test_otp_senza_prova_del_primo_fattore_non_autentica(client, rotta):
     risposta = client.post(f"/auth/{rotta}", json={"sfida": "a" * 43, "codice": "123456"})
     assert risposta.status_code == 400

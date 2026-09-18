@@ -51,5 +51,5 @@ export const QUERY_ANAGRAFICA = {
   ),
 };
 export const QUERY_PROFILO = {
-  scheda: scelta(["dati-principali", "utente"], "dati-principali"),
+  scheda: scelta(["dati-principali", "utente", "sicurezza"], "dati-principali"),
 };

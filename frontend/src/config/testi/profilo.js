@@ -26,6 +26,8 @@ export const SEZIONI_PROFILO = [
 export const SCHEDE_PROFILO = [
   { id: "dati-principali", etichetta: "Dati principali" },
   { id: "utente", etichetta: "Utente" },
+  // Secondo fattore: solo il Nazionale la vede (ADR 0009).
+  { id: "sicurezza", etichetta: "Sicurezza", soloNazionale: true },
 ];
 
 export const CAMPI_INDIRIZZO = [

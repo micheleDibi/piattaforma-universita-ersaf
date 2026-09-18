@@ -21,6 +21,7 @@ PASSWORD = "password-di-collaudo-lunga"
 
 def nazionale(client, db, mailer):
     persona = f.crea_attuatore(db, email="nazionale@example.org", ruolo=5, password_hash=hash_password(PASSWORD))
+    f.verifica_email(db, persona.cliente_id)  # email verificata: il secondo fattore e' l'OTP di login
     risposta = client.post("/auth/login", json={"utente_username": persona.username, "utente_password": PASSWORD})
     assert risposta.status_code == 200, risposta.text
     codice = re.search(r"\b\d{6}\b", come_testo(corpo_html(mailer.inviate[-1]))).group()

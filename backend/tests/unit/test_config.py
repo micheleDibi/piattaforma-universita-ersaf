@@ -14,6 +14,7 @@ VALIDA = dict(
     database_url="mysql+pymysql://utente:segreto@127.0.0.1:3306/db",
     password_reset_token_pepper="r" * 40,
     session_token_pepper="s" * 40,
+    totp_chiave="t" * 40,
 )
 
 
@@ -82,6 +83,13 @@ def test_pepper_con_il_valore_d_esempio(campo):
 def test_pepper_troppo_corta():
     with pytest.raises(ErroreConfigurazione, match="almeno 32"):
         _verifica(password_reset_token_pepper="troppo-corta")
+
+
+def test_la_chiave_totp_e_obbligatoria_e_distinta_dai_pepper():
+    with pytest.raises(ErroreConfigurazione, match="TOTP_CHIAVE"):
+        _verifica(totp_chiave="")
+    with pytest.raises(ErroreConfigurazione, match="diversa dai pepper"):
+        _verifica(totp_chiave="s" * 40)
 
 
 def test_pepper_uguali():
