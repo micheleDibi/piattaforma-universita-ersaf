@@ -11,6 +11,52 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 5 — 18/09/2026 12:08
+
+<!-- timbro: versione=5 sha=dc19af27d1a8bfb5694e8480b79e9971987a8bb1 -->
+
+### Novità e correzioni
+
+**Aggiunto**
+
+- Avvisi su anagrafiche con codice fiscale o email non validi e dati duplicati, consultabili dall’elenco e dalla scheda anche su mobile.
+- Il documento della pratica è disponibile per lauree, master, perfezionamento, formazione e corsi singoli degli enti per cui è presente il modulo originale.
+- Gli insegnamenti dei corsi singoli che superano le righe del modulo continuano su una pagina aggiuntiva della domanda.
+- Le pratiche eCampus con rate salvate includono l'accordo di rateizzazione nel PDF; i piani oltre dodici rate proseguono su pagine aggiuntive.
+
+**Modificato**
+
+- Il pannello degli atenei si apre dalla pagina Pratiche; il Nazionale dispone della voce dedicata nel menu.
+- Aziende è visibile nel menu anche a Regionale e Provinciale.
+
+**Corretto**
+
+- Gli avvisi non aprono accidentalmente la scheda e usano il tema e il dialogo condivisi.
+- Le dichiarazioni non indicano più come mai immatricolato uno studente con una carriera universitaria già registrata.
+- I valori più lunghi delle caselle del modulo restano completi nel documento.
+
+### Dettagli tecnici
+
+**Aggiunto**
+
+- Dodici moduli oltre a eCampus lauree, con registro unico, layout dichiarativi, sfondi condivisi e mapping comune; nessuna migrazione o dipendenza aggiuntiva.
+- Lettura della tabella legacy delle dilazioni eCampus, con importi Decimal, ordinamento per scadenza e ID e tasse separate; composizione dell'accordo centralizzata nel registro dei modelli.
+
+**Modificato**
+
+- Il confronto delle anomalie interroga solo i valori della pagina; codice fiscale ed email modificati usano la validazione completa.
+- I corsi richiesti usano la scheda corsi singoli più recente, con fallback ai legami della pratica; gli esami sostenuti restano distinti e riportano i CFU nei moduli SSML.
+- I tipi privi di un originale identificato restano non disponibili; nessuna scelta automatica di un modulo alternativo e nessun consenso presunto per i nuovi enti.
+
+**Corretto**
+
+- Risolte funzioni e proprietà duplicate introdotte dall’integrazione, preservati caricamento del curriculum e controllo della scadenza del documento.
+
+**Sicurezza**
+
+- Il dettaglio cliente e il confronto dei duplicati applicano la visibilità centralizzata; nessun nominativo esterno alla portata dell’utente viene esposto.
+- Disponibilità e download dei documenti applicano il filtro per azienda centralizzato delle pratiche, con risposta 404 per i documenti non visibili.
+
 ## Versione 4 — 18/09/2026 10:00
 
 <!-- timbro: versione=4 sha=4c73d2cc8922cfcecd17933725b2881e67f9de15 -->
