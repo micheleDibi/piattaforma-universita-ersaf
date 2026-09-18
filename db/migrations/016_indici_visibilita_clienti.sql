@@ -1,5 +1,5 @@
 -- =============================================================================
--- 016 - INDICI PER LA VISIBILITA' DEI CLIENTI
+-- 016 - Indici per la visibilita' dei clienti.
 -- =============================================================================
 -- DB        : admin_entedb (MariaDB 10.11, InnoDB, utf8mb4_unicode_ci)
 -- Rollback  : db/rollback/016_indici_visibilita_clienti_down.sql

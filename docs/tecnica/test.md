@@ -22,6 +22,10 @@ In `support/`:
 
 - `factories.py`: costruisce gli scenari con dati sintetici e domini riservati
   agli esempi;
+- `scenari.py`: accesso di prova per i test della visibilità. Ogni aiuto svuota
+  i cookie del client dopo il login e restituisce le intestazioni esplicite
+  della sessione: con più utenti nello stesso test, un cookie rimasto farebbe
+  partire la richiesta a nome dell'ultimo che ha fatto login;
 - `sessioni.py`: cookie e CSRF per le richieste di prova;
 - `sqlrunner.py`: esegue un file `.sql` intero in una sola chiamata, con più
   istruzioni;
@@ -120,6 +124,8 @@ secondi.
 | `db` | Sessione di osservazione con isolamento `READ COMMITTED`, per vedere ciò che l'API ha scritto |
 | `client`, `client_da` | Client HTTP di prova con un IP valido (`client_da` lo sceglie), base https su un dominio di esempio, `X-ERSAF-Request: 1`. Un errore 500 resta una risposta, non un'eccezione |
 | `mailer`, `sms` | Automatiche: spie in memoria, svuotate a ogni test. Nessun test può spedire davvero |
+| `spia_sql` | Raccoglie gli statement SQL eseguiti mentre è attiva. Si registra dopo il listener della visibilità, quindi li vede già con il prefisso `SET STATEMENT`: è così che si verifica dove il prefisso compare |
+| `tabella_pratiche` | Crea `pratiche` dai modelli e la svuota prima e dopo. Non sta fra le tabelle troncate, e il `TRUNCATE` di `aziende` riusa gli id: una pratica rimasta finirebbe "nell'azienda 1" del test successivo |
 
 Altri comportamenti da conoscere:
 

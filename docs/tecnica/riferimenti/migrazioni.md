@@ -21,6 +21,7 @@ Le regole per applicarle, annullarle e correggere gli errori sono in [db/README.
 | 013 | `013_verifiche_otp.sql` | Stato autonomo OTP. Il registro legacy logs_otp resta invariato | `013_verifiche_otp.sql` (nome irregolare) |
 | 014 | `014_contenuti_email.sql` | Contenuti email uniformi al modello FindYourGoal | assente |
 | 015 | `015_secondo_fattore.sql` | Secondo fattore a scelta per il ruolo Nazionale (ADR 0009) | `015_secondo_fattore_down.sql` |
+| 016 | `016_indici_visibilita_clienti.sql` | Indici per la visibilita' dei clienti | `016_indici_visibilita_clienti_down.sql` |
 
 ## Anomalie
 

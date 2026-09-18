@@ -50,11 +50,31 @@ Nota: questo limite è applicato solo dall'interfaccia; vedi [Limiti noti](../te
 
 ### Colonne
 
-- Sottoscrittori: Nome e Cognome.
-- Attuatori: Nome, Cognome e Ruolo. Il Nazionale vede anche la colonna
+- Sottoscrittori: Nome, Cognome e Stato.
+- Attuatori: Nome, Cognome, Ruolo e Stato. Il Nazionale vede anche la colonna
   Azienda.
 - Su uno schermo stretto le righe diventano riquadri, con nome e cognome
   insieme.
+
+La colonna **Stato** è una fila di pallini, verde quando la cosa è a posto e
+grigio quando non lo è:
+
+| Pallino | Verde quando |
+|---|---|
+| Email | l'indirizzo è stato verificato con un codice |
+| Cellulare | il numero è stato verificato con un codice |
+| Diploma | i dati del diploma sono completi (solo nei Sottoscrittori) |
+
+I dati del diploma si considerano completi quando ci sono tutti e cinque:
+diploma, anno di conseguimento, istituto, voto ricevuto e voto massimo. Via,
+città e provincia dell'istituto non contano. Uno zero come voto vale come
+valorizzato.
+
+Sopra l'elenco una legenda ricorda l'ordine dei pallini e il significato dei
+due colori. Il significato non dipende solo dal colore: il pallino verde è
+pieno e quello grigio è un anello, passandoci sopra con il mouse compare la
+descrizione a parole, e chi usa un lettore di schermo la sente leggere
+insieme alla riga.
 
 Nota: la colonna Azienda è nascosta solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
@@ -69,10 +89,18 @@ Nota: la colonna Azienda è nascosta solo dall'interfaccia; vedi [Limiti noti](.
 
 ### Chi vede quali anagrafiche
 
-In questa versione gli elenchi non filtrano per azienda né per utente padre.
-Chi apre un elenco vede tutte le anagrafiche di quel tipo.
+- Il Nazionale vede tutte le anagrafiche.
+- Chiunque altro vede la propria e quelle delle persone che dipendono da lui o
+  da una persona della sua stessa azienda, seguendo la catena dell'utente
+  padre fino in fondo, a qualunque profondità. La catena vale anche quando
+  attraversa una persona senza anagrafica.
+- Le persone della stessa azienda non compaiono per il solo fatto di esserlo:
+  compaiono se a loro volta dipendono da qualcuno del gruppo.
+- Chi non ha un'azienda vede solo la propria anagrafica e chi dipende da lui.
 
-Nota: il server non applica alcun filtro di visibilità alle anagrafiche; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+La stessa regola vale per aprire una scheda: un'anagrafica che non si vede
+nell'elenco risponde «non trovata» anche aprendola dall'indirizzo, con lo
+stesso messaggio di un'anagrafica inesistente.
 
 ## Creare un'anagrafica
 
@@ -242,11 +270,11 @@ Il curriculum si salva con il «Salva Modifiche» in fondo alla pagina, oppure
 con la creazione. Se per la stessa persona esistono più curricula, la scheda
 mostra il più recente.
 
-I due «Anno di conseguimento» (diploma e anno integrativo) e la «Data di
-conseguimento» del titolo universitario sono lo stesso dato. Modificarne uno
-cambia anche gli altri due.
-
-Nota: l'interfaccia mostra tre campi per un solo dato salvato; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+I due «Anno di conseguimento», quello del diploma e quello dell'anno
+integrativo, si scrivono liberamente: va bene sia un anno solo sia un anno
+scolastico, come ricorda il suggerimento nel campo. Il limite è di 45
+caratteri. Sono due dati distinti, e nessuno dei due ha a che vedere con la
+«Data di conseguimento» del titolo universitario.
 
 ### Utente
 
@@ -327,6 +355,8 @@ alla persona dell'anagrafica, e chi lavora sulla scheda lo inserisce.
   per verificare questo contatto.»
 - Un contatto verificato mostra «Verificato». Se la data è nota, sotto compare
   «Verificato il» con data e ora.
+- Solo su un'anagrafica che si vede: su una che non si vede, chiedere lo stato,
+  far partire un codice o confermarlo rispondono «Anagrafica non trovata.».
 
 ### Come si svolge
 

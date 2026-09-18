@@ -136,6 +136,10 @@ Nota: la regola dell'azienda padre oggi non produce effetti; vedi [Limiti noti](
 Compare solo nella scheda di un'azienda già salvata. Mostra la ragione sociale
 dell'azienda padre, oppure «Nessuna (azienda radice)».
 
+Passando da un'azienda a un'altra, un eventuale messaggio di errore rimasto
+dall'azienda precedente sparisce: prima restava sullo schermo e sembrava
+riferito a quella appena aperta.
+
 ### Cambiare il padre
 
 - Il pulsante «Cambia padre» compare solo al Nazionale. Il server rifiuta gli

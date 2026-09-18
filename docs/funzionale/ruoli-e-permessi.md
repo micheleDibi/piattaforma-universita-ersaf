@@ -110,9 +110,14 @@ La regola vale per l'elenco, la scheda, la modifica, le percentuali e la ricerca
 
 Nota: in alcuni casi il server rivela comunque l'esistenza di un'azienda non visibile; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
-Per sottoscrittori, attuatori e pratiche non esiste una regola simile: chi accede li vede tutti.
+## Visibilità di sottoscrittori, attuatori e pratiche
 
-Nota: il server non limita per ruolo né per gerarchia la lettura di sottoscrittori, attuatori e pratiche, anche dove il menu nasconde la pagina; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+- Il **Nazionale** vede tutto.
+- Per le **anagrafiche**, chiunque altro vede la propria e quelle delle persone che dipendono da lui o da una persona della sua stessa azienda, seguendo la catena dell'utente padre fino in fondo. Le persone della stessa azienda non compaiono per il solo fatto di esserlo: compaiono se a loro volta dipendono da qualcuno del gruppo. Vedi [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
+- Per le **pratiche**, chiunque altro vede solo quelle della propria azienda, e chi non ha un'azienda non ne vede nessuna né può crearne. Vedi [Pratiche](pratiche.md).
+- Ciò che non si vede risponde "non trovata", con lo stesso messaggio di una cosa inesistente: la regola non rivela nulla.
+
+Nota: il documento PDF di una pratica non segue questa regola, e alcune pagine restano raggiungibili dall'indirizzo anche a chi non ha il ruolo; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 ## Assegnare i ruoli
 
@@ -125,11 +130,11 @@ Nota: il server non limita per ruolo né per gerarchia la lettura di sottoscritt
 
 La scheda "Utente" di ogni persona ha la tendina **"Ruolo"** con tutti e sette i ruoli. La schermata e il suo salvataggio sono descritti in [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md). Qui contano solo le regole di permesso:
 
-- il **ruolo** lo può cambiare qualunque utente collegato, su qualunque scheda, compresa la propria;
+- il **ruolo** lo può cambiare qualunque utente collegato, sulle schede che vede, con due eccezioni valide per chi non è Nazionale: non può assegnare il ruolo Nazionale a nessuno, e non può cambiare il proprio ruolo. In entrambi i casi il server risponde "Solo il nazionale può eseguire questa operazione.". Riconfermare il ruolo già presente è ammesso, perché la scheda lo rimanda a ogni salvataggio;
 - **nome utente, stato e utente padre** li può cambiare solo chi modifica la propria scheda, oppure un Regionale o un Nazionale. Agli altri il server risponde "Non hai i permessi per modificare un altro utente.". Attenzione: il salvataggio è già andato a metà, perché il ruolo viene salvato per primo. Dopo quel messaggio il ruolo risulta cambiato e il resto no;
 - cambiare ruolo sposta la persona da un elenco all'altro: il ruolo Utente la porta fra i Sottoscrittori, un ruolo da attuatore fra gli Attuatori.
 
-Nota: né l'interfaccia né il server limitano chi può assegnare un ruolo; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Nota: la tendina continua a offrire tutti i ruoli, compreso Nazionale, anche a chi non può assegnarli: l'errore arriva al salvataggio; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 Un cambio di ruolo non chiude le sessioni già aperte della persona. Il suo menu cambia al successivo caricamento della pagina.
 
@@ -139,4 +144,4 @@ Nota: chi riceve un ruolo senza accesso resta collegato fino alla fine della ses
 
 L'utente padre indica l'attuatore di riferimento della persona. Si cambia dalla scheda "Utente" e segue le stesse regole di permesso del nome utente e dello stato: solo sulla propria scheda, oppure da un Regionale o da un Nazionale. Come si sceglie il nuovo padre è descritto in [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
 
-Oggi l'utente padre è solo un'informazione: non limita cosa vede nessuno.
+L'utente padre non è solo un'informazione: è la catena su cui si regge la visibilità delle anagrafiche. Cambiarlo cambia chi vede quella persona e chi vede le persone che dipendono da lei.

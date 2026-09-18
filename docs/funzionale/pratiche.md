@@ -341,12 +341,23 @@ riporta i nomi.
 
 ## Chi vede le pratiche
 
-Chiunque possa accedere alla piattaforma vede tutte le pratiche, senza
-distinzione di ruolo, di ateneo o di azienda. Per sapere chi accede, vedi
+- Il Nazionale vede tutte le pratiche.
+- Chiunque altro vede solo le pratiche della propria azienda.
+- Chi non ha un'azienda non vede nessuna pratica, e non può crearne: il
+  tentativo viene rifiutato.
+
+La regola vale per l'elenco, per la scheda e anche per le tendine dei filtri,
+che propongono solo studenti e percorsi presenti fra le pratiche che si
+vedono. Una pratica che non si vede risponde «non trovata» anche aprendola
+dall'indirizzo. Per sapere chi accede, vedi
 [Ruoli e permessi](ruoli-e-permessi.md).
 
-Le abilitazioni limitano solo i pulsanti della Dashboard. L'elenco, la
-scheda, il pulsante "Nuova" e il documento PDF sono disponibili a tutti, anche
-a chi non ha abilitazioni.
+Creando una pratica, l'azienda è sempre la propria: non si può indicarne
+un'altra, e nemmeno spostarla in un'altra azienda modificandola. Il Nazionale
+invece può.
 
-Nota: le abilitazioni sono applicate solo dall'interfaccia, e solo nella Dashboard; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Le abilitazioni sono un'altra cosa e limitano solo i pulsanti della Dashboard:
+l'elenco, la scheda, il pulsante "Nuova" e il documento PDF restano
+disponibili anche a chi non ne ha.
+
+Nota: le abilitazioni sono applicate solo dall'interfaccia, e il documento PDF non segue la regola sopra; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
