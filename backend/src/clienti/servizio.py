@@ -21,7 +21,9 @@ from fastapi import HTTPException, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from src.auth.autorizzazioni import richiedi_nazionale
 from src.auth.models import ATTIVO
+from src.auth.servizio_login import codice_ruolo
 from src.clienti.models import Cliente
 from src.ruolo.models import Ruolo
 from src.security.password import (
@@ -67,6 +69,75 @@ ABILITAZIONI_SEMPRE_SPENTE = ("cliente_abilitazione_corsi_speciali",)
 # =============================================================================
 # Unicita'
 # =============================================================================
+def verifica_ruolo_assegnabile(
+    db: Session,
+    vis,
+    utente: Utente,
+    nuovo_ruolo: int | None,
+    riga_attuale=None,
+) -> None:
+    """Chi non e' Nazionale non puo' promuovere nessuno a Nazionale, ne'
+    cambiare il proprio ruolo.
+
+    Senza questa regola il filtro di visibilita' si scavalcava con una sola
+    richiesta: la propria riga "me" e' sempre visibile, e scriverci
+    cliente_ruolo = Nazionale bastava a vedere tutto dalla richiesta
+    successiva. Lo stesso valeva creando con con-utente un Nazionale con
+    un'email scelta da chi lo crea.
+
+    `riga_attuale` ha utente_id e cliente_ruolo della riga modificata (None in
+    creazione). Un valore uguale a quello attuale e' ammesso: la scheda utente
+    lo rimanda a ogni salvataggio.
+    """
+    if vis.nazionale:
+        return
+    # In creazione un ruolo assente lascia il default dello schema. In modifica
+    # invece un null esplicito E' un cambio: con la sql_mode non strict di
+    # produzione MariaDB lo salva come 0, con il solo warning 1048. Trattarlo
+    # come "niente da controllare" permetteva di cambiare il proprio ruolo, e
+    # con due righe clienti di far diventare principale quella con piu' diritti.
+    if riga_attuale is None and nuovo_ruolo is None:
+        return
+    if riga_attuale is not None and nuovo_ruolo == riga_attuale.cliente_ruolo:
+        return
+    promuove = (
+        nuovo_ruolo is not None
+        and (codice_ruolo(db, nuovo_ruolo) or "").lower() == "nazionale"
+    )
+    proprio = riga_attuale is not None and riga_attuale.utente_id == vis.utente_id
+    if promuove or proprio:
+        # Solleva il 403 di sempre, con la stessa traccia nel log.
+        richiedi_nazionale(db, utente, "assegnazione del ruolo")
+
+
+def verifica_azienda_assegnabile(
+    db: Session,
+    vis,
+    utente: Utente,
+    nuova_azienda: int | None,
+    riga_attuale,
+) -> None:
+    """Chi non e' Nazionale non puo' cambiare l'azienda della propria riga.
+
+    L'azienda della riga "me" e' il secondo campo su cui si regge la
+    visibilita': decide le pratiche che si vedono, i colleghi da cui partono
+    i clienti visibili e le aziende. La riga "me" e' sempre visibile per
+    costruzione, quindi il controllo sulla visibilita' non la ferma, ed e' la
+    stessa scalata che verifica_ruolo_assegnabile chiude sul ruolo.
+
+    L'azienda di un'ALTRA riga visibile resta modificabile: e' il flusso della
+    scheda Azienda di un attuatore. Riassegnare lo stesso valore e' ammesso,
+    perche' la scheda rimanda i campi a ogni salvataggio.
+    """
+    if vis.nazionale or riga_attuale is None:
+        return
+    if riga_attuale.utente_id != vis.utente_id:
+        return
+    if nuova_azienda == riga_attuale.azienda_id:
+        return
+    richiedi_nazionale(db, utente, "assegnazione dell'azienda")
+
+
 def verifica_unicita_anagrafica(
     db: Session, dati: dict[str, Any], escludi_cliente_id: int | None = None
 ) -> None:

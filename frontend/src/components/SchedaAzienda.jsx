@@ -10,7 +10,8 @@ import { scheda } from "../config/styles/superficie";
 import { ROTTE } from "../config/routes/rotte";
 import IntestazionePagina from "./shared/IntestazionePagina";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
-import CampiAzienda, { VUOTO_AZIENDA } from "./CampiAzienda.jsx";
+import CampiAzienda from "./CampiAzienda.jsx";
+import { VUOTO_AZIENDA } from "../config/campiAzienda.js";
 import GerarchiaAzienda from "./GerarchiaAzienda.jsx";
 import { TriangleAlert } from "../config/icone.js";
 

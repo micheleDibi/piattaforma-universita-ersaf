@@ -254,6 +254,14 @@ class ClienteResponse(ClienteBase):
     cliente_id: int
     email_verificata: bool = False
     cellulare_verificato: bool = False
+    diploma_completo: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Vero se il curriculum piu' recente ha diploma, anno, istituto e i due "
+            "voti del diploma. Valorizzato nell'elenco dei sottoscrittori e nel "
+            "dettaglio; null negli altri elenchi, dove non viene calcolato."
+        ),
+    )
     azienda: Optional[AziendaResponse] = None
     ruolo: Optional[RuoloResponse] = None
     utente: Optional[UtenteResponse] = None

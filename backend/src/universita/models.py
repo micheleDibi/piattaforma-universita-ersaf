@@ -5,6 +5,20 @@ from sqlalchemy import Date, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import  Mapped, mapped_column, relationship
 from sqlalchemy import text
 
+# I dati del diploma che devono esserci perche' il curriculum sia "completo".
+# Via, citta' e provincia dell'istituto sono facoltativi. Le costanti servono
+# anche all'elenco clienti, che carica solo queste colonne.
+CAMPI_DIPLOMA_TESTO = (
+    "universita_diploma",
+    "universita_anno_scolastico",
+    "universita_istituto",
+)
+CAMPI_DIPLOMA_NUMERO = (
+    "universita_votoRicevuto_diploma",
+    "universita_votoMassimo_diploma",
+)
+
+
 class Universita(Base):
     __tablename__ = "universita"
 
@@ -101,3 +115,14 @@ class Universita(Base):
     universita_attIscritto_modalita: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     cliente: Mapped["Cliente"] = relationship("Cliente", back_populates="universita")
+
+    @property
+    def diploma_completo(self) -> bool:
+        """Unica definizione di "dati diploma completi".
+
+        I testi devono essere non vuoti dopo il trim; i voti non NULL, e uno
+        zero conta come valorizzato. Il frontend legge solo il booleano.
+        """
+        testi = all((getattr(self, campo) or "").strip() for campo in CAMPI_DIPLOMA_TESTO)
+        numeri = all(getattr(self, campo) is not None for campo in CAMPI_DIPLOMA_NUMERO)
+        return testi and numeri

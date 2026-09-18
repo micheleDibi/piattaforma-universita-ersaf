@@ -138,6 +138,10 @@ Desktop.ini
 # =============================================================================
 # VARIE
 # =============================================================================
+# Appunti di lavoro: estratti degli script del gestionale Inde e risultati di
+# ricerche sul database. Restano sul PC di chi li ha fatti.
+scripts_inde/
+
 tmp/
 temp/
 *.tmp

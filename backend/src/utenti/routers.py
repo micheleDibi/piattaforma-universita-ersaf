@@ -8,6 +8,7 @@ from src.database import get_db
 from typing import List
 from src.auth.autorizzazioni import e_amministrativo
 from src.auth.dipendenze import get_current_utente
+from src.auth.visibilita import Visibilita, utente_visibile, visibilita_corrente
 from src.security.password import hash_password, messaggi_policy, verifica_policy_password
 
 
@@ -22,13 +23,23 @@ router = APIRouter(
     dependencies=[Depends(get_current_utente)],
 )
 
-def _verifica_padre(db: Session, utente_padre: int | None, utente_id: int | None = None) -> None:
-    """utente_padre deve esistere, e non puo' essere se stessi.
+def _verifica_padre(
+    db: Session,
+    utente_padre: int | None,
+    utente_id: int | None = None,
+    *,
+    vis: Visibilita,
+) -> None:
+    """utente_padre deve esistere, non puo' essere se stessi e, per chi non e'
+    Nazionale, deve essere il chiamante o un utente che il chiamante vede.
 
     Il database ha la FOREIGN KEY su utente_created_by e utente_updated_by ma
     NON su utente_padre: si poteva scrivere un id qualsiasi e la riga restava
     li', con la scheda che mostrava "ID: 999999" e nessuno in grado di capire
     a chi si riferisse. La finestra "Cambia Padre" scrive proprio questo campo.
+
+    Un padre non visibile riceve lo stesso 404 di un padre inesistente: un
+    testo diverso direbbe che quell'utente esiste.
     """
     if utente_padre is None:
         return
@@ -40,7 +51,12 @@ def _verifica_padre(db: Session, utente_padre: int | None, utente_id: int | None
     esiste = (
         db.query(Utente.utente_id).filter(Utente.utente_id == utente_padre).first()
     )
-    if not esiste:
+    ammesso = esiste and (
+        vis.nazionale
+        or utente_padre == vis.utente_id
+        or utente_visibile(db, vis, utente_padre)
+    )
+    if not ammesso:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"L'utente padre con id {utente_padre} non esiste.",
@@ -51,7 +67,8 @@ def _verifica_padre(db: Session, utente_padre: int | None, utente_id: int | None
 @router.post("/", response_model=UtenteResponse, status_code=status.HTTP_201_CREATED)
 def crea_utente(utente: UtenteCreate,
                 db: Session = Depends(get_db),
-                current_utente = Depends(get_current_utente)):
+                current_utente = Depends(get_current_utente),
+                vis: Visibilita = Depends(visibilita_corrente)):
 
     esistente = db.query(Utente).filter(Utente.utente_username == utente.utente_username).first()
     if esistente:
@@ -78,7 +95,7 @@ def crea_utente(utente: UtenteCreate,
             },
         )
 
-    _verifica_padre(db, utente.utente_padre)
+    _verifica_padre(db, utente.utente_padre, vis=vis)
 
     dati_utente = utente.model_dump(exclude={"utente_password"})
     id_corrente = current_utente.utente_id
@@ -147,7 +164,8 @@ def leggi_utente(utente_id: int, db: Session = Depends(get_db)):
 def aggiorna_utente(utente_id: int,
                     utente: UtenteUpdate,
                     db: Session = Depends(get_db),
-                    current_utente = Depends(get_current_utente)):
+                    current_utente = Depends(get_current_utente),
+                    vis: Visibilita = Depends(visibilita_corrente)):
     # Autenticato non basta: senza questo controllo qualunque utente loggato
     # poteva disattivare o rinominare qualunque altro dei 4.771, amministratore
     # compreso. Si modifica se' stessi, oppure si ha un ruolo amministrativo.
@@ -169,11 +187,13 @@ def aggiorna_utente(utente_id: int,
     # loro default, azzerando utente_created_by e utente_updated_by.
     # Lo schema non ha piu' utente_password: la password non si cambia da qui.
     modifiche = utente.model_dump(exclude_unset=True)
+    # Il padre si controlla prima di qualunque scrittura: un rifiuto non deve
+    # lasciare dietro di se' un'attivazione cancellata.
+    if "utente_padre" in modifiche:
+        _verifica_padre(db, modifiche["utente_padre"], utente_id=utente_id, vis=vis)
     if "utente_attivoSN" in modifiche:
         from src.otp.models import Attivazione
         db.query(Attivazione).filter(Attivazione.utente_id == utente_id).delete()
-    if "utente_padre" in modifiche:
-        _verifica_padre(db, modifiche["utente_padre"], utente_id=utente_id)
 
     for key, value in modifiche.items():
         setattr(db_utente, key, value)

@@ -1,7 +1,12 @@
+import { useId } from "react";
 import { ChevronRight } from "../../config/icone.js";
 import AvvisoTooltip from "./AvvisoTooltip.jsx";
+import IndicatoriStato from "./IndicatoriStato.jsx";
+import { campoIndicatori, idIndicatori } from "../../lib/righeElenco.js";
 
 export default function TabellaElenco({ dati, modello, onApri }) {
+  const base = useId();
+  const indicatori = campoIndicatori(modello.colonne.flatMap((colonna) => colonna.campi));
   return (
     <table className="elenco-adattivo__tabella">
       <caption className="sr-only">{modello.etichetta}</caption>
@@ -37,6 +42,7 @@ export default function TabellaElenco({ dati, modello, onApri }) {
             tabIndex={0}
             role="button"
             aria-label={`Visualizza ${riga.nomeAzione}`}
+            aria-describedby={idIndicatori(base, riga, indicatori)}
           >
             {modello.colonne.map((colonna) => (
               <td key={colonna.id}>
@@ -55,6 +61,12 @@ export default function TabellaElenco({ dati, modello, onApri }) {
                         />
                         <span>{valore}</span>
                       </span>
+                    );
+                  }
+                  if (campo.rilievo === "indicatori") {
+                    return (
+                      <IndicatoriStato key={campo.id} indicatori={valore}
+                        id={idIndicatori(base, riga, indicatori)} />
                     );
                   }
                   if (campo.rilievo === "codice") {

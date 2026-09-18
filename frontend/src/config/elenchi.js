@@ -17,6 +17,9 @@ const cliente = {
 };
 const corso = { id: "corso", etichetta: "Corso", icona: "corso" };
 const stato = { id: "stato", etichetta: "Stato", rilievo: "stato" };
+// Stesso id della colonna di pratiche e prodotti, e quindi stessa larghezza,
+// ma i valori sono i pallini di rigaCliente e non un'etichetta.
+const statoCliente = { id: "stato", etichetta: "Stato", rilievo: "indicatori" };
 const titolo = { id: "titolo", etichetta: "Titolo", rilievo: "principale" };
 const codice = { id: "codice", etichetta: "Codice", rilievo: "codice" };
 const universita = {
@@ -50,9 +53,14 @@ export function modelloClienti({ attuatori, mostraAzienda }) {
     id: "clienti",
     etichetta: attuatori ? "Attuatori" : "Sottoscrittori",
     ampiezza: mostraAzienda ? "articolata" : "semplice",
+<<<<<<< HEAD
     colonne: [nome, cognome, ...riferimenti].map(colonna),
     mobile: [nominativo, ...riferimenti],
     avvisoDopo: "cognome",
+=======
+    colonne: [nome, cognome, statoCliente, ...riferimenti].map(colonna),
+    mobile: [nominativo, statoCliente, ...riferimenti],
+>>>>>>> origin/main
   };
 }
 

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
+from src.auth.autorizzazioni import richiedi_nazionale
 from src.auth.dipendenze import get_current_utente
 from src.database import get_db
 from src.ruolo.models import Ruolo
@@ -45,7 +46,14 @@ def _verifica_codice_libero(db: Session, codice: str, escludi_id: int | None = N
 
 
 @router.post("/", response_model=RuoloResponse, status_code=status.HTTP_201_CREATED)
-def crea_ruolo(ruolo: RuoloCreate, db: Session = Depends(get_db)):
+def crea_ruolo(
+    ruolo: RuoloCreate,
+    db: Session = Depends(get_db),
+    current_utente=Depends(get_current_utente),
+):
+    # Solo il Nazionale: chi e' Nazionale lo decide proprio la stringa
+    # ruolo_codice, e con due scritture chiunque poteva diventarlo.
+    richiedi_nazionale(db, current_utente, "modifica dei ruoli")
     _verifica_codice_libero(db, ruolo.ruolo_codice)
 
     db_ruolo = Ruolo(**ruolo.model_dump())
@@ -72,7 +80,15 @@ def leggi_ruolo(ruolo_id: int, db: Session = Depends(get_db)):
 
 #PUT
 @router.put("/{ruolo_id}", response_model=RuoloResponse)
-def aggiorna_ruolo(ruolo_id: int, ruolo: RuoloUpdate, db: Session = Depends(get_db)):
+def aggiorna_ruolo(
+    ruolo_id: int,
+    ruolo: RuoloUpdate,
+    db: Session = Depends(get_db),
+    current_utente=Depends(get_current_utente),
+):
+    # Vedi crea_ruolo: rinominare "Nazionale" e poi un altro ruolo in
+    # "Nazionale" dava a tutti quegli utenti la vista completa.
+    richiedi_nazionale(db, current_utente, "modifica dei ruoli")
     db_ruolo = _ruolo_o_404(db, ruolo_id)
 
     modifiche = ruolo.model_dump(exclude_unset=True)

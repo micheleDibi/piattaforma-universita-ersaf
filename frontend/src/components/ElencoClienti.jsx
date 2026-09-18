@@ -9,8 +9,9 @@ import IntestazioneElenco from "./shared/IntestazioneElenco";
 import CampoRicerca from "./shared/CampoRicerca";
 import AzioneCrea from "./shared/AzioneCrea";
 import RigheElenco from "./shared/RigheElenco.jsx";
+import { LegendaIndicatori } from "./shared/IndicatoriStato.jsx";
 import { modelloClienti } from "../config/elenchi.js";
-import { rigaCliente } from "../lib/righeElenco.js";
+import { rigaCliente, vociLegendaCliente } from "../lib/righeElenco.js";
 import { campo } from "../config/styles/campo";
 import { TESTI_ELENCO } from "../config/testi/elenco.js";
 import { contenutoPagina } from "../config/styles/pagina";
@@ -76,6 +77,7 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
             </select>
             </label>
           ) } : undefined}
+        legenda={<LegendaIndicatori voci={vociLegendaCliente(opzioniRighe)} />}
       />
       <div className={schedaElenco("corpo")}>
         <RigheElenco

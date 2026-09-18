@@ -4,6 +4,7 @@ from typing import Annotated
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from src.auth.visibilita import Visibilita, condizione_azienda
 from src.pratiche.models import Pratica
 from src.clienti.models import Cliente
 
@@ -20,8 +21,14 @@ class FiltriPratiche(BaseModel):
     listino_tipo_corso_id: list[Annotated[int, Field(gt=0)]] = Field(default_factory=list, max_length=10)
 
 
-def query_filtrata(db: Session, filtri: FiltriPratiche):
+def query_filtrata(db: Session, filtri: FiltriPratiche, vis: Visibilita):
     query = db.query(Pratica)
+    # Chi non e' Nazionale vede solo le pratiche della propria azienda, e
+    # nessuna se non ne ha una. Sta qui, e non nel router, perche' ogni elenco
+    # di pratiche passi di qui.
+    condizione = condizione_azienda(vis, Pratica.azienda_id)
+    if condizione is not None:
+        query = query.filter(condizione)
     if filtri.search.strip():
         query = query.join(Cliente, Pratica.cliente_id == Cliente.cliente_id)
         for parola in filtri.search.split():
