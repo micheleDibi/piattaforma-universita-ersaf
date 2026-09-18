@@ -1,0 +1,31 @@
+[
+  {
+    "sfondo": "pagina-01.jpg",
+    "layout": [
+      "numero",
+      "ssml-formazione-domanda"
+    ]
+  },
+  {
+    "sfondo": "pagina-02.jpg",
+    "layout": [
+      "numero",
+      "ssml-formazione-privacy"
+    ]
+  },
+  {
+    "sfondo": "pagina-03.jpg",
+    "layout": [
+      "numero",
+      "ssml-formazione-dichiarazioni"
+    ]
+  },
+  {
+    "sfondo": "pagina-04.jpg",
+    "layout": [
+      "numero",
+      "ssml-formazione-carriera",
+      "ssml-tabella-esami"
+    ]
+  }
+]

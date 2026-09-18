@@ -1,0 +1,71 @@
+[
+  {
+    "sfondo": "pagina-01.jpg",
+    "layout": [
+      "numero",
+      "ssml-laurea-domanda"
+    ]
+  },
+  {
+    "sfondo": "pagina-02.jpg",
+    "layout": [
+      "numero",
+      "ssml-laurea-privacy"
+    ]
+  },
+  {
+    "sfondo": "pagina-03.jpg",
+    "layout": [
+      "numero",
+      "ssml-laurea-privacy"
+    ]
+  },
+  {
+    "sfondo": "pagina-04.jpg",
+    "layout": [
+      "numero",
+      "ssml-laurea-dichiarazioni"
+    ]
+  },
+  {
+    "sfondo": "pagina-05.jpg",
+    "layout": [
+      "numero",
+      "ssml-laurea-carriera",
+      "ssml-tabella-esami"
+    ]
+  },
+  {
+    "sfondo": "pagina-06.jpg",
+    "layout": [
+      "numero",
+      "ssml-laurea-foto"
+    ]
+  },
+  {
+    "sfondo": "pagina-07.jpg",
+    "layout": [
+      "numero",
+      "ssml-contratto-anagrafica"
+    ]
+  },
+  {
+    "sfondo": "pagina-08.jpg",
+    "layout": [
+      "numero"
+    ]
+  },
+  {
+    "sfondo": "pagina-09.jpg",
+    "layout": [
+      "numero"
+    ]
+  },
+  {
+    "sfondo": "pagina-10.jpg",
+    "layout": [
+      "numero",
+      "ssml-contratto-firme"
+    ]
+  }
+]

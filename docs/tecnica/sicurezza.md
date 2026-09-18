@@ -406,6 +406,11 @@ Chi vede quali dati è deciso da tre regole distinte, tutte applicate dal server
 | Pratiche | Uguaglianza fra `azienda_id` della pratica e quella della propria riga; senza azienda, nessuna pratica | `auth/visibilita.py:232-245` |
 | Aziende | La propria azienda e le sue discendenti | `aziende_xcod/servizi.py:73-88` |
 
+Disponibilità e download del PDF applicano la stessa regola delle pratiche
+tramite `condizione_azienda`, prima di leggere i dati e la firma del documento.
+Sono coperti da test per la propria azienda, azienda diversa, nessuna azienda
+e accesso Nazionale (`tests/integration/test_documento_pratica.py`).
+
 Il Nazionale non ha filtri. La regola delle anagrafiche e quella delle pratiche stanno in un unico modulo, `backend/src/auth/visibilita.py`: i router la chiamano e non la riscrivono. Ciò che non si vede risponde 404 con lo stesso testo di un id inesistente.
 
 ### I due campi che decidono la visibilità
@@ -501,10 +506,6 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - L'elenco attuatori mostra la colonna solo al Nazionale.
   - L'API però restituisce l'azienda in ogni riga, fra quelle visibili.
   - `frontend/src/components/ElencoClienti.jsx:32-34`; `clienti/schemas.py:261`.
-- **Documento PDF della pratica.**
-  - È l'unica rotta delle pratiche rimasta fuori dal filtro per azienda: il router dei documenti è incluso in quello delle pratiche e ne eredita l'autenticazione, ma non la visibilità.
-  - Ogni utente autenticato può scaricarlo, per qualunque pratica, anche quando la scheda della stessa pratica risponde "non trovata". Contiene dati anagrafici, estremi del documento e firma.
-  - `documenti/rotte.py:29-48`, `51-83`; `backend/src/pratiche/routers.py:23`; `backend/src/documenti/dati.py:91-113`, `140-162`.
 - **Padre di un'azienda.**
   - La lettura del padre non applica il filtro di visibilità.
   - Il dettaglio dell'azienda invece lo applica e risponde 404.

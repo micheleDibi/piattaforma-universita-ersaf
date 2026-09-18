@@ -27,7 +27,11 @@
   while dimensione > corpo-minimo and measure(text(size: dimensione, testo)).width > larghezza {
     dimensione -= 0.25pt
   }
-  text(size: dimensione, testo)
+  let contenuto = box(text(size: dimensione, testo))
+  let estensione = measure(contenuto).width
+  if estensione > larghezza {
+    scale(x: larghezza / estensione * 100%, y: 100%, reflow: true, contenuto)
+  } else { contenuto }
 }
 
 #let testo(campo) = {
@@ -36,11 +40,18 @@
   su-linea(campo.x0 + 0.5, campo.y, larghezza, allineato)
 }
 
-#let griglia(campo) = {
+#let griglia(campo) = context {
   let passo = (campo.x1 - campo.x0) / campo.celle
   let caratteri = campo.testo.clusters()
-  for (indice, carattere) in caratteri.slice(0, calc.min(campo.celle, caratteri.len())).enumerate() {
-    su-linea(campo.x0 + indice * passo, campo.y, mm(passo), align(center, carattere))
+  if caratteri.len() > campo.celle {
+    // Un valore lungo resta completo: sostituisce le caselle interne con una riga.
+    place(top + left, dx: mm(campo.x0 + 0.2), dy: mm(campo.y - 4),
+      rect(width: mm(campo.x1 - campo.x0 - 0.4), height: 3.5mm, fill: white, stroke: none))
+    testo((..campo, allinea: "left"))
+  } else {
+    for (indice, carattere) in caratteri.enumerate() {
+      su-linea(campo.x0 + indice * passo, campo.y, mm(passo), align(center, carattere))
+    }
   }
 }
 
@@ -75,12 +86,16 @@
   )
   let immagine-firma = dati.allegati.at("firma", default: none)
   for pagina in dati.pagine {
-    page(background: image("/" + pagina.sfondo, width: 100%, height: 100%))[
+    page(background: if pagina.sfondo != none { image("/" + pagina.sfondo, width: 100%, height: 100%) })[
       #for campo in pagina.campi {
         if campo.tipo == "testo" { testo(campo) }
         else if campo.tipo == "griglia" { griglia(campo) }
         else if campo.tipo == "casella" { crocetta(campo) }
         else if campo.tipo == "firma" and immagine-firma != none { firma(campo, "/" + immagine-firma) }
+        else if campo.tipo == "copertura" {
+          place(top + left, dx: mm(campo.x0), dy: mm(campo.y),
+            rect(width: mm(campo.x1 - campo.x0), height: mm(campo.altezza), fill: white, stroke: none))
+        }
       }
     ]
   }

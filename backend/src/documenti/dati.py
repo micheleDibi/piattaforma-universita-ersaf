@@ -20,6 +20,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.documenti.firma import immagine_firma
+from src.documenti.corsi_richiesti import corsi_richiesti
+from src.documenti.dilazioni import rate_ecampus
 from src.esami.models import Esame
 from src.pratiche.models import Pratica
 from src.universita.models import Universita
@@ -156,7 +158,13 @@ def dati_pratica(db: Session, pratica: Pratica) -> tuple[dict, dict[str, bytes]]
         "corso": _corso(pratica.listino_testa),
         "generalita": _generalita(generalita_di(db, pratica.cliente_id)),
         "esami": esami_di(db, pratica.cliente_id),
+        "corsi_richiesti": [_corso(c) for c in corsi_richiesti(db, pratica)],
         "azienda": {"citta": _descrizione(pratica.azienda, "azienda_citta")},
     }
+    if normalizza(dati["corso"]["ente"]) == normalizza("Università Telematica eCampus"):
+        dati["rateizzazione"] = [
+            {"importo": importo(rata.dilazione_importo), "data": testo(rata.dilazione_data)}
+            for rata in rate_ecampus(db, pratica.pratica_id)
+        ]
     firma = immagine_firma(pratica.pratica_firma)
     return dati, ({"firma": firma} if firma else {})

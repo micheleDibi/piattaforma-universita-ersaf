@@ -1,0 +1,11 @@
+[
+  ["T", "anno_accademico.inizio", 100, 115, 153.8],
+  ["T", "anno_accademico.fine", 116.5, 132, 153.8],
+  ["T", "retta.intero", 168, 193.5, 208.5],
+  ["T", "richiesti.1.descrizione", 16.5, 85, 166.6],
+  ["T", "richiesti.2.descrizione", 16.5, 85, 172.9],
+  ["T", "richiesti.3.descrizione", 16.5, 85, 179.2],
+  ["T", "richiesti.1.corso_laurea", 88, 156, 166.6],
+  ["T", "richiesti.2.corso_laurea", 88, 156, 172.9],
+  ["T", "richiesti.3.corso_laurea", 88, 156, 179.2]
+]

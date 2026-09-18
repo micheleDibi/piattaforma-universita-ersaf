@@ -1,0 +1,38 @@
+[
+  {
+    "sfondo": "pagina-01.jpg",
+    "layout": [
+      "numero",
+      "ssml-master-domanda"
+    ]
+  },
+  {
+    "sfondo": "pagina-02.jpg",
+    "layout": [
+      "numero",
+      "ssml-master-privacy"
+    ]
+  },
+  {
+    "sfondo": "pagina-03.jpg",
+    "layout": [
+      "numero",
+      "ssml-master-dichiarazioni"
+    ]
+  },
+  {
+    "sfondo": "pagina-04.jpg",
+    "layout": [
+      "numero",
+      "ssml-master-carriera",
+      "ssml-tabella-esami"
+    ]
+  },
+  {
+    "sfondo": "pagina-05.jpg",
+    "layout": [
+      "numero",
+      "ssml-master-foto"
+    ]
+  }
+]

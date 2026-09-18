@@ -1,0 +1,23 @@
+[
+  {
+    "sfondo": "pagina-01.jpg",
+    "layout": [
+      "numero",
+      "link-perfezionamento-domanda"
+    ]
+  },
+  {
+    "sfondo": "pagina-02.jpg",
+    "layout": [
+      "numero",
+      "link-perfezionamento-privacy"
+    ]
+  },
+  {
+    "sfondo": "pagina-03.jpg",
+    "layout": [
+      "numero",
+      "link-perfezionamento-dichiarazioni"
+    ]
+  }
+]

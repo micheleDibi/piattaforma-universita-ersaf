@@ -129,9 +129,10 @@ I controlli di ruolo non sono dipendenze: le funzioni li chiamano al loro
 interno (`auth/autorizzazioni.py`). La sessione del database arriva da
 `get_db` e si chiude a fine richiesta.
 
-Un filtro di visibilità esiste solo per le aziende
-(`aziende_xcod/servizi.py`, usato da `aziende/routers.py`). Clienti e pratiche
-non hanno un filtro: vedi [Limiti noti](sicurezza.md#limiti-noti).
+Le regole di visibilità per clienti e pratiche sono centralizzate in
+`auth/visibilita.py`; quelle delle aziende in `aziende_xcod/servizi.py`. Anche
+i documenti delle pratiche applicano il filtro per azienda. Limiti di ruolo
+ancora aperti: [Limiti noti](sicurezza.md#limiti-noti).
 
 ### 4. Gestori di errore
 
@@ -201,13 +202,17 @@ pratica.
 
 **Rotte.** `GET /pratiche/{id}/documento/disponibile` e
 `GET /pratiche/{id}/documento`. Sono incluse nel router delle pratiche, quindi
-hanno la stessa autenticazione.
+hanno la stessa autenticazione. Entrambe applicano anche
+`condizione_azienda`: il Nazionale vede tutto, gli altri la propria azienda;
+un documento fuori portata risponde 404 come una pratica inesistente.
 
 **Scelta del modulo** (`documenti/modelli.py`). Il modulo dipende dall'ente e
 dal tipo di corso del prodotto formativo della pratica. Il confronto usa le
 descrizioni in forma normalizzata, non gli id, perché gli id delle decodifiche
 possono cambiare fra il gestionale e le sue copie. I moduli registrati stanno
-in `MODELLI`; il primo è quello eCampus per i corsi di laurea.
+in `MODELLI`, con 13 moduli per eCampus, SSML, Link e Avatar4University.
+La matrice è nella [guida alle pratiche](../funzionale/pratiche.md#quando-è-disponibile).
+Non ci sono fallback per tipi senza un originale documentato.
 
 Se non c'è un modulo, la verifica risponde `disponibile: false` e il download
 risponde 404.
@@ -219,25 +224,59 @@ formattato:
   diventano testo vuoto;
 - i caratteri di controllo e invisibili vengono tolti, perché il PDF/A li
   rifiuta;
-- gli esami arrivano dal modello `esami`;
+- gli esami sostenuti arrivano dal modello `esami`;
+- `corsi_richiesti.py` legge fino a sei insegnamenti dalla scheda
+  `pratiche_corsisingoli` più recente per id, oppure i tre legami legacy della
+  pratica se la scheda non esiste; non usa gli esami come corsi richiesti;
 - la firma perde l'intestazione del gestionale e viene ritagliata sul tratto con
   Pillow (`documenti/firma.py`).
 
-**Impaginazione.** Ogni pagina è un'immagine.
+**Impaginazione centralizzata.** Le pagine originali sono immagini, i campi
+sono dati dichiarativi. Non esiste un generatore separato per ogni ateneo.
 
-- `documenti/impaginazione.py` definisce gli elementi dei moduli a campi
-  (testo, casella, griglia, firma, pagina) e la funzione che li riempie. Le
-  posizioni sono millimetri sull'A4.
-- Le posizioni dei campi di un modulo e le regole che trasformano i dati in
-  testi e crocette stanno in una sottocartella per ente: oggi
-  `documenti/ecampus/`, con la prima pagina del modulo, le pagine riusate e i
-  valori.
-- `modelli/_comune/impaginato.typ` disegna i campi.
+- `impaginazione.py` definisce testo, griglia, casella, firma e copertura di una
+  scritta prestampata obsoleta. Le coordinate sono millimetri sull'A4.
+- `moduli.py` carica la sequenza da `modelli/<nome>/pagine.json` e i campi da
+  `modelli/layout/*.json`; riusa le pagine già calibrate in `ecampus/pagine.py`.
+- `valori_moduli.py` estende il mapping comune di `ecampus/valori.py` con date,
+  titoli e insegnamenti richiesti. Le regole non vivono nei template Typst.
+- Gli sfondi identici sono condivisi in `modelli/_comune/sfondi/`. Le tabelle
+  SSML riusano un solo layout con CFU; le coordinate diverse degli altri
+  originali restano specifiche del modulo.
+- `modelli/_comune/impaginato.typ` è l'unico disegnatore: adatta il testo alla
+  larghezza; una griglia troppo corta diventa testo completo sulla stessa riga.
+  Non tronca i valori e non li manda a capo sopra altre etichette.
+- `moduli.py` aggiunge una pagina senza sfondo per gli insegnamenti oltre le
+  righe del modulo eCampus o Link. SSML contiene già sei righe.
+- `modelli/fonti.json` conserva percorso nell'archivio e SHA-256 degli originali
+  usati. Gli originali sono quelli forniti: il codice non ne aggiorna condizioni,
+  privacy o coordinate di pagamento. Solo l'anno prestampato del modulo Link
+  singoli è sostituito con quello della pratica.
 
-**Un modulo nuovo** richiede due cose: la cartella Typst in
-`documenti/modelli/` con le immagini delle pagine, e il codice Python che
-calcola i suoi campi, registrato in `MODELLI` con la propria funzione
-`arricchisci` (`documenti/modelli.py`).
+**Un modulo nuovo** richiede sfondi, layout, sequenza di pagine e associazione
+ente/tipo in `MODELLI`. Una regola nuova sui dati va nel mapping comune,
+soltanto se non è già rappresentata. Il modulo eCampus lauree conserva la sua
+sequenza verificata; usa lo stesso motore e le stesse primitive.
+
+**Rateizzazione eCampus.** `Modello.compila` compone il modulo e gli allegati
+previsti per l'ente in un unico punto. `documenti/dilazioni.py` mappa la tabella
+legacy `dilazioni_pagamenti_ecampus`; `dati_pratica` la legge solo per eCampus,
+dopo il controllo di visibilità della pratica. Include le righe con
+`dilazione_tassa` zero o NULL, ordinate per data e ID, e formatta gli importi
+Decimal senza ricalcolare il piano. I segnaposto delle date diventano vuoti.
+
+`ecampus/rateizzazione.py` usa un solo JPG condiviso per tutti i moduli eCampus.
+Le prime dodici rate occupano le colonne dispari/pari del modulo originale;
+le ulteriori rate proseguono su pagine da 24 righe. Nessun accordo viene aggiunto
+senza rate. Prezzo e data dell'accordo provengono dalla pratica; le tasse
+prestampate non sono ricostruite dalle righe escluse. Il percorso legacy del
+file e il flag dei dati mancanti non attivano né sostituiscono il piano.
+
+Non sono richieste migrazioni, dipendenze o variabili di ambiente nuove:
+la tabella delle dilazioni esiste già nel database legacy.
+Le verifiche sono in `tests/unit/test_documenti_moduli.py`,
+`tests/unit/test_documenti_rateizzazione.py` e
+`tests/integration/test_documento_pratica.py`; si usano solo dati sintetici.
 
 **Motore** (`documenti/motore.py`):
 

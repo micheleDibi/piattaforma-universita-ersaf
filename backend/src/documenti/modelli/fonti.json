@@ -1,0 +1,236 @@
+{
+  "ecampus-perfezionamento": [
+    {
+      "file": "eCampus/Corsi di Perfezionamento/perfezionamento_page-0001.jpg",
+      "sha256": "b02088d7c4cd13d870ba3c6185a6460984a05fc64da2d40bbb9007e86ab7f2bc"
+    },
+    {
+      "file": "eCampus/Corsi di Perfezionamento/perfezionamento_page-0002.jpg",
+      "sha256": "2ed63c9dcdd63105d6a4beaf9066dcfc1a9ad00660758395e85e987ffbbbd72d"
+    },
+    {
+      "file": "eCampus/Corsi di Perfezionamento/perfezionamento_page-0003.jpg",
+      "sha256": "6c38ed2d6255be8f12f667960bb1ac9e272c45e6c49a11610326cce3f03bbae8"
+    },
+    {
+      "file": "eCampus/Corsi di Perfezionamento/perfezionamento_page-0004.jpg",
+      "sha256": "087e25a757aa63c44d844ba6e2f3c464cd2dcecc9ad34f28618f716aaca0fbac"
+    }
+  ],
+  "ecampus-singoli": [
+    {
+      "file": "eCampus/Corsi Singoli/corsi singoli_page-0001.jpg",
+      "sha256": "ebdc2a7669dbe787ebb57f531bf9125a91ea9a724408eb5c2dabad076dd37740"
+    },
+    {
+      "file": "eCampus/Corsi Singoli/corsi singoli_page-0002.jpg",
+      "sha256": "2ed63c9dcdd63105d6a4beaf9066dcfc1a9ad00660758395e85e987ffbbbd72d"
+    },
+    {
+      "file": "eCampus/Corsi Singoli/corsi singoli_page-0003.jpg",
+      "sha256": "e5bfdd0d7ddf662a35fc9e9848ecd3535702c4217da13ef5177213ed3b61e6c1"
+    },
+    {
+      "file": "eCampus/Corsi Singoli/corsi singoli_page-0004.jpg",
+      "sha256": "087e25a757aa63c44d844ba6e2f3c464cd2dcecc9ad34f28618f716aaca0fbac"
+    }
+  ],
+  "ecampus-formazione": [
+    {
+      "file": "eCampus/Formazione ed Alta Formazione/formazione e alta formazione_page-0001.jpg",
+      "sha256": "4b81c343654151ce665e55da96667baf0b0ab27cb9128f597cb0b54ea1245b61"
+    },
+    {
+      "file": "eCampus/Formazione ed Alta Formazione/formazione e alta formazione_page-0002.jpg",
+      "sha256": "1f8255bed48aff2df10ca9956f9e4d12703408355e148e2754fc031290133bbd"
+    },
+    {
+      "file": "eCampus/Formazione ed Alta Formazione/formazione e alta formazione_page-0003.jpg",
+      "sha256": "b37fa2abe0919183d10495f1d2978b0343e762d3e4474dd11ecda04081f46c8f"
+    },
+    {
+      "file": "eCampus/Formazione ed Alta Formazione/formazione e alta formazione_page-0004.jpg",
+      "sha256": "8a86295471d82c6c8463bebbf9268db7341b5c6d3c5bc2e04b2fb8b219cc1c20"
+    }
+  ],
+  "ecampus-master": [
+    {
+      "file": "eCampus/Master/master_page-0001.jpg",
+      "sha256": "ea65427c12c327a61391cc18e2d6d33a6239a8c08f0c6aded29a8ec22b1efd10"
+    },
+    {
+      "file": "eCampus/Master/master_page-0002.jpg",
+      "sha256": "4ecfb32d19d1b7ebeaea6d5a8fba1fc637a401eb8c211c69224f33b037c6bf74"
+    },
+    {
+      "file": "eCampus/Master/master_page-0003.jpg",
+      "sha256": "6c38ed2d6255be8f12f667960bb1ac9e272c45e6c49a11610326cce3f03bbae8"
+    },
+    {
+      "file": "eCampus/Master/master_page-0004.jpg",
+      "sha256": "087e25a757aa63c44d844ba6e2f3c464cd2dcecc9ad34f28618f716aaca0fbac"
+    },
+    {
+      "file": "eCampus/Master/master_page-0005.jpg",
+      "sha256": "7ad84987df26bf0809b9b5d0b0161e2f2993a7f5d9a6af9ff271cc15571d39af"
+    }
+  ],
+  "link-perfezionamento": [
+    {
+      "file": "Link Campus/Corsi di Perfezionamento/immagini modulo corsi di perfezionamento link campus 2023/modulo perfezionamento unilink_page-0001.jpg",
+      "sha256": "84d58ebedd6cdf93093012152045fc14ef2cb4b7ab3b9cbbc3b958ce8e65624b"
+    },
+    {
+      "file": "Link Campus/Corsi di Perfezionamento/immagini modulo corsi di perfezionamento link campus 2023/modulo perfezionamento unilink_page-0002.jpg",
+      "sha256": "fb90e3e00f82c092a9500555e9c1af57d73b81cc829b476bf3361f0cca05454f"
+    },
+    {
+      "file": "Link Campus/Corsi di Perfezionamento/immagini modulo corsi di perfezionamento link campus 2023/modulo perfezionamento unilink_page-0003.jpg",
+      "sha256": "1c4efc2f5dc458da2daa6bc46e32b5c7ae3bc8a9f4bc5649de711e224893b900"
+    }
+  ],
+  "link-singoli": [
+    {
+      "file": "Link Campus/Corsi Singoli/LXS0014M_page-0001.jpg",
+      "sha256": "f2156c46a0465903411dbe14fdc2c3af4cff7b7c493fc2889ecc3bd5042a215a"
+    },
+    {
+      "file": "Link Campus/Corsi Singoli/LXS0014M_page-0002.jpg",
+      "sha256": "1cd73b7761c9bea11f8c23b49e8f37bb6d4dd4c64fe00693d2b397d4dbdf36b9"
+    },
+    {
+      "file": "Link Campus/Corsi Singoli/LXS0014M_page-0003.jpg",
+      "sha256": "3811d776a3e8b157f243ed3220ec4f7d6ddbe5ea2a658e0ffec8e9825f839546"
+    }
+  ],
+  "ssml-laurea": [
+    {
+      "file": "SSML/JPG Corsi di Laurea SSML/Laurea_page-0001.jpg",
+      "sha256": "db384173dd96795210b7ccee56f46baf4918222feb0f5a07983826d4215cefaa"
+    },
+    {
+      "file": "SSML/JPG Corsi di Laurea SSML/Laurea_page-0002.jpg",
+      "sha256": "da1bc97f88704eedfbac8ca7622b790d1197c3ee2cbc308cc85d0a76d53091e7"
+    },
+    {
+      "file": "SSML/JPG Corsi di Laurea SSML/Laurea_page-0003.jpg",
+      "sha256": "45e0bca7b77f7dfc4e648f6341f31a27e22b829d9b8328a79e1180656fa465ba"
+    },
+    {
+      "file": "SSML/JPG Corsi di Laurea SSML/Laurea_page-0004.jpg",
+      "sha256": "5e2dbd9f08b08b212ac51fc57dd5105b882fcb150de360903d1c5eebdab195b6"
+    },
+    {
+      "file": "SSML/JPG Corsi di Laurea SSML/Laurea_page-0005.jpg",
+      "sha256": "ecb5db168c275af0f4abb8b9fca1dcac798d05d261fd1cd062ad1cc12bf3c0b6"
+    },
+    {
+      "file": "SSML/JPG Corsi di Laurea SSML/Laurea_page-0006.jpg",
+      "sha256": "248de2f0a2afa410f09043562fd5a13ef795c84a1a875c7b94e06d3c51828378"
+    },
+    {
+      "file": "SSML/JPG Corsi di Laurea SSML/Laurea_page-0007.jpg",
+      "sha256": "b7e93d4a72a512b8a6a98c17462c0089146ad085537b8901b538aff0091f8a5e"
+    },
+    {
+      "file": "SSML/JPG Corsi di Laurea SSML/Laurea_page-0008.jpg",
+      "sha256": "29ea1d153f5fb19f10fe775aedbe6e4530ae59d45c06e978ef8d11554c925700"
+    },
+    {
+      "file": "SSML/JPG Corsi di Laurea SSML/Laurea_page-0009.jpg",
+      "sha256": "95a37e07cfa43d035323ef20a72ab38d34dc811b00e9095c45a12e938887045c"
+    },
+    {
+      "file": "SSML/JPG Corsi di Laurea SSML/Laurea_page-0010.jpg",
+      "sha256": "5e5686af12f01ee248ae28f1dcd4af8087039f2b67bece5efd311a01d54ff982"
+    }
+  ],
+  "ssml-perfezionamento": [
+    {
+      "file": "SSML/JPG Corsi di perfezionamento SSML/Perfezionamento_page-0001.jpg",
+      "sha256": "e64f4d5eb8b689a42534f58bb727518cd88a1519c424843439235c19cfc68a09"
+    },
+    {
+      "file": "SSML/JPG Corsi di perfezionamento SSML/Perfezionamento_page-0002.jpg",
+      "sha256": "f0570afc04aa8df4e050fbd62dfe4c9fc4e197c653152ad24e343d8ea4ba9b91"
+    },
+    {
+      "file": "SSML/JPG Corsi di perfezionamento SSML/Perfezionamento_page-0003.jpg",
+      "sha256": "f7aadfca63cca939cbf34e65483dc5618f9ff3fdbc3d7354e9a44b098d57578c"
+    },
+    {
+      "file": "SSML/JPG Corsi di perfezionamento SSML/Perfezionamento_page-0004.jpg",
+      "sha256": "470fd7158c9e40c789122955522fd5962f9ed4a7168059a504e218b2b203d845"
+    }
+  ],
+  "ssml-master": [
+    {
+      "file": "SSML/JPG Master SSML/Master_page-0001.jpg",
+      "sha256": "2d08acb9287efadbb8696e99710ada7b2eb19d112ca95a323bbde64ea2516d23"
+    },
+    {
+      "file": "SSML/JPG Master SSML/Master_page-0002.jpg",
+      "sha256": "da1ca786aa41b7202d08fc51a07d7c1666db4b0ef9fd1b5450b9f04c5395a316"
+    },
+    {
+      "file": "SSML/JPG Master SSML/Master_page-0003.jpg",
+      "sha256": "c1c0b3446e9d32a9061eaca8d7d43991f3b9730d2de18de2ed958bca2ad8737f"
+    },
+    {
+      "file": "SSML/JPG Master SSML/Master_page-0004.jpg",
+      "sha256": "89cb944c504b12edda93610097772c23fbd59990fe9e0cd21eb6d0101fa1ba37"
+    },
+    {
+      "file": "SSML/JPG Master SSML/Master_page-0005.jpg",
+      "sha256": "c5b333b9408843c11eccd2c0b2f6a795b302744b8b4e32d05ee3b673e4baf15c"
+    }
+  ],
+  "ssml-formazione": [
+    {
+      "file": "SSML/JPG Corsi di Formazione SSML/Corsi di Formazione_page-0001.jpg",
+      "sha256": "8502257c74f85f69281deaf5c06634e238f4099cfca683d1b760959ed00a6356"
+    },
+    {
+      "file": "SSML/JPG Corsi di Formazione SSML/Corsi di Formazione_page-0002.jpg",
+      "sha256": "495885c1bb681c9350f5868f8a90e7184068f233cdb2c1c67949639935ad187f"
+    },
+    {
+      "file": "SSML/JPG Corsi di Formazione SSML/Corsi di Formazione_page-0003.jpg",
+      "sha256": "bb000e7527a3415c439475537a9b6b85d47fdc87d826c9e3f00e0df65594df40"
+    },
+    {
+      "file": "SSML/JPG Corsi di Formazione SSML/Corsi di Formazione_page-0004.jpg",
+      "sha256": "d53142c8bd8201cc336cad710254f4d01f73c2bb23e592417fd8124e5ab2872d"
+    }
+  ],
+  "ssml-singoli": [
+    {
+      "file": "SSML/JPG Corsi Singoli SSML/corsi singoli_page-0001.jpg",
+      "sha256": "0a90ad1b74c486a824b1240cf3a8420624869d2f54ec51176a8c3943266de352"
+    },
+    {
+      "file": "SSML/JPG Corsi Singoli SSML/corsi singoli_page-0002.jpg",
+      "sha256": "8e40c754774f36629d61e35653e06ad1bd17109e147d8fd952282bd041b8fe6b"
+    },
+    {
+      "file": "SSML/JPG Corsi Singoli SSML/corsi singoli_page-0003.jpg",
+      "sha256": "384629a0873367b54b95ac96985391334fc02e9a13414c20f6f35466bb87c57f"
+    },
+    {
+      "file": "SSML/JPG Corsi Singoli SSML/corsi singoli_page-0004.jpg",
+      "sha256": "ceb436e608afd4a427c0fd797a91091a34dac4f590a5611f7d69ded552469a76"
+    }
+  ],
+  "a4u-perfezionamento": [
+    {
+      "file": "a4u/Modulo Iscrizione Fenice.pdf",
+      "sha256": "38979ce4bad27361a91e2317ea74bc447064c8c8fdc0b32850dbbc676eb71e09"
+    }
+  ],
+  "ecampus-rateizzazione": [
+    {
+      "file": "eCampus/Modulo Rateizzazione.jpg",
+      "sha256": "163a9a24b008e0ea2d22fec37a849c0269da2971ec04a3206e455a2ba77ae294"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+[
+  ["G", "vecchio.denominazione", 45.19, 172.84, 37.84, 25],
+  ["G", "vecchio.universita", 41.58, 172.8, 57.22, 27],
+  ["G", "vecchio.data", 49.83, 91.83, 63.65, 8],
+  ["T", "vecchio.voto", 102, 118, 62.5],
+  ["G", "nuovo.denominazione", 22.68, 150.29, 83.04, 25],
+  ["G", "nuovo.universita", 54.36, 152.65, 102.44, 19],
+  ["G", "nuovo.data", 67.66, 101.49, 108.87, 8],
+  ["T", "nuovo.voto", 109, 125, 108],
+  ["G", "immatricolazione.cifre", 105.08, 149.86, 115.34, 9],
+  ["G", "diploma.denominazione", 22.68, 150.29, 128.3, 25],
+  ["G", "diploma.anno_cifre", 75.57, 117.78, 134.73, 8],
+  ["T", "diploma.voto", 84, 98, 140.5],
+  ["T", "diploma.voto_massimo", 101, 118, 140.5],
+  ["G", "diploma.istituto", 45.71, 147.75, 147.65, 20],
+  ["G", "diploma.citta", 33.63, 131.4, 154.12, 20],
+  ["G", "diploma.provincia", 142.06, 150.54, 154.12, 2]
+]

@@ -85,11 +85,24 @@ class Firma:
 
 
 @dataclass(frozen=True)
+class Copertura:
+    """Rettifica di una scritta prestampata obsoleta, prima del campo sostitutivo."""
+
+    x0: float
+    x1: float
+    y: float
+    altezza: float
+
+    def campo(self, valori: dict) -> dict:
+        return {"tipo": "copertura", "x0": self.x0, "x1": self.x1, "y": self.y, "altezza": self.altezza}
+
+
+@dataclass(frozen=True)
 class Pagina:
     """Un'immagine del modello e i campi da scriverci sopra."""
 
-    sfondo: str
-    campi: tuple[Testo | Griglia | Casella | Firma, ...] = ()
+    sfondo: str | None
+    campi: tuple[Testo | Griglia | Casella | Firma | Copertura, ...] = ()
 
 
 def impagina(pagine: tuple[Pagina, ...], valori: dict) -> list[dict]:

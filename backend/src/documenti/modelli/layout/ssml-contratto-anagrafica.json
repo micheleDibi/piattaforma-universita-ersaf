@@ -1,0 +1,14 @@
+[
+  ["T", "nome_cognome", 32, 122, 102.45],
+  ["T", "cittadinanza", 144, 195, 102.45],
+  ["T", "nascita.luogo", 25, 148, 107.55],
+  ["T", "nascita.provincia", 150, 162, 107.55],
+  ["T", "residenza.via", 33, 114, 112.45],
+  ["T", "residenza.civico", 116, 124, 112.45],
+  ["T", "residenza.cap", 21, 50, 117.45],
+  ["T", "residenza.comune", 58, 178, 117.45],
+  ["T", "residenza.provincia", 181, 194, 117.45],
+  ["T", "nascita.gg", 166, 173.7, 107.55, "center"],
+  ["T", "nascita.mm", 174.8, 182.2, 107.55, "center"],
+  ["T", "nascita.aaaa", 183.5, 195, 107.55, "center"]
+]

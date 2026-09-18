@@ -1,0 +1,31 @@
+[
+  {
+    "sfondo": "pagina-01.jpg",
+    "layout": [
+      "numero",
+      "ssml-singoli-domanda"
+    ]
+  },
+  {
+    "sfondo": "pagina-02.jpg",
+    "layout": [
+      "numero",
+      "ssml-singoli-privacy"
+    ]
+  },
+  {
+    "sfondo": "pagina-03.jpg",
+    "layout": [
+      "numero",
+      "ssml-singoli-dichiarazioni"
+    ]
+  },
+  {
+    "sfondo": "pagina-04.jpg",
+    "layout": [
+      "numero",
+      "carriera-senza-tabella",
+      "ssml-tabella-esami"
+    ]
+  }
+]

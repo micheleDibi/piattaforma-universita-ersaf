@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session, joinedload
 
 from src.database import get_db
+from src.auth.visibilita import Visibilita, condizione_azienda, visibilita_corrente
 from src.documenti import modelli as registro
 from src.documenti.dati import dati_pratica
 from src.documenti.motore import ComposizioneFallita, ModelloAssente, componi_pdf
@@ -26,9 +27,9 @@ NON_DISPONIBILE = "Per questo tipo di pratica il documento non è ancora disponi
 COMPOSIZIONE_FALLITA = "Non è stato possibile comporre il documento. Riprova tra poco o avvisa l'assistenza."
 
 
-def _pratica(db: Session, pratica_id: int) -> Pratica:
+def _pratica(db: Session, pratica_id: int, vis: Visibilita) -> Pratica:
     listino = joinedload(Pratica.listino_testa)
-    pratica = (
+    query = (
         db.query(Pratica)
         .options(
             joinedload(Pratica.cliente),
@@ -41,17 +42,21 @@ def _pratica(db: Session, pratica_id: int) -> Pratica:
             listino.joinedload(ListinoTestaDB.corso_laurea),
         )
         .filter(Pratica.pratica_id == pratica_id)
-        .first()
     )
+    condizione = condizione_azienda(vis, Pratica.azienda_id)
+    if condizione is not None:
+        query = query.filter(condizione)
+    pratica = query.first()
     if pratica is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Pratica non trovata.")
     return pratica
 
 
 @router.get("/{pratica_id}/documento/disponibile")
-def documento_disponibile(pratica_id: int, db: Session = Depends(get_db)) -> dict:
+def documento_disponibile(pratica_id: int, db: Session = Depends(get_db),
+                         vis: Visibilita = Depends(visibilita_corrente)) -> dict:
     """Se la pratica ha un modulo stampabile: il frontend mostra il pulsante solo in quel caso."""
-    pratica = _pratica(db, pratica_id)
+    pratica = _pratica(db, pratica_id, vis)
     disponibile = registro.modello_per(pratica) is not None
     return {"disponibile": disponibile, "nome_file": registro.nome_file(pratica) if disponibile else None}
 
@@ -61,14 +66,15 @@ def documento_disponibile(pratica_id: int, db: Session = Depends(get_db)) -> dic
     response_class=Response,
     responses={200: {"content": {"application/pdf": {}}, "description": "Il documento della pratica in PDF/A."}},
 )
-def scarica_documento(pratica_id: int, db: Session = Depends(get_db)) -> Response:
-    pratica = _pratica(db, pratica_id)
+def scarica_documento(pratica_id: int, db: Session = Depends(get_db),
+                     vis: Visibilita = Depends(visibilita_corrente)) -> Response:
+    pratica = _pratica(db, pratica_id, vis)
     modello = registro.modello_per(pratica)
     if modello is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, NON_DISPONIBILE)
     dati, allegati = dati_pratica(db, pratica)
     try:
-        pdf = componi_pdf(modello.nome, modello.arricchisci(dati), allegati)
+        pdf = componi_pdf(modello.nome, modello.compila(dati), allegati)
     except (ModelloAssente, ComposizioneFallita):
         # Nessun dato personale nel log: solo pratica e modello.
         logger.exception("composizione del documento fallita: pratica %s, modello %s", pratica_id, modello.nome)

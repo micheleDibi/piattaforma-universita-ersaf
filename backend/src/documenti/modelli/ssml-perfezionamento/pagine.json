@@ -1,0 +1,31 @@
+[
+  {
+    "sfondo": "pagina-01.jpg",
+    "layout": [
+      "numero",
+      "ssml-perfezionamento-domanda"
+    ]
+  },
+  {
+    "sfondo": "pagina-02.jpg",
+    "layout": [
+      "numero",
+      "ssml-perfezionamento-privacy"
+    ]
+  },
+  {
+    "sfondo": "pagina-03.jpg",
+    "layout": [
+      "numero",
+      "ssml-perfezionamento-dichiarazioni"
+    ]
+  },
+  {
+    "sfondo": "pagina-04.jpg",
+    "layout": [
+      "numero",
+      "ssml-perfezionamento-carriera",
+      "ssml-tabella-esami"
+    ]
+  }
+]

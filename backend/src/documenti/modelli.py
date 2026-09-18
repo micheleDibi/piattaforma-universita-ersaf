@@ -11,11 +11,14 @@ documento: il frontend nasconde il pulsante.
 from __future__ import annotations
 
 import re
+from functools import partial
 from dataclasses import dataclass, field
 from typing import Callable
 
 from src.documenti.dati import normalizza
 from src.documenti.ecampus import laurea as ecampus_laurea
+from src.documenti.ecampus.rateizzazione import pagine_rateizzazione
+from src.documenti.moduli import compila
 from src.pratiche.models import Pratica
 
 
@@ -36,10 +39,44 @@ class Modello:
     def si_applica(self, ente: str, tipo_corso: str) -> bool:
         return normalizza(self.ente) == normalizza(ente) and normalizza(self.tipo_corso) == normalizza(tipo_corso)
 
+    def compila(self, dati: dict) -> dict:
+        """Modulo e allegati dell'ente, attraverso una sola pipeline di composizione."""
+        documento = self.arricchisci(dati)
+        if normalizza(self.ente) == normalizza(ECAMPUS):
+            documento = {**documento, "pagine": [*documento["pagine"], *pagine_rateizzazione(dati)]}
+        return documento
 
-# I moduli si aggiungono qui man mano che vengono calibrati sulle immagini.
+
+ECAMPUS = "Università Telematica eCampus"
+SSML = "Scuola Superiore Universitaria di Mediazione Linguistica Lamezia Terme"
+# Il primo nome e' quello realmente presente nel catalogo legacy.
+LINK = ("Link Campus Univesity", "Link Campus University")
+
+
+def _moduli(ente: str, associazioni: dict[str, tuple[str, ...]]) -> tuple[Modello, ...]:
+    return tuple(Modello(nome, ente, tipo, partial(compila, nome))
+                 for nome, tipi in associazioni.items() for tipo in tipi)
+
+
+# Solo associazioni documentate. Percorso docenti e corsi speciali restano esclusi.
 MODELLI: tuple[Modello, ...] = (
-    Modello(ecampus_laurea.NOME, "Università Telematica eCampus", "Lauree", ecampus_laurea.arricchisci),
+    Modello(ecampus_laurea.NOME, ECAMPUS, "Lauree", ecampus_laurea.arricchisci),
+    *_moduli(ECAMPUS, {
+        "ecampus-master": ("MASTER", "MASTER AREA SCUOLA", "MASTER CLASSI DI CONCORSO"),
+        "ecampus-perfezionamento": ("CORSI DI PERFEZIONAMENTO",),
+        "ecampus-formazione": ("CORSI DI FORMAZIONE", "CORSI DI ALTA FORMAZIONE"),
+        "ecampus-singoli": ("CORSI SINGOLI",),
+    }),
+    *_moduli(SSML, {
+        "ssml-laurea": ("LAUREE",), "ssml-master": ("MASTER",),
+        "ssml-perfezionamento": ("CORSI DI PERFEZIONAMENTO",),
+        "ssml-formazione": ("CORSI DI FORMAZIONE", "CORSI DI ALTA FORMAZIONE"),
+        "ssml-singoli": ("CORSI SINGOLI",),
+    }),
+    *(m for ente in LINK for m in _moduli(ente, {
+        "link-perfezionamento": ("CORSI DI PERFEZIONAMENTO",), "link-singoli": ("CORSI SINGOLI",),
+    })),
+    *_moduli("Avatar4University", {"a4u-perfezionamento": ("CORSI DI PERFEZIONAMENTO",)}),
 )
 
 

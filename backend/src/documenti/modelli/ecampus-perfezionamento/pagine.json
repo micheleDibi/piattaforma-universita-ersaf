@@ -1,0 +1,32 @@
+[
+  {
+    "sfondo": "pagina-01.jpg",
+    "layout": [
+      "numero",
+      "ecampus-anagrafica",
+      "ecampus-perfezionamento-domanda",
+      "ecampus-firma-domanda"
+    ]
+  },
+  {
+    "sfondo": "_comune/sfondi/ecampus-privacy.jpg",
+    "layout": [
+      "numero",
+      "ecampus-privacy"
+    ]
+  },
+  {
+    "sfondo": "_comune/sfondi/ecampus-dichiarazioni.jpg",
+    "layout": [
+      "numero",
+      "ecampus-dichiarazioni"
+    ]
+  },
+  {
+    "sfondo": "_comune/sfondi/ecampus-carriera.jpg",
+    "layout": [
+      "numero",
+      "ecampus-carriera"
+    ]
+  }
+]

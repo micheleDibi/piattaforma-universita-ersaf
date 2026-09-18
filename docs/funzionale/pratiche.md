@@ -213,11 +213,19 @@ Il pulsante "Annulla" torna all'elenco senza salvare.
 Il pulsante "Scarica PDF" compare nell'intestazione della scheda solo se per
 la pratica esiste un modulo stampabile.
 
-I moduli stampabili sono: la domanda di immatricolazione ai corsi di laurea
-dell'Università Telematica eCampus. Il pulsante compare quindi solo se il
-percorso formativo della pratica appartiene all'Università Telematica eCampus
-e ha come tipo di corso le lauree. Nel confronto dei nomi non contano
-maiuscole, accenti, spazi e punteggiatura.
+Sono disponibili i moduli originali per queste combinazioni:
+
+| Ente | Tipi di corso |
+|---|---|
+| eCampus | Lauree, master (anche area scuola e classi di concorso), perfezionamento, formazione e alta formazione, corsi singoli |
+| SSML | Lauree, master, perfezionamento, formazione e alta formazione, corsi singoli |
+| Link Campus | Perfezionamento, corsi singoli |
+| Avatar4University | Perfezionamento, con il modulo Fenice presente fra gli originali |
+
+Percorso docenti, corsi speciali e master Avatar4University restano senza PDF:
+non è stato individuato un modulo corrispondente nell'archivio fornito.
+Non viene usato un modulo di un altro tipo come ripiego. Nel confronto dei
+nomi non contano maiuscole, accenti, spazi e punteggiatura.
 
 Il documento guarda l'università e il tipo di corso attuali del prodotto
 formativo, non quelli copiati nella pratica alla creazione. Se il prodotto
@@ -256,8 +264,8 @@ Se il download non riesce, sopra la scheda compare un messaggio:
 
 ### Cosa contiene
 
-Il documento riproduce il modulo cartaceo, con i campi già compilati. Le parti
-sono:
+Il documento riproduce il modulo cartaceo del tipo di corso, con i campi già
+compilati. Le pagine cambiano secondo il modulo originale. Per le lauree sono:
 
 - la domanda di immatricolazione: dati anagrafici, residenza, recapiti, anno
   accademico, immatricolazione o iscrizione ad anni successivi, corso,
@@ -296,8 +304,9 @@ contratto ha anche una seconda firma, per l'approvazione delle clausole.
 ### Da sapere
 
 - Un dato che manca lascia vuoto il campo o la casella.
-- Il consenso al trattamento dei dati è sempre barrato. Anche la non adesione
-  ai servizi integrativi è sempre barrata.
+- Nei moduli eCampus il consenso al trattamento dei dati e la non adesione
+  ai servizi integrativi mantengono le scelte del gestionale precedente. Per
+  gli altri enti le caselle restano vuote: non si presume un consenso assente.
 - Alcuni campi restano sempre vuoti, perché la piattaforma non raccoglie quei
   dati: stato di nascita, curriculum del corso, servizi integrativi, corso
   innovativo, scuola statale o paritaria.
@@ -316,6 +325,43 @@ contratto ha anche una seconda firma, per l'approvazione delle clausole.
   Una pratica creata dalla piattaforma produce quindi un documento senza firma
   e senza luogo, e risulta sempre come immatricolazione. Firma, luogo e
   rinnovo compaiono solo nelle pratiche che li contengono già.
+
+### Corsi singoli e dati che non entrano nel modulo
+
+Gli insegnamenti richiesti provengono dalla scheda dei corsi singoli della
+pratica; in sua assenza si usano il percorso principale e gli eventuali due
+corsi aggiuntivi già collegati. Sono distinti dagli esami sostenuti dallo
+studente. Il modulo eCampus contiene tre righe, Link quattro, SSML sei:
+gli insegnamenti ulteriori proseguono su una pagina aggiuntiva della domanda.
+
+CFU e SSD degli insegnamenti richiesti restano vuoti se il catalogo non li
+raccoglie. Nei moduli SSML si riportano invece i CFU degli esami già sostenuti,
+quando registrati. Un valore più lungo delle caselle prestampate viene scritto
+per intero come testo nella stessa riga, riducendone la dimensione.
+
+Il vecchio modulo Link per i corsi singoli viene compilato con l'anno
+accademico della pratica al posto di quello prestampato. Le altre condizioni,
+informative e indicazioni di pagamento restano quelle degli originali forniti.
+Nuovi allegati, acquisizione della firma nell'applicazione e salvataggio remoto
+del documento non fanno parte di questa generazione.
+
+### Accordo di rateizzazione eCampus
+
+Per tutti i tipi eCampus supportati, se la pratica ha rate della retta salvate,
+il PDF include anche l'accordo di rateizzazione sul modulo originale. Riporta
+studente, residenza, corso, prezzo della pratica, importi e scadenze registrati,
+data della pratica, luogo e firma quando presenti. Le rate sono ordinate per
+scadenza; quelle con la stessa data mantengono l'ordine di inserimento.
+
+Il modulo contiene dodici rate. Quelle successive proseguono su pagine
+aggiuntive numerate per rata, senza perdere importi o scadenze. Le righe
+contrassegnate come tasse non vengono inserite fra le rate della retta.
+Le indicazioni prestampate sulle tasse restano quelle dell'originale fornito.
+
+Senza rate non viene aggiunto un accordo vuoto. Importi e date non vengono
+ricalcolati: un dato mancante resta vuoto e un importo zero resta zero.
+Questa funzione stampa i piani già registrati; non introduce la creazione
+o la modifica dei piani di pagamento nell'interfaccia.
 
 ## Stati della pratica
 
@@ -346,7 +392,7 @@ riporta i nomi.
 - Chi non ha un'azienda non vede nessuna pratica, e non può crearne: il
   tentativo viene rifiutato.
 
-La regola vale per l'elenco, per la scheda e anche per le tendine dei filtri,
+La regola vale per l'elenco, la scheda, la disponibilità e il download del PDF e le tendine dei filtri,
 che propongono solo studenti e percorsi presenti fra le pratiche che si
 vedono. Una pratica che non si vede risponde «non trovata» anche aprendola
 dall'indirizzo. Per sapere chi accede, vedi
@@ -360,4 +406,4 @@ Le abilitazioni sono un'altra cosa e limitano solo i pulsanti della Dashboard:
 l'elenco, la scheda, il pulsante "Nuova" e il documento PDF restano
 disponibili anche a chi non ne ha.
 
-Nota: le abilitazioni sono applicate solo dall'interfaccia, e il documento PDF non segue la regola sopra; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Nota: le abilitazioni sono applicate solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).

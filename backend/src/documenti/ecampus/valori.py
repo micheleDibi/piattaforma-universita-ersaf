@@ -169,7 +169,8 @@ def _studi(g: dict) -> dict:
 def _carriera(g: dict, *, compilata: bool, rinnovo: bool) -> dict:
     """Pagina 4: immatricolazioni, iscrizioni in corso e titolo universitario."""
     titolo = TITOLI.get(normalizza(g["titolo_universitario"]))
-    mai_immatricolato = compilata and not rinnovo and g["immatricolato"] in ("", "0") and not g["data_immatricolazione"]
+    carriera_presente = any(g[k] for k in ("titolo_universitario", "attIscritto_tipo", "conclusione", "data_immatricolazione"))
+    mai_immatricolato = compilata and not rinnovo and g["immatricolato"] in ("", "0") and not carriera_presente
     return {
         "mai_immatricolato": mai_immatricolato,
         "non_iscritto_altrove": compilata and g["iscrizioneAltraUniversita"] in ("", "0"),
@@ -227,7 +228,7 @@ def _esami(esami: list[dict]) -> dict:
     campi = {"esami": bool(esami), "esami.universita": ", ".join(dict.fromkeys(e["universita"] for e in esami if e["universita"]))}
     for numero in range(1, RIGHE_ESAMI + 1):
         esame = riportati[numero - 1] if numero <= len(riportati) else {}
-        campi.update({f"esami.{numero}.{colonna}": esame.get(colonna, "") for colonna in ("insegnamento", "data", "ssd", "voto")})
+        campi.update({f"esami.{numero}.{colonna}": esame.get(colonna, "") for colonna in ("insegnamento", "data", "ssd", "cfu", "voto")})
     if len(esami) > len(riportati):
         campi[f"esami.{RIGHE_ESAMI}.insegnamento"] = f"… e altri {len(esami) - len(riportati)} esami"
     return campi
