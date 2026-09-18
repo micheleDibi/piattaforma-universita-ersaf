@@ -396,6 +396,31 @@ I valori non stanno nel repository. L'elenco delle variabili è in [riferimenti/
   - il fornitore SMS reale con le sue credenziali (`main.py:71-74`; `backend/src/notifiche/config_sms.py:16-19`).
 - Le funzioni che usano pepper e chiave rifiutano da sole i valori assenti o corti, anche se la verifica all'avvio non è girata (`tokens.py:52-67`; `totp.py:86-91`).
 
+## Visibilità
+
+Chi vede quali dati è deciso da tre regole distinte, tutte applicate dal server.
+
+| Dati | Regola | Dove |
+|---|---|---|
+| Anagrafiche | La propria riga, più tutte le righe degli utenti che discendono da una radice lungo `utenti.utente_padre`. Le radici sono l'utente collegato e gli utenti con una riga `clienti` nella sua azienda. La catena vale anche attraverso utenti senza riga `clienti`; una radice non è visibile in quanto radice | `auth/visibilita.py:130-180`, `186-218` |
+| Pratiche | Uguaglianza fra `azienda_id` della pratica e quella della propria riga; senza azienda, nessuna pratica | `auth/visibilita.py:232-245` |
+| Aziende | La propria azienda e le sue discendenti | `aziende_xcod/servizi.py:73-88` |
+
+Il Nazionale non ha filtri. La regola delle anagrafiche e quella delle pratiche stanno in un unico modulo, `backend/src/auth/visibilita.py`: i router la chiamano e non la riscrivono. Ciò che non si vede risponde 404 con lo stesso testo di un id inesistente.
+
+### I due campi che decidono la visibilità
+
+La riga `clienti` dell'utente collegato è sempre visibile a se stesso, quindi il filtro non la protegge da sola. I due campi che la regola legge sono protetti a parte, in modifica e in creazione:
+
+- il **ruolo**: chi non è Nazionale non può promuovere nessuno a Nazionale né cambiare il proprio (`clienti/servizio.py:72-110`);
+- l'**azienda**: chi non è Nazionale non può cambiare l'azienda della propria riga, mentre resta libero di assegnarla a un'altra riga che vede (`clienti/servizio.py:113-139`).
+
+In entrambi i casi riassegnare il valore già presente è ammesso, perché la scheda rimanda tutti i campi a ogni salvataggio. Il null esplicito sul ruolo conta come cambio: con la `sql_mode` non strict di produzione MariaDB lo salverebbe come 0.
+
+### Ricorsione troncata
+
+La regola delle anagrafiche è una CTE ricorsiva. Superato `max_recursive_iterations`, MariaDB non dà errore: restituisce un risultato parziale con il solo warning 1931, e alcune anagrafiche sparirebbero senza alcun segnale. Per questo lo statement viene eseguito con un prefisso `SET STATEMENT` che alza il limite a 100.000 iterazioni e impone un tempo massimo, e i warning vengono letti dopo l'esecuzione: se il troncamento è avvenuto, o se non si può escludere, la richiesta fallisce con un 500 invece di rispondere un elenco incompleto. Con un cursore non bufferizzato i warning non sarebbero leggibili, e il calcolo viene rifiutato (`auth/visibilita.py:248-288`).
+
 ## Rilievi dell'analisi del 2026
 
 L'analisi di settembre 2026 elencava sette rilievi di sicurezza. Questa è la situazione attuale.
@@ -404,7 +429,7 @@ L'analisi di settembre 2026 elencava sette rilievi di sicurezza. Questa è la si
 |---|---|---|
 | S1. Password in chiaro | Aperto per le righe legacy non ancora convertite. La riga di chi accede viene convertita. Nessun percorso scrive password in chiaro e non ci sono riscritture massive. Il codice non dice quante righe restano: è un dato di produzione. | `utenti/models.py:20`; `servizio_login.py:48-82`; `test_nessun_plaintext.py:169-212` |
 | S2. Autenticazione falsificabile | Risolto. La sessione usa un token opaco e revocabile, in un cookie `HttpOnly`, con il CSRF. `Authorization` non vale come trasporto. L'autenticazione è dichiarata sul router. Un test percorre l'elenco delle rotte e chiama senza sessione ogni rotta non dichiarata pubblica: si aspetta 401. L'elenco delle rotte pubbliche ammesse sta nel test stesso. L'impersonificazione richiede sessione e ruolo amministrativo. | `browser.py:25-27`; `backend/tests/security/test_rotte_protette.py:20-70`; `auth/routers.py:248-270` |
-| S2-bis. Autorizzazione per ruolo | Parziale. Il ruolo si controlla solo in quattro casi: impersonificazione, modifica di un altro utente, cambio del padre di un'azienda, gestione del secondo fattore. Esiste un filtro di visibilità solo sulle aziende. Il resto richiede solo la sessione. Il dettaglio è in [Limiti noti](#limiti-noti). | `autorizzazioni.py:25-95`; `utenti/routers.py:154-160`; `backend/src/aziende_xcod/router.py:53`; `gestione.py:55-57`; `backend/src/aziende_xcod/servizi.py:73-88` |
+| S2-bis. Autorizzazione per ruolo | Parziale. Il ruolo si controlla in sei casi: impersonificazione, modifica di un altro utente, cambio del padre di un'azienda, gestione del secondo fattore, modifica della tabella dei ruoli e assegnazione di ruolo e azienda. Esiste inoltre un filtro di visibilità su anagrafiche, pratiche e aziende, con tre regole distinte (vedi [Visibilità](#visibilità)). Il resto richiede solo la sessione: il dettaglio è in [Limiti noti](#limiti-noti). | `autorizzazioni.py:25-95`; `utenti/routers.py:172-178`; `backend/src/aziende_xcod/router.py:53`; `gestione.py:55-57`; `backend/src/auth/visibilita.py`; `clienti/servizio.py:72-140`; `ruolo/routers.py:56`, `91` |
 | S3. Stato dell'account | Risolto. Un utente disattivato riceve lo stesso 401 di una password errata. Le sessioni, l'impersonificazione e le sfide lo escludono. | `servizio_login.py:92-94`; `sessioni.py:95`; `auth/routers.py:280-281`; `otp/accesso.py:29` |
 | S4. Errore 500 come oracolo | Risolto, con un'eccezione. Chi non ha un'anagrafica, o ha un ruolo senza accesso, riceve il 401 generico. L'anagrafica si sceglie con un ordine esplicito. La verifica della password non solleva eccezioni e il recupero non risponde mai 500. Gli errori del database hanno messaggi generici. Eccezione: le rotte dei prodotti formativi restituiscono il testo dell'errore del database. | `auth/accesso.py:28-37`; `servizio_login.py:128-150`; `password.py:111-128`; `auth/routers.py:98-110`; `main.py:124-177`; `backend/src/listini_testa/routers.py:94-100` |
 | S5. Credenziali SMTP nel database | Il codice non legge credenziali di posta dal database: le prende dalla configurazione. Il contenuto delle tabelle legacy non si verifica dal codice. | `config.py:119-128`; `backend/src/notifiche/backend_invio.py:36-62` |
@@ -414,8 +439,6 @@ L'analisi di settembre 2026 elencava sette rilievi di sicurezza. Questa è la si
 ## Limiti noti
 
 Questa sezione elenca i difetti noti di autorizzazione, visibilità e coerenza, e i contrasti fra interfaccia e server. Ogni voce indica il difetto e il punto del codice, senza istruzioni per riprodurlo. I documenti funzionali rimandano qui con una riga.
-
-Nota: un lavoro in corso, non ancora unito a main, riguarda la visibilità dei clienti e l'assegnazione dei ruoli. Chiuderà una parte delle voci sotto. La pull request che lo unirà dovrà aggiornare questa sezione.
 
 ### Sessione, ruoli e secondo fattore
 
@@ -435,26 +458,24 @@ Nota: un lavoro in corso, non ancora unito a main, riguarda la visibilità dei c
   - Le pagine però si aprono dall'indirizzo con qualunque sessione valida.
   - `frontend/src/config/routes/rotte.js:20-47`; `frontend/src/App.jsx:35-71`.
 - **Anagrafiche senza controllo di ruolo.**
-  - Creazione, lettura e modifica di sottoscrittori, attuatori e curriculum richiedono solo la sessione.
+  - Creazione, lettura e modifica di sottoscrittori, attuatori e curriculum richiedono solo la sessione: nessuna di queste rotte guarda il ruolo.
+  - Sulle anagrafiche la portata è ora limitata a quelle visibili, ma sul curriculum e sugli utenti non è cambiato nulla.
   - Lo stesso vale per la creazione diretta di utenti, che l'interfaccia non usa.
-  - `backend/src/clienti/routers.py:39-43`, `88-292`; `backend/src/universita/routers.py:18-22`, `58`, `78`, `84`, `108`; `backend/src/utenti/routers.py:51-100`.
-- **Ruolo assegnabile da chiunque.**
-  - Il server accetta qualunque ruolo, in creazione e in modifica di un'anagrafica, da qualunque utente autenticato, anche sulla propria anagrafica.
-  - La scheda Utente offre tutti i ruoli. La scheda Dati principali degli attuatori offre anche Regionale e Nazionale.
-  - `backend/src/clienti/schemas.py:163`, `232`; `clienti/servizio.py:197-216`, `254-257`; `clienti/routers.py:260-261`; `frontend/src/components/SchedaUtente.jsx:254-273`; `frontend/src/components/NuovoSottoscrittore.jsx:404-431`.
-- **Tabella dei ruoli modificabile da ogni utente autenticato.**
-  - Creazione e modifica dei ruoli richiedono solo la sessione.
-  - Eppure il codice del ruolo decide l'obbligo del secondo fattore e i permessi amministrativi.
-  - `backend/src/ruolo/routers.py:10-18`, `47-87`; `auth/accesso.py:67`; `autorizzazioni.py:32`.
+  - `backend/src/clienti/routers.py:51-55`, `110-350`; `backend/src/universita/routers.py:18-22`, `49`, `79`, `85`, `109`; `backend/src/utenti/routers.py:67-117`.
+- **Ruoli amministrativi assegnabili da chiunque.**
+  - Il ruolo Nazionale e il proprio ruolo sono protetti (vedi [Visibilità](#visibilità)), ma ogni altro ruolo resta assegnabile da qualunque utente autenticato, in creazione e su un'anagrafica visibile.
+  - Fra questi c'è **Regionale**, che è amministrativo: chi lo assegna può creare un amministratore e usarne i permessi.
+  - La scheda Utente continua a offrire tutti i ruoli, compreso Nazionale, a chiunque: il rifiuto arriva solo al salvataggio.
+  - `backend/src/clienti/schemas.py:163`, `232`; `clienti/routers.py:120`, `232-246`, `311-312`; `auth/autorizzazioni.py:32`; `frontend/src/components/SchedaUtente.jsx:254-273`; `frontend/src/components/NuovoSottoscrittore.jsx:404-431`.
 - **Abilitazioni alle pratiche.**
   - La scheda Abilitazioni compare solo al Nazionale, in modifica di un attuatore.
   - Il server accetta i cinque campi, in creazione e in modifica, da ogni utente autenticato.
   - `NuovoSottoscrittore.jsx:38-41`, `256-271`, `343-345`; `clienti/schemas.py:168-173`, `237-242`; `clienti/servizio.py:211-214`.
-- **Pratiche.**
+- **Pratiche: abilitazioni e ruolo.**
   - La Dashboard abilita i pulsanti solo con l'abilitazione generale e quella dell'ateneo.
-  - Elenco, dettaglio, creazione, modifica e PDF delle pratiche non controllano né abilitazioni né ruolo.
+  - Elenco, dettaglio, creazione e modifica applicano ora la visibilità per azienda, ma nessuna rotta guarda le abilitazioni né il ruolo: chi ha i pulsanti spenti crea e modifica lo stesso, purché nella propria azienda.
   - La pagina Pratiche non è nel menu, ma si apre dall'indirizzo.
-  - `frontend/src/components/PannelloPratiche.jsx:39-41`, `94`; `backend/src/pratiche/routers.py:14-22`, `53-102`; `documenti/rotte.py:51-83`; `rotte.js:20-41`; `App.jsx:56`.
+  - `frontend/src/components/PannelloPratiche.jsx:39-41`, `94`; `backend/src/pratiche/routers.py:15-19`, `65-95`, `121-143`; `rotte.js:20-41`; `App.jsx:56`.
 - **Prodotti formativi e tipi di corso.**
   - La voce di menu è solo per il Nazionale.
   - Creazione e modifica sono aperte a ogni utente autenticato.
@@ -464,35 +485,35 @@ Nota: un lavoro in corso, non ancora unito a main, riguarda la visibilità dei c
   - Ogni utente autenticato può creare aziende e modificare dati e percentuali di quelle che vede: la propria e le discendenti.
   - `backend/src/aziende/routers.py:138-166`, `229-295`; `aziende_xcod/servizi.py:73-88`.
 - **Verifica dei contatti.**
-  - Le rotte di stato, invio e conferma dei codici non controllano il ruolo.
-  - Non controllano nemmeno a chi appartiene l'anagrafica.
-  - L'email dell'anagrafica e la sua verifica decidono anche il metodo del secondo fattore del Nazionale (`metodi.py:45-46`): finché queste rotte e la modifica dell'anagrafica non controllano ruolo e appartenenza, il secondo fattore non è più robusto della scheda anagrafica.
-  - `otp/contatti.py:15`, `58-88`; `clienti/routers.py:39-43`, `254-261`.
+  - Le rotte di stato, invio e conferma dei codici agiscono ora solo su un'anagrafica visibile, ma continuano a non controllare il ruolo.
+  - L'email dell'anagrafica e la sua verifica decidono anche il metodo del secondo fattore del Nazionale (`metodi.py:45-46`): chi vede un'anagrafica ne cambia l'email e poi la verifica, quindi per quelle anagrafiche il secondo fattore non è più robusto della scheda anagrafica. Un bersaglio Nazionale è fuori portata perché non è fra i visibili, non perché ci sia un controllo di ruolo.
+  - `otp/contatti.py:62-67`, `70-82`, `85-88`; `clienti/routers.py:218-246`, `305-312`.
 
 ### Visibilità dei dati
 
-Su main il filtro di visibilità esiste solo per le aziende.
+Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibilità)). Queste voci elencano dove non arriva.
 
-- **Anagrafiche.**
-  - Nessun filtro per ruolo, azienda o gerarchia: ogni utente autenticato elenca e legge tutte le anagrafiche, con contatti, documento, azienda e username.
-  - Anche l'elenco degli utenti è completo, e il campo "utente padre" non limita nulla.
-  - `clienti/routers.py:126-177`; `clienti/schemas.py:249-255`; `utenti/routers.py:112-143`.
+- **Utenti e curriculum fuori dal filtro.**
+  - L'elenco e la scheda delle anagrafiche sono filtrati, ma l'elenco degli utenti no: restituisce l'intera tabella paginata, con nome utente, padre e nome del padre.
+  - Non è filtrato nemmeno il curriculum: chiedendolo per `cliente_id` si leggono i titoli di studio di un'anagrafica che la sua scheda dichiara inesistente, e si possono anche modificare. Sono gli stessi dati da cui si calcola il pallino del diploma.
+  - `backend/src/utenti/routers.py:129-145`, `148-160`; `backend/src/universita/routers.py:58-74`, `108-133`.
 - **Colonna Azienda.**
   - L'elenco attuatori mostra la colonna solo al Nazionale.
-  - L'API però restituisce l'azienda in ogni riga.
-  - `frontend/src/components/ElencoClienti.jsx:31-33`; `clienti/schemas.py:253`.
-- **Pratiche.**
-  - Nessun filtro: ogni utente autenticato vede tutte le pratiche.
-  - Lo stesso vale per le opzioni dei filtri.
-  - `pratiche/routers.py:72-83`; `backend/src/pratiche/filtri.py:23-44`; `backend/src/pratiche/opzioni.py:35-66`.
+  - L'API però restituisce l'azienda in ogni riga, fra quelle visibili.
+  - `frontend/src/components/ElencoClienti.jsx:32-34`; `clienti/schemas.py:261`.
 - **Documento PDF della pratica.**
-  - Ogni utente autenticato può scaricarlo, per qualunque pratica.
-  - Contiene dati anagrafici, estremi del documento e firma.
-  - `documenti/rotte.py:51-83`; `backend/src/documenti/dati.py:93-100`, `140-162`.
+  - È l'unica rotta delle pratiche rimasta fuori dal filtro per azienda: il router dei documenti è incluso in quello delle pratiche e ne eredita l'autenticazione, ma non la visibilità.
+  - Ogni utente autenticato può scaricarlo, per qualunque pratica, anche quando la scheda della stessa pratica risponde "non trovata". Contiene dati anagrafici, estremi del documento e firma.
+  - `documenti/rotte.py:29-48`, `51-83`; `backend/src/pratiche/routers.py:23`; `backend/src/documenti/dati.py:91-113`, `140-162`.
 - **Padre di un'azienda.**
   - La lettura del padre non applica il filtro di visibilità.
   - Il dettaglio dell'azienda invece lo applica e risponde 404.
-  - `aziende_xcod/router.py:32-42`; `aziende/routers.py:71-77`.
+  - `aziende_xcod/router.py:32-42`; `aziende/routers.py:71-77`, `217-225`.
+
+- **Un amministrativo si aggancia chiunque come figlio.**
+  - La modifica di un altro utente è aperta a Regionale e Nazionale, e il controllo sul nuovo padre guarda solo chi viene indicato come padre, accettando sempre il chiamante stesso.
+  - Un Regionale può quindi indicare se stesso come padre di un utente qualsiasi e rendere visibile, dalla richiesta successiva, quell'utente e tutto ciò che sta sotto di lui.
+  - `backend/src/utenti/routers.py:54-58`, `172-178`, `193`; `auth/autorizzazioni.py:32`; `auth/visibilita.py:130-180`.
 - **Esistenza di un'azienda.**
   - La ricerca per partita IVA rispetta la visibilità.
   - La creazione invece rifiuta con un messaggio esplicito un valore univoco già presente, anche se l'azienda non è visibile, e così ne rivela l'esistenza.
@@ -501,7 +522,7 @@ Su main il filtro di visibilità esiste solo per le aziende.
   - Il controllo dei codici fiscali duplicati legge tutta la tabella.
   - Riporta la ragione sociale delle aziende in conflitto anche quando sono fuori dalla visibilità di chi guarda.
   - Il testo compare nell'elenco e nella scheda.
-  - `aziende/routers.py:94-134`, `165`, `189`, `212`, `224`, `258`; `frontend/src/lib/righeElenco.js:50`; `frontend/src/components/SchedaAzienda.jsx:112-121`.
+  - `aziende/routers.py:94-134`, `165`, `189`, `212`, `224`, `258`; `frontend/src/lib/righeElenco.js:88`; `frontend/src/components/SchedaAzienda.jsx:113-124`.
 - **Aziende invisibili a chi le crea.**
   - Un utente non Nazionale senza azienda crea aziende radice.
   - Poi non le vede.
@@ -509,7 +530,7 @@ Su main il filtro di visibilità esiste solo per le aziende.
 - **Consulenti e Operatori.**
   - Non compaiono in nessun elenco.
   - Un'anagrafica a cui la scheda Utente assegna uno di questi ruoli sparisce sia da Sottoscrittori sia da Attuatori.
-  - `clienti/routers.py:141-150`; `SchedaUtente.jsx:269`, `271`.
+  - `clienti/routers.py:169-178`; `SchedaUtente.jsx:269`, `271`.
 
 ### Incoerenze dell'interfaccia
 
@@ -598,9 +619,6 @@ Su main il filtro di visibilità esiste solo per le aziende.
   - Dopo il login, e dopo un'impersonificazione, si arriva a Sottoscrittori e non alla Dashboard.
   - Eppure la Dashboard è l'unico accesso alle Pratiche dal menu.
   - `frontend/src/config/routes/percorsi.js:14`; `SchedaUtente.jsx:165`.
-- **Una sola data per tre titoli.**
-  - Diploma, anno integrativo e titolo universitario scrivono la stessa data.
-  - `frontend/src/components/SezioneTitoli.jsx:36`, `178`, `283`.
 - **Durata del link di recupero.**
   - I testi dicono "60 minuti", un valore fisso.
   - Nel server la durata è configurabile.

@@ -1,3 +1,5 @@
+import { TESTI_ELENCO } from "../config/testi/elenco.js";
+
 const testo = (valore) => String(valore ?? "").trim() || "-";
 
 function formattaData(valore) {
@@ -8,6 +10,41 @@ function formattaData(valore) {
   const mese = String(data.getMonth() + 1).padStart(2, "0");
   const anno = data.getFullYear();
   return `${giorno}-${mese}-${anno}`;
+}
+
+// Unica fonte dei pallini dei clienti, nell'ordine in cui compaiono: la
+// colonna e la legenda derivano entrambe da qui. Il diploma e' calcolato dal
+// backend solo per i sottoscrittori.
+const INDICATORI_CLIENTE = [
+  { id: "email", campo: "email_verificata" },
+  { id: "cellulare", campo: "cellulare_verificato" },
+  { id: "diploma", campo: "diploma_completo", soloSottoscrittori: true },
+];
+
+const indicatoriCliente = (attuatori) =>
+  INDICATORI_CLIENTE.filter((indicatore) => !(attuatori && indicatore.soloSottoscrittori));
+
+/** Voci della legenda, nello stesso ordine dei pallini. */
+export function vociLegendaCliente({ attuatori }) {
+  return indicatoriCliente(attuatori).map(({ id }) => TESTI_ELENCO.indicatori[id].voce);
+}
+
+/** Il campo dei pallini fra quelli di una vista, se c'e'. */
+export const campoIndicatori = (campi) => campi.find((campo) => campo.rilievo === "indicatori");
+
+/** Id del testo che descrive i pallini di una riga, unico per vista grazie a
+ * `base`; undefined se la riga non ne ha, cosi' `aria-describedby` non compare. */
+export function idIndicatori(base, riga, campo) {
+  return campo && riga.campi[campo.id]?.length ? `${base}-indicatori-${riga.id}` : undefined;
+}
+
+/** Verde solo per un `true` esplicito: assente o null vale grigio. */
+function statoCliente(item, attuatori) {
+  return indicatoriCliente(attuatori).map(({ id, campo }) => {
+    const attivo = item[campo] === true;
+    const testi = TESTI_ELENCO.indicatori[id];
+    return { id, attivo, etichetta: attivo ? testi.si : testi.no };
+  });
 }
 
 export function rigaCliente(item, { attuatori, mostraAzienda }) {
@@ -23,6 +60,7 @@ export function rigaCliente(item, { attuatori, mostraAzienda }) {
       nominativo,
       nome: testo(item.cliente_nome),
       cognome: testo(item.cliente_cognome),
+      stato: statoCliente(item, attuatori),
       ...(attuatori ? { ruolo: testo(item.ruolo?.ruolo_codice) } : {}),
       ...(mostraAzienda
         ? { azienda: testo(item.azienda?.azienda_ragione_sociale) }

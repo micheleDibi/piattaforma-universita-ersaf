@@ -15,7 +15,11 @@ pytestmark = pytest.mark.mariadb
 def scenario(client, db):
     Base.metadata.create_all(engine)
     db.execute(delete(Pratica))
-    account = f.crea_attuatore(db, email="filtri@example.org", password_hash=hash_password("test-filtri"))
+    # L'account vede solo le pratiche della propria azienda: account e pratiche
+    # stanno nella stessa.
+    azienda = f.crea_azienda(db)
+    account = f.crea_attuatore(db, email="filtri@example.org", password_hash=hash_password("test-filtri"),
+                               azienda_id=azienda.azienda_id)
     studenti = [f.crea_cliente(db, utente_id=account.utente_id, email=f"s{n}@example.org",
                 nome=nome, cognome="Ricerca", ruolo=0) for n, nome in enumerate(["Anna", "Bruno", "Carlo"])]
     for tabella, dati in {
@@ -41,7 +45,7 @@ def scenario(client, db):
         db.add(Pratica(pratica_numero=f"FILTRO-{n}", cliente_id=studenti[studente].cliente_id,
             cliente_emittente_aderente_id=account.cliente_id, pratica_stato_id=stato,
             listTesta_id=percorsi[percorso].listTesta_id, nome_universita_id=universita,
-            listino_tipo_corso_id=tipo_corso))
+            listino_tipo_corso_id=tipo_corso, azienda_id=azienda.azienda_id))
     db.commit()
     assert client.post("/auth/login", json={"utente_username": account.username, "utente_password": "test-filtri"}).status_code == 200
     yield studenti, percorsi

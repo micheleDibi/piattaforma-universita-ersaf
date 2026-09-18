@@ -8,7 +8,8 @@ import {
 import { pulsante } from "../config/styles/pulsante";
 import { scheda } from "../config/styles/superficie";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
-import CampiAzienda, { VUOTO_AZIENDA } from "./CampiAzienda.jsx";
+import CampiAzienda from "./CampiAzienda.jsx";
+import { VUOTO_AZIENDA } from "../config/campiAzienda.js";
 import AlertMessage from "./AlertMessage.jsx";
 
 const CAMPI_PERCENTUALI = [
@@ -70,19 +71,27 @@ export default function SchedaAziendaAttuatori({
   const [erroreModale, setErroreModale] = useState("");
   const [salvataggioModale, setSalvataggioModale] = useState(false);
 
-  useEffect(() => {
+  // Quando cambia l'azienda lo stato si riallinea durante il render e non in
+  // un effetto: stesso risultato, senza un render in piu' a cascata. Al primo
+  // render i valori iniziali coincidono gia' con questi.
+  const [aziendaIdMostrata, setAziendaIdMostrata] = useState(aziendaId);
+  if (aziendaId !== aziendaIdMostrata) {
+    setAziendaIdMostrata(aziendaId);
     setModalitaRicerca(!aziendaId);
-
     if (!aziendaId) {
       setAzienda(null);
       setDettaglio(null);
       setCaricamento(false);
-      return;
+    } else {
+      setCaricamento(true);
+      setErrore("");
     }
+  }
+
+  useEffect(() => {
+    if (!aziendaId) return;
 
     let annullato = false;
-    setCaricamento(true);
-    setErrore("");
 
     Promise.all([
       apiFetch(`/aziende/${aziendaId}`).then(async (risposta) => {

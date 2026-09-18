@@ -23,6 +23,9 @@
 .testata-elenco__azioni .azione-crea { @apply min-h-11; }
 .testata-elenco__azioni { @apply flex items-center justify-end gap-2; grid-area: azioni; }
 .filtri-elenco { @apply min-w-0 shrink-0; }
+/* Senza area propria: occupa tutta la larghezza nella prima riga libera, sotto
+ * le aree di ogni disposizione, e nella testata agganciata non compare. */
+.testata-elenco__legenda { @apply min-w-0; grid-column: 1 / -1; }
 
 @container (width < theme(--breakpoint-testata-stretta)) {
   .testata-elenco .azione-crea { @apply size-11 p-0; }
@@ -34,6 +37,7 @@
   grid-template-areas: "strumenti azioni";
 }
 .testata-elenco[data-compatta="true"] .testata-elenco__titolo { @apply sr-only; }
+.testata-elenco[data-compatta="true"] .testata-elenco__legenda { @apply hidden; }
 .testata-elenco[data-compatta="true"] .azione-crea { @apply size-11 p-0; }
 .testata-elenco[data-compatta="true"] .azione-crea__etichetta { @apply sr-only; }
 .testata-elenco[data-compatta="true"] .testata-elenco__strumenti { @apply gap-2; }

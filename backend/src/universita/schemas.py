@@ -1,6 +1,6 @@
 from datetime import date
-from typing import Optional
-from pydantic import BaseModel, ConfigDict, field_validator
+from typing import Annotated, Optional
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.comune.flag_legacy import a_flag_legacy, a_flag_legacy_uno
 
@@ -13,6 +13,13 @@ CAMPI_FLAG_MENO_UNO = (
     "universita_altre_attivita_certificate",
 )
 CAMPO_FLAG_UNO = "universita_immatricolato"
+
+# Testo libero: i formati reali (2015, 2014/2015, altro) non sono noti, quindi
+# nessun controllo di formato. Solo il limite della colonna, varchar(45): oltre,
+# il database di test risponde con un errore e quello di produzione, non
+# strict, tronca in silenzio.
+AnnoScolastico = Annotated[Optional[str], Field(max_length=45)]
+CAMPI_ANNO_SCOLASTICO = ("universita_anno_scolastico", "universita_anno_scolastico_ai")
 
 
 class UniversitaBase(BaseModel):
@@ -27,14 +34,14 @@ class UniversitaBase(BaseModel):
     universita_via_istituto: Optional[str] = None
     universita_citta_istituto: Optional[str] = None
     universita_provincia_istituto: Optional[str] = None
-    universita_anno_scolastico: Optional[str] = None
+    universita_anno_scolastico: AnnoScolastico = None
     universita_votoRicevuto_diploma: Optional[int] = None
     universita_votoMassimo_diploma: Optional[int] = None
     universita_istituto_ai: Optional[str] = None
     universita_citta_istituto_ai: Optional[str] = None
     universita_provincia_istituto_ai: Optional[str] = None
     universita_via_istituto_ai: Optional[str] = None
-    universita_anno_scolastico_ai: Optional[str] = None
+    universita_anno_scolastico_ai: AnnoScolastico = None
     universita_votoRicevuto_ai: Optional[int] = None
     universita_votoMassimo_ai: Optional[int] = None
     universita_titolo_universitario: Optional[str] = None
@@ -104,6 +111,17 @@ class UniversitaBase(BaseModel):
     @classmethod
     def _normalizza_flag_immatricolato(cls, v):
         return a_flag_legacy_uno(v)
+
+    @field_validator(*CAMPI_ANNO_SCOLASTICO, mode="before")
+    @classmethod
+    def _ripulisci_anno_scolastico(cls, v):
+        # Il trim avviene prima del controllo di lunghezza; uno spazio solo
+        # vale come campo vuoto. I non-stringa restano a Pydantic, che li
+        # rifiuta.
+        if isinstance(v, str):
+            v = v.strip()
+            return v or None
+        return v
 
 
 class UniversitaCreate(UniversitaBase):

@@ -960,6 +960,7 @@ Aggiorna Utente.
 | `cliente_telefono` | `string \| null` | no |
 | `cliente_tipoDocumento` | `TipoDocumentoEnum \| null` | no |
 | `curriculum` | `Universita \| null` | no |
+| `diploma_completo` | `boolean \| null` | no |
 | `email_verificata` | `boolean` | no |
 | `ruolo` | `RuoloResponse \| null` | no |
 | `tessera_id` | `integer \| null` | no |
@@ -1019,6 +1020,7 @@ Aggiorna Utente.
 | `cliente_sesso` | `SessoEnum \| null` | no |
 | `cliente_telefono` | `string \| null` | no |
 | `cliente_tipoDocumento` | `TipoDocumentoEnum \| null` | no |
+| `diploma_completo` | `boolean \| null` | no |
 | `email_verificata` | `boolean` | no |
 | `ruolo` | `RuoloResponse \| null` | no |
 | `tessera_id` | `integer \| null` | no |
@@ -1183,6 +1185,15 @@ Aggiorna Utente.
 |---|---|---|
 | `codice` | `string` | sì |
 | `sfida` | `string` | sì |
+
+### EmittenteBreve
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `cliente_codice` | `string \| null` | no |
+| `cliente_cognome` | `string \| null` | no |
+| `cliente_id` | `integer` | sì |
+| `cliente_nome` | `string \| null` | no |
 
 ### IndirizzoProfilo
 
@@ -1385,6 +1396,7 @@ Aggiorna Utente.
 | `cliente_emittente_aderente_id` | `integer \| null` | no |
 | `cliente_id` | `integer \| null` | no |
 | `cliente_nome_completo` | `string \| null` | no |
+| `emittente` | `EmittenteBreve \| null` | no |
 | `listTesta_corso2_id` | `integer \| null` | no |
 | `listTesta_corso3_id` | `integer \| null` | no |
 | `listTesta_descrizione` | `string \| null` | no |

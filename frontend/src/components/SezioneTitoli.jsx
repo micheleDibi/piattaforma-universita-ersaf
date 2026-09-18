@@ -1,8 +1,12 @@
+import { useId } from "react";
 import { SEGNAPOSTI_SELEZIONE } from "../config/testi/selezioni.js";
+import { TESTI_TITOLI } from "../config/testi/titoli.js";
 import { campo, etichetta } from "../config/styles/campo";
 import { riquadro, titoloSezione } from "../config/styles/superficie";
 
+// Gli anni del diploma e dell'anno integrativo sono varchar(45) nel database.
 export default function SezioneTitoli({ formData, handleChange }) {
+  const id = useId();
   return (
     <div className="space-y-10 text-testo">
       {/* SEZIONE 1: Istruzione Secondaria e Anno Integrativo */}
@@ -27,18 +31,19 @@ export default function SezioneTitoli({ formData, handleChange }) {
               />
             </div>
             <div>
-              <label className={etichetta()}>
+              <label htmlFor={`${id}-anno-diploma`} className={etichetta()}>
                 Anno di conseguimento
               </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  name="universita_data_titolo"
-                  value={formData.universita_data_titolo}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
+              <input
+                id={`${id}-anno-diploma`}
+                type="text"
+                name="universita_anno_scolastico"
+                value={formData.universita_anno_scolastico}
+                onChange={handleChange}
+                maxLength={45}
+                placeholder={TESTI_TITOLI.segnapostoAnno}
+                className={campo()}
+              />
             </div>
             <div>
               <label className={etichetta()}>
@@ -169,18 +174,19 @@ export default function SezioneTitoli({ formData, handleChange }) {
               />
             </div>
             <div>
-              <label className={etichetta()}>
+              <label htmlFor={`${id}-anno-integrativo`} className={etichetta()}>
                 Anno di conseguimento
               </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  name="universita_data_titolo"
-                  value={formData.universita_data_titolo}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
+              <input
+                id={`${id}-anno-integrativo`}
+                type="text"
+                name="universita_anno_scolastico_ai"
+                value={formData.universita_anno_scolastico_ai}
+                onChange={handleChange}
+                maxLength={45}
+                placeholder={TESTI_TITOLI.segnapostoAnno}
+                className={campo()}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

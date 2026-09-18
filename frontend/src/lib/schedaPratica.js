@@ -20,8 +20,9 @@ export async function caricaSchedaPratica(id, signal) {
     richiedi("/pratiche/filtri/stati", { signal }),
     richiedi("/listini-testa/opzioni/universita", { signal }),
   ]);
-  const emittente = pratica?.cliente_emittente_aderente_id
-    ? opzioneStudente(await richiedi(`/clienti/${pratica.cliente_emittente_aderente_id}`, { signal })) : null;
+  // L'emittente arriva con la pratica. Chiederlo a /clienti/{id} fallirebbe
+  // quando non e' fra i clienti visibili, e con lui l'intera scheda.
+  const emittente = pratica?.emittente ? opzioneStudente(pratica.emittente) : null;
   return { pratica, stati, universita, emittente };
 }
 export async function salvaPratica(id, payload) {

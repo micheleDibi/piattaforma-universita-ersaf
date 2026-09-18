@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from src.auth.dipendenze import get_current_utente
+from src.auth.visibilita import Visibilita, cliente_visibile_o_404, visibilita_corrente
 from src.database import get_db
 from src.otp.models import Attivazione
 from src.otp.servizio import blocca_cliente, gia_verificato, verifica
@@ -14,6 +15,9 @@ from src.otp.models import ContattoVerificato
 
 router = APIRouter(prefix="/clienti", dependencies=[Depends(get_current_utente)])
 Tipo = Literal["email", "cellulare"]
+# Il testo di blocca_cliente per un id inesistente: per un non Nazionale un
+# cliente non visibile deve ricevere la stessa identica risposta.
+NON_TROVATA = "Anagrafica non trovata."
 
 
 class InvioContatto(BaseModel):
@@ -56,14 +60,20 @@ def stato_contatti(db, cliente, utente):
     }
 
 @router.get("/{cliente_id}/contatti")
-def stato(cliente_id: int, db: Session = Depends(get_db)):
+def stato(cliente_id: int, db: Session = Depends(get_db),
+          vis: Visibilita = Depends(visibilita_corrente)):
+    cliente_visibile_o_404(db, vis, cliente_id, NON_TROVATA)
     cliente, utente = blocca_cliente(db, cliente_id)
     return stato_contatti(db, cliente, utente)
 
 
 @router.post("/{cliente_id}/contatti/{tipo}/genera-otp")
 def genera(cliente_id: int, tipo: Tipo, corpo: InvioContatto, request: Request,
-           db: Session = Depends(get_db), autore=Depends(get_current_utente)):
+           db: Session = Depends(get_db), autore=Depends(get_current_utente),
+           vis: Visibilita = Depends(visibilita_corrente)):
+    # Prima di tutto: niente lock, contatori, sfide o invii su un cliente che
+    # il chiamante non vede.
+    cliente_visibile_o_404(db, vis, cliente_id, NON_TROVATA)
     contesto = blocca_cliente(db, cliente_id)
     if corpo.valore != (getattr(contesto[0], "cliente_" + tipo) or ""):
         raise HTTPException(409, "Il contatto è cambiato. Salva e ricarica la scheda prima della verifica.")
@@ -73,7 +83,9 @@ def genera(cliente_id: int, tipo: Tipo, corpo: InvioContatto, request: Request,
 
 
 @router.post("/{cliente_id}/contatti/{tipo}/verifica-otp")
-def conferma(cliente_id: int, tipo: Tipo, corpo: ConfermaSfida, db: Session = Depends(get_db)):
+def conferma(cliente_id: int, tipo: Tipo, corpo: ConfermaSfida, db: Session = Depends(get_db),
+             vis: Visibilita = Depends(visibilita_corrente)):
+    cliente_visibile_o_404(db, vis, cliente_id, NON_TROVATA)
     cliente, utente = blocca_cliente(db, cliente_id)
     verifica(db, (cliente, utente), (corpo.sfida, corpo.codice), tipo)
     credenziali = prepara_attivazione(db, cliente, utente)

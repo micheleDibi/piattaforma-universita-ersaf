@@ -223,6 +223,46 @@ def db(db_pulito):
         connessione.close()
 
 
+@pytest.fixture
+def spia_sql():
+    """Gli statement SQL eseguiti mentre la fixture e' attiva.
+
+    Il listener si registra dopo quello di src/auth/visibilita.py, quindi vede
+    gli statement gia' con il prefisso SET STATEMENT: e' cio' che permette di
+    verificare dove il prefisso compare.
+    """
+    eseguiti: list[str] = []
+
+    def registra(conn, cursor, statement, parameters, context, executemany):
+        eseguiti.append(statement)
+
+    sa.event.listen(engine, "before_cursor_execute", registra)
+    try:
+        yield eseguiti
+    finally:
+        sa.event.remove(engine, "before_cursor_execute", registra)
+
+
+@pytest.fixture
+def tabella_pratiche(db_pulito):
+    """`pratiche` non e' in schema_base.sql: si crea dai modelli.
+
+    Si svuota prima e dopo perche' non sta in TABELLE_DA_SVUOTARE, e il
+    TRUNCATE di `aziende` riusa gli id: una pratica rimasta da un test
+    precedente finirebbe "nell'azienda 1" di quello successivo.
+    """
+    import src.main  # noqa: F401  registra tutti i mapper
+    from src.database import Base
+    from src.pratiche.models import Pratica
+
+    Base.metadata.create_all(engine)
+    with engine.begin() as connessione:
+        connessione.execute(sa.delete(Pratica.__table__))
+    yield
+    with engine.begin() as connessione:
+        connessione.execute(sa.delete(Pratica.__table__))
+
+
 # =============================================================================
 # Client HTTP
 # =============================================================================
