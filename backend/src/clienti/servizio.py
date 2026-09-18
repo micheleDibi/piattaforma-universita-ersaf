@@ -110,6 +110,34 @@ def verifica_ruolo_assegnabile(
         richiedi_nazionale(db, utente, "assegnazione del ruolo")
 
 
+def verifica_azienda_assegnabile(
+    db: Session,
+    vis,
+    utente: Utente,
+    nuova_azienda: int | None,
+    riga_attuale,
+) -> None:
+    """Chi non e' Nazionale non puo' cambiare l'azienda della propria riga.
+
+    L'azienda della riga "me" e' il secondo campo su cui si regge la
+    visibilita': decide le pratiche che si vedono, i colleghi da cui partono
+    i clienti visibili e le aziende. La riga "me" e' sempre visibile per
+    costruzione, quindi il controllo sulla visibilita' non la ferma, ed e' la
+    stessa scalata che verifica_ruolo_assegnabile chiude sul ruolo.
+
+    L'azienda di un'ALTRA riga visibile resta modificabile: e' il flusso della
+    scheda Azienda di un attuatore. Riassegnare lo stesso valore e' ammesso,
+    perche' la scheda rimanda i campi a ogni salvataggio.
+    """
+    if vis.nazionale or riga_attuale is None:
+        return
+    if riga_attuale.utente_id != vis.utente_id:
+        return
+    if nuova_azienda == riga_attuale.azienda_id:
+        return
+    richiedi_nazionale(db, utente, "assegnazione dell'azienda")
+
+
 def verifica_unicita_anagrafica(
     db: Session, dati: dict[str, Any], escludi_cliente_id: int | None = None
 ) -> None:

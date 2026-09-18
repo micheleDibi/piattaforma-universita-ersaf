@@ -10,7 +10,8 @@ pr: 4
 - corretto: Nella sezione dei titoli di studio l'anno di conseguimento si scrive come anno
   scolastico. Prima i due campi chiedevano una data e salvavano nel posto sbagliato.
 - sicurezza: Chi non è Nazionale non può più assegnare il ruolo Nazionale, nemmeno a se stesso, e
-  non può più cambiare il proprio ruolo.
+  non può più cambiare il proprio ruolo né la propria azienda. Restano modificabili il ruolo e
+  l'azienda delle persone che vede.
 - modificato: Chi vede quali sottoscrittori, quali aziende e quali pratiche segue adesso la stessa
   regola in tutta la piattaforma.
 
@@ -25,8 +26,11 @@ pr: 4
 - aggiunto: `diploma_completo` sugli elenchi e sulla scheda dei clienti, calcolato con una
   `selectinload` del curriculum: nessuna query per riga. La regola dei campi del diploma sta in
   `universita/models.py` e vale sia per l'elenco sia per la scheda.
-- sicurezza: `verifica_ruolo_assegnabile` chiude l'innalzamento di privilegi che si otteneva
-  scrivendo sulla propria riga `clienti`, sempre visibile, o creando un Nazionale con con-utente.
+- sicurezza: `verifica_ruolo_assegnabile` e `verifica_azienda_assegnabile` chiudono
+  l'innalzamento di privilegi che si otteneva scrivendo sulla propria riga `clienti`, sempre
+  visibile per costruzione: il ruolo dava la vista del Nazionale, l'azienda spostava la
+  visibilità di pratiche, colleghi e aziende. Riassegnare il valore già presente resta ammesso,
+  perché la scheda rimanda tutti i campi a ogni salvataggio.
 - modificato: `universita_anno_scolastico` e `universita_anno_scolastico_ai` sono campi di testo da
   45 caratteri, come lo schema. Nessuna migrazione dei dati.
 - modificato: le liste dei campi azienda stanno in `frontend/src/config/campiAzienda.js`, così un

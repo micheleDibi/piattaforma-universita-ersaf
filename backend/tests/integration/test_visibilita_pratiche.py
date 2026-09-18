@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from src.clienti.models import Cliente
 from src.pratiche.models import Pratica
 from tests.support import factories as f
 from tests.support.scenari import accedi, accedi_nazionale, riferimenti_pratiche
@@ -12,6 +13,7 @@ pytestmark = pytest.mark.mariadb
 
 NON_TROVATA = {"detail": "Pratica non trovata."}
 AZIENDA_MANCANTE = {"detail": "Per creare pratiche l'utente deve avere un'azienda associata."}
+SOLO_NAZIONALE = {"detail": "Solo il nazionale può eseguire questa operazione."}
 
 
 @pytest.fixture
@@ -213,3 +215,42 @@ def test_l_elenco_non_fa_una_query_per_riga(client, db, mondo, spia_sql):
     spia_sql.clear()
     assert len(client.get("/pratiche/?limit=40", headers=sessione).json()) == 32
     assert len(spia_sql) == con_due
+
+
+def test_la_propria_azienda_non_si_riscrive(client, db, mondo):
+    """Cambiare `azienda_id` sulla propria riga sposterebbe la visibilita'.
+
+    La riga "me" e' sempre visibile per costruzione, quindi il controllo sulla
+    visibilita' la lascia passare: senza un controllo sul campo, un PUT con il
+    solo azienda_id dava le pratiche dell'azienda scelta, e con esse nuovi
+    colleghi da cui partire per i clienti. E' la stessa scalata che la regola
+    sul ruolo chiude, sull'altro campo che la regola legge.
+    """
+    io, sessione, ids = mondo["io"], mondo["sessione"], mondo["ids"]
+
+    risposta = client.put(f"/clienti/{io.cliente_id}",
+                          json={"azienda_id": mondo["b"]}, headers=sessione)
+    assert (risposta.status_code, risposta.json()) == (403, SOLO_NAZIONALE)
+
+    db.expire_all()
+    assert db.get(Cliente, io.cliente_id).azienda_id == mondo["a"]
+    elenco = client.get("/pratiche/?limit=200", headers=sessione)
+    assert {r["pratica_id"] for r in elenco.json()} == {ids["a_altrui"], ids["a_mio"]}
+
+
+def test_la_propria_azienda_si_puo_rimandare_uguale(client, mondo):
+    """La scheda rimanda tutti i campi a ogni salvataggio."""
+    risposta = client.put(f"/clienti/{mondo['io'].cliente_id}",
+                          json={"azienda_id": mondo["a"]}, headers=mondo["sessione"])
+    assert risposta.status_code == 200, risposta.text
+
+
+def test_l_azienda_di_un_altro_visibile_resta_modificabile(client, db, mondo):
+    """Il divieto riguarda solo la propria riga: associare un'azienda a un
+    attuatore che si vede e' il flusso della scheda Azienda."""
+    altro = mondo["mio_studente"]
+    risposta = client.put(f"/clienti/{altro.cliente_id}",
+                          json={"azienda_id": mondo["b"]}, headers=mondo["sessione"])
+    assert risposta.status_code == 200, risposta.text
+    db.expire_all()
+    assert db.get(Cliente, altro.cliente_id).azienda_id == mondo["b"]

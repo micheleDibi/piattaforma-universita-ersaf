@@ -32,6 +32,7 @@ from src.clienti.schemas import (
 from src.clienti.servizio import (
     TipoUtente,
     crea_cliente_con_utente,
+    verifica_azienda_assegnabile,
     verifica_ruolo_assegnabile,
     verifica_unicita_anagrafica,
 )
@@ -229,14 +230,23 @@ def aggiorna_cliente(
     # non deve succedere nulla. Il testo e' quello che blocca_cliente da' per
     # un id inesistente, cosi' le due risposte coincidono.
     cliente_visibile_o_404(db, vis, cliente_id, "Anagrafica non trovata.")
-    if "cliente_ruolo" in modifiche.model_fields_set:
+    # Ruolo e azienda della riga "me" sono i due campi che decidono la
+    # visibilita': si controllano prima di scrivere, e leggendo la riga una
+    # volta sola.
+    inviati_sensibili = modifiche.model_fields_set & {"cliente_ruolo", "azienda_id"}
+    if inviati_sensibili:
         riga = db.execute(
-            select(Cliente.utente_id, Cliente.cliente_ruolo)
+            select(Cliente.utente_id, Cliente.cliente_ruolo, Cliente.azienda_id)
             .where(Cliente.cliente_id == cliente_id)
         ).first()
-        verifica_ruolo_assegnabile(
-            db, vis, current_utente, modifiche.cliente_ruolo, riga
-        )
+        if "cliente_ruolo" in inviati_sensibili:
+            verifica_ruolo_assegnabile(
+                db, vis, current_utente, modifiche.cliente_ruolo, riga
+            )
+        if "azienda_id" in inviati_sensibili:
+            verifica_azienda_assegnabile(
+                db, vis, current_utente, modifiche.azienda_id, riga
+            )
     blocca_cliente(db, cliente_id)
     db_cliente = _cliente_o_404(db, cliente_id, con_curriculum=True)
 
