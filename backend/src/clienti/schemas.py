@@ -64,10 +64,6 @@ def _normalizza_enum(v, info):
 # =============================================================================
 # Codice Fiscale: struttura (con omocodia) + carattere di controllo ufficiale
 # =============================================================================
-# Le 7 posizioni numeriche del CF possono contenere, in caso di omocodia,
-# una lettera al posto della cifra (l'Agenzia delle Entrate sostituisce le
-# cifre con L,M,N,P,Q,R,S,T,U,V partendo dall'ultima posizione numerica).
-# La regex quindi accetta sia cifra sia lettera in quelle posizioni.
 _CF_PATTERN = re.compile(
     r"^[A-Z]{6}[0-9A-Z]{2}[A-EHLMPR-T][0-9A-Z]{2}[A-Z][0-9A-Z]{3}[A-Z]$"
 )
@@ -89,14 +85,8 @@ _CF_RESTO = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 def _valida_codice_fiscale(v):
     """Controllo completo, omocodia inclusa: struttura + ricalcolo del
-    carattere di controllo con le tabelle ufficiali. Le 7 posizioni
-    numeriche possono contenere una lettera di omocodia al posto della
-    cifra: il calcolo del checksum usa comunque le tabelle _CF_DISPARI/
-    _CF_PARI, che assegnano un valore sia alle cifre sia alle lettere,
-    quindi non serve "tradurre" la lettera prima di calcolare il controllo.
-
-    Si assume cittadinanza italiana: nessuna gestione di codici fiscali o
-    documenti di identificazione esteri."""
+    carattere di controllo con le tabelle ufficiali. Si assume cittadinanza
+    italiana: nessuna gestione di codici fiscali esteri."""
     if v is None or v.strip() == "":
         return v
     v = v.strip().upper()
@@ -109,8 +99,6 @@ def _valida_codice_fiscale(v):
 
     somma = 0
     for i, carattere in enumerate(v[:15]):
-        # Posizioni dispari (1a, 3a, ... 15a, contate da 1): indici pari in
-        # Python (0, 2, 4, ...).
         somma += _CF_DISPARI[carattere] if i % 2 == 0 else _CF_PARI[carattere]
 
     atteso = _CF_RESTO[somma % 26]
@@ -123,6 +111,21 @@ def _valida_codice_fiscale(v):
 def _valida_scadenza_documento(v):
     if v is not None and v < date_.today():
         raise ValueError("Il documento è scaduto: inserisci una data di scadenza valida.")
+    return v
+
+
+# =============================================================================
+# Email: formato standard qualcosa@dominio.estensione
+# =============================================================================
+_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def _valida_email(v):
+    if v is None or v.strip() == "":
+        return v
+    v = v.strip()
+    if not _EMAIL_PATTERN.match(v):
+        raise ValueError("Email non valida: formato non conforme.")
     return v
 
 
@@ -173,9 +176,9 @@ class ClienteBase(BaseModel):
     cliente_abilitazione_a4u: Optional[int] = None
 
     # Solo normalizzazione (stringa vuota -> None): innocua anche in lettura,
-    # non solleva mai errori sui dati storici. NIENTE validator di CF o
-    # scadenza qui: ClienteResponse eredita da questa classe e verrebbe
-    # rotta dai dati storici gia' presenti nel DB.
+    # non solleva mai errori sui dati storici. NIENTE validator di CF,
+    # scadenza o email qui: ClienteResponse eredita da questa classe e
+    # verrebbe rotta dai dati storici gia' presenti nel DB.
     _valida_enum_vuoti = field_validator(
         "cliente_tipoDocumento", "cliente_sesso", mode="before"
     )(_normalizza_enum)
@@ -184,15 +187,16 @@ class ClienteBase(BaseModel):
 class ClienteCreate(ClienteBase):
     _valida_cf = field_validator("cliente_codice_fiscale")(_valida_codice_fiscale)
     _valida_scadenza = field_validator("cliente_dataScadenzaDocumento")(_valida_scadenza_documento)
+    _valida_email = field_validator("cliente_email")(_valida_email)
 
 
 class ClienteUpdate(UniversitaBase):
     """Aggiornamento parziale: tutti i campi opzionali, curriculum compreso.
 
-    Niente validator di CF/scadenza a livello di schema: il frontend
+    Niente validator di CF/scadenza/email a livello di schema: il frontend
     rimanda sempre tutti i campi del form, non solo quelli modificati.
     Validarli qui bloccherebbe ogni PUT su un cliente storico che ha gia'
-    un CF o una scadenza non conformi ai nuovi controlli, anche quando
+    un CF o un'email non conformi ai nuovi controlli, anche quando
     l'operatore non ha toccato quei campi. Il controllo si fa nel router,
     confrontando col valore gia' salvato: un peggioramento nuovo si
     blocca, un dato storico invariato passa.
@@ -261,6 +265,9 @@ class ClienteResponse(ClienteBase):
     azienda: Optional[AziendaResponse] = None
     ruolo: Optional[RuoloResponse] = None
     utente: Optional[UtenteResponse] = None
+    # Calcolate a runtime da clienti/anomalie.py, non colonne del
+    # database: elenco di stringhe leggibili, vuoto se il cliente e' pulito.
+    anomalie: list[str] = []
 
 
 class ClienteDettaglioResponse(ClienteResponse):
@@ -280,6 +287,7 @@ class ClienteConUtenteCreate(ClienteBase, UniversitaBase):
 
     _valida_cf = field_validator("cliente_codice_fiscale")(_valida_codice_fiscale)
     _valida_scadenza = field_validator("cliente_dataScadenzaDocumento")(_valida_scadenza_documento)
+    _valida_email = field_validator("cliente_email")(_valida_email)
 
 
 class PermessiPraticheResponse(BaseModel):

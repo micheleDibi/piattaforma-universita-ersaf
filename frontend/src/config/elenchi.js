@@ -34,7 +34,7 @@ const tipo = { id: "tipo", etichetta: "Tipo di corso", icona: "tipo" };
 // puntano a campi diversi (nome_universita vs listino_tipoCorso_descrizione).
 const dataCreazione = {
   id: "dataCreazione",
-  etichetta: "Data creazione",
+  etichetta: "Data di creazione",
   icona: "data",
 };
 
@@ -53,6 +53,7 @@ export function modelloClienti({ attuatori, mostraAzienda }) {
     id: "clienti",
     etichetta: attuatori ? "Attuatori" : "Sottoscrittori",
     ampiezza: mostraAzienda ? "articolata" : "semplice",
+    avvisoDopo: "cognome",
     colonne: [nome, cognome, statoCliente, ...riferimenti].map(colonna),
     mobile: [nominativo, statoCliente, ...riferimenti],
   };
@@ -74,6 +75,7 @@ export const MODELLO_AZIENDE = {
     { ...azienda, etichetta: "Ragione sociale", rilievo: "principale" },
     sede,
   ],
+  avvisoDopo: "azienda",
 };
 
 export const MODELLO_PRATICHE = {

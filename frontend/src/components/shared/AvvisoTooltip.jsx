@@ -1,28 +1,38 @@
-import { TriangleAlert } from "../../config/icone.js";
+import { useState } from "react";
+import { createPortal } from "react-dom";
+import { TriangleAlert, X } from "../../config/icone.js";
+import { pulsanteIcona } from "../../config/styles/pulsante.js";
+import { STILI_AVVISI } from "../../config/styles/feedback.js";
+import { TESTI_ELENCO } from "../../config/testi/elenco.js";
+import Dialogo from "./Dialogo.jsx";
 
+/** Il comando non apre la riga; il dialogo nativo gestisce focus, Escape e mobile. */
 export default function AvvisoTooltip({ messaggi }) {
-  if (!messaggi || messaggi.length === 0) return null;
-
+  const [aperto, setAperto] = useState(false);
+  if (!messaggi?.length) return null;
+  const ferma = (evento) => evento.stopPropagation();
   return (
-    <span
-      className="group relative inline-flex items-center"
-      style={{ verticalAlign: "middle", transform: "translateY(-1px)" }}
-      tabIndex={0}
-    >
-      <TriangleAlert className="size-icona text-amber-500" aria-hidden="true" />
-      <span className="sr-only">{messaggi.join(". ")}</span>
-
-      <span
-        role="tooltip"
-        className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 hidden w-max max-w-xs rounded-md bg-gray-900 px-3 py-2 text-xs font-medium text-white shadow-lg group-hover:block group-focus:block"
-      >
-        <ul className="space-y-1">
-          {messaggi.map((m) => (
-            <li key={m}>{m}</li>
-          ))}
-        </ul>
-        <span className="absolute right-3 top-full border-4 border-transparent border-t-gray-900" />
-      </span>
+    <span className={STILI_AVVISI.comando} onClick={ferma} onKeyDown={ferma}>
+      <button type="button" className={pulsanteIcona()} onClick={() => setAperto(true)}
+        title={messaggi.join("\n")} aria-label={TESTI_ELENCO.apriAvvisi} aria-haspopup="dialog">
+        <TriangleAlert className={STILI_AVVISI.icona} aria-hidden="true" />
+      </button>
+      {createPortal(
+        <Dialogo aperto={aperto} onChiudi={() => setAperto(false)} etichetta={TESTI_ELENCO.avvisi}>
+          <div className={STILI_AVVISI.contenuto}>
+            <div className={STILI_AVVISI.intestazione}>
+              <h2>{TESTI_ELENCO.avvisi}</h2>
+              <button type="button" className={pulsanteIcona()} data-focus-iniziale
+                onClick={() => setAperto(false)} aria-label={TESTI_ELENCO.chiudiAvvisi}>
+                <X aria-hidden="true" />
+              </button>
+            </div>
+            <ul className={STILI_AVVISI.elenco}>
+              {messaggi.map((messaggio) => <li key={messaggio}>{messaggio}</li>)}
+            </ul>
+          </div>
+        </Dialogo>, document.body,
+      )}
     </span>
   );
 }

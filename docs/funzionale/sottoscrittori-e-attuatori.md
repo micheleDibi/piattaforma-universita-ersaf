@@ -229,10 +229,10 @@ diverse:
   salvataggio: dalla scheda Dati Principali il browser lo impedisce, da
   un'altra scheda la richiesta arriva al server e a video compare «Servizio
   temporaneamente non disponibile. Riprova tra poco.»;
-- il codice fiscale, se cambia, deve essere lungo 16 caratteri; struttura e
-  carattere di controllo non vengono ricontrollati;
+- il codice fiscale, se cambia, viene controllato per lunghezza, struttura e
+  carattere di controllo; anche una nuova email deve avere formato valido;
 - la scadenza del documento, se cambia, non può essere già passata;
-- un codice fiscale o una scadenza già salvati e non toccati non bloccano il
+- un codice fiscale, un’email o una scadenza già salvati e non toccati non bloccano il
   salvataggio, anche se non rispettano queste regole;
 - cambiare email o cellulare annulla la verifica di quel contatto (vedi più
   avanti).
@@ -483,3 +483,19 @@ Nota: la finestra mostra l'azienda a tutti e il server non impedisce i giri; ved
 
 Le anagrafiche non si possono eliminare, né dall'interfaccia né dal server.
 Si può solo disattivare l'utente.
+
+## Avvisi sulle anomalie storiche
+
+Un'icona accanto al nominativo nell'elenco apre gli avvisi, sia su desktop sia
+su mobile, senza aprire la scheda. Il dialogo si chiude con il pulsante dedicato
+o con Escape. Gli stessi avvisi compaiono anche nella scheda anagrafica.
+
+Si segnalano codice fiscale o email non validi e duplicati di codice fiscale,
+email, telefono, cellulare, PEC e documento. Il confronto include altre pagine
+dell'elenco, ma solo anagrafiche visibili all'operatore: non rivela nomi di
+clienti fuori dalla sua portata. Il Nazionale confronta l'intero archivio.
+
+In modifica codice fiscale ed email vengono validati nel formato completo
+solo se cambiati; una nuova scadenza del documento non può essere passata.
+I valori storici invariati non falliscono la validazione del formato.
+Resta il controllo di unicità descritto sopra, anche per i valori invariati.

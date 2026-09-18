@@ -38,11 +38,14 @@ Le voci sono:
 
 - **Dashboard**, per tutti;
 - **Sottoscrittori**, per tutti;
-- **Attuatori**, **Aziende** e **Prodotti formativi**, solo per il Nazionale.
+- **Attuatori**, **Pratiche** e **Prodotti formativi**, solo per il Nazionale;
+- **Aziende**, per Nazionale, Regionale e Provinciale.
 
-Nota: queste tre voci sono nascoste solo dal menu, e le pagine si aprono comunque dal loro indirizzo; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Le voci nascoste non impediscono di aprire un indirizzo: la visibilità dei dati
+è controllata dal server. Vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
-Le **Pratiche** non hanno una voce di menu. Si aprono dalla Dashboard, scegliendo l'ateneo e il tipo di corso.
+Aprendo **Pratiche** si sceglie l'ateneo e il tipo di corso dal pannello.
+La Dashboard conserva il messaggio di benvenuto.
 
 In fondo al menu ci sono:
 

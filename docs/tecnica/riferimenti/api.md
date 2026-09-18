@@ -918,6 +918,7 @@ Aggiorna Utente.
 
 | Campo | Tipo | Obbligatorio |
 |---|---|---|
+| `anomalie` | `list[string]` | no |
 | `attuatore_id` | `integer \| null` | no |
 | `azienda` | `AziendaResponse \| null` | no |
 | `azienda_id` | `integer \| null` | no |
@@ -979,6 +980,7 @@ Aggiorna Utente.
 
 | Campo | Tipo | Obbligatorio |
 |---|---|---|
+| `anomalie` | `list[string]` | no |
 | `attuatore_id` | `integer \| null` | no |
 | `azienda` | `AziendaResponse \| null` | no |
 | `azienda_id` | `integer \| null` | no |

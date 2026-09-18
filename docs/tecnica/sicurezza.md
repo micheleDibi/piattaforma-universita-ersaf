@@ -459,7 +459,7 @@ Questa sezione elenca i difetti noti di autorizzazione, visibilità e coerenza, 
 ### Autorizzazione applicata solo dall'interfaccia
 
 - **Pagine riservate al Nazionale solo nel menu.**
-  - Attuatori, Aziende e Prodotti formativi sono nascosti nel menu agli altri ruoli.
+  - Attuatori, Pratiche e Prodotti formativi sono nascosti nel menu agli altri ruoli; Aziende è nascosta all’Aderente.
   - Le pagine però si aprono dall'indirizzo con qualunque sessione valida.
   - `frontend/src/config/routes/rotte.js:20-47`; `frontend/src/App.jsx:35-71`.
 - **Anagrafiche senza controllo di ruolo.**
@@ -477,16 +477,16 @@ Questa sezione elenca i difetti noti di autorizzazione, visibilità e coerenza, 
   - Il server accetta i cinque campi, in creazione e in modifica, da ogni utente autenticato.
   - `NuovoSottoscrittore.jsx:38-41`, `256-271`, `343-345`; `clienti/schemas.py:168-173`, `237-242`; `clienti/servizio.py:211-214`.
 - **Pratiche: abilitazioni e ruolo.**
-  - La Dashboard abilita i pulsanti solo con l'abilitazione generale e quella dell'ateneo.
+  - Il pannello nella pagina Pratiche abilita i pulsanti solo con l'abilitazione generale e quella dell'ateneo.
   - Elenco, dettaglio, creazione e modifica applicano ora la visibilità per azienda, ma nessuna rotta guarda le abilitazioni né il ruolo: chi ha i pulsanti spenti crea e modifica lo stesso, purché nella propria azienda.
-  - La pagina Pratiche non è nel menu, ma si apre dall'indirizzo.
+  - La pagina Pratiche è nel menu del Nazionale e si apre anche dall’indirizzo.
   - `frontend/src/components/PannelloPratiche.jsx:39-41`, `94`; `backend/src/pratiche/routers.py:15-19`, `65-95`, `121-143`; `rotte.js:20-41`; `App.jsx:56`.
 - **Prodotti formativi e tipi di corso.**
   - La voce di menu è solo per il Nazionale.
   - Creazione e modifica sono aperte a ogni utente autenticato.
   - `listini_testa/routers.py:17-21`, `49`, `174`; `backend/src/listino_tipoCorso/routers.py:8-12`, `15`, `38`.
 - **Aziende.**
-  - La voce Aziende è solo per il Nazionale.
+  - La voce Aziende è visibile a Nazionale, Regionale e Provinciale.
   - Ogni utente autenticato può creare aziende e modificare dati e percentuali di quelle che vede: la propria e le discendenti.
   - `backend/src/aziende/routers.py:138-166`, `229-295`; `aziende_xcod/servizi.py:73-88`.
 - **Verifica dei contatti.**
@@ -618,7 +618,7 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - `servizio_reset.py:125-160`; `auth/schemas.py:29`.
 - **Pagina dopo l'accesso.**
   - Dopo il login, e dopo un'impersonificazione, si arriva a Sottoscrittori e non alla Dashboard.
-  - Eppure la Dashboard è l'unico accesso alle Pratiche dal menu.
+  - Il Nazionale raggiunge le Pratiche dalla voce dedicata del menu.
   - `frontend/src/config/routes/percorsi.js:14`; `SchedaUtente.jsx:165`.
 - **Durata del link di recupero.**
   - I testi dicono "60 minuti", un valore fisso.
@@ -676,7 +676,7 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - `clienti/servizio.py:56-64`, `211-214`; `backend/src/clienti/models.py:82-86`; `clienti/routers.py:45-59`; `utenti/models.py:73-79`; `servizio_login.py:128-135`.
 - **Controllo del codice fiscale.**
   - In creazione il server controlla struttura e carattere di controllo.
-  - In modifica controlla solo la lunghezza di 16 caratteri, e solo se il valore cambia.
+  - In modifica controlla lunghezza, struttura e carattere di controllo, solo se il valore cambia.
   - `clienti/schemas.py:90-120`, `185`, `273`; `clienti/routers.py:225-232`.
 - **Unicità in modifica.**
   - Il controllo di unicità considera anche i campi non modificati, e l'interfaccia rimanda sempre tutti i campi.
@@ -719,3 +719,12 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - `password.py:20`, `46` e `passwordPolicy.js:25` parlano di un minimo di 12 caratteri.
   - Il messaggio d'errore all'avvio parla di "due pepper", ma i segreti sono tre (`config.py:297-299`).
   - `NuovoSottoscrittore.jsx:209-210` dice che il codice cliente deriva dall'identificativo, ma è casuale.
+
+### Avvisi anagrafici e visibilità
+
+Il dettaglio cliente mantiene `cliente_visibile_o_404` prima della lettura.
+`clienti/anomalie.py` applica `filtra_clienti` anche al confronto dei duplicati:
+nessun nome o esistenza di anagrafiche non visibili viene riportato negli avvisi.
+Le query cercano solo i valori delle righe richieste, non caricano tutta la
+tabella a ogni pagina. I test di regressione coprono dettaglio non visibile,
+duplicati fuori pagina e fuori portata, e accesso Nazionale.

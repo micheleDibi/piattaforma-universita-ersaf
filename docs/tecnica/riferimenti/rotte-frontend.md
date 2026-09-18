@@ -17,8 +17,8 @@ Pagine registrate nell'applicazione web, nell'ordine in cui sono dichiarate.
 | `/profilo` | `MioProfilo` | sessione | — |
 | `/sottoscrittori` | `ElencoClienti` (soloAttuatori=false, soloUtenti=true) | sessione | Sottoscrittori |
 | `/attuatori` | `ElencoClienti` (soloAttuatori=true) | sessione | Attuatori (solo Nazionale) |
-| `/aziende` | `ElencoAziende` (soloAttuatori=true) | sessione | Aziende (solo Nazionale) |
-| `/pratiche` | `ElencoPratiche` | sessione | — |
+| `/aziende` | `ElencoAziende` (soloAttuatori=true) | sessione | Aziende |
+| `/pratiche` | `ElencoPratiche` | sessione | Pratiche (solo Nazionale) |
 | `/prodotti` | `ElencoProdottiFormativi` (soloAttuatori=true) | sessione | Prodotti formativi (solo Nazionale) |
 | `/sottoscrittori/nuovo` | `NuovoSottoscrittore` (tipoUtente=sottoscrittore) | sessione | — |
 | `/sottoscrittori/:clienteId` | `NuovoSottoscrittore` (tipoUtente=sottoscrittore) | sessione | — |

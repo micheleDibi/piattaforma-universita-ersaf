@@ -13,3 +13,11 @@ export const STILI_FEEDBACK = {
   icona: "mt-0.5 size-icona-piccola shrink-0",
   testo: "min-w-0 break-words",
 };
+
+export const STILI_AVVISI = {
+  comando: "inline-flex items-center align-middle",
+  icona: "size-icona text-attenzione-forte",
+  contenuto: "dialogo__contenuto",
+  intestazione: "flex items-center justify-between gap-3 pb-4 font-semibold text-testo-forte",
+  elenco: "list-disc pl-4 space-y-2 overflow-y-auto text-sm text-testo",
+};

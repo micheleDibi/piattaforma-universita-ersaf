@@ -78,7 +78,7 @@ export default function TabellaElenco({ dati, modello, onApri }) {
                   }
                   const avviso = riga.campi.avviso;
                   const conAvviso =
-                    campo.rilievo === "principale" && avviso?.length > 0;
+                    modello.avvisoDopo === campo.id && avviso?.length > 0;
                   return (
                     <span
                       key={campo.id}

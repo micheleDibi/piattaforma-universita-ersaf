@@ -1,4 +1,7 @@
 export const TESTI_ELENCO = {
+  avvisi: "Avvisi anagrafica",
+  apriAvvisi: "Mostra gli avvisi dell’anagrafica",
+  chiudiAvvisi: "Chiudi avvisi",
   gruppoFiltri: "Filtri dell'elenco",
   nomeFiltri: "Filtri",
   chiudiFiltri: "Chiudi filtri",

@@ -108,7 +108,11 @@ def test_il_limite_si_alza_solo_dove_serve(client, db, mailer, spia_sql, tabella
     io, sessione = accedi(client, db)
     spia_sql.clear()
     client.get("/clienti/", headers=sessione)
-    assert sum("SET STATEMENT" in s for s in spia_sql) == 1
+    # Elenco e confronto email per gli avvisi applicano entrambi la visibilita'.
+    ricorsive = [s for s in spia_sql if v.NOME_CTE in s]
+    assert len(ricorsive) == 2
+    assert all("SET STATEMENT" in s for s in ricorsive)
+    assert not any("SET STATEMENT" in s for s in spia_sql if v.NOME_CTE not in s)
 
     spia_sql.clear()
     client.get("/pratiche/filtri/stati", headers=sessione)

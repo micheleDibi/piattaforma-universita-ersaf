@@ -1,7 +1,7 @@
 # Pratiche
 
 Questa pagina descrive le pratiche come le vede chi usa la piattaforma: la
-Dashboard, l'elenco, la scheda e il documento PDF.
+pagina Pratiche, l'elenco, la scheda e il documento PDF.
 
 ## Cos'è una pratica
 
@@ -15,23 +15,22 @@ Collega:
 - l'università e il tipo di corso, ricavati dal percorso;
 - il numero della pratica, il prezzo e lo stato.
 
-Il tipo di corso non compare nella scheda. Serve ai filtri che la Dashboard
+Il tipo di corso non compare nella scheda. Serve ai filtri che la pagina Pratiche
 applica all'elenco. Università e tipo di corso si copiano dal percorso alla
 creazione della pratica: poi restano quelli, anche se il prodotto formativo
 cambia.
 
 ## Come si arriva alle pratiche
 
-La voce "Pratiche" non è nel menu. All'elenco si arriva dai pulsanti della
-Dashboard, oppure scrivendo l'indirizzo della pagina nel browser.
+Il Nazionale apre **Pratiche** dal menu. Senza un ateneo selezionato, la pagina
+mostra il pannello degli atenei; scegliendo un pulsante si apre l'elenco filtrato.
+Gli altri ruoli possono raggiungere la pagina dal suo indirizzo: il backend
+limita comunque le pratiche all'azienda visibile all'utente.
 
-La Dashboard si apre dal menu. La pagina che si apre dopo l'accesso è descritta
-in [Accesso e sicurezza](accesso-e-sicurezza.md).
+## Pannello degli atenei
 
-## Dashboard
-
-La Dashboard mostra il titolo, un messaggio di benvenuto e un blocco per
-ciascun ateneo. Non contiene statistiche.
+Il pannello è stato spostato dalla Dashboard alla pagina Pratiche. La Dashboard
+mostra soltanto il titolo e il messaggio di benvenuto.
 
 ### Blocchi e pulsanti
 
@@ -54,7 +53,7 @@ Negli altri casi i pulsanti restano visibili, ma sono grigi e non si possono
 premere. Senza l'abilitazione generale, in cima alla pagina compare il
 messaggio "Non hai l'abilitazione generale alle pratiche universitarie."
 
-Mentre legge le abilitazioni, la Dashboard mostra "Caricamento permessi...".
+Mentre legge le abilitazioni, la pagina Pratiche mostra "Caricamento permessi...".
 Se non riesce a leggerle, al posto dei blocchi mostra un messaggio di errore.
 
 Le abilitazioni si impostano nella scheda di un attuatore: vedi
@@ -83,7 +82,7 @@ Nota: il pulsante porta a una pagina che non esiste; vedi [Limiti noti](../tecni
 
 ## Elenco delle pratiche
 
-L'elenco si intitola "Elenco Pratiche". Se si arriva dalla Dashboard, il
+L'elenco si intitola "Elenco Pratiche". Se si arriva dalla pagina Pratiche, il
 titolo aggiunge l'ateneo e i tipi di corso. Il pulsante "Nuova" apre una
 pratica nuova. Selezionando una riga si apre la scheda della pratica.
 
@@ -114,15 +113,15 @@ Il pulsante "Filtri" apre questi filtri:
   cognome o codice. Vengono proposti solo gli studenti che hanno almeno una
   pratica.
 - **Tipologia corso**: è pensato per i pulsanti che raggruppano più tipi di
-  corso. Nessun pulsante della Dashboard lo attiva, quindi non compare.
+  corso. Nessun pulsante della pagina Pratiche lo attiva, quindi non compare.
 
-L'ateneo e i tipi di corso scelti dalla Dashboard non compaiono fra i filtri.
-Per cambiarli si torna alla Dashboard e si sceglie un altro pulsante.
+L'ateneo e i tipi di corso scelti dalla pagina Pratiche non compaiono fra i filtri.
+Per cambiarli si torna alla pagina Pratiche e si sceglie un altro pulsante.
 
 Accanto alla scritta "Filtri" compare il numero dei filtri attivi. Il
 conteggio e il pulsante "Azzera filtri" riguardano solo numero, stato,
 studenti e tipologia. Non toccano la ricerca, né l'ateneo e i tipi di corso
-scelti dalla Dashboard.
+scelti dalla pagina Pratiche.
 
 Ricerca e filtri restano nell'indirizzo della pagina. Chi torna dalla scheda
 ritrova l'elenco con le stesse scelte.
@@ -182,7 +181,7 @@ Una pratica può contenere anche dati che la scheda non mostra e non modifica:
 per esempio la firma, gli allegati, l'azienda, il consulente e l'indicazione
 di rinnovo. Alcuni di questi dati finiscono nel documento PDF.
 
-Nota: in modifica la scheda cambia solo i campi elencati sopra, ma il sistema ne accetta anche altri, fra cui l'azienda, il consulente e il tipo di corso che decide i filtri della Dashboard; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Nota: in modifica la scheda cambia solo i campi elencati sopra, ma il sistema ne accetta anche altri, fra cui l'azienda, il consulente e il tipo di corso che decide i filtri della pagina Pratiche; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 ### Salvataggio
 
@@ -230,10 +229,10 @@ nomi non contano maiuscole, accenti, spazi e punteggiatura.
 Il documento guarda l'università e il tipo di corso attuali del prodotto
 formativo, non quelli copiati nella pratica alla creazione. Se il prodotto
 cambia università o tipo di corso, una pratica può comparire sotto un pulsante
-della Dashboard senza avere il documento, oppure avere il documento senza
+della pagina Pratiche senza avere il documento, oppure avere il documento senza
 comparire sotto il pulsante corrispondente.
 
-Nota: la Dashboard e il documento possono quindi non concordare; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Nota: la pagina Pratiche e il documento possono quindi non concordare; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 Il pulsante non c'è in una pratica nuova non ancora salvata. Se la piattaforma
 non riesce a verificare la disponibilità, il pulsante non compare.
@@ -402,7 +401,7 @@ Creando una pratica, l'azienda è sempre la propria: non si può indicarne
 un'altra, e nemmeno spostarla in un'altra azienda modificandola. Il Nazionale
 invece può.
 
-Le abilitazioni sono un'altra cosa e limitano solo i pulsanti della Dashboard:
+Le abilitazioni sono un'altra cosa e limitano solo i pulsanti della pagina Pratiche:
 l'elenco, la scheda, il pulsante "Nuova" e il documento PDF restano
 disponibili anche a chi non ne ha.
 

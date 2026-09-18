@@ -14,6 +14,7 @@ import { contenutoPagina } from "../config/styles/pagina";
 import { schedaElenco } from "../config/styles/tabella";
 import StatoPagineElenco from "./shared/StatoPagineElenco.jsx";
 import { BLOCCHI_PRATICHE } from "../lib/configPratiche.js";
+import PannelloPratiche from "./PannelloPratiche";
 
 function costruisciTitolo(filtri) {
   const blocco = BLOCCHI_PRATICHE.find(
@@ -21,9 +22,19 @@ function costruisciTitolo(filtri) {
   );
   if (!blocco) return "Elenco Pratiche";
 
-  const idsTipoCorso = filtri.tipoSelezionato
-    ? [filtri.tipoSelezionato]
-    : filtri.tipoCorso;
+  if (filtri.tipoSelezionato) {
+    const scelto = filtri.tipiCorso.find(
+      (t) => String(t.listino_tipoCorso_id) === String(filtri.tipoSelezionato),
+    );
+    if (scelto)
+      return `Elenco Pratiche - ${blocco.titolo} - ${scelto.listino_tipoCorso_descrizione}`;
+  }
+
+  if (filtri.labelTipo) {
+    return `Elenco Pratiche - ${blocco.titolo} - ${filtri.labelTipo}`;
+  }
+
+  const idsTipoCorso = filtri.tipoCorso;
   const descrizioniTipoCorso = filtri.tipiCorso
     .filter((t) =>
       idsTipoCorso.map(String).includes(String(t.listino_tipoCorso_id)),
@@ -40,7 +51,22 @@ export default function ElencoPratiche() {
   const risorsa = PERCORSI.pratiche;
   const { apri } = useNavigazioneElenco(risorsa.elenco);
   const filtri = useFiltriPratiche();
-  const pagina = usePagineRemote(filtri.query, paginaPratiche, true);
+  // Chiamato sempre, indipendentemente da cosa si renderizza sotto: mai
+  // condizionare la chiamata di un hook, altrimenti React perde la
+  // corrispondenza tra hook e render e il componente si rompe silenziosamente
+  // (esattamente il sintomo del bug: lista che smette di caricare dopo il click).
+  const mostraPannello = !filtri.universita;
+  const pagina = usePagineRemote(filtri.query, paginaPratiche, !mostraPannello);
+
+  if (mostraPannello) {
+    return (
+      <div className={contenutoPagina()}>
+        <IntestazioneElenco titolo="Pratiche" />
+        <PannelloPratiche />
+      </div>
+    );
+  }
+
   return (
     <div className={contenutoPagina()}>
       <IntestazioneElenco

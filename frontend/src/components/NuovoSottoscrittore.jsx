@@ -27,6 +27,8 @@ import BarraSchede from "./shared/BarraSchede.jsx";
 import SchedaAziendaAttuatori from "./SchedaAziendaAttuatori";
 import SchedaAbilitazioniPratiche from "./SchedaAbilitazioniPratiche";
 import { useSessione } from "../hooks/useSessione.js";
+import { feedback, STILI_AVVISI } from "../config/styles/feedback.js";
+import { TriangleAlert } from "../config/icone.js";
 
 const RUOLI_ATTUATORE = ["Aderente", "Provinciale", "Regionale", "Nazionale"];
 
@@ -55,6 +57,7 @@ function NuovoSottoscrittore({ tipoUtente }) {
   const [lettura, setLettura] = useState({ loading: isEditMode, errore: null });
   const [formData, setFormData] = useState(ANAGRAFICA_INIZIALE);
   const [avviso, setAvviso] = useState(null);
+  const [anomalie, setAnomalie] = useState([]);
 
   // Ruoli disponibili per la select dell'attuatore. Non serve per i
   // sottoscrittori, che restano sempre ruolo "Utente" (0).
@@ -93,6 +96,8 @@ function NuovoSottoscrittore({ tipoUtente }) {
           if (data.cliente_ruolo != null) {
             setRuoloSelezionato(String(data.cliente_ruolo));
           }
+
+          setAnomalie(data.anomalie ?? []);
 
           setFormData((prev) => ({
             ...prev,
@@ -311,6 +316,8 @@ function NuovoSottoscrittore({ tipoUtente }) {
       }
 
       if (isEditMode) {
+        const aggiornato = await leggiJson(response);
+        setAnomalie(aggiornato?.anomalie ?? []);
         navigate(rottaElenco, {
           state: {
             avviso: {
@@ -371,6 +378,19 @@ function NuovoSottoscrittore({ tipoUtente }) {
         }}
       />
       <AlertMessage message={avviso} />
+      {anomalie.length > 0 && (
+        <div className={feedback("warning")}>
+          <TriangleAlert
+            className={STILI_AVVISI.icona}
+            aria-hidden="true"
+          />
+          <ul className="list-disc pl-4">
+            {anomalie.map((testo) => (
+              <li key={testo}>{testo}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className={`${scheda()} schede overflow-hidden`}>
         <form onSubmit={handleSubmit}>
           <BarraSchede

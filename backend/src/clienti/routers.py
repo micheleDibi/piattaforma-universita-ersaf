@@ -1,5 +1,4 @@
 import logging
-from datetime import date
 from typing import List, Optional
 
 from fastapi import (
@@ -21,6 +20,7 @@ from src.auth.visibilita import (
 )
 
 from src.aziende.models import Azienda
+from src.clienti.anomalie import annota_anomalie
 from src.clienti.models import Cliente
 from src.clienti.schemas import (
     ClienteDettaglioResponse,
@@ -28,6 +28,9 @@ from src.clienti.schemas import (
     ClienteConUtenteCreate,
     ClienteUpdate,
     PermessiPraticheResponse,
+    _valida_codice_fiscale,
+    _valida_email,
+    _valida_scadenza_documento,
 )
 from src.clienti.servizio import (
     TipoUtente,
@@ -198,7 +201,9 @@ def leggi_clienti(
                     | (Cliente.cliente_cognome.ilike(termine))
                 )
 
-    return query.order_by(Cliente.cliente_id.asc()).offset(skip).limit(limit).all()
+    risultati = query.order_by(Cliente.cliente_id.asc()).offset(skip).limit(limit).all()
+    annota_anomalie(db, risultati, vis)
+    return risultati
 
 
 #GET BY ID
@@ -212,7 +217,9 @@ def leggi_cliente(
     # query carica una collezione e SQLAlchemy la avvolge in una subquery.
     # Stesso testo dell'id inesistente, cosi' la risposta non rivela nulla.
     cliente_visibile_o_404(db, vis, cliente_id, "Cliente non trovato")
-    return _cliente_o_404(db, cliente_id, con_curriculum=True)
+    cliente = _cliente_o_404(db, cliente_id, con_curriculum=True)
+    annota_anomalie(db, [cliente], vis)
+    return cliente
 
 
 #PUT
@@ -264,33 +271,34 @@ def aggiorna_cliente(
 
     verifica_unicita_anagrafica(db, campi_cliente, escludi_cliente_id=cliente_id)
 
-    # Il frontend rimanda sempre tutti i campi del form, non solo quelli
-    # modificati: validare CF/scadenza a livello di schema bloccherebbe ogni
-    # PUT su un cliente storico che ha gia' un documento scaduto o un CF
-    # malformato, anche quando l'operatore non ha toccato quei campi.
-    # Si controlla quindi solo se il valore inviato e' DIVERSO da quello
-    # gia' salvato: un peggioramento nuovo si blocca, un dato storico
-    # invariato passa.
     if "cliente_dataScadenzaDocumento" in campi_cliente:
-        nuova_scadenza = campi_cliente["cliente_dataScadenzaDocumento"]
-        if (
-            nuova_scadenza is not None
-            and nuova_scadenza != db_cliente.cliente_dataScadenzaDocumento
-            and nuova_scadenza < date.today()
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="Il documento è scaduto: inserisci una data di scadenza valida.",
-            )
+        scadenza = campi_cliente["cliente_dataScadenzaDocumento"]
+        if scadenza != db_cliente.cliente_dataScadenzaDocumento:
+            try:
+                _valida_scadenza_documento(scadenza)
+            except ValueError as errore:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(errore))
 
+    # Stesso principio della Partita IVA sulle aziende: un campo si valida
+    # SOLO se e' stato davvero cambiato rispetto al valore gia' salvato. Un
+    # PUT che rimanda invariato un CF o un'email storicamente sporchi non
+    # deve fallire solo per questo; se pero' l'operatore lo sta modificando,
+    # il nuovo valore deve essere conforme.
     if "cliente_codice_fiscale" in campi_cliente:
         nuovo_cf = campi_cliente["cliente_codice_fiscale"]
         if nuovo_cf and nuovo_cf != db_cliente.cliente_codice_fiscale:
-            if len(nuovo_cf.strip()) != 16:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                    detail="Codice fiscale non valido: deve essere lungo 16 caratteri.",
-                )
+            try:
+                campi_cliente["cliente_codice_fiscale"] = _valida_codice_fiscale(nuovo_cf)
+            except ValueError as errore:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(errore))
+
+    if "cliente_email" in campi_cliente:
+        nuova_email = campi_cliente["cliente_email"]
+        if nuova_email and nuova_email != db_cliente.cliente_email:
+            try:
+                campi_cliente["cliente_email"] = _valida_email(nuova_email)
+            except ValueError as errore:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(errore))
 
     CAMPI_STRINGA_NOT_NULL = {
         "cliente_codice", "cliente_nome", "cliente_cognome", "cliente_email",
@@ -350,6 +358,7 @@ def aggiorna_cliente(
         )
 
     db.refresh(db_cliente)
+    annota_anomalie(db, [db_cliente], vis)
     # refresh() ricarica la relazione `universita` solo se l'istanza ricorda le
     # opzioni con cui e' nata, e questo dipende da quando il garbage collector
     # ha liberato quella creata da blocca_cliente. Senza questa lettura

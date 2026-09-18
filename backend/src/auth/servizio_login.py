@@ -126,13 +126,6 @@ def verifica_credenziali(db: Session, utente: Utente | None, password: str) -> b
 
 
 def cliente_principale(db: Session, utente_id: int):
-    """La riga `clienti` da usare per il ruolo.
-
-    NON si usa Utente.clienti: la relazione e' uselist=False, ma 869 utenti non
-    hanno alcuna riga (e l'accesso a .ruolo esplodeva con AttributeError,
-    restituendo 500) e 4 ne hanno due, rendendola non deterministica. Qui
-    l'ordine e' esplicito e si preferisce la riga con ruolo attuatore.
-    """
     return db.execute(
         select(
             Cliente.cliente_id,
@@ -140,6 +133,7 @@ def cliente_principale(db: Session, utente_id: int):
             Cliente.cliente_email,
             Cliente.cliente_nome,
             Cliente.cliente_cognome,
+            Cliente.azienda_id,
         )
         .where(Cliente.utente_id == utente_id)
         .order_by(

@@ -22,20 +22,27 @@ const INDICATORI_CLIENTE = [
 ];
 
 const indicatoriCliente = (attuatori) =>
-  INDICATORI_CLIENTE.filter((indicatore) => !(attuatori && indicatore.soloSottoscrittori));
+  INDICATORI_CLIENTE.filter(
+    (indicatore) => !(attuatori && indicatore.soloSottoscrittori),
+  );
 
 /** Voci della legenda, nello stesso ordine dei pallini. */
 export function vociLegendaCliente({ attuatori }) {
-  return indicatoriCliente(attuatori).map(({ id }) => TESTI_ELENCO.indicatori[id].voce);
+  return indicatoriCliente(attuatori).map(
+    ({ id }) => TESTI_ELENCO.indicatori[id].voce,
+  );
 }
 
 /** Il campo dei pallini fra quelli di una vista, se c'e'. */
-export const campoIndicatori = (campi) => campi.find((campo) => campo.rilievo === "indicatori");
+export const campoIndicatori = (campi) =>
+  campi.find((campo) => campo.rilievo === "indicatori");
 
 /** Id del testo che descrive i pallini di una riga, unico per vista grazie a
  * `base`; undefined se la riga non ne ha, cosi' `aria-describedby` non compare. */
 export function idIndicatori(base, riga, campo) {
-  return campo && riga.campi[campo.id]?.length ? `${base}-indicatori-${riga.id}` : undefined;
+  return campo && riga.campi[campo.id]?.length
+    ? `${base}-indicatori-${riga.id}`
+    : undefined;
 }
 
 /** Verde solo per un `true` esplicito: assente o null vale grigio. */
@@ -60,6 +67,7 @@ export function rigaCliente(item, { attuatori, mostraAzienda }) {
       nominativo,
       nome: testo(item.cliente_nome),
       cognome: testo(item.cliente_cognome),
+      avviso: item.anomalie ?? [],
       stato: statoCliente(item, attuatori),
       ...(attuatori ? { ruolo: testo(item.ruolo?.ruolo_codice) } : {}),
       ...(mostraAzienda
@@ -99,7 +107,7 @@ export function rigaPratica(item) {
       numero,
       cliente: testo(item.cliente_nome_completo),
       corso: testo(item.listTesta_descrizione),
-      dataCreazione: formattaData(item.pratica_dataCreazione), // MODIFICATO
+      dataCreazione: formattaData(item.pratica_dataCreazione),
       stato: testo(item.pratica_stato_descrizione),
     },
   };
