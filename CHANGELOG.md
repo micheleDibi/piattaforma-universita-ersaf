@@ -11,6 +11,26 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 6 — 18/09/2026 12:14
+
+<!-- timbro: versione=6 sha=18bd6255bc7866464cb7519cf7823b96dd537a9c -->
+
+### Novità e correzioni
+
+**Corretto**
+
+- La generazione consecutiva di documenti di tipi diversi non accumula più la memoria del compilatore nell’API.
+
+### Dettagli tecnici
+
+**Modificato**
+
+- Ogni PDF viene compilato in un processo breve, una richiesta alla volta per processo API, con timeout e pulizia degli allegati anche in caso di interruzione.
+
+**Sicurezza**
+
+- I dati del documento passano tramite stdin; gli errori del processo non espongono dati personali.
+
 ## Versione 5 — 18/09/2026 12:08
 
 <!-- timbro: versione=5 sha=dc19af27d1a8bfb5694e8480b79e9971987a8bb1 -->
