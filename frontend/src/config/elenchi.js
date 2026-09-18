@@ -53,14 +53,11 @@ export function modelloClienti({ attuatori, mostraAzienda }) {
     id: "clienti",
     etichetta: attuatori ? "Attuatori" : "Sottoscrittori",
     ampiezza: mostraAzienda ? "articolata" : "semplice",
-<<<<<<< HEAD
     colonne: [nome, cognome, ...riferimenti].map(colonna),
     mobile: [nominativo, ...riferimenti],
     avvisoDopo: "cognome",
-=======
     colonne: [nome, cognome, statoCliente, ...riferimenti].map(colonna),
     mobile: [nominativo, statoCliente, ...riferimenti],
->>>>>>> origin/main
   };
 }
 
