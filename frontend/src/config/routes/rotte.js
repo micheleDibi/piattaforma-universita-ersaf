@@ -5,6 +5,7 @@
 
 import {
   Building2,
+  FileText,
   GraduationCap,
   LayoutDashboard,
   UserCog,
@@ -31,6 +32,12 @@ export const VOCI_MENU = [
     etichetta: "Aziende",
     icona: Building2,
     nascondiAderente: true,
+  },
+  {
+    rotta: ROTTE.pratiche,
+    etichetta: "Pratiche",
+    icona: FileText,
+    soloNazionale: true,
   },
   {
     rotta: ROTTE.prodotti,

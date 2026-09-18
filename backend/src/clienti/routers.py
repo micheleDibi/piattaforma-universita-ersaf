@@ -272,12 +272,10 @@ def leggi_clienti(
 
 #GET BY ID
 @router.get("/{cliente_id}", response_model=ClienteDettaglioResponse)
-<<<<<<< HEAD
 def leggi_cliente(cliente_id: int, db: Session = Depends(get_db)):
     cliente = _cliente_o_404(db, cliente_id, con_curriculum=True)
     _annota_anomalie(db, [cliente])
     return cliente
-=======
 def leggi_cliente(
     cliente_id: int,
     db: Session = Depends(get_db),
@@ -288,7 +286,6 @@ def leggi_cliente(
     # Stesso testo dell'id inesistente, cosi' la risposta non rivela nulla.
     cliente_visibile_o_404(db, vis, cliente_id, "Cliente non trovato")
     return _cliente_o_404(db, cliente_id, con_curriculum=True)
->>>>>>> origin/main
 
 
 #PUT
@@ -419,10 +416,8 @@ def aggiorna_cliente(
         )
 
     db.refresh(db_cliente)
-<<<<<<< HEAD
     _annota_anomalie(db, [db_cliente])
     return db_cliente
-=======
     # refresh() ricarica la relazione `universita` solo se l'istanza ricorda le
     # opzioni con cui e' nata, e questo dipende da quando il garbage collector
     # ha liberato quella creata da blocca_cliente. Senza questa lettura
@@ -431,4 +426,3 @@ def aggiorna_cliente(
     # curriculum la farebbe comunque.
     db_cliente.curriculum
     return db_cliente
->>>>>>> origin/main
