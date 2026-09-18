@@ -30,7 +30,6 @@ export const VOCI_MENU = [
     rotta: ROTTE.aziende,
     etichetta: "Aziende",
     icona: Building2,
-    soloNazionale: true,
   },
   {
     rotta: ROTTE.prodotti,
