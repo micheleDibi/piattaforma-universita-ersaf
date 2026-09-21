@@ -11,11 +11,12 @@ indica il sistema che salva i dati e applica le regole.
 Ogni anagrafica riguarda una persona. Contiene i dati personali, il curriculum
 formativo e un utente, cioè le credenziali con cui la persona può accedere.
 
-- **Sottoscrittori**: anagrafiche con ruolo Utente. Con questo ruolo non si
-  accede alla piattaforma.
-- **Attuatori**: anagrafiche con ruolo Aderente, Provinciale, Regionale o
-  Nazionale. Con questi ruoli si accede alla piattaforma. Il Nazionale accede
-  con un secondo fattore: vedi [Accesso e sicurezza](accesso-e-sicurezza.md).
+- **Sottoscrittori**: anagrafiche con ruolo Utente o Consulente. Con questi
+  ruoli non si accede alla piattaforma.
+- **Attuatori**: anagrafiche con ruolo Aderente, Provinciale, Regionale,
+  Nazionale o Operatore. Con i primi quattro ruoli si accede alla
+  piattaforma; con il ruolo Operatore no. Il Nazionale accede con un secondo
+  fattore: vedi [Accesso e sicurezza](accesso-e-sicurezza.md).
 
 Le differenze fra i due tipi:
 
@@ -24,11 +25,6 @@ Le differenze fra i due tipi:
 | Schede | Dati Principali, Curriculum Formativo, Utente, Esami | Dati Principali, Curriculum Formativo, Utente, Azienda, più Abilitazioni (vedi sotto) |
 | Ruolo alla creazione | Utente | quello scelto nella tendina «Ruolo attuatore»; se non si sceglie nulla, Aderente |
 | Abilitazioni alle pratiche alla creazione | tutte spente | tutte accese, tranne SSML Lamezia Terme |
-
-Le anagrafiche con ruolo Consulente o Operatore non compaiono in nessuno dei
-due elenchi.
-
-Nota: queste anagrafiche esistono ma non si raggiungono dagli elenchi; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 Per i permessi dei singoli ruoli vedi [Ruoli e permessi](ruoli-e-permessi.md).
 
@@ -45,7 +41,7 @@ Nota: questo limite è applicato solo dall'interfaccia; vedi [Limiti noti](../te
 - Negli Attuatori ogni parola può comparire anche nella ragione sociale
   dell'azienda associata.
 - Negli Attuatori il pulsante «Filtri» apre la tendina «Ruolo»: Tutti i ruoli,
-  Aderente, Provinciale, Regionale, Nazionale. «Azzera filtri» toglie il
+  Aderente, Provinciale, Regionale, Nazionale, Operatore. «Azzera filtri» toglie il
   filtro.
 
 ### Colonne

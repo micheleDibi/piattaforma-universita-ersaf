@@ -11,12 +11,11 @@ Ogni persona registrata ha un ruolo. Il ruolo decide se la persona può entrare 
 | Provinciale | attuatore | sì |
 | Regionale | attuatore, amministrativo | sì |
 | Nazionale | attuatore, amministrativo | sì, con il secondo fattore |
-| Consulente | altro | no |
-| Operatore | altro | no |
+| Consulente | sottoscrittore | no |
+| Operatore | attuatore | no |
 
-- Le persone con ruolo **Utente** sono i sottoscrittori e compaiono nell'elenco Sottoscrittori.
-- **Aderente, Provinciale, Regionale e Nazionale** sono gli attuatori e compaiono nell'elenco Attuatori.
-- **Consulente e Operatore** non compaiono in nessuno dei due elenchi.
+- Le persone con ruolo **Utente o Consulente** sono i sottoscrittori e compaiono nell'elenco Sottoscrittori.
+- **Aderente, Provinciale, Regionale, Nazionale e Operatore** compaiono nell'elenco Attuatori. L'Operatore, però, non accede alla piattaforma.
 
 ## Chi può accedere
 
@@ -24,7 +23,7 @@ Ogni persona registrata ha un ruolo. Il ruolo decide se la persona può entrare 
 - Utente, Consulente e Operatore non accedono. Anche con la password giusta vedono lo stesso messaggio delle credenziali sbagliate.
 - Il Nazionale, dopo la password, deve superare il **secondo fattore**: senza, non entra. Vedi [Accesso e sicurezza](accesso-e-sicurezza.md).
 - Un account nuovo resta disattivato finché email e cellulare non sono verificati. Vedi [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
-- Il **recupero della password** funziona solo per gli attuatori.
+- Il **recupero della password** funziona solo per Aderente, Provinciale, Regionale e Nazionale.
 
 Anche un sottoscrittore riceve le credenziali quando il suo account si attiva. In quel caso l'email non indica l'indirizzo della piattaforma, perché con il ruolo Utente non si accede.
 

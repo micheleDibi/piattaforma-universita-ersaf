@@ -138,7 +138,7 @@ Aggiorna Dettaglio Azienda.
 Leggi Clienti.
 
 - **Accesso**: sessione
-- **Parametri**: `limit` (query): `integer`; `ruolo_codice` (query): `string | null`; `search` (query): `string | null`; `skip` (query): `integer`; `solo_attuatori` (query): `boolean`; `solo_utenti` (query): `boolean`
+- **Parametri**: `limit` (query): `integer`; `ruolo_codice` (query): `string | null`; `search` (query): `string | null`; `skip` (query): `integer`; `solo_attuatori` (query): `boolean`; `solo_sottoscrittori` (query): `boolean`; `solo_utenti` (query): `boolean`
 - **Corpo**: —
 - **Risposta**: `200` `list[ClienteResponse]`
 
@@ -918,6 +918,7 @@ Aggiorna Utente.
 
 | Campo | Tipo | Obbligatorio |
 |---|---|---|
+| `anomalie` | `list[string]` | no |
 | `attuatore_id` | `integer \| null` | no |
 | `azienda` | `AziendaResponse \| null` | no |
 | `azienda_id` | `integer \| null` | no |
@@ -979,6 +980,7 @@ Aggiorna Utente.
 
 | Campo | Tipo | Obbligatorio |
 |---|---|---|
+| `anomalie` | `list[string]` | no |
 | `attuatore_id` | `integer \| null` | no |
 | `azienda` | `AziendaResponse \| null` | no |
 | `azienda_id` | `integer \| null` | no |

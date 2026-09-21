@@ -20,7 +20,7 @@ App del telefono, per esempio Google Authenticator o Microsoft Authenticator, ch
 
 ## Attuatore
 
-Persona che opera nella rete con ruolo Aderente, Provinciale, Regionale o Nazionale. Accede alla piattaforma, può recuperare la password e può essere associata a un'azienda. Vedi [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
+Persona che opera nella rete con ruolo Aderente, Provinciale, Regionale, Nazionale od Operatore. Con i primi quattro ruoli accede alla piattaforma e può recuperare la password; l'Operatore compare fra gli attuatori ma non accede. Può essere associata a un'azienda. Vedi [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
 
 ## Azienda padre e azienda figlia
 
@@ -80,7 +80,7 @@ Periodo in cui la piattaforma ricorda chi è collegato. Con la configurazione pr
 
 ## Sottoscrittore
 
-Persona con ruolo Utente: compare nell'elenco Sottoscrittori e, nelle pratiche, come studente. Non accede alla piattaforma. Vedi [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
+Persona con ruolo Utente o Consulente: compare nell'elenco Sottoscrittori. Solo chi ha il ruolo Utente si sceglie come studente nelle pratiche. Non accede alla piattaforma. Vedi [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
 
 ## Stato della pratica
 

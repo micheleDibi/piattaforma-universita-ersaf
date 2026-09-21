@@ -1,9 +1,9 @@
 const LIMITE = 40;
 export const paginaElenco = dati => ({ elementi: dati, altri: dati.length === LIMITE });
-export function queryClienti({ ricerca, ruolo }, { soloAttuatori, soloUtenti }) {
+export function queryClienti({ ricerca, ruolo }, { soloAttuatori, soloSottoscrittori }) {
   const params = new URLSearchParams({ limit: LIMITE, search: ricerca });
   if (soloAttuatori) params.set("solo_attuatori", "true");
-  if (soloUtenti) params.set("solo_utenti", "true");
+  if (soloSottoscrittori) params.set("solo_sottoscrittori", "true");
   if (soloAttuatori && ruolo) params.set("ruolo_codice", ruolo);
   return `/clienti/?${params}`;
 }

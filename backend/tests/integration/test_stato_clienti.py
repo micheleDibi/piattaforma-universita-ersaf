@@ -46,7 +46,7 @@ def elenco(client, sessione, **parametri):
 
 
 def sottoscrittori(client, sessione):
-    return elenco(client, sessione, solo_utenti="true")
+    return elenco(client, sessione, solo_sottoscrittori="true")
 
 
 # =============================================================================
@@ -216,11 +216,11 @@ def test_una_pagina_costa_le_stesse_query_con_2_o_40_righe(client, db, spia_sql)
     io, sessione = accedi(client, db)
     for _ in range(2):
         curriculum(db, sottoscrittore(db, io.utente_id).cliente_id, **DIPLOMA)
-    con_due = _statement_elenco(client, sessione, spia_sql, solo_utenti="true")
+    con_due = _statement_elenco(client, sessione, spia_sql, solo_sottoscrittori="true")
 
     for _ in range(38):
         curriculum(db, sottoscrittore(db, io.utente_id).cliente_id, **DIPLOMA)
-    con_quaranta = _statement_elenco(client, sessione, spia_sql, solo_utenti="true")
+    con_quaranta = _statement_elenco(client, sessione, spia_sql, solo_sottoscrittori="true")
 
     assert len(con_quaranta) == len(con_due)
     assert sum(bool(DA_UNIVERSITA.search(s)) for s in con_quaranta) == 1

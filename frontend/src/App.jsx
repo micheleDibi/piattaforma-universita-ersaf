@@ -41,7 +41,7 @@ function App() {
               <ElencoClienti
                 key="sottoscrittori"
                 soloAttuatori={false}
-                soloUtenti={true}
+                soloSottoscrittori={true}
               />
             }
           />

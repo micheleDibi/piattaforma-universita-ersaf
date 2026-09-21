@@ -55,8 +55,10 @@ _PK = BigInteger().with_variant(Integer, "sqlite")
 ATTIVO = -1
 DISATTIVO = 0
 
-# "Attuatore" non e' un valore in tabella: e' l'insieme di ruoli che il filtro
-# solo_attuatori di src/clienti/routers.py gia' seleziona.
+# Ruoli che possono accedere e recuperare la password. Non coincide con
+# l'elenco Attuatori (filtro solo_attuatori di src/clienti/routers.py), che
+# comprende anche l'Operatore (6): questo ruolo compare fra gli attuatori ma
+# non accede e non riceve mai la mail di recupero.
 # 1 Aderente, 2 Regionale, 3 Provinciale, 5 Nazionale.
 RUOLI_ATTUATORE: frozenset[int] = frozenset({1, 2, 3, 5})
 
