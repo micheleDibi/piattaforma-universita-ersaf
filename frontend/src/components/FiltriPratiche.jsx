@@ -1,7 +1,5 @@
 import { campo } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
-import { STUDENTI_PRATICHE } from "../config/filtriPratiche";
-import SelezioneRicercabile from "./shared/SelezioneRicercabile";
 
 export default function FiltriPratiche({ filtri }) {
   const opzioniTipoCorso = filtri.tipiCorso.filter((t) =>
@@ -71,11 +69,6 @@ export default function FiltriPratiche({ filtri }) {
           </button>
         </div>
       )}
-      <SelezioneRicercabile
-        configurazione={STUDENTI_PRATICHE}
-        selezionati={filtri.studenti}
-        onCambia={filtri.setStudenti}
-      />
     </>
   );
 }

@@ -25,7 +25,7 @@ export const VOCI_MENU = [
     rotta: ROTTE.attuatori,
     etichetta: "Attuatori",
     icona: UserCog,
-    soloNazionale: true,
+    ruoliAmmessi: ["nazionale", "regionale", "provinciale"],
   },
   {
     rotta: ROTTE.aziende,
@@ -37,7 +37,7 @@ export const VOCI_MENU = [
     rotta: ROTTE.pratiche,
     etichetta: "Pratiche",
     icona: FileText,
-    soloNazionale: true,
+    ruoliAmmessi: ["nazionale", "aderente", "provinciale", "regionale"],
   },
   {
     rotta: ROTTE.prodotti,
@@ -54,6 +54,7 @@ export function vociMenuPerRuolo(ruoloCodice) {
   return VOCI_MENU.filter((voce) => {
     if (voce.soloNazionale && !nazionale) return false;
     if (voce.nascondiAderente && aderente) return false;
+    if (voce.ruoliAmmessi && !voce.ruoliAmmessi.includes(ruoloCodice)) return false;
     return true;
   });
 }

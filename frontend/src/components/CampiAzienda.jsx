@@ -4,7 +4,12 @@ import {
 } from "../config/styles/campo";
 import { FACOLTATIVI, OBBLIGATORI } from "../config/campiAzienda.js";
 
-export default function CampiAzienda({ dati, onChange, disabilita = {} }) {
+export default function CampiAzienda({
+  dati,
+  onChange,
+  disabilita = {},
+  nascondi = {},
+}) {
   const campo = ([nome, etichetta], obbligatorio) => {
     const isPartitaIVA = nome === "azienda_partitaIVA";
     return (
@@ -33,7 +38,7 @@ export default function CampiAzienda({ dati, onChange, disabilita = {} }) {
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
       {OBBLIGATORI.map((c) => campo(c, true))}
-      {FACOLTATIVI.map((c) => campo(c, false))}
+      {FACOLTATIVI.filter(([nome]) => !nascondi[nome]).map((c) => campo(c, false))}
     </div>
   );
 }

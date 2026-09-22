@@ -22,8 +22,10 @@ cambia.
 
 ## Come si arriva alle pratiche
 
-La voce "Pratiche" non è nel menu. All'elenco si arriva dai pulsanti della
-Dashboard, oppure scrivendo l'indirizzo della pagina nel browser.
+La voce "Pratiche" è nel menu per Nazionale, Regionale, Provinciale e
+Aderente. Vedi [Ruoli e permessi](ruoli-e-permessi.md). All'elenco si arriva
+anche dai pulsanti della Dashboard, oppure scrivendo l'indirizzo della pagina
+nel browser.
 
 La Dashboard si apre dal menu. La pagina che si apre dopo l'accesso è descritta
 in [Accesso e sicurezza](accesso-e-sicurezza.md).
@@ -110,9 +112,6 @@ Il pulsante "Filtri" apre questi filtri:
 - **Numero pratica**: mostra le pratiche il cui numero contiene il testo
   scritto.
 - **Stato**: uno degli stati disponibili, oppure "Tutti gli stati".
-- **Studenti**: uno o più studenti, fino a cento. Si cercano per nome,
-  cognome o codice. Vengono proposti solo gli studenti che hanno almeno una
-  pratica.
 - **Tipologia corso**: è pensato per i pulsanti che raggruppano più tipi di
   corso. Nessun pulsante della Dashboard lo attiva, quindi non compare.
 
@@ -120,9 +119,9 @@ L'ateneo e i tipi di corso scelti dalla Dashboard non compaiono fra i filtri.
 Per cambiarli si torna alla Dashboard e si sceglie un altro pulsante.
 
 Accanto alla scritta "Filtri" compare il numero dei filtri attivi. Il
-conteggio e il pulsante "Azzera filtri" riguardano solo numero, stato,
-studenti e tipologia. Non toccano la ricerca, né l'ateneo e i tipi di corso
-scelti dalla Dashboard.
+conteggio e il pulsante "Azzera filtri" riguardano solo numero, stato e
+tipologia. Non toccano la ricerca, né l'ateneo e i tipi di corso scelti dalla
+Dashboard.
 
 Ricerca e filtri restano nell'indirizzo della pagina. Chi torna dalla scheda
 ritrova l'elenco con le stesse scelte.

@@ -31,21 +31,20 @@ Anche un sottoscrittore riceve le credenziali quando il suo account si attiva. I
 
 ### Nel menu e nel profilo
 
-| Voce | Nazionale | Regionale, Provinciale, Aderente |
-|---|---|---|
-| Dashboard | sì | sì |
-| Sottoscrittori | sì | sì |
-| Attuatori | sì | no |
-| Aziende | sì | no |
-| Prodotti formativi | sì | no |
-| Profilo, schede "Dati principali" e "Utente" | sì | sì |
-| Profilo, scheda "Sicurezza" | sì | no |
+| Voce | Nazionale | Regionale, Provinciale | Aderente |
+|---|---|---|---|
+| Dashboard | sì | sì | sì |
+| Sottoscrittori | sì | sì | sì |
+| Attuatori | sì | sì | no |
+| Aziende | sì | sì | no |
+| Pratiche | sì | sì | sì |
+| Prodotti formativi | sì | no | no |
+| Profilo, schede "Dati principali" e "Utente" | sì | sì | sì |
+| Profilo, scheda "Sicurezza" | sì | no | no |
 
 Nota: le voci nascoste non proteggono le pagine. Attuatori e Prodotti formativi si aprono digitando l'indirizzo e il server non controlla il ruolo. Anche la pagina Aziende si apre, ma lì il server applica la regola di visibilità descritta più sotto, per cui l'elenco risulta vuoto. Vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
-Le **Pratiche** non sono nel menu di nessuno: si aprono dalla Dashboard. I pulsanti della Dashboard sono attivi solo se la persona collegata ha l'abilitazione generale alle pratiche universitarie e quella dell'ateneo. Vedi [Pratiche](pratiche.md).
-
-Nota: le abilitazioni limitano solo i pulsanti della Dashboard, e l'elenco delle pratiche si apre comunque dal suo indirizzo; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+L'elenco **Pratiche**, dalla voce di menu, mostra le pratiche secondo le stesse regole di visibilità dell'elenco raggiunto dalla Dashboard: vedi [Pratiche](pratiche.md).
 
 ### Dentro le pagine, solo per il Nazionale
 

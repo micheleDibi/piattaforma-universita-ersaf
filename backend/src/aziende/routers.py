@@ -4,6 +4,8 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import datetime
+import secrets
+import string
 
 from src.auth.dipendenze import get_current_utente
 from src.auth.servizio_login import cliente_principale
@@ -134,6 +136,18 @@ def _annota_anomalie(db: Session, aziende: list[Azienda]) -> None:
         azienda.anomalie = anomalie
 
 
+def _genera_codice_nazionale(db: Session, lunghezza: int = 22) -> str:
+    """Codice nazionale casuale e univoco, nello stesso formato dei codici
+    gia' presenti in azienda_codice_nazionale (lettere, cifre e simboli): il
+    campo e' bloccato in interfaccia, quindi chi crea o modifica un'azienda
+    non lo valorizza mai."""
+    alfabeto = string.ascii_letters + string.digits + string.punctuation
+    while True:
+        candidato = "".join(secrets.choice(alfabeto) for _ in range(lunghezza))
+        if not db.query(Azienda).filter(Azienda.azienda_codice_nazionale == candidato).first():
+            return candidato
+
+
 #POST
 @router.post("/", response_model=AziendaResponse, status_code=status.HTTP_201_CREATED)
 def crea_azienda(
@@ -143,7 +157,10 @@ def crea_azienda(
 ):
     _verifica_unicita(db, azienda_in.model_dump())
 
-    nuova_azienda = Azienda(**azienda_in.model_dump())
+    dati = azienda_in.model_dump()
+    # Bloccato: il valore inviato dal client, se c'e', viene ignorato.
+    dati["azienda_codice_nazionale"] = _genera_codice_nazionale(db)
+    nuova_azienda = Azienda(**dati)
     db.add(nuova_azienda)
     db.commit()
     db.refresh(nuova_azienda)
@@ -236,6 +253,8 @@ def aggiorna_azienda(
     azienda = _azienda_o_404(db, azienda_id, aziende_visibili_ids(db, utente_corrente))
 
     modifiche = azienda_in.model_dump(exclude_unset=True)
+    # Bloccato: generato una sola volta alla creazione, non si aggiorna mai.
+    modifiche.pop("azienda_codice_nazionale", None)
     _verifica_unicita(db, modifiche, escludi_id=azienda_id)
 
     for chiave, valore in modifiche.items():

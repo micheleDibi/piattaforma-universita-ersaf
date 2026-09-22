@@ -78,11 +78,18 @@ compare in un riquadro rosso sopra i campi.
 
 | Obbligatori | Facoltativi |
 |---|---|
-| Ragione sociale, Partita IVA, Codice fiscale, Via, Città, CAP, Provincia | Civico, Codice SDI, Email, PEC, Telefono, Sito web, IBAN, Codice BIC, Codice nazionale |
+| Ragione sociale, Partita IVA, Codice fiscale, Via, Città, CAP, Provincia | Civico, Codice SDI, Email, PEC, Telefono, Sito web, IBAN, Codice BIC |
 
 I campi obbligatori hanno l'asterisco e l'interfaccia non salva finché sono
 vuoti. Il campo Partita IVA accetta al massimo 11 caratteri, e il browser
 segnala i caratteri diversi dalle cifre.
+
+Il **Codice nazionale** non è fra questi: il server lo genera da solo, con un
+valore casuale e univoco, alla creazione dell'azienda. Il campo compare in
+sola lettura nella scheda dell'azienda e non compare affatto nella finestra
+di creazione rapida dalla scheda Azienda di un attuatore. Nessuno lo può
+scrivere né modificare, né dall'interfaccia né passando un valore al server
+in creazione o in modifica.
 
 ### Controlli del server
 
@@ -177,11 +184,12 @@ Ogni azienda ha otto percentuali:
 - SSML - Lauree e SSML - Master;
 - A4U - Master e A4U - Perfezionamenti.
 
-Si vedono e si modificano solo nella scheda Azienda di un attuatore, nella
-sezione «Dettaglio convenzioni universitarie». La scheda dell'azienda non le
-mostra. «Salva percentuali» le salva subito, indipendentemente dal resto della
-scheda dell'attuatore. Un'azienda senza percentuali salvate le ha tutte a
-zero.
+Si vedono nella sezione «Dettaglio convenzioni universitarie», sia nella
+scheda dell'azienda sia nella scheda Azienda di un attuatore, ma si
+modificano solo dalla scheda dell'azienda: nella scheda dell'attuatore la
+sezione è in sola lettura. «Salva percentuali» le salva subito,
+indipendentemente dal resto della scheda dell'azienda. Un'azienda senza
+percentuali salvate le ha tutte a zero.
 
 Il server permette di modificarle a chiunque veda l'azienda, compresa la
 propria. Poiché oggi il server non riconosce l'azienda di chi lavora (vedi
@@ -225,9 +233,9 @@ numero fuori da questo intervallo. Un campo svuotato vale zero.
 
 Due effetti si incontrano comunque:
 
-- con la scheda Azienda aperta, i campi delle percentuali fanno parte della
-  pagina dell'attuatore. Un valore fuori da 0 a 100, o non intero, blocca il
-  «Salva Modifiche» in fondo alla pagina, che non riguarda le percentuali;
+- con la scheda dell'azienda aperta, i campi delle percentuali fanno parte
+  della pagina dell'azienda. Un valore fuori da 0 a 100, o non intero, blocca
+  il «Salva» in fondo alla pagina, che non riguarda le percentuali;
 - il server accetta solo numeri interi. Un valore con i decimali, salvato con
   «Salva percentuali», viene rifiutato con un messaggio tecnico.
 
@@ -274,7 +282,7 @@ Nota: la ricerca propone di creare un'azienda che esiste già; vedi [Limiti noti
   la vista dell'azienda attuale.
 - «Rimuovi associazione» chiede «Rimuovere l'azienda associata a questo
   attuatore?». Se si conferma, l'azienda viene scollegata.
-- Più in basso ci sono le percentuali, descritte sopra.
+- Più in basso ci sono le percentuali, in sola lettura, descritte sopra.
 
 ### Quando si salva l'associazione
 
