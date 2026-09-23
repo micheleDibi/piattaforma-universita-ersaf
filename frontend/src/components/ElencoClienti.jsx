@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import useQueryPagina from "../hooks/useQueryPagina.js";
 import { QUERY_CLIENTI } from "../config/routes/query.js";
 import { PERCORSI } from "../config/routes/percorsi.js";
@@ -9,16 +10,16 @@ import IntestazioneElenco from "./shared/IntestazioneElenco";
 import CampoRicerca from "./shared/CampoRicerca";
 import AzioneCrea from "./shared/AzioneCrea";
 import RigheElenco from "./shared/RigheElenco.jsx";
-import { LegendaIndicatori } from "./shared/IndicatoriStato.jsx";
 import { modelloClienti } from "../config/elenchi.js";
-import { rigaCliente, vociLegendaCliente } from "../lib/righeElenco.js";
+import { rigaCliente } from "../lib/righeElenco.js";
 import { campo } from "../config/styles/campo";
 import { TESTI_ELENCO } from "../config/testi/elenco.js";
 import { contenutoPagina } from "../config/styles/pagina";
 import { schedaElenco } from "../config/styles/tabella";
 import StatoPagineElenco from "./shared/StatoPagineElenco.jsx";
 import usePagineRemote from "../hooks/usePagineRemote.js";
-import { paginaElenco, queryClienti } from "../lib/queryElenchi.js";
+import { apiFetch } from "../lib/api";
+import { conteggioClienti, paginaElenco, queryClienti } from "../lib/queryElenchi.js";
 
 function ElencoClienti({ soloAttuatori = false, soloSottoscrittori = false }) {
   const [query, aggiornaQuery] = useQueryPagina(QUERY_CLIENTI);
@@ -34,10 +35,32 @@ function ElencoClienti({ soloAttuatori = false, soloSottoscrittori = false }) {
   const opzioniRighe = { attuatori: soloAttuatori, mostraAzienda: canSeeAzienda };
 
   const pagina = usePagineRemote(queryClienti(query, { soloAttuatori, soloSottoscrittori }), paginaElenco, true);
+
+  // Totale dei risultati con gli stessi filtri dell'elenco. Se la richiesta
+  // fallisce il conteggio semplicemente non compare: l'elenco resta usabile.
+  const percorsoConteggio = conteggioClienti(query, { soloAttuatori, soloSottoscrittori });
+  const [conteggio, setConteggio] = useState({ percorso: null, totale: null });
+  useEffect(() => {
+    const controllo = new AbortController();
+    const timer = setTimeout(() => {
+      apiFetch(percorsoConteggio, { signal: controllo.signal })
+        .then((risposta) => (risposta.ok ? risposta.json() : null))
+        .then((dati) => {
+          if (dati) setConteggio({ percorso: percorsoConteggio, totale: dati.totale });
+        })
+        .catch(() => {});
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+      controllo.abort();
+    };
+  }, [percorsoConteggio]);
+  const totale = conteggio.percorso === percorsoConteggio ? conteggio.totale : null;
   return (
     <div className={contenutoPagina()}>
       <IntestazioneElenco
         titolo={soloAttuatori ? "Attuatori" : "Sottoscrittori"}
+        conteggio={totale === null ? undefined : TESTI_ELENCO.risultati(totale)}
         azioni={
           <AzioneCrea
             onClick={() =>
@@ -78,7 +101,6 @@ function ElencoClienti({ soloAttuatori = false, soloSottoscrittori = false }) {
             </select>
             </label>
           ) } : undefined}
-        legenda={<LegendaIndicatori voci={vociLegendaCliente(opzioniRighe)} />}
       />
       <div className={schedaElenco("corpo")}>
         <RigheElenco

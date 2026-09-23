@@ -1,10 +1,3 @@
-const nominativo = {
-  id: "nominativo",
-  etichetta: "Nominativo",
-  rilievo: "principale",
-};
-const nome = { id: "nome", etichetta: "Nome", rilievo: "principale" };
-const cognome = { id: "cognome", etichetta: "Cognome", rilievo: "principale" };
 const ruolo = { id: "ruolo", etichetta: "Ruolo", icona: "ruolo" };
 const azienda = { id: "azienda", etichetta: "Azienda", icona: "azienda" };
 const sede = { id: "sede", etichetta: "Sede", icona: "sede" };
@@ -17,9 +10,9 @@ const cliente = {
 };
 const corso = { id: "corso", etichetta: "Corso", icona: "corso" };
 const stato = { id: "stato", etichetta: "Stato", rilievo: "stato" };
-// Stesso id della colonna di pratiche e prodotti, e quindi stessa larghezza,
-// ma i valori sono i pallini di rigaCliente e non un'etichetta.
-const statoCliente = { id: "stato", etichetta: "Stato", rilievo: "indicatori" };
+// Nominativo dei clienti: iniziali, "Cognome Nome" e avviso delle anomalie.
+const persona = { id: "nominativo", etichetta: "Nominativo", rilievo: "persona" };
+const verifiche = { id: "verifiche", etichetta: "Verifiche", rilievo: "indicatori" };
 const titolo = { id: "titolo", etichetta: "Titolo", rilievo: "principale" };
 const codice = { id: "codice", etichetta: "Codice", rilievo: "codice" };
 const universita = {
@@ -53,9 +46,8 @@ export function modelloClienti({ attuatori, mostraAzienda }) {
     id: "clienti",
     etichetta: attuatori ? "Attuatori" : "Sottoscrittori",
     ampiezza: mostraAzienda ? "articolata" : "semplice",
-    avvisoDopo: "cognome",
-    colonne: [nome, cognome, statoCliente, ...riferimenti].map(colonna),
-    mobile: [nominativo, statoCliente, ...riferimenti],
+    colonne: [persona, ...riferimenti, verifiche].map(colonna),
+    mobile: [persona, verifiche, ...riferimenti],
   };
 }
 

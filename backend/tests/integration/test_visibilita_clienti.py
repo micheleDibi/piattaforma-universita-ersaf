@@ -107,6 +107,41 @@ def test_sottoscrittori_comprendono_consulenti_e_gli_operatori_sono_attuatori(cl
     ])
 
 
+def test_il_conteggio_segue_filtri_e_visibilita_dell_elenco(client, db):
+    """Il totale e' quello dell'elenco senza paginazione: stessi ruoli, stessa
+    ricerca (anche sull'azienda degli attuatori), solo le righe visibili."""
+    azienda = f.crea_azienda(db, ragione_sociale="Formazione Verdi Srl")
+    io, sessione = accedi(client, db)
+    estraneo = f.crea_utente(db)
+    inserisci(db, [
+        (26_001, io.utente_id, f.RUOLO_SOTTOSCRITTORE, "Verdi"),
+        (26_002, io.utente_id, f.RUOLO_CONSULENTE, "Neri"),
+        (26_003, estraneo.utente_id, f.RUOLO_SOTTOSCRITTORE, "Verdi"),
+        (26_004, io.utente_id, f.RUOLO_ADERENTE, "Gialli"),
+        (26_005, estraneo.utente_id, f.RUOLO_ADERENTE, "Gialli"),
+    ])
+    db.get(Cliente, 26_004).azienda_id = azienda.azienda_id
+    db.commit()
+
+    def totale(query):
+        risposta = client.get(f"/clienti/conteggio?{query}", headers=sessione)
+        assert risposta.status_code == 200, risposta.text
+        return risposta.json()["totale"]
+
+    for query in (
+        "solo_sottoscrittori=true",
+        "solo_sottoscrittori=true&search=verdi",
+        "solo_attuatori=true",
+        "solo_attuatori=true&search=formazione",
+        "ruolo_codice=Aderente",
+    ):
+        assert totale(query) == len(
+            ids(client.get(f"/clienti/?{query}&limit=200", headers=sessione))
+        ), query
+    assert totale("solo_sottoscrittori=true") == 2
+    assert totale("solo_attuatori=true&search=formazione") == 1
+
+
 def test_il_nazionale_vede_tutti(client, db, mailer):
     estraneo = f.crea_utente(db)
     inserisci(db, [(30_000 + n, estraneo.utente_id, f.RUOLO_SOTTOSCRITTORE, "S") for n in range(5)])

@@ -27,6 +27,7 @@ from src.clienti.schemas import (
     ClienteResponse,
     ClienteConUtenteCreate,
     ClienteUpdate,
+    ConteggioClientiResponse,
     PermessiPraticheResponse,
     _valida_codice_fiscale,
     _valida_email,
@@ -151,43 +152,33 @@ def crea_cliente_e_utente(
 
 
 # GET ALL (paginazione a 50)
-@router.get("/", response_model=List[ClienteResponse])
-def leggi_clienti(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=200),
-    search: Optional[str] = None,
-    ruolo_codice: Optional[str] = None,
-    solo_attuatori: bool = False,
-    solo_utenti: bool = False,
-    solo_sottoscrittori: bool = False,
-    db: Session = Depends(get_db),
-    vis: Visibilita = Depends(visibilita_corrente),
-):
-    # Il filtro di visibilita' sta in SQL e prima di ORDER BY/LIMIT: il
-    # frontend considera che ci siano altre pagine se ne arrivano esattamente
-    # 40, e un filtro applicato dopo la paginazione romperebbe lo scroll.
-    query = filtra_clienti(db.query(Cliente).options(*_CARICAMENTO_ELENCO), vis)
+RUOLI_ATTUATORE = ["Nazionale", "Regionale", "Provinciale", "Aderente", "Operatore"]
 
+
+def _filtra_elenco(
+    query,
+    *,
+    search: Optional[str],
+    ruolo_codice: Optional[str],
+    solo_attuatori: bool,
+    solo_utenti: bool,
+    solo_sottoscrittori: bool,
+):
+    """Filtri comuni all'elenco e al suo conteggio: stessi criteri, stessi risultati."""
     if ruolo_codice or solo_attuatori or solo_utenti or solo_sottoscrittori:
         query = query.join(Ruolo, Cliente.cliente_ruolo == Ruolo.ruolo_id)
 
     if ruolo_codice:
         query = query.filter(Ruolo.ruolo_codice == ruolo_codice)
     elif solo_attuatori:
-        query = query.filter(
-            Ruolo.ruolo_codice.in_(
-                ["Nazionale", "Regionale", "Provinciale", "Aderente", "Operatore"]
-            )
-        )
+        query = query.filter(Ruolo.ruolo_codice.in_(RUOLI_ATTUATORE))
     elif solo_utenti:
         query = query.filter(Ruolo.ruolo_codice == "Utente")
-        query = query.options(_CARICAMENTO_DIPLOMA)
     elif solo_sottoscrittori:
         # L'elenco Sottoscrittori comprende anche Consulente; solo_utenti
         # resta il solo ruolo Utente, usato dal selettore dello studente
         # nelle pratiche.
         query = query.filter(Ruolo.ruolo_codice.in_(["Utente", "Consulente"]))
-        query = query.options(_CARICAMENTO_DIPLOMA)
 
     if search:
         parole = search.split()
@@ -207,13 +198,63 @@ def leggi_clienti(
                     (Cliente.cliente_nome.ilike(termine))
                     | (Cliente.cliente_cognome.ilike(termine))
                 )
+    return query
+
+
+@router.get("/", response_model=List[ClienteResponse])
+def leggi_clienti(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    search: Optional[str] = None,
+    ruolo_codice: Optional[str] = None,
+    solo_attuatori: bool = False,
+    solo_utenti: bool = False,
+    solo_sottoscrittori: bool = False,
+    db: Session = Depends(get_db),
+    vis: Visibilita = Depends(visibilita_corrente),
+):
+    # Il filtro di visibilita' sta in SQL e prima di ORDER BY/LIMIT: il
+    # frontend considera che ci siano altre pagine se ne arrivano esattamente
+    # 40, e un filtro applicato dopo la paginazione romperebbe lo scroll.
+    query = filtra_clienti(db.query(Cliente).options(*_CARICAMENTO_ELENCO), vis)
+    query = _filtra_elenco(
+        query,
+        search=search,
+        ruolo_codice=ruolo_codice,
+        solo_attuatori=solo_attuatori,
+        solo_utenti=solo_utenti,
+        solo_sottoscrittori=solo_sottoscrittori,
+    )
+    if not ruolo_codice and not solo_attuatori and (solo_utenti or solo_sottoscrittori):
+        query = query.options(_CARICAMENTO_DIPLOMA)
 
     risultati = query.order_by(Cliente.cliente_id.asc()).offset(skip).limit(limit).all()
     annota_anomalie(db, risultati, vis)
     return risultati
 
 
-#GET BY ID
+@router.get("/conteggio", response_model=ConteggioClientiResponse)
+def conta_clienti(
+    search: Optional[str] = None,
+    ruolo_codice: Optional[str] = None,
+    solo_attuatori: bool = False,
+    solo_utenti: bool = False,
+    solo_sottoscrittori: bool = False,
+    db: Session = Depends(get_db),
+    vis: Visibilita = Depends(visibilita_corrente),
+):
+    """Quante righe restituirebbe l'elenco con gli stessi filtri, senza paginazione."""
+    query = _filtra_elenco(
+        filtra_clienti(db.query(Cliente), vis),
+        search=search,
+        ruolo_codice=ruolo_codice,
+        solo_attuatori=solo_attuatori,
+        solo_utenti=solo_utenti,
+        solo_sottoscrittori=solo_sottoscrittori,
+    )
+    return {"totale": query.order_by(None).count()}
+
+
 @router.get("/{cliente_id}", response_model=ClienteDettaglioResponse)
 def leggi_cliente(
     cliente_id: int,

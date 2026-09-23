@@ -26,13 +26,6 @@ const indicatoriCliente = (attuatori) =>
     (indicatore) => !(attuatori && indicatore.soloSottoscrittori),
   );
 
-/** Voci della legenda, nello stesso ordine dei pallini. */
-export function vociLegendaCliente({ attuatori }) {
-  return indicatoriCliente(attuatori).map(
-    ({ id }) => TESTI_ELENCO.indicatori[id].voce,
-  );
-}
-
 /** Il campo dei pallini fra quelli di una vista, se c'e'. */
 export const campoIndicatori = (campi) =>
   campi.find((campo) => campo.rilievo === "indicatori");
@@ -50,25 +43,28 @@ function statoCliente(item, attuatori) {
   return indicatoriCliente(attuatori).map(({ id, campo }) => {
     const attivo = item[campo] === true;
     const testi = TESTI_ELENCO.indicatori[id];
-    return { id, attivo, etichetta: attivo ? testi.si : testi.no };
+    return { id, attivo, voce: testi.voce, etichetta: attivo ? testi.si : testi.no };
   });
 }
 
 export function rigaCliente(item, { attuatori, mostraAzienda }) {
-  const nominativo =
-    [item.cliente_nome, item.cliente_cognome]
-      .map((parte) => String(parte ?? "").trim())
-      .filter(Boolean)
-      .join(" ") || "-";
+  const [nome, cognome] = [item.cliente_nome, item.cliente_cognome].map(
+    (parte) => String(parte ?? "").trim(),
+  );
+  // "Cognome Nome", come negli elenchi cartacei; le iniziali nello stesso ordine.
+  const nominativo = [cognome, nome].filter(Boolean).join(" ") || "-";
+  const iniziali = [cognome, nome]
+    .map((parte) => parte.charAt(0))
+    .join("")
+    .toUpperCase();
   return {
     id: item.cliente_id,
     nomeAzione: nominativo,
+    iniziali,
     campi: {
       nominativo,
-      nome: testo(item.cliente_nome),
-      cognome: testo(item.cliente_cognome),
       avviso: item.anomalie ?? [],
-      stato: statoCliente(item, attuatori),
+      verifiche: statoCliente(item, attuatori),
       ...(attuatori ? { ruolo: testo(item.ruolo?.ruolo_codice) } : {}),
       ...(mostraAzienda
         ? { azienda: testo(item.azienda?.azienda_ragione_sociale) }

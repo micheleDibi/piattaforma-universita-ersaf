@@ -296,3 +296,8 @@ class PermessiPraticheResponse(BaseModel):
     link_campus: bool
     corsi_speciali: bool
     a4u: bool
+
+class ConteggioClientiResponse(BaseModel):
+    """Numero di clienti che l'elenco mostrerebbe con gli stessi filtri."""
+
+    totale: int

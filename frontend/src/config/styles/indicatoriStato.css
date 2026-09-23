@@ -1,17 +1,8 @@
-/* Pallini di stato dei clienti. Il punto e' disegnato con il bordo e non con
- * lo sfondo: con i colori forzati gli sfondi spariscono e i bordi restano, e
- * pieno contro anello si distingue anche senza colore. La scatola intorno al
- * punto allarga l'area del tooltip. */
-/* Il margine negativo allinea il primo punto al testo, nonostante la scatola. */
-.indicatori-stato { @apply -ms-1 inline-flex items-center gap-0.5 align-middle; }
-.indicatori-stato__pallino { @apply inline-flex size-5 shrink-0 items-center justify-center; }
-.indicatori-stato__pallino::before {
-  content: "";
-  @apply block size-3 rounded-full border-2 border-testo-tenue;
+/* Etichette di verifica dei clienti. Verificato e non verificato si
+ * distinguono anche senza colore: il primo ha la spunta e il bordo pieno. */
+.indicatori-stato { @apply inline-flex flex-wrap items-center gap-1.5 align-middle; }
+.indicatori-stato__etichetta {
+  @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-bordo bg-superficie px-2 py-0.5 text-xs font-medium text-testo-tenue;
 }
-.indicatori-stato__pallino[data-attivo="true"]::before { @apply border-6 border-positivo; }
-
-.indicatori-legenda { @apply flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-xs text-testo-tenue; }
-/* Le due chiavi dei colori vanno a capo insieme. */
-.indicatori-legenda__chiave { @apply inline-flex items-center gap-x-4; }
-.indicatori-legenda__voce { @apply -ms-1 inline-flex items-center gap-0.5; }
+.indicatori-stato__etichetta[data-attivo="true"] { @apply border-positivo/30 bg-positivo/10 text-positivo; }
+.indicatori-stato__spunta { @apply size-3 shrink-0; }

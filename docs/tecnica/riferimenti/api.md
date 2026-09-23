@@ -151,6 +151,15 @@ Crea Cliente E Utente.
 - **Corpo**: `ClienteConUtenteCreate` (application/json) obbligatorio
 - **Risposta**: `201` schema non dichiarato
 
+### `GET /clienti/conteggio`
+
+Conta Clienti.
+
+- **Accesso**: sessione
+- **Parametri**: `ruolo_codice` (query): `string | null`; `search` (query): `string | null`; `solo_attuatori` (query): `boolean`; `solo_sottoscrittori` (query): `boolean`; `solo_utenti` (query): `boolean`
+- **Corpo**: —
+- **Risposta**: `200` `ConteggioClientiResponse`
+
 ### `GET /clienti/permessi-pratiche`
 
 Permessi Pratiche Correnti.
@@ -1187,6 +1196,12 @@ Aggiorna Utente.
 |---|---|---|
 | `codice` | `string` | sì |
 | `sfida` | `string` | sì |
+
+### ConteggioClientiResponse
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `totale` | `integer` | sì |
 
 ### EmittenteBreve
 
