@@ -70,7 +70,7 @@ MODELLI: tuple[Modello, ...] = (
     *_moduli(SSML, {
         "ssml-laurea": ("LAUREE",), "ssml-master": ("MASTER",),
         "ssml-perfezionamento": ("CORSI DI PERFEZIONAMENTO",),
-        "ssml-formazione": ("CORSI DI FORMAZIONE", "CORSI DI ALTA FORMAZIONE"),
+        "ssml-formazione": ("CORSI DI FORMAZIONE", "CORSI DI ALTA FORMAZIONE", "CORSI SPECIALI"),
         "ssml-singoli": ("CORSI SINGOLI",),
     }),
     *(m for ente in LINK for m in _moduli(ente, {

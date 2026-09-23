@@ -213,6 +213,8 @@ possono cambiare fra il gestionale e le sue copie. I moduli registrati stanno
 in `MODELLI`, con 13 moduli per eCampus, SSML, Link e Avatar4University.
 La matrice è nella [guida alle pratiche](../funzionale/pratiche.md#quando-è-disponibile).
 Non ci sono fallback per tipi senza un originale documentato.
+I corsi speciali SSML sono associati esplicitamente a `ssml-formazione`,
+condividendo la composizione dei corsi di formazione e alta formazione.
 
 Se non c'è un modulo, la verifica risponde `disponibile: false` e il download
 risponde 404.

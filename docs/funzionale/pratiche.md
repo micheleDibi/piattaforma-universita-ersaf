@@ -216,11 +216,14 @@ Sono disponibili i moduli originali per queste combinazioni:
 | Ente | Tipi di corso |
 |---|---|
 | eCampus | Lauree, master (anche area scuola e classi di concorso), perfezionamento, formazione e alta formazione, corsi singoli |
-| SSML | Lauree, master, perfezionamento, formazione e alta formazione, corsi singoli |
+| SSML | Lauree, master, perfezionamento, formazione e alta formazione, corsi speciali, corsi singoli |
 | Link Campus | Perfezionamento, corsi singoli |
 | Avatar4University | Perfezionamento, con il modulo Fenice presente fra gli originali |
 
-Percorso docenti, corsi speciali e master Avatar4University restano senza PDF:
+I corsi speciali SSML usano lo stesso modulo dei corsi di formazione SSML,
+secondo la corrispondenza confermata il 18 settembre 2026.
+
+Percorso docenti e corsi speciali eCampus, e master Avatar4University restano senza PDF:
 non è stato individuato un modulo corrispondente nell'archivio fornito.
 Non viene usato un modulo di un altro tipo come ripiego. Nel confronto dei
 nomi non contano maiuscole, accenti, spazi e punteggiatura.

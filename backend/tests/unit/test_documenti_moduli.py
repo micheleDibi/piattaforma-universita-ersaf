@@ -37,7 +37,7 @@ def test_registro_univoco_e_copertura_fonti():
 
 
 @pytest.mark.parametrize("ente,tipo", [
-    (ECAMPUS, "Percorso docenti"), (ECAMPUS, "CORSI SPECIALI"), (SSML, "CORSI SPECIALI"),
+    (ECAMPUS, "Percorso docenti"), (ECAMPUS, "CORSI SPECIALI"),
     ("Avatar4University", "MASTER"), (LINK[0], "LAUREE"), ("Altro ateneo", "MASTER"), (ECAMPUS, ""),
 ])
 def test_nessun_modulo_inventato_per_tipi_senza_originale(ente, tipo):
