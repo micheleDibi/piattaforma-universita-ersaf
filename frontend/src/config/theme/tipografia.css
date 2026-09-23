@@ -1,6 +1,10 @@
 /* Scala tipografica: famiglia, dimensioni e pesi con un nome che dice a cosa
  * servono. La scala di Tailwind resta valida e non viene duplicata: qui si
  * nominano soltanto i ruoli ricorrenti.
+ *
+ * Dove il design non dichiara l'interlinea vale `normal` (con Inter circa
+ * 1,21): il preflight di Tailwind imporrebbe 1,5 e sposterebbe il ritmo
+ * verticale di titoli, etichette e campi.
  */
 
 @theme {
@@ -8,24 +12,53 @@
    * esterni. Se non si carica, subentra il carattere di sistema. */
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
-  /* Titolo della pagina: "Attuatori", "Modifica azienda". */
-  --text-titolo-pagina: var(--text-2xl);
-  --text-titolo-pagina--line-height: var(--text-2xl--line-height);
-  --text-titolo-pagina--font-weight: 600;
-  --text-titolo-pagina--letter-spacing: var(--tracking-tight);
+  /* Titolo della pagina: "Modifica azienda", "Modifica sottoscrittore". */
+  --text-titolo-pagina: 1.5rem;
+  --text-titolo-pagina--line-height: normal;
+  --text-titolo-pagina--font-weight: 700;
+  --text-titolo-pagina--letter-spacing: -0.01em;
+
+  /* Titolo di un elenco nella sua testata: "Attuatori", "Sottoscrittori". */
+  --text-titolo-elenco: 1.375rem;
+  --text-titolo-elenco--line-height: normal;
+  --text-titolo-elenco--font-weight: 700;
+  --text-titolo-elenco--letter-spacing: -0.01em;
 
   /* Titolo di una sezione dentro una scheda: "Contatti", "Dati anagrafici". */
-  --text-titolo-sezione: var(--text-base);
-  --text-titolo-sezione--line-height: var(--text-base--line-height);
+  --text-titolo-sezione: 0.9375rem;
+  --text-titolo-sezione--line-height: normal;
   --text-titolo-sezione--font-weight: 600;
+
+  /* Titolo di una sezione in evidenza: "Diploma di istruzione secondaria". */
+  --text-titolo-evidenziato: 1.0625rem;
+  --text-titolo-evidenziato--line-height: normal;
+  --text-titolo-evidenziato--font-weight: 600;
+
+  /* Descrizione sotto il titolo di una sezione. */
+  --text-descrizione: 0.8125rem;
+  --text-descrizione--line-height: 1.5;
 
   /* Etichetta di un campo o di una colonna. Va usata con uppercase e
    * tracking-wider: la forma completa sta nelle varianti. */
-  --text-etichetta: var(--text-xs);
-  --text-etichetta--line-height: var(--text-xs--line-height);
+  --text-etichetta: 0.6875rem;
+  --text-etichetta--line-height: normal;
   --text-etichetta--font-weight: 600;
 
   /* Testo di servizio: note sotto un campo, conteggi, messaggi di stato. */
-  --text-nota: var(--text-xs);
-  --text-nota--line-height: var(--text-xs--line-height);
+  --text-nota: 0.75rem;
+  --text-nota--line-height: 1.45;
+
+  /* Controlli secondari, pulsanti piccoli, conteggi, voci del popover degli
+   * avvisi, fine dell'elenco. */
+  --text-dettaglio: 0.8125rem;
+  --text-dettaglio--line-height: 1.45;
+
+  /* Valore in evidenza in un campo: "Diploma", "Titolo". */
+  --text-evidenziato: 0.9375rem;
+  --text-evidenziato--line-height: normal;
+  --text-evidenziato--font-weight: 500;
+
+  /* Testo dei banner di avviso con piu' voci. */
+  --text-avviso: 0.875rem;
+  --text-avviso--line-height: 1.55;
 }

@@ -11,7 +11,11 @@ const cliente = {
 const corso = { id: "corso", etichetta: "Corso", icona: "corso" };
 const stato = { id: "stato", etichetta: "Stato", rilievo: "stato" };
 // Nominativo dei clienti: iniziali, "Cognome Nome" e avviso delle anomalie.
-const persona = { id: "nominativo", etichetta: "Nominativo", rilievo: "persona" };
+// Il nome si ferma a due righe e il title lo mostra per intero.
+const persona = { id: "nominativo", etichetta: "Nominativo", rilievo: "persona", righe: 2 };
+// Azienda negli elenchi dei clienti: testo secondario (13px) su due righe al
+// massimo, come nel design. Nell'elenco delle Aziende resta il campo principale.
+const aziendaCliente = { ...azienda, rilievo: "secondario", righe: 2 };
 const verifiche = { id: "verifiche", etichetta: "Verifiche", rilievo: "indicatori" };
 const titolo = { id: "titolo", etichetta: "Titolo", rilievo: "principale" };
 const codice = { id: "codice", etichetta: "Codice", rilievo: "codice" };
@@ -21,6 +25,9 @@ const universita = {
   icona: "universita",
 };
 const tipo = { id: "tipo", etichetta: "Tipo di corso", icona: "tipo" };
+// Corso delle pratiche: testo secondario su due righe al massimo, come
+// l'azienda dei clienti; il title lo mostra per intero.
+const corsoPratica = { ...corso, rilievo: "secondario", righe: 2 };
 
 // NUOVE — servono solo a MODELLO_PRATICHE. Nomi distinti da "universita"/"tipo"
 // sopra: quelle sono per MODELLO_PRODOTTI e usano id "universita"/"tipo" che
@@ -37,10 +44,20 @@ const colonna = (campo) => ({
   campi: [campo],
 });
 
+// Valori del filtro Ruolo degli Attuatori: sono i codici che l'API accetta nel
+// parametro `ruolo`, quindi stanno qui e non nei testi. La voce senza filtro
+// e' TESTI_ELENCO.tuttiRuoli.
+export const RUOLI_FILTRO = ["Aderente", "Provinciale", "Regionale", "Nazionale", "Operatore"];
+
+/**
+ * Colonne dei clienti. Le proporzioni del design (Nominativo 2.4, Ruolo 0.9,
+ * Azienda 2, Verifiche 1.5, chevron 24px; 2 e 1.3 per i Sottoscrittori) stanno
+ * in config/styles/righeElenco.css, legate agli id delle colonne.
+ */
 export function modelloClienti({ attuatori, mostraAzienda }) {
   const riferimenti = [
     ...(attuatori ? [ruolo] : []),
-    ...(mostraAzienda ? [azienda] : []),
+    ...(mostraAzienda ? [aziendaCliente] : []),
   ];
   return {
     id: "clienti",
@@ -74,8 +91,8 @@ export const MODELLO_PRATICHE = {
   id: "pratiche",
   etichetta: "Pratiche",
   ampiezza: "articolata",
-  colonne: [numero, dataCreazione, cliente, corso, stato].map(colonna),
-  mobile: [numero, dataCreazione, cliente, corso, stato],
+  colonne: [numero, dataCreazione, cliente, corsoPratica, stato].map(colonna),
+  mobile: [numero, dataCreazione, cliente, corsoPratica, stato],
 };
 
 export const MODELLO_PRODOTTI = {

@@ -7,6 +7,9 @@ import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
 import { salvaSessione } from "../lib/sessione";
 import { campo, etichetta } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
+import { colonnaCampo, pillolaStato, STILI_ANAGRAFICA as stili } from "../config/styles/anagrafica.js";
+import { TESTI_ANAGRAFICA, TESTI_UTENTE as testi } from "../config/testi/anagrafica.js";
+import { dataCronologia, nomeUtente, statoAccount } from "../lib/schedaAnagrafica.js";
 import SezioneModulo from "./shared/SezioneModulo.jsx";
 import CampoModulo from "./shared/CampoModulo.jsx";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
@@ -69,10 +72,7 @@ export default function SchedaUtente() {
     // due coincidono solo in 377 clienti su 3.906.
     const padreUtenteId = attuatoreSelezionato.utente?.utente_id;
     if (!padreUtenteId) {
-      setAvviso({
-        type: "error",
-        text: "L'attuatore selezionato non ha un utente associato.",
-      });
+      setAvviso({ type: "error", text: testi.padreSenzaUtente });
       return;
     }
 
@@ -102,10 +102,7 @@ export default function SchedaUtente() {
     // guardia bastava salvare con la tendina non selezionata per chiudere
     // fuori l'utente.
     if (ruoloId === "" || ruoloId === null) {
-      setAvviso({
-        type: "error",
-        text: "Seleziona un ruolo prima di salvare.",
-      });
+      setAvviso({ type: "error", text: testi.ruoloMancante });
       return;
     }
 
@@ -139,7 +136,7 @@ export default function SchedaUtente() {
       }
 
       setCliente(clienteAggiornato);
-      setAvviso({ type: "success", text: "Modifiche salvate con successo!" });
+      setAvviso({ type: "success", text: testi.salvataggioRiuscito });
     } catch (err) {
       setAvviso({ type: "error", text: err.message });
     } finally {
@@ -169,39 +166,19 @@ export default function SchedaUtente() {
     }
   };
 
-  if (!id)
-    return (
-      <div className="text-center p-12 text-testo-tenue text-base">
-        Nessun utente selezionato.
-      </div>
-    );
+  if (!id) return <div className={stili.vuoto}>{testi.nessunUtente}</div>;
   if (loading)
     return (
       <IndicatoreCaricamento
         dimensione="grande"
-        messaggio="Caricamento in corso..."
+        messaggio={testi.caricamento}
         centrato
       />
     );
-  if (error)
-    return (
-      <div className="text-center p-12 text-negativo text-base">
-        Errore: {error}
-      </div>
-    );
+  if (error) return <div className={stili.errore}>{testi.errore(error)}</div>;
   if (!cliente) return null;
 
-  // `padre` e `aggiornato_da` sono utenti, non clienti: il nome della persona
-  // sta nel cliente annidato, e lo username resta come ripiego per gli 869
-  // utenti che una riga clienti non ce l'hanno.
-  const nomeUtente = (utente, idNumerico) => {
-    if (!utente) return idNumerico ? `ID: ${idNumerico}` : "Nessuno";
-    const persona = `${utente.cliente?.cliente_nome || ""} ${
-      utente.cliente?.cliente_cognome || ""
-    }`.trim();
-    return persona || utente.utente_username || `ID: ${utente.utente_id}`;
-  };
-
+  // `padre` e `aggiornato_da` sono utenti, non clienti: vedi nomeUtente().
   const testoPadre = nomeUtente(
     cliente.utente?.padre,
     cliente.utente?.utente_padre,
@@ -211,9 +188,8 @@ export default function SchedaUtente() {
     cliente.utente?.utente_updated_by,
   );
 
-  const isAttivo = Number(attivoSN) === -1;
-  const formattaData = (valore) =>
-    valore ? new Date(valore).toLocaleString() : "-";
+  const isAttivo = statoAccount(attivoSN)?.attivo ?? false;
+  const formattaData = (valore) => dataCronologia(valore) || testi.vuoto;
 
   const ruoliAttuatori = ["1", "2", "3", "5"];
   // Mostra il login automatico solo se il ruolo è ammesso E l'utente è attivo
@@ -222,16 +198,21 @@ export default function SchedaUtente() {
 
   return (
     <div>
+      {/* Prima delle sezioni: il <dialog> resta nel DOM anche chiuso, e in
+          fondo toglierebbe all'ultima sezione il ruolo di ultima figlia
+          (bordo inferiore doppio sopra la barra delle azioni). */}
+      <ModalCambiaPadre
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSelectPadre={handleSelectPadre}
+      />
       {avviso && (
-        <div className="px-6 pt-6 sm:px-8">
+        <div className={stili.avvisoUtente}>
           <AlertMessage message={avviso} separato={false} />
         </div>
       )}
-      <SezioneModulo
-        titolo="Account e ruolo"
-        descrizione="Credenziali di accesso e gerarchia."
-      >
-        <CampoModulo per="utente-username" etichetta="Username" colonne={3}>
+      <SezioneModulo titolo={testi.account.titolo} descrizione={testi.account.descrizione}>
+        <CampoModulo per="utente-username" etichetta={testi.username} colonne={3}>
           <input
             id="utente-username"
             type="text"
@@ -241,26 +222,22 @@ export default function SchedaUtente() {
           />
         </CampoModulo>
 
-        <div className="col-span-6 flex flex-col sm:col-span-3">
-          <span className={etichetta()}>Stato</span>
-          <div className="flex min-h-[42px] items-center">
+        <div className={colonnaCampo(3)}>
+          <span className={etichetta()}>{testi.stato}</span>
+          <div className={stili.cellaStato}>
             <button
               type="button"
               onClick={() => setAttivoSN(isAttivo ? 0 : -1)}
               aria-pressed={isAttivo}
-              title="Clicca per cambiare stato"
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors cursor-pointer ${
-                isAttivo
-                  ? "bg-positivo/10 text-positivo hover:bg-positivo/20"
-                  : "bg-negativo-tenue text-negativo hover:opacity-90"
-              }`}
+              title={testi.cambiaStato}
+              className={pillolaStato(isAttivo)}
             >
-              {isAttivo ? "Attivo" : "Disattivo"}
+              {TESTI_ANAGRAFICA.stato(isAttivo)}
             </button>
           </div>
         </div>
 
-        <CampoModulo per="utente-ruolo" etichetta="Ruolo" colonne={3}>
+        <CampoModulo per="utente-ruolo" etichetta={testi.ruolo} colonne={3}>
           <select
             id="utente-ruolo"
             value={ruoloId}
@@ -270,76 +247,61 @@ export default function SchedaUtente() {
             <option value="" data-segnaposto>
               {SEGNAPOSTI_SELEZIONE.ruolo}
             </option>
-            <option value="0">Utente</option>
-            <option value="1">Aderente</option>
-            <option value="2">Regionale</option>
-            <option value="3">Provinciale</option>
-            <option value="4">Consulente</option>
-            <option value="5">Nazionale</option>
-            <option value="6">Operatore</option>
+            {testi.ruoli.map(([valore, etichettaRuolo]) => (
+              <option key={valore} value={valore}>{etichettaRuolo}</option>
+            ))}
           </select>
         </CampoModulo>
 
-        <div className="col-span-6 flex flex-col sm:col-span-3">
-          <span className={etichetta()}>Utente padre</span>
-          <div className="flex min-h-[42px] items-center justify-between gap-3 rounded-controllo border border-bordo bg-superficie-tenue px-3 py-1.5">
-            <span className="truncate text-sm font-medium text-testo-forte">
-              {testoPadre || "-"}
-            </span>
+        <div className={colonnaCampo(3)}>
+          <span className={etichetta()}>{testi.padre}</span>
+          <div className={stili.riquadroPadre}>
+            <span className={stili.nomePadre}>{testoPadre || testi.vuoto}</span>
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className={`${pulsante("secondario", "piccolo")} shrink-0`}
+              className={`${pulsante("contorno", "minimo")} shrink-0`}
             >
-              Cambia padre
+              {testi.cambiaPadre}
             </button>
           </div>
         </div>
 
-        <div className="col-span-6 flex flex-wrap items-center justify-end gap-3">
+        <div className={stili.azioniUtente}>
           {mostraLoginAutomatico && (
             <button
               onClick={handleLoginAutomatico}
               type="button"
-              className={pulsante("ausiliario")}
+              className={pulsante("contorno")}
             >
-              Accedi con questo utente
+              {testi.accedi}
             </button>
           )}
           <button
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className={pulsante("secondario")}
+            className={pulsante("contorno")}
           >
-            {saving ? "Salvataggio..." : "Salva utente"}
+            {saving ? testi.salvataggio : testi.salva}
           </button>
         </div>
       </SezioneModulo>
 
-      <SezioneModulo titolo="Cronologia" griglia={false}>
-        <dl className="divide-y divide-bordo text-sm">
+      <SezioneModulo titolo={testi.cronologia} griglia={false}>
+        <dl className={stili.cronologia}>
           {[
-            ["Creato il", formattaData(cliente.utente?.utente_created_at)],
-            [
-              "Ultimo aggiornamento",
-              formattaData(cliente.utente?.utente_updated_at),
-            ],
-            ["Aggiornato da", testoAggiornatoDa || "-"],
+            [testi.creato, formattaData(cliente.utente?.utente_created_at)],
+            [testi.aggiornato, formattaData(cliente.utente?.utente_updated_at)],
+            [testi.aggiornatoDa, testoAggiornatoDa || testi.vuoto],
           ].map(([voce, valore]) => (
-            <div key={voce} className="flex justify-between gap-4 py-2.5">
-              <dt className="text-testo-tenue">{voce}</dt>
-              <dd className="text-right text-testo-forte">{valore}</dd>
+            <div key={voce}>
+              <dt className={etichetta("secondaria")}>{voce}</dt>
+              <dd className={stili.valoreCronologia}>{valore}</dd>
             </div>
           ))}
         </dl>
       </SezioneModulo>
-
-      <ModalCambiaPadre
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSelectPadre={handleSelectPadre}
-      />
     </div>
   );
 }

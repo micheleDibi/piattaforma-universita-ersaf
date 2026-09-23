@@ -22,18 +22,23 @@ import { ROTTE } from "../config/routes/rotte";
 import { contenutoPagina } from "../config/styles/pagina";
 import { pulsante } from "../config/styles/pulsante";
 import { campo } from "../config/styles/campo";
-import { scheda } from "../config/styles/superficie";
+import { pillola } from "../config/styles/pillola";
+import { barraAzioniModulo, scheda } from "../config/styles/superficie";
+import { STILI_ANAGRAFICA as stili } from "../config/styles/anagrafica.js";
+import { TESTI_ANAGRAFICA as testi } from "../config/testi/anagrafica.js";
+import { anomaliePerCampo, noteVisibili } from "../lib/anomalieCampi.js";
+import { statoAccount } from "../lib/schedaAnagrafica.js";
 import SezioneModulo from "./shared/SezioneModulo.jsx";
 import CampoModulo from "./shared/CampoModulo.jsx";
 import BarraSchede from "./shared/BarraSchede.jsx";
 import SchedaAziendaAttuatori from "./SchedaAziendaAttuatori";
 import SchedaAbilitazioniPratiche from "./SchedaAbilitazioniPratiche";
 import { useSessione } from "../hooks/useSessione.js";
-import { feedback, STILI_AVVISI } from "../config/styles/feedback.js";
-import { TriangleAlert } from "../config/icone.js";
 
-// Schede composte da SezioneModulo: il pannello non aggiunge margine suo.
-const PANNELLI_A_SEZIONI = new Set(["dati-principali", "utente"]);
+// Schede non composte da SezioneModulo (Azienda e Abilitazioni
+// dell'attuatore): il pannello aggiunge il suo margine. Tutte le altre
+// poggiano direttamente sulla scheda.
+const PANNELLI_CON_MARGINE = new Set(["azienda", "abilitazioni"]);
 
 const RUOLI_ATTUATORE = ["Aderente", "Provinciale", "Regionale", "Nazionale"];
 
@@ -53,8 +58,6 @@ function NuovoSottoscrittore({ tipoUtente }) {
     aggiornaQuery({ scheda }, { replace: false });
   const pannello = useIngresso(activeTab);
 
-  const labelTitolo =
-    tipoUtente === "attuatore" ? "Attuatore" : "Sottoscrittore";
   const risorsa =
     tipoUtente === "attuatore" ? PERCORSI.attuatori : PERCORSI.sottoscrittori;
   const { ritorno: rottaElenco } = useNavigazioneElenco(risorsa.elenco);
@@ -63,6 +66,9 @@ function NuovoSottoscrittore({ tipoUtente }) {
   const [formData, setFormData] = useState(ANAGRAFICA_INIZIALE);
   const [avviso, setAvviso] = useState(null);
   const [anomalie, setAnomalie] = useState([]);
+  // Valori letti dal server: una nota per campo resta visibile finche' il
+  // campo non viene modificato.
+  const [salvati, setSalvati] = useState({});
   // Stato dell'account letto con l'anagrafica: null se non disponibile.
   const [attivoSN, setAttivoSN] = useState(null);
 
@@ -87,10 +93,9 @@ function NuovoSottoscrittore({ tipoUtente }) {
       apiFetch(`/clienti/${id}`)
         .then((res) => {
           if (!res.ok)
-            throw Object.assign(
-              new Error("Impossibile caricare l’anagrafica."),
-              { status: res.status },
-            );
+            throw Object.assign(new Error(testi.erroreCaricamento), {
+              status: res.status,
+            });
           return res.json();
         })
         .then((data) => {
@@ -107,8 +112,7 @@ function NuovoSottoscrittore({ tipoUtente }) {
           setAnomalie(data.anomalie ?? []);
           setAttivoSN(data.utente?.utente_attivoSN ?? null);
 
-          setFormData((prev) => ({
-            ...prev,
+          const anagrafica = {
             // Letto dalla colonna dedicata: prima si leggeva da
             // cliente_codice, che non e' il codice fiscale.
             codiceFiscale: data.cliente_codice_fiscale || "",
@@ -144,6 +148,12 @@ function NuovoSottoscrittore({ tipoUtente }) {
             cellulare: data.cliente_cellulare || "",
             telefono: data.cliente_telefono || "",
             pec: data.cliente_pec || "",
+          };
+          setSalvati(anagrafica);
+
+          setFormData((prev) => ({
+            ...prev,
+            ...anagrafica,
             // FK verso aziende: non ha prefisso "cliente_" nella risposta,
             // e' la colonna grezza della tabella clienti. Serve alla scheda
             // Azienda per sapere quale azienda caricare.
@@ -210,10 +220,7 @@ function NuovoSottoscrittore({ tipoUtente }) {
     setAvviso(null);
     const utenteId = leggiUtenteId();
     if (utenteId === null) {
-      setAvviso({
-        type: "error",
-        text: "Sessione scaduta. Rifai il login prima di salvare.",
-      });
+      setAvviso({ type: "error", text: testi.sessioneScaduta });
       navigate(ROTTE.accesso);
       return;
     }
@@ -328,10 +335,7 @@ function NuovoSottoscrittore({ tipoUtente }) {
         setAnomalie(aggiornato?.anomalie ?? []);
         navigate(rottaElenco, {
           state: {
-            avviso: {
-              type: "success",
-              text: "Modifiche salvate con successo!",
-            },
+            avviso: { type: "success", text: testi.salvataggioRiuscito },
           },
         });
         return;
@@ -349,16 +353,12 @@ function NuovoSottoscrittore({ tipoUtente }) {
   };
 
   const tabs = [
-    { id: "dati-principali", label: "Dati principali" },
-    { id: "curriculum", label: "Curriculum formativo" },
-    { id: "utente", label: "Utente" },
-    ...(tipoUtente === "attuatore"
-      ? [{ id: "azienda", label: "Azienda" }]
-      : [{ id: "esami", label: "Esami" }]),
-    ...(mostraAbilitazioni
-      ? [{ id: "abilitazioni", label: "Abilitazioni" }]
-      : []),
-  ];
+    "dati-principali",
+    "curriculum",
+    "utente",
+    tipoUtente === "attuatore" ? "azienda" : "esami",
+    ...(mostraAbilitazioni ? ["abilitazioni"] : []),
+  ].map((chiave) => ({ id: chiave, label: testi.schede[chiave] }));
 
   const handleCopyResidenza = () => {
     setFormData((prev) => ({
@@ -375,58 +375,40 @@ function NuovoSottoscrittore({ tipoUtente }) {
   if (lettura.loading || lettura.errore)
     return <StatoCaricamentoDettaglio {...lettura} ritorno={rottaElenco} />;
 
+  // Testata: nome e codice fiscale letti dal server, non quelli che si stanno
+  // scrivendo; in creazione niente riga sotto il titolo.
+  const stato = isEditMode ? statoAccount(attivoSN) : null;
+  const nominativo = `${salvati.nome ?? ""} ${salvati.cognome ?? ""}`.trim();
+  const descrizione = isEditMode && (nominativo || salvati.codiceFiscale || stato) ? (
+    <>
+      {nominativo && <span className={stili.nomeTestata}>{nominativo}</span>}
+      {salvati.codiceFiscale && (
+        <span className={stili.codiceTestata}>{salvati.codiceFiscale}</span>
+      )}
+      {stato && <span className={pillola(stato.tono)}>{testi.stato(stato.attivo)}</span>}
+    </>
+  ) : undefined;
+  // Note brevi accanto ai campi con un'anomalia, finche' il valore e' quello salvato.
+  const note = noteVisibili(anomaliePerCampo(anomalie, "cliente"), formData, salvati);
+
   return (
     <div className={contenutoPagina("modulo")}>
       <IntestazionePagina
-        titolo={`${isEditMode ? "Modifica" : "Nuovo"} ${labelTitolo.toLowerCase()}`}
-        indietro={{
-          rotta: rottaElenco,
-          etichetta:
-            tipoUtente === "attuatore" ? "Attuatori" : "Sottoscrittori",
-        }}
-        descrizione={
-          isEditMode
-            ? [
-                `${formData.nome} ${formData.cognome}`.trim(),
-                formData.codiceFiscale,
-              ]
-                .filter(Boolean)
-                .join(" · ") || undefined
-            : undefined
-        }
-        azioni={
-          isEditMode && attivoSN !== null ? (
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                Number(attivoSN) === -1
-                  ? "bg-positivo/10 text-positivo"
-                  : "bg-negativo-tenue text-negativo"
-              }`}
-            >
-              {Number(attivoSN) === -1 ? "Attivo" : "Disattivo"}
-            </span>
-          ) : undefined
-        }
+        titolo={testi.titolo(tipoUtente, isEditMode)}
+        indietro={{ rotta: rottaElenco, etichetta: testi.ritorno(tipoUtente) }}
+        descrizione={descrizione}
       />
       <AlertMessage message={avviso} />
       {anomalie.length > 0 && (
-        <div className={feedback("warning")}>
-          <TriangleAlert
-            className={STILI_AVVISI.icona}
-            aria-hidden="true"
-          />
-          <ul className="list-disc pl-4">
-            {anomalie.map((testo) => (
-              <li key={testo}>{testo}</li>
-            ))}
-          </ul>
-        </div>
+        <AlertMessage message={{ type: "warning", text: anomalie }} />
       )}
-      <div className={`${scheda()} schede overflow-hidden`}>
+      {/* overflow-clip e non overflow-hidden: ritaglia gli angoli senza
+          diventare un contenitore di scorrimento, che bloccherebbe sticky. */}
+      <div className={`${scheda()} schede overflow-clip`}>
         <form onSubmit={handleSubmit}>
           <BarraSchede
             id="anagrafica"
-            etichetta="Schede anagrafica"
+            etichetta={testi.etichettaSchede}
             schede={tabs}
             attiva={activeTab}
             onChange={setActiveTab}
@@ -438,7 +420,7 @@ function NuovoSottoscrittore({ tipoUtente }) {
             id={`anagrafica-pannello-${activeTab}`}
             aria-labelledby={`anagrafica-scheda-${activeTab}`}
             className={`movimento-scheda schede__pannello ${
-              PANNELLI_A_SEZIONI.has(activeTab) ? "schede__pannello--sezioni" : ""
+              PANNELLI_CON_MARGINE.has(activeTab) ? "" : "schede__pannello--sezioni"
             }`}
           >
             {activeTab === "dati-principali" ? (
@@ -446,16 +428,18 @@ function NuovoSottoscrittore({ tipoUtente }) {
                 <FormInformazioniPersonali
                   formData={formData}
                   handleChange={handleChange}
+                  note={note}
+                  tipoUtente={tipoUtente}
                 />
 
                 {tipoUtente === "attuatore" && (
                   <SezioneModulo
-                    titolo="Ruolo"
-                    descrizione="Livello dell'attuatore nella rete."
+                    titolo={testi.ruolo.titolo}
+                    descrizione={testi.ruolo.descrizione}
                   >
                     <CampoModulo
                       per="ruolo-attuatore"
-                      etichetta="Ruolo attuatore"
+                      etichetta={testi.ruolo.etichetta}
                       colonne={3}
                     >
                       <select
@@ -463,9 +447,9 @@ function NuovoSottoscrittore({ tipoUtente }) {
                         name="ruolo"
                         value={ruoloSelezionato}
                         onChange={(e) => setRuoloSelezionato(e.target.value)}
-                        className={`${campo("comodo")} transition`}
+                        className={campo("comodo")}
                       >
-                        <option value="">Aderente (default)</option>
+                        <option value="">{testi.ruolo.predefinito}</option>
                         {ruoli
                           .filter((r) =>
                             RUOLI_ATTUATORE.includes(r.ruolo_codice),
@@ -485,10 +469,12 @@ function NuovoSottoscrittore({ tipoUtente }) {
                   clienteId={id}
                   formData={formData}
                   handleChange={handleChange}
+                  note={note}
                 />
                 <FormDocumento
                   formData={formData}
                   handleChange={handleChange}
+                  note={note}
                 />
                 <FormResidenzaDomicilio
                   formData={formData}
@@ -520,41 +506,32 @@ function NuovoSottoscrittore({ tipoUtente }) {
                 }
               />
             ) : activeTab === "esami" ? (
-              <div className="rounded-controllo border border-dashed border-bordo py-12 text-center text-sm text-testo-tenue">
-                Nessun esame registrato.
-              </div>
+              <div className={stili.vuoto}>{testi.esamiVuoto}</div>
             ) : (
-              <div className="py-12 text-center text-testo-tenue">
-                <h3 className="text-lg font-semibold mb-2">
-                  Sezione in fase di sviluppo
-                </h3>
-                <p className="text-sm">
-                  Stai visualizzando la scheda:{" "}
-                  <span className="font-medium text-primario capitalize">
+              <div className={stili.vuoto}>
+                <h3 className={stili.titoloVuoto}>{testi.inSviluppo}</h3>
+                <p>
+                  {testi.schedaCorrente}{" "}
+                  <span className={stili.schedaCorrente}>
                     {activeTab.replace("-", " ")}
                   </span>
                 </p>
               </div>
             )}
+          </div>
 
-            <div
-              className={`flex justify-end gap-3 border-t border-bordo ${
-                PANNELLI_A_SEZIONI.has(activeTab)
-                  ? "px-6 py-5 sm:px-8"
-                  : "pt-8 mt-10"
-              }`}
+          {/* Fuori dal pannello: resta agganciata in fondo in ogni scheda. */}
+          <div className={barraAzioniModulo("scheda")}>
+            <button
+              type="button"
+              onClick={() => navigate(rottaElenco)}
+              className={pulsante("contorno", "grande")}
             >
-              <button
-                type="button"
-                onClick={() => navigate(rottaElenco)}
-                className={pulsante("discreto", "grande")}
-              >
-                Annulla
-              </button>
-              <button type="submit" className={pulsante("primario", "grande")}>
-                {isEditMode ? "Salva modifiche" : `Crea ${labelTitolo}`}
-              </button>
-            </div>
+              {testi.annulla}
+            </button>
+            <button type="submit" className={pulsante("primario", "grande")}>
+              {isEditMode ? testi.salva : testi.crea(tipoUtente)}
+            </button>
           </div>
         </form>
       </div>

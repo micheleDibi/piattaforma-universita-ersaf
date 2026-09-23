@@ -8,7 +8,7 @@ export const STILI_PROFILO = {
   pannello: "schede__pannello focus:outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-fuoco/30",
   sezioni: "space-y-8",
   colonne: "grid grid-cols-1 md:grid-cols-2 gap-8",
-  separatore: "border-bordo",
+  separatore: "border-divisore",
   sezione: "min-w-0",
   titoloSezione: titoloSezione(),
   dati: "grid gap-x-8 gap-y-5 sm:grid-cols-2",

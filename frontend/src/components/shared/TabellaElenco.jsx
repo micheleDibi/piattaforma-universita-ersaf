@@ -3,6 +3,7 @@ import { ChevronRight } from "../../config/icone.js";
 import AvvisoTooltip from "./AvvisoTooltip.jsx";
 import IndicatoriStato from "./IndicatoriStato.jsx";
 import { campoIndicatori, idIndicatori } from "../../lib/righeElenco.js";
+import { TESTI_ELENCO } from "../../config/testi/elenco.js";
 
 export default function TabellaElenco({ dati, modello, onApri }) {
   const base = useId();
@@ -24,7 +25,7 @@ export default function TabellaElenco({ dati, modello, onApri }) {
             </th>
           ))}
           <th scope="col">
-            <span className="sr-only">Azioni</span>
+            <span className="sr-only">{TESTI_ELENCO.colonnaAzioni}</span>
           </th>
         </tr>
       </thead>
@@ -41,7 +42,7 @@ export default function TabellaElenco({ dati, modello, onApri }) {
             }}
             tabIndex={0}
             role="button"
-            aria-label={`Visualizza ${riga.nomeAzione}`}
+            aria-label={TESTI_ELENCO.visualizza(riga.nomeAzione)}
             aria-describedby={idIndicatori(base, riga, indicatori)}
           >
             {modello.colonne.map((colonna) => (
@@ -75,7 +76,8 @@ export default function TabellaElenco({ dati, modello, onApri }) {
                         <span className="elenco-adattivo__iniziali" aria-hidden="true">
                           {riga.iniziali}
                         </span>
-                        <span className="elenco-adattivo__valore" data-rilievo="principale">
+                        <span className="elenco-adattivo__valore" data-rilievo="principale"
+                          title={campo.righe ? valore : undefined}>
                           {valore}
                         </span>
                         <AvvisoTooltip messaggi={riga.campi.avviso} />
@@ -95,20 +97,18 @@ export default function TabellaElenco({ dati, modello, onApri }) {
                   return (
                     <span
                       key={campo.id}
-                      className="elenco-adattivo__valore"
-                      data-rilievo={campo.rilievo}
-                      style={
+                      className={
                         conAvviso
-                          ? { display: "inline-flex", alignItems: "center" }
-                          : undefined
+                          ? "elenco-adattivo__valore elenco-adattivo__valore--con-avviso"
+                          : "elenco-adattivo__valore"
                       }
+                      data-rilievo={campo.rilievo}
+                      // Con `righe` il valore puo' essere tagliato: il title lo
+                      // mostra per intero al passaggio del puntatore.
+                      title={campo.righe ? valore : undefined}
                     >
                       <span>{valore}</span>
-                      {conAvviso && (
-                        <span style={{ marginLeft: "0.85rem" }}>
-                          <AvvisoTooltip messaggi={avviso} />
-                        </span>
-                      )}
+                      {conAvviso && <AvvisoTooltip messaggi={avviso} />}
                     </span>
                   );
                 })}

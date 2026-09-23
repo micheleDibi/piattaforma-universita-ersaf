@@ -50,9 +50,10 @@ Nota: la regola della propria azienda e delle discendenti oggi non produce effet
 
 ### Avvisi sui dati
 
-Accanto alla ragione sociale può comparire un triangolo giallo. Passandoci
-sopra con il mouse, o raggiungendolo con la tastiera, mostra i problemi
-dell'azienda:
+Accanto alla ragione sociale può comparire un triangolo giallo. Un clic sul
+triangolo apre, subito sotto, un riquadro con il numero di errori e i problemi
+dell'azienda, senza aprire la scheda; se sotto non c'è spazio si apre sopra;
+si chiude con Escape o con un clic fuori:
 
 - «Codice Fiscale mancante»;
 - «Codice Fiscale duplicato con:», seguito dalle ragioni sociali delle altre
@@ -60,8 +61,18 @@ dell'azienda:
 - «Partita IVA mancante»;
 - «Partita IVA non conforme (deve essere di 11 cifre numeriche)».
 
-Gli stessi avvisi compaiono in un riquadro giallo in cima alla scheda
-dell'azienda.
+Gli stessi avvisi compaiono, per intero, in un riquadro giallo in cima alla
+scheda dell'azienda. Il campo interessato ha il bordo giallo e, sotto, una nota
+breve:
+
+- «Codice Fiscale mancante» e «Partita IVA mancante»: «Da compilare»;
+- «Codice Fiscale duplicato con:»: «Duplicato con un'altra azienda» oppure
+  «Duplicato con altre aziende»;
+- «Partita IVA non conforme»: «Deve contenere 11 cifre numeriche».
+
+La nota sparisce appena si modifica il campo e torna se si rimette il valore
+salvato; il riquadro in cima resta. Sulla partita IVA la nota resta finché il
+valore non ha 11 cifre (vedi «Campi»).
 
 L'avviso sul codice fiscale duplicato nomina anche aziende che chi guarda non
 potrebbe vedere.
@@ -70,30 +81,61 @@ Nota: l'avviso non rispetta la regola di visibilità; vedi [Limiti noti](../tecn
 
 ## Creare e modificare un'azienda
 
-La scheda si intitola «Nuova azienda» oppure «Modifica azienda»; in modifica
-sotto il titolo compare la ragione sociale. I campi sono divisi in sezioni:
-Dati anagrafici, Sede legale, Contatti e Coordinate bancarie; in modifica
-seguono Gerarchia e Convenzioni universitarie. Una partita IVA che non ha 11
-cifre si evidenzia in rosso mentre si scrive. «Salva» (in modifica «Salva
-modifiche») salva e torna all'elenco; «Annulla» torna all'elenco senza
-salvare. Un errore compare in un riquadro rosso sopra i campi.
+La scheda si intitola «Nuova azienda» oppure «Modifica azienda». I campi sono
+divisi in sezioni: Dati anagrafici, Sede legale, Contatti e Coordinate
+bancarie. In fondo alla pagina, a destra, ci sono «Annulla», che torna
+all'elenco senza salvare, e «Salva», che salva e torna all'elenco. Un errore
+di salvataggio compare in un riquadro rosso sopra i campi.
+
+In modifica la scheda ha in più:
+
+- sotto il titolo, la ragione sociale e, se l'azienda ha un padre, «· Figlia
+  di» seguito dal nome dell'azienda padre. La ragione sociale è quella
+  salvata: non cambia mentre si scrive nel campo. Compare solo la ragione
+  sociale per un'azienda radice, finché il padre non è stato letto e quando
+  non si riesce a sapere quale sia il padre (vedi «Il riquadro Azienda
+  padre»);
+- le sezioni Gerarchia e Convenzioni universitarie, dopo le altre;
+- gli avvisi sui dati, descritti sopra;
+- il pulsante «Salva modifiche» al posto di «Salva».
+
+In una nuova azienda non c'è niente sotto il titolo e il Codice nazionale
+resta vuoto.
 
 ### Campi
 
 | Obbligatori | Facoltativi |
 |---|---|
-| Ragione sociale, Partita IVA, Codice fiscale, Via, Città, CAP, Provincia | Civico, Codice SDI, Email, PEC, Telefono, Sito web, IBAN, Codice BIC |
+| Ragione sociale, Partita IVA, Codice fiscale, Via, Città, CAP, Prov. | Civico, Codice SDI, Email, PEC, Telefono, Sito web, IBAN, Codice BIC |
 
 I campi obbligatori hanno l'asterisco e l'interfaccia non salva finché sono
-vuoti. Il campo Partita IVA accetta al massimo 11 caratteri, e il browser
-segnala i caratteri diversi dalle cifre.
+vuoti.
 
-Il **Codice nazionale** non è fra questi: il server lo genera da solo, con un
+- **Partita IVA**: accetta al massimo 11 caratteri. Mentre si scrive un
+  valore diverso da 11 cifre, il campo diventa giallo e sotto compare «Deve
+  contenere 11 cifre numeriche»; la nota sparisce quando il valore arriva a
+  11 cifre. La nota da sola non blocca il salvataggio. Se ci sono caratteri
+  diversi dalle cifre, il browser lo segnala e non invia la scheda. Se le
+  cifre non sono esattamente 11, il salvataggio lo rifiuta il server (vedi
+  «Controlli del server»).
+- **Prov.**: accetta al massimo 2 caratteri, la sigla della provincia. Vale
+  anche nella finestra di creazione rapida dalla scheda Azienda di un
+  attuatore. Il limite è solo dell'interfaccia: il server accetta anche
+  valori più lunghi, e una provincia già salvata più lunga si vede per intero.
+- **Codice SDI, PEC, IBAN e Codice BIC**: quando sono vuoti mostrano un
+  esempio: «7 caratteri» per il Codice SDI, un indirizzo di posta certificata
+  per la PEC, «IT00 X000 0000 0000 0000 0000 000» per l'IBAN e «XXXXITXX» per
+  il Codice BIC. Il formato non viene controllato, né dall'interfaccia né dal
+  server. IBAN e Codice BIC, come il Codice nazionale, sono scritti con
+  caratteri tutti della stessa larghezza, per leggerli meglio uno per uno.
+
+Il **Codice nazionale** non è nella tabella: il server lo genera da solo, con un
 valore casuale e univoco, alla creazione dell'azienda. Il campo compare in
-sola lettura nella scheda dell'azienda e non compare affatto nella finestra
-di creazione rapida dalla scheda Azienda di un attuatore. Nessuno lo può
-scrivere né modificare, né dall'interfaccia né passando un valore al server
-in creazione o in modifica.
+sola lettura nella scheda dell'azienda: il valore si può selezionare e
+copiare, ma non modificare. Non compare affatto nella finestra di creazione
+rapida dalla scheda Azienda di un attuatore. Nessuno lo può scrivere né
+modificare, né dall'interfaccia né passando un valore al server in creazione
+o in modifica.
 
 ### Controlli del server
 
@@ -144,8 +186,14 @@ Nota: la regola dell'azienda padre oggi non produce effetti; vedi [Limiti noti](
 
 ### Il riquadro «Azienda padre»
 
-Compare solo nella scheda di un'azienda già salvata. Mostra la ragione sociale
-dell'azienda padre, oppure «Nessuna (azienda radice)».
+Compare solo nella scheda di un'azienda già salvata, nella sezione Gerarchia.
+Mostra la ragione sociale dell'azienda padre, oppure «Nessuna (azienda
+radice)». Se la scheda del padre non si può leggere, al posto del nome compare
+«Azienda #» seguito dal suo numero interno, anche sotto il titolo della
+pagina.
+
+Se invece non si riesce a sapere quale sia il padre, al posto del riquadro
+compare un riquadro rosso con il messaggio di errore, senza «Cambia padre».
 
 Passando da un'azienda a un'altra, un eventuale messaggio di errore rimasto
 dall'azienda precedente sparisce: prima restava sullo schermo e sembrava
@@ -162,7 +210,7 @@ riferito a quella appena aperta.
 - L'azienda che si sta modificando non compare fra le scelte.
 - «Seleziona» indica il nuovo padre. «Rendi radice (nessun padre)» toglie il
   padre.
-- Il cambio si salva subito, senza passare dal pulsante «Salva» della scheda.
+- Il cambio si salva subito, senza passare da «Salva modifiche».
   Se il cambio azzererebbe delle percentuali, prima compare la richiesta di
   conferma descritta più avanti.
 
@@ -188,14 +236,16 @@ Ogni azienda ha otto percentuali:
 - SSML - Lauree e SSML - Master;
 - A4U - Master e A4U - Perfezionamenti.
 
-Si vedono in una tabella per ateneo e tipologia di corso (le combinazioni che
-non esistono mostrano un trattino): nella sezione «Convenzioni universitarie»
-della scheda dell'azienda e nella sezione «Dettaglio convenzioni
-universitarie» della scheda Azienda di un attuatore. Si
-modificano solo dalla scheda dell'azienda: nella scheda dell'attuatore la
-sezione è in sola lettura. «Salva percentuali» le salva subito,
-indipendentemente dal resto della scheda dell'azienda. Un'azienda senza
+Si vedono in una tabella con una riga per ateneo e le colonne Lauree, Master
+e Perfezionamenti: nella sezione «Convenzioni universitarie» della scheda
+dell'azienda e nella sezione «Dettaglio convenzioni universitarie» della
+scheda Azienda di un attuatore. Accanto a ogni valore c'è il simbolo «%»; le
+combinazioni che non esistono mostrano una lineetta, «—». Un'azienda senza
 percentuali salvate le ha tutte a zero.
+
+Si modificano solo dalla scheda dell'azienda: nella scheda dell'attuatore la
+sezione è in sola lettura. «Salva percentuali», sotto la tabella a destra, le
+salva subito, indipendentemente dal resto della scheda dell'azienda.
 
 Il server permette di modificarle a chiunque veda l'azienda, compresa la
 propria. Poiché oggi il server non riconosce l'azienda di chi lavora (vedi
@@ -226,6 +276,9 @@ percentuali verranno azzerate. Continuare?» con due pulsanti:
 - «Conferma» salva e applica gli azzeramenti;
 - «Annulla» lascia tutto com'era.
 
+Per le percentuali la richiesta compare fra la tabella e «Salva percentuali»;
+per il cambio del padre, nel riquadro «Azienda padre», sotto il nome.
+
 Il server indica quali aziende e quali percentuali verrebbero azzerate, ma
 l'interfaccia mostra solo il messaggio generico.
 
@@ -255,21 +308,23 @@ ricerca per partita IVA oppure l'azienda già associata.
 
 Oggi chi non è Nazionale non vede alcuna azienda (vedi «Chi vede quali
 aziende»). Su un attuatore che ha già un'azienda collegata, la scheda mostra
-l'errore «Azienda non trovata.», i dati dell'azienda vuoti, con un trattino al
-posto di ogni valore, e tutte le percentuali a zero. La ricerca per partita
+l'errore «Azienda non trovata.», i dati dell'azienda vuoti, con una lineetta
+al posto di ogni valore, e tutte le percentuali a zero. La ricerca per partita
 IVA non trova mai nulla e propone sempre di creare l'azienda.
 
 Nota: la scheda mostra un'azienda vuota al posto di quella collegata; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 ### Attuatore senza azienda
 
-- Il campo «PARTITA IVA» accetta solo cifre, al massimo 11.
-- «Cerca azienda» con meno di 11 cifre mostra «Inserisci 11 cifre.».
+- Il campo «Partita IVA» accetta solo cifre, al massimo 11.
+- «Cerca azienda» con meno di 11 cifre colora il campo di rosso e sotto mostra
+  «Inserisci 11 cifre.».
 - Se l'azienda esiste, viene associata subito all'attuatore.
 - Se non esiste, si apre la finestra «Nessuna azienda trovata con questa
-  Partita IVA». La finestra contiene i campi dell'azienda, con la partita IVA
-  già compilata e non modificabile. «Crea e associa» crea l'azienda e la
-  associa all'attuatore; «Annulla» chiude la finestra.
+  Partita IVA». La finestra contiene i campi dell'azienda, con gli stessi
+  limiti della scheda, e la partita IVA già compilata e in sola lettura. In
+  basso a destra, «Annulla» chiude la finestra e «Crea e associa» crea
+  l'azienda e la associa all'attuatore.
 - La nuova azienda segue la regola dell'azienda padre di chi la crea, non
   quella dell'attuatore (vedi Gerarchia).
 
@@ -282,18 +337,20 @@ Nota: la ricerca propone di creare un'azienda che esiste già; vedi [Limiti noti
 
 ### Attuatore con azienda
 
-- In alto compare la ragione sociale; sotto, partita IVA, codice fiscale,
-  email, PEC e telefono.
+- In alto compare la ragione sociale, con accanto «Cambia azienda» e
+  «Rimuovi associazione». Sotto ci sono ragione sociale, partita IVA, codice
+  fiscale, email, PEC e telefono; un dato vuoto mostra una lineetta, «—».
 - «Cambia azienda» torna alla ricerca per partita IVA. Lì «Annulla» ripristina
   la vista dell'azienda attuale.
 - «Rimuovi associazione» chiede «Rimuovere l'azienda associata a questo
   attuatore?». Se si conferma, l'azienda viene scollegata.
-- Più in basso ci sono le percentuali, in sola lettura, descritte sopra.
+- Più in basso, dopo una linea di separazione, ci sono le percentuali, in
+  sola lettura, descritte sopra.
 
 ### Quando si salva l'associazione
 
 - Su un attuatore già salvato, associare, cambiare o rimuovere l'azienda ha
   effetto subito.
 - Su un attuatore in creazione, l'associazione si salva con «Crea
-  Attuatore». Un'azienda creata dalla finestra esiste invece già da subito,
+  attuatore». Un'azienda creata dalla finestra esiste invece già da subito,
   anche se poi l'attuatore non viene creato.

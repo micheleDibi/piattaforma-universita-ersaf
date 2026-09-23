@@ -1,50 +1,41 @@
+import { TESTI_ABILITAZIONI_PRATICHE } from "../config/testi/anagrafica.js";
+import {
+  interruttore,
+  levettaInterruttore,
+  STILI_ANAGRAFICA as stili,
+} from "../config/styles/anagrafica.js";
+
+// Colonne dei flag legacy: -1 abilitato, 0 no. Le etichette stanno in config/testi.
 const CAMPI_ABILITAZIONE = [
-  {
-    chiave: "cliente_abilPraticheUniv",
-    etichetta: "Abilitazione generale pratiche universitarie",
-  },
-  {
-    chiave: "cliente_abilitazione_ecampus",
-    etichetta: "Università Telematica eCampus",
-  },
-  {
-    chiave: "cliente_abilitazione_link_campus",
-    etichetta: "Link Campus University",
-  },
-  {
-    chiave: "cliente_abilitazione_corsi_speciali",
-    etichetta: "SSML Lamezia Terme",
-  },
-  { chiave: "cliente_abilitazione_a4u", etichetta: "Avatar4University" },
+  "cliente_abilPraticheUniv",
+  "cliente_abilitazione_ecampus",
+  "cliente_abilitazione_link_campus",
+  "cliente_abilitazione_corsi_speciali",
+  "cliente_abilitazione_a4u",
 ];
 
+/**
+ * Abilitazioni dell'attuatore alle pratiche: una riga a scheda per flag.
+ * L'intera riga e' l'etichetta dell'interruttore, quindi si clicca ovunque.
+ */
 export default function SchedaAbilitazioniPratiche({ formData, onCambia }) {
   return (
-    <div className="space-y-4">
-      {CAMPI_ABILITAZIONE.map(({ chiave, etichetta }) => {
+    <div className={stili.abilitazioni}>
+      {CAMPI_ABILITAZIONE.map((chiave) => {
         const attivo = formData[chiave] === -1;
         return (
-          <div
-            key={chiave}
-            className="flex items-center justify-between rounded-md border border-bordo px-4 py-3"
-          >
-            <span className="text-sm font-medium">{etichetta}</span>
+          <label key={chiave} className={stili.rigaAbilitazione}>
+            {TESTI_ABILITAZIONI_PRATICHE[chiave]}
             <button
               type="button"
               role="switch"
               aria-checked={attivo}
               onClick={() => onCambia(chiave, attivo ? 0 : -1)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                attivo ? "bg-primario" : "bg-gray-300"
-              }`}
+              className={interruttore(attivo)}
             >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  attivo ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
+              <span aria-hidden="true" className={levettaInterruttore(attivo)} />
             </button>
-          </div>
+          </label>
         );
       })}
     </div>

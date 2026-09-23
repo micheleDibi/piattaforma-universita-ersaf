@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
 import { BLOCCHI_PRATICHE } from "../lib/configPratiche";
+import AlertMessage from "./AlertMessage.jsx";
+import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
+import { STILI_PANNELLO_PRATICHE as stili } from "../config/styles/pratica.js";
+import { TESTI_PANNELLO_PRATICHE as testi } from "../config/testi/pratiche.js";
 
 export default function PannelloPratiche() {
   const navigate = useNavigate();
@@ -14,12 +18,7 @@ export default function PannelloPratiche() {
       .then(async (risposta) => {
         if (!attivo) return;
         if (!risposta.ok) {
-          setErrore(
-            await messaggioErrore(
-              risposta,
-              "Errore nel caricamento dei permessi",
-            ),
-          );
+          setErrore(await messaggioErrore(risposta, testi.erroreCaricamento));
           return;
         }
         setPermessi(await leggiJson(risposta));
@@ -27,7 +26,7 @@ export default function PannelloPratiche() {
       .catch(
         (err) =>
           attivo &&
-          setErrore(err.message ?? "Errore nel caricamento dei permessi"),
+          setErrore(err.message ?? testi.erroreCaricamento),
       );
     return () => {
       attivo = false;
@@ -58,38 +57,38 @@ export default function PannelloPratiche() {
   }
 
   if (errore) {
-    return <div className="p-4 text-red-600">{errore}</div>;
+    return (
+      <AlertMessage message={{ type: "error", text: errore }} separato={false} />
+    );
   }
 
   if (!permessi) {
-    return <div className="p-4 text-gray-500">Caricamento permessi...</div>;
+    return (
+      <IndicatoreCaricamento dimensione="compatto" messaggio={testi.caricamento} />
+    );
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-10">
+    <div className={stili.contenuto}>
       {!permessi.abilPraticheUniv && (
-        <div className="rounded-md bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-2 text-sm">
-          Non hai l'abilitazione generale alle pratiche universitarie.
-        </div>
+        <AlertMessage
+          message={{ type: "warning", text: testi.senzaAbilitazione }}
+          separato={false}
+        />
       )}
 
       {BLOCCHI_PRATICHE.map((blocco) => {
         const abilitato = bloccoAttivo(blocco);
         return (
-          <section
-            key={blocco.chiave}
-            className="border-t pt-4 first:border-t-0 first:pt-0"
-          >
-            <h2 className="text-blue-700 font-semibold mb-3">
-              {blocco.titolo}
-            </h2>
-            <div className="flex gap-6 items-center">
+          <section key={blocco.chiave} className={stili.sezione}>
+            <h2 className={stili.titolo}>{blocco.titolo}</h2>
+            <div className={stili.riga}>
               <img
                 src={blocco.logo}
                 alt={blocco.titolo}
-                className="w-24 h-24 object-contain shrink-0"
+                className={stili.logo}
               />
-              <div className="grid grid-cols-3 gap-3 flex-1">
+              <div className={stili.tipologie}>
                 {blocco.pulsanti.map((pulsante) => {
                   const disabilitato = !abilitato || pulsante.semprebloccato;
                   return (
@@ -98,11 +97,7 @@ export default function PannelloPratiche() {
                       type="button"
                       disabled={disabilitato}
                       onClick={() => selezionaPulsante(blocco, pulsante)}
-                      className={`rounded-md px-4 py-3 text-sm font-medium text-center transition-colors ${
-                        disabilitato
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : "bg-gray-100 text-gray-800 hover:bg-blue-50 hover:text-blue-700 cursor-pointer"
-                      }`}
+                      className={stili.tipologia}
                     >
                       {pulsante.label}
                     </button>

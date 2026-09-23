@@ -47,16 +47,22 @@ Nota: questo limite è applicato solo dall'interfaccia; vedi [Limiti noti](../te
 ### Colonne
 
 Accanto al titolo compare il numero di risultati, calcolato con la stessa
-ricerca e gli stessi filtri dell'elenco.
+ricerca e gli stessi filtri dell'elenco. Finché il numero non arriva, o se il
+calcolo non riesce, non compare: l'elenco resta comunque usabile.
 
 - Sottoscrittori: Nominativo e Verifiche.
 - Attuatori: Nominativo, Ruolo e Verifiche. Il Nazionale vede anche la colonna
   Azienda, fra Ruolo e Verifiche.
 - Il **Nominativo** è «Cognome Nome», preceduto da un cerchio con le iniziali.
-  Se l'anagrafica ha delle anomalie, subito dopo il nome compare il segnale di
-  avviso: un clic apre l'elenco degli errori, con il loro numero come titolo.
-- Su uno schermo stretto le righe diventano riquadri, con il nominativo in
-  evidenza.
+  Nella tabella un nome lungo va a capo al massimo su due righe; passando il
+  mouse compare per intero.
+- Nella colonna **Azienda** la ragione sociale è scritta più piccola, al
+  massimo su due righe; passando il mouse compare per intero.
+- Se l'anagrafica ha delle anomalie, subito dopo il nome compare il segnale di
+  avviso: vedi [Avvisi sulle anomalie storiche](#avvisi-sulle-anomalie-storiche).
+- Su uno schermo stretto le righe diventano riquadri: in alto le iniziali e il
+  nominativo, sotto le etichette delle verifiche e, negli Attuatori, il ruolo
+  e, per il Nazionale, l'azienda.
 
 La colonna **Verifiche** è una fila di etichette, verdi e con la spunta
 quando la cosa è a posto, grigie quando non lo è:
@@ -68,13 +74,13 @@ quando la cosa è a posto, grigie quando non lo è:
 | Diploma | i dati del diploma sono completi (solo nei Sottoscrittori) |
 
 I dati del diploma si considerano completi quando ci sono tutti e cinque:
-diploma, anno di conseguimento, istituto, voto ricevuto e voto massimo. Via,
-città e provincia dell'istituto non contano. Uno zero come voto vale come
-valorizzato.
+diploma, anno, istituto, voto ricevuto e voto massimo (vedi
+[Curriculum formativo](#curriculum-formativo)). Indirizzo, città e provincia
+dell'istituto non contano. Uno zero come voto vale come valorizzato.
 
-Il significato non dipende solo dal colore: l'etichetta verde ha la spunta e
-il bordo pieno, passandoci sopra con il mouse compare la descrizione a
-parole, e chi usa un lettore di schermo la sente leggere insieme alla riga.
+Il significato non dipende solo dal colore: l'etichetta verde ha la spunta,
+passandoci sopra con il mouse compare la descrizione a parole, e chi usa un
+lettore di schermo la sente leggere insieme alla riga.
 
 Nota: la colonna Azienda è nascosta solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
@@ -85,6 +91,8 @@ Nota: la colonna Azienda è nascosta solo dall'interfaccia; vedi [Limiti noti](.
   in fondo alla pagina oppure con «Carica altri elementi».
 - Alla fine compare «Hai raggiunto la fine dell'elenco». Se un caricamento
   non riesce compare «Riprova».
+- Scorrendo, la ricerca, «Filtri» (negli Attuatori) e «Nuovo» restano in
+  alto, in una testata ridotta; sugli schermi larghi resta anche il titolo.
 - Un clic sulla riga apre la scheda.
 
 ### Chi vede quali anagrafiche
@@ -104,33 +112,41 @@ stesso messaggio di un'anagrafica inesistente.
 
 ## Creare un'anagrafica
 
-Il pulsante «Nuovo», in alto nell'elenco, apre una scheda vuota. Chi usa un
-lettore di schermo sente la forma estesa, «Nuovo sottoscrittore» o «Nuovo
-attuatore». Il pulsante è visibile a chiunque apra l'elenco.
+Il pulsante «Nuovo», con il segno più, in alto nell'elenco, apre una scheda
+vuota. Chi usa un lettore di schermo sente la forma estesa, «Nuovo
+sottoscrittore» o «Nuovo attuatore». Il pulsante è visibile a chiunque apra
+l'elenco.
+
+La scheda vuota ha il titolo «Nuovo sottoscrittore» o «Nuovo attuatore».
+Sotto il titolo non c'è la riga con nome, codice fiscale e stato: compare
+solo in modifica.
 
 ### Cosa si compila
 
 Nella scheda Dati principali, divisa in sezioni con titolo e descrizione a
 sinistra e campi a destra:
 
-- **Informazioni personali**: nome, cognome, codice fiscale, genere, data di
-  nascita, luogo e provincia di nascita, cittadinanza.
+- **Informazioni personali**: nome, cognome, codice fiscale, genere (Uomo o
+  Donna), data di nascita, luogo e provincia di nascita, cittadinanza.
 - **Ruolo**, solo per gli attuatori: tendina «Ruolo attuatore» con la voce
   iniziale «Aderente (default)», seguita da Aderente, Regionale, Provinciale e
   Nazionale, nell'ordine in cui i ruoli sono registrati.
-- **Contatti**: email e cellulare, con lo stato di verifica accanto
-  all'etichetta; poi PEC e telefono.
+- **Contatti**: email e cellulare, in due riquadri in evidenza; sotto, in
+  «Altri recapiti», PEC e telefono, in campi più piccoli.
 - **Documento**: tipo (carta d'identità, passaporto, patente), numero, comune
   di rilascio, data di rilascio, data di scadenza.
 - **Residenza** e **Domicilio**: indirizzo, civico, comune, CAP, provincia.
-  «Copia da residenza», nella sezione Domicilio, copia i cinque campi della
-  residenza su quelli del domicilio.
+  Il pulsante «Copia da residenza», sotto la descrizione del Domicilio
+  («Solo se diverso dalla residenza.»), copia i cinque campi della residenza
+  su quelli del domicilio e per qualche istante mostra «Residenza copiata in
+  Domicilio».
 
 Già in creazione si possono compilare il Curriculum formativo e, per un
 attuatore, la scheda Azienda. La scheda Utente mostra «Nessun utente
 selezionato.» finché l'anagrafica non è salvata.
 
-«Crea Sottoscrittore» o «Crea Attuatore» salva tutto insieme.
+«Crea sottoscrittore» o «Crea attuatore», nella barra in fondo alla scheda,
+salva tutto insieme.
 
 Chiunque arrivi alla pagina può scegliere qualunque ruolo da attuatore,
 Nazionale compreso.
@@ -213,19 +229,32 @@ inviate via email.»
 ## La scheda
 
 Un clic sull'elenco apre la scheda, con il titolo «Modifica sottoscrittore» o
-«Modifica attuatore». Sotto il titolo compaiono nome, cognome e codice
-fiscale; a destra lo stato dell'account («Attivo» o «Disattivo»). Un indirizzo che non corrisponde a un'anagrafica mostra
-«Pagina non trovata».
+«Modifica attuatore». Sopra il titolo c'è il collegamento per tornare
+all'elenco, «Sottoscrittori» o «Attuatori». Sotto il titolo, sulla stessa
+riga, compaiono nome e cognome, il codice fiscale e lo stato dell'account:
+«Attivo» in verde o «Disattivo» in rosso. Sono i valori letti all'apertura
+della scheda: non cambiano mentre si scrive nei campi, né dopo un salvataggio
+della scheda Utente. Se l'anagrafica non ha un utente, lo stato non compare.
+Un indirizzo che non corrisponde a un'anagrafica mostra «Pagina non trovata».
 
-In fondo ci sono «Annulla» e «Salva modifiche». Questo «Salva modifiche»
-salva Dati principali, Curriculum formativo, l'azienda collegata e le
-Abilitazioni. Poi torna all'elenco, senza mostrare alcun messaggio di
-conferma.
+Se l'anagrafica ha delle anomalie, sotto il titolo compare il riquadro giallo
+degli avvisi: vedi [Avvisi sulle anomalie storiche](#avvisi-sulle-anomalie-storiche).
+
+Le schede sono una fila di titoli in alto; quella aperta è sottolineata.
+
+In fondo c'è una barra con «Annulla» e «Salva modifiche», che resta visibile
+mentre si scorre, in tutte le schede. «Annulla» torna all'elenco senza
+salvare. «Salva modifiche» salva Dati principali, Curriculum formativo,
+l'azienda collegata e le Abilitazioni. Poi torna all'elenco, senza mostrare
+alcun messaggio di conferma.
 
 ### Dati principali
 
-I campi sono quelli della creazione. In modifica il server applica regole
-diverse:
+I campi sono quelli della creazione. In più, accanto alle etichette Email e
+Cellulare compare lo stato della verifica: vedi
+[Verifica di email e cellulare](#verifica-di-email-e-cellulare).
+
+In modifica il server applica regole diverse:
 
 - tutti i campi sono facoltativi: un campo di testo obbligatorio svuotato
   viene salvato vuoto. Una data obbligatoria svuotata invece fa fallire il
@@ -244,59 +273,75 @@ Nota: in modifica l'obbligo dei campi è controllato solo dall'interfaccia; vedi
 
 ### Curriculum formativo
 
-La scheda ha quattro sotto-schede, ognuna divisa in sezioni:
+In alto un selettore porta a quattro sotto-schede: Titoli, Immatricolazioni
+ed iscrizioni, Abilitazioni professionali, Invalidità. Ognuna è divisa in
+sezioni.
 
 - **Titoli**:
-  - Diploma di istruzione secondaria: diploma, anno di conseguimento, istituto con
-    indirizzo, città e provincia, voto ricevuto e voto massimo; anno
-    integrativo, con gli stessi dati;
-  - Titolo universitario: tipo di titolo, corso di laurea, università, data di
-    conseguimento, voti;
-  - Altri titoli: fino a due titoli post-laurea e due
-    altri titoli di studio, ciascuno con istituto e data.
+  - «Titolo principale», Diploma di istruzione secondaria, in un riquadro
+    evidenziato: Diploma, Istituto, Anno, Indirizzo (via), Città, Prov. e
+    «Voto (ricevuto / massimo)», due caselle separate da una barra. Sotto,
+    la parte «Anno integrativo (se previsto)» ha Presso, Anno, Indirizzo
+    (via), Città, Prov. e Voto, senza il campo Diploma;
+  - «Ultimo titolo», Titolo universitario, anch'esso in un riquadro
+    evidenziato: Titolo (Laurea (Laurea 1° Livello), Laurea Magistrale,
+    Laurea Specialistica, Diploma Universitario, Laurea vecchio ordinamento),
+    Data conseguimento, Corso di laurea, Università e Voto
+    (ricevuto / massimo);
+  - Altri titoli: una tabella con le righe Post-laurea (1), Post-laurea (2),
+    Altro titolo (1) e Altro titolo (2); per ciascuna si scrivono istituto e
+    data.
 - **Immatricolazioni ed iscrizioni**:
-  - Anagrafe Nazionale Studenti: stato (immatricolato o no), tipo di corso
-    (prima o dopo la riforma del D.M. 509/99), data di immatricolazione,
-    ateneo, conclusione della carriera (titolo finale, rinuncia, decadenza,
-    trasferimento) e relativa data;
-  - Iscrizione in corso, il corso a cui la persona è attualmente iscritta: casella «Iscritto ad altro
-    corso di studi di altre Università», tipo, classe di laurea,
-    denominazione, università, anno di iscrizione, modalità (full-time o
-    part-time), città e provincia.
+  - Anagrafe Nazionale Studenti: status accademico (immatricolato o no), tipo
+    di corso (prima o dopo la riforma del D.M. 509/99), ateneo di iscrizione,
+    data immatricolazione, università con città e provincia, conclusione della
+    carriera (titolo finale, rinuncia, decadenza, trasferimento) e data
+    conclusione;
+  - Iscrizione in corso, il corso a cui la persona è attualmente iscritta:
+    casella «Iscritto ad altro corso di studi di altre Università», che si
+    spunta anche con un clic sul testo; tipo (laurea di I o II livello o a
+    ciclo unico, master di I o II livello, Altro), il campo «In caso di
+    "Altro"», classe di laurea, denominazione, università, città, provincia,
+    anno di iscrizione e modalità (full-time o part-time).
 - **Abilitazioni professionali**: abilitazione professionale e qualifica
-  professionale con data e luogo; albo o elenco; forze dell'ordine; richiesta
-  di convalida di attività professionalizzanti, corsi di formazione e altre
-  attività certificate.
-- **Invalidità**: percentuale e tipo.
+  professionale, ciascuna con data e luogo; albo o elenco; forze dell'ordine;
+  «Convalida esperienze», con tre caselle per chiedere la convalida di
+  attività professionalizzanti, corsi di formazione e altre attività
+  certificate. Ogni casella è un riquadro che si spunta con un clic in
+  qualunque punto.
+- **Invalidità**: percentuale, un numero con il simbolo % già scritto nel
+  campo, e tipo di invalidità.
 
 Il curriculum si salva con il «Salva modifiche» in fondo alla pagina, oppure
 con la creazione. Se per la stessa persona esistono più curricula, la scheda
 mostra il più recente.
 
-I due «Anno di conseguimento», quello del diploma e quello dell'anno
-integrativo, si scrivono liberamente: va bene sia un anno solo sia un anno
-scolastico, come ricorda il suggerimento nel campo. Il limite è di 45
+I due campi «Anno» del diploma e dell'anno integrativo si scrivono
+liberamente: va bene sia un anno solo sia un anno scolastico, come ricorda il
+suggerimento nel campo, «es. 2015 oppure 2014/2015». Il limite è di 45
 caratteri. Sono due dati distinti, e nessuno dei due ha a che vedere con la
-«Data di conseguimento» del titolo universitario.
+«Data conseguimento» del titolo universitario.
 
 ### Utente
 
 La scheda ha due sezioni. «Account e ruolo» contiene:
 
-- il nome utente, modificabile;
-- lo stato, un pulsante che passa da «Attivo» a «Disattivo» e viceversa;
+- il nome utente («Username»), modificabile;
+- lo stato, un'etichetta verde «Attivo» o rossa «Disattivo»: un clic la fa
+  passare all'altro valore;
 - il ruolo, con tutti i ruoli: Utente, Aderente, Regionale, Provinciale,
   Consulente, Nazionale, Operatore;
-- l'utente padre, con il pulsante «Cambia padre».
+- l'utente padre, in un riquadro con il nome e il pulsante «Cambia padre».
 
-«Cronologia» mostra data di creazione, ultimo aggiornamento e «aggiornato da»,
-in sola lettura.
+In fondo alla sezione, a destra, c'è il pulsante «Salva utente», proprio di
+questa scheda. Accanto compare «Accedi con questo utente» per un utente
+attivo con un ruolo da attuatore. Questo pulsante, come si salva il ruolo,
+chi può salvare gli altri campi e cosa cambia per la persona dopo un cambio
+di ruolo sono descritti in [Ruoli e permessi](ruoli-e-permessi.md).
 
-La scheda ha un proprio pulsante «Salva utente». Come si salva il ruolo, chi può
-salvare gli altri campi e cosa cambia per la persona dopo un cambio di ruolo
-sono descritti in [Ruoli e permessi](ruoli-e-permessi.md). Nella stessa pagina
-è descritto il pulsante «Accedi con questo utente», che compare qui per un
-utente attivo con un ruolo da attuatore.
+«Cronologia» mostra, in sola lettura, «Creato il», «Ultimo aggiornamento» e
+«Aggiornato da». Le date sono nel formato gg/mm/aaaa, hh:mm:ss; una data
+mancante è un trattino.
 
 Quando il salvataggio di questa scheda riesce, la pagina resta aperta e mostra
 «Modifiche salvate con successo!».
@@ -326,7 +371,8 @@ percentuali delle convenzioni universitarie. È descritta in
 ### Abilitazioni
 
 Solo per gli attuatori, solo per il Nazionale e solo su un'anagrafica già
-salvata. Contiene cinque interruttori:
+salvata. Contiene cinque interruttori, ciascuno in un riquadro con il suo
+nome; si cambiano anche con un clic sul nome:
 
 - Abilitazione generale pratiche universitarie;
 - Università Telematica eCampus;
@@ -335,14 +381,16 @@ salvata. Contiene cinque interruttori:
 - Avatar4University.
 
 Gli interruttori si salvano con il «Salva modifiche» in fondo alla pagina.
-Nella Dashboard i pulsanti delle pratiche di un ateneo sono attivi solo con
-l'abilitazione generale e con quella dell'ateneo: vedi [Pratiche](pratiche.md).
+Nella pagina Pratiche i pulsanti delle pratiche di un ateneo sono attivi solo
+con l'abilitazione generale e con quella dell'ateneo: vedi
+[Pratiche](pratiche.md#pannello-degli-atenei).
 
 Nota: questo limite è applicato solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 ### Esami
 
-Solo per i sottoscrittori. Mostra «Sezione in fase di sviluppo».
+Solo per i sottoscrittori. Gli esami non sono ancora gestiti: la scheda non
+contiene dati e mostra sempre «Nessun esame registrato.».
 
 ## Verifica di email e cellulare
 
@@ -354,12 +402,16 @@ alla persona dell'anagrafica, e chi lavora sulla scheda lo inserisce.
 
 - Solo su un'anagrafica già salvata: in creazione il pulsante «Verifica» non
   c'è.
-- Il pulsante è attivo se il campo non è vuoto, se il valore a video è quello
-  salvato e se il contatto non è già verificato.
-- Se il valore a video è diverso da quello salvato compare «Salva le modifiche
-  per verificare questo contatto.»
-- Un contatto verificato mostra «Verificato». Se la data è nota, sotto compare
-  «Verificato il» con data e ora.
+- Il pulsante «Verifica» sta accanto all'etichetta Email o Cellulare e
+  compare finché il contatto non è verificato. È attivo se il campo non è
+  vuoto e il valore a video è quello salvato.
+- Se il valore a video non è vuoto ed è diverso da quello salvato, sotto il
+  campo compare «Salva le modifiche per verificare questo contatto.»
+- Un contatto verificato mostra, al posto del pulsante, un'etichetta verde
+  con la spunta: «Verificata» per l'email, «Verificato» per il cellulare. Se
+  la data è nota, sotto il campo compare «Verificato il» con data e ora, per
+  esempio «Verificato il 12/09/2024, 17:24».
+- Un campo vuoto non risulta mai verificato.
 - Solo su un'anagrafica che si vede: su una che non si vede, chiedere lo stato,
   far partire un codice o confermarlo rispondono «Anagrafica non trovata.».
 
@@ -407,14 +459,14 @@ verifica di quel contatto e annulla i codici non ancora usati.
 - Per un account in attesa di attivazione, il nuovo valore va verificato di
   nuovo.
 - Un account già attivo resta attivo. La scheda però mostra il nuovo contatto
-  come «Verificato», senza data, e il pulsante resta disattivato.
+  come verificato, senza data, e il pulsante «Verifica» non compare.
 
 Nota: l'interfaccia mostra come verificato un contatto che il server non ha verificato; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 ### Anagrafiche precedenti a questo sistema
 
 - Un account già attivo, per il quale non risulta nessuna verifica, mostra i
-  contatti come «Verificato», senza data.
+  contatti come verificati, senza data e senza pulsante «Verifica».
 - Le verifiche fatte con il sistema precedente si possono recuperare con
   un'operazione tecnica. Per ogni anagrafica si prende l'ultima verifica
   riuscita dell'email e quella del cellulare. Ciascuna viene riportata solo se
@@ -460,12 +512,12 @@ ciò che si vede sono descritti in
 [Ruoli e permessi](ruoli-e-permessi.md). Qui contano la finestra di scelta e i
 controlli del server.
 
-- «Cambia Padre» apre la finestra «Seleziona Nuovo Utente Padre». La finestra
+- «Cambia padre» apre la finestra «Seleziona Nuovo Utente Padre». La finestra
   elenca gli attuatori con nome, cognome, ruolo e azienda. Si può cercare per
   nome, cognome o azienda e filtrare per ruolo. Scorrendo in fondo si
   caricano altri risultati.
-- «Seleziona» cambia solo ciò che si vede. Il cambio si salva con il «Salva
-  Modifiche» della scheda Utente.
+- «Seleziona» cambia solo ciò che si vede. Il cambio si salva con «Salva
+  utente», nella scheda Utente.
 - Se l'attuatore scelto non ha un utente compare «L'attuatore selezionato non
   ha un utente associato.»
 - Il server accetta solo un utente esistente e rifiuta l'utente stesso con
@@ -476,8 +528,8 @@ Nota: la finestra mostra l'azienda a tutti e il server non impedisce i giri; ved
 
 ## Attivazione e disattivazione
 
-- Lo stato si cambia nella scheda Utente e si salva con il suo «Salva
-  Modifiche».
+- Lo stato si cambia con un clic sull'etichetta «Attivo» o «Disattivo» della
+  scheda Utente e si salva con «Salva utente».
 - Un utente disattivato non può accedere. I suoi accessi già aperti smettono
   di funzionare alla richiesta successiva.
 - Attivare a mano un account in attesa non spedisce credenziali: la password
@@ -491,9 +543,24 @@ Si può solo disattivare l'utente.
 
 ## Avvisi sulle anomalie storiche
 
-Un'icona accanto al nominativo nell'elenco apre gli avvisi, sia su desktop sia
-su mobile, senza aprire la scheda. Il dialogo si chiude con il pulsante dedicato
-o con Escape. Gli stessi avvisi compaiono anche nella scheda anagrafica.
+Un clic sul segnale accanto al nominativo nell'elenco apre, subito sotto, un
+riquadro con il numero di errori e l'elenco, sia su desktop sia su mobile, senza
+aprire la scheda. Se sotto non c'è spazio, il riquadro si apre sopra il
+segnale. Il riquadro si chiude con Escape o con un clic fuori. Passando con il
+mouse sul segnale si legge solo il numero di errori.
+
+Gli stessi avvisi compaiono in cima alla scheda anagrafica, in un riquadro
+giallo con le frasi complete. Accanto ai campi interessati (codice fiscale,
+email, telefono, cellulare, PEC, numero di documento) il bordo diventa giallo
+e sotto il campo compare una nota breve:
+
+- per un codice fiscale o un'email non validi, il motivo, per esempio
+  «Carattere di controllo errato» o «Formato non conforme»;
+- per un duplicato, «Duplicato con un'altra anagrafica» oppure «Duplicato con
+  N anagrafiche»; per email e PEC «Duplicata».
+
+La nota sparisce appena si modifica il campo e torna se si rimette il valore
+salvato. Il testo completo resta nel riquadro in cima.
 
 Si segnalano codice fiscale o email non validi e duplicati di codice fiscale,
 email, telefono, cellulare, PEC e documento. Il confronto include altre pagine

@@ -89,7 +89,7 @@ Confermando il codice, l'email risulta verificata e la persona entra. Dagli acce
 
 Se in anagrafica non c'è un'email valida, compare **"Per accedere serve un'email valida in anagrafica: rivolgiti a un amministratore."**. Serve che un amministratore inserisca un'email valida nella scheda della persona.
 
-Nota: una persona già attiva prima dell'introduzione della verifica, oppure il cui indirizzo email è stato cambiato dopo l'attivazione, può avere nella sua scheda l'email indicata come "Verificato" anche se la verifica non risulta registrata; per il secondo fattore quell'email non conta; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Nota: una persona già attiva prima dell'introduzione della verifica, oppure il cui indirizzo email è stato cambiato dopo l'attivazione, può avere nella sua scheda l'email indicata come "Verificata" anche se la verifica non risulta registrata; per il secondo fattore quell'email non conta; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 ### Gestire i metodi dal profilo
 
@@ -233,7 +233,7 @@ Nota: l'interfaccia controlla sempre un minimo di 8 caratteri, mentre il minimo 
 
 La verifica conferma che email e cellulare di una persona sono davvero suoi. Riguarda la scheda di una persona, non l'accesso. Il flusso completo, le regole del codice e cosa accade quando un contatto cambia sono descritti in [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
 
-Quello che conta per questo documento è un solo punto: per il Nazionale l'email verificata vale anche come metodo del secondo fattore. Se l'email cambia, la verifica decade e quel metodo viene a mancare, anche se la scheda continua a mostrare "Verificato".
+Quello che conta per questo documento è un solo punto: per il Nazionale l'email verificata vale anche come metodo del secondo fattore. Se l'email cambia, la verifica decade e quel metodo viene a mancare, anche se la scheda continua a mostrare "Verificata".
 
 Nota: la scheda mostra come verificato un contatto che il server non considera verificato; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 

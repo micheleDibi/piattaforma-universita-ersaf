@@ -1,61 +1,74 @@
-import { campo, etichetta } from "../../config/styles/campo.js";
+import { campo } from "../../config/styles/campo.js";
 import { pulsante } from "../../config/styles/pulsante.js";
+import { pillola } from "../../config/styles/pillola.js";
+import { notaRecapito, STILI_ANAGRAFICA as stili } from "../../config/styles/anagrafica.js";
+import { TESTI_CONTATTI as testi } from "../../config/testi/anagrafica.js";
+import { dataVerifica, statoRecapito } from "../../lib/schedaAnagrafica.js";
 import { Check } from "../../config/icone.js";
 
-export default function CampoContatto({ tipo, valore, onChange, verifica }) {
-  const salvato = verifica?.stato?.valore === valore;
-  const verificato = salvato && verifica?.stato?.verificato;
-  const verificatoIl = verifica?.stato?.verificato_il;
-  const titolo = tipo === "email" ? "Email" : "Cellulare";
+/**
+ * Scheda in evidenza di un recapito usato per l'accesso (email o cellulare):
+ * etichetta con la pillola "Verificata" oppure il pulsante "Verifica", campo
+ * grande e note brevi (anomalie, data della verifica, invito a salvare).
+ *
+ * @param {{
+ *   tipo: "email"|"cellulare",
+ *   valore: string,
+ *   onChange: Function,
+ *   verifica: { disponibile: boolean, stato?: object, apri: Function },
+ *   nota?: string[],
+ * }} props
+ */
+export default function CampoContatto({ tipo, valore, onChange, verifica, nota = [] }) {
+  const id = `contatto-${tipo}`;
+  const { verificato, verificatoIl, mostraVerifica, verificaDisabilitata, daSalvare } =
+    statoRecapito(verifica, valore);
+  const avviso = nota.length > 0;
+  const conNote = avviso || Boolean(verificatoIl) || daSalvare;
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <label htmlFor={`contatto-${tipo}`} className={`${etichetta()} mb-0`}>
-          {titolo}
+    <div className={stili.schedaRecapito}>
+      <div className={stili.testataRecapito}>
+        <label htmlFor={id} className={stili.etichettaRecapito}>
+          {testi[tipo]}
         </label>
         {verificato && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-positivo/10 px-2 py-0.5 text-xs font-semibold text-positivo">
-            <Check aria-hidden="true" className="size-3" />
-            {tipo === "email" ? "Verificata" : "Verificato"}
+          <span className={pillola("positivo")}>
+            <Check aria-hidden="true" className={stili.spuntaRecapito} />
+            {testi.verificato(tipo)}
           </span>
         )}
-      </div>
-      <div className="flex items-start gap-2">
-        <input
-          id={`contatto-${tipo}`}
-          type={tipo === "email" ? "email" : "tel"}
-          name={tipo}
-          value={valore}
-          onChange={onChange}
-          className={`${campo("comodo")} min-w-0 flex-1`}
-        />
-        {verifica?.disponibile && (
+        {mostraVerifica && (
           <button
             type="button"
-            disabled={!salvato || !valore || verificato}
-            className={pulsante("secondario")}
+            disabled={verificaDisabilitata}
+            className={`${pulsante("contorno", "minimo")} ${stili.pulsanteRecapito}`}
             onClick={verifica.apri}
           >
-            {verificato ? "Verificato" : "Verifica"}
+            {testi.verifica}
           </button>
         )}
       </div>
-      {verificato && verificatoIl && (
-        <p className="text-sm text-testo-tenue">
-          Verificato il{" "}
-          {new Date(verificatoIl).toLocaleDateString("it-IT", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </p>
-      )}
-      {verifica?.disponibile && !salvato && valore && (
-        <p className="text-sm text-testo-tenue">
-          Salva le modifiche per verificare questo contatto.
-        </p>
+      <input
+        id={id}
+        type={tipo === "email" ? "email" : "tel"}
+        name={tipo}
+        value={valore}
+        onChange={onChange}
+        className={campo("recapito", { avviso })}
+        aria-describedby={conNote ? `${id}-nota` : undefined}
+      />
+      {conNote && (
+        <div id={`${id}-nota`}>
+          {nota.map((testo, indice) => (
+            <p key={`${indice}-${testo}`} className={notaRecapito("avviso")}>
+              {testo}
+            </p>
+          ))}
+          {verificatoIl && (
+            <p className={notaRecapito()}>{testi.verificatoIl(dataVerifica(verificatoIl))}</p>
+          )}
+          {daSalvare && <p className={notaRecapito()}>{testi.daSalvare}</p>}
+        </div>
       )}
     </div>
   );

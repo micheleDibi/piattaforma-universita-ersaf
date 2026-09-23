@@ -2,7 +2,13 @@ import { useState } from "react";
 import { campo } from "../config/styles/campo";
 import { pulsante, pulsanteIcona } from "../config/styles/pulsante";
 import { Plus, Trash2 } from "../config/icone.js";
-import { intestazioneTabella, rigaTabella } from "../config/styles/tabella";
+import {
+  cellaAzioni,
+  cellaIntestazione,
+  contenitoreTabella,
+  intestazioneTabella,
+  rigaTabella,
+} from "../config/styles/tabella";
 
 export default function ProdottoDettagliTabella({
   dettagli,
@@ -91,7 +97,7 @@ export default function ProdottoDettagliTabella({
   };
 
   return (
-    <div className="pt-6 border-t border-bordo">
+    <div className="pt-6 border-t border-divisore">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-titolo-sezione text-testo">Dettaglio prodotto</h3>
         {isModifica && (
@@ -107,17 +113,17 @@ export default function ProdottoDettagliTabella({
         )}
       </div>
 
-      <div className="overflow-x-auto border border-bordo rounded-superficie">
+      <div className={contenitoreTabella()}>
         <table className="w-full text-left text-sm text-testo">
-          <thead className={`${intestazioneTabella()} uppercase border-b border-bordo`}>
+          <thead className={intestazioneTabella()}>
             <tr>
-              <th className="p-2.5">Inizio Validità</th>
-              <th className="p-2.5">Fine Validità</th>
-              <th className="p-2.5">Prezzo (€)</th>
-              <th className="p-2.5">Durata (mesi)</th>
-              <th className="p-2.5">CFU</th>
-              <th className="p-2.5">Tasse (€)</th>
-              <th className="p-2.5 text-center">Azioni</th>
+              <th className={cellaIntestazione()}>Inizio Validità</th>
+              <th className={cellaIntestazione()}>Fine Validità</th>
+              <th className={cellaIntestazione()}>Prezzo (€)</th>
+              <th className={cellaIntestazione()}>Durata (mesi)</th>
+              <th className={cellaIntestazione()}>CFU</th>
+              <th className={cellaIntestazione()}>Tasse (€)</th>
+              <th className={cellaIntestazione("destra")}>Azioni</th>
             </tr>
           </thead>
           <tbody>
@@ -226,7 +232,7 @@ export default function ProdottoDettagliTabella({
                     className={campo("minimo")}
                   />
                 </td>
-                <td className="p-2 text-center">
+                <td className={cellaAzioni()}>
                   {det.isNew && (
                     <button
                       type="button"

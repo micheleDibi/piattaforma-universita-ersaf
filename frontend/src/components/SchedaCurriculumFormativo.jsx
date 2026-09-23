@@ -5,54 +5,34 @@ import AbilitazioniProfessionali from "./AbilitazioniProfessionali";
 import Invalidita from "./Invalidita";
 import BarraSchede from "./shared/BarraSchede.jsx";
 import { useIngresso } from "../hooks/useIngresso.js";
+import { TESTI_CURRICULUM as testi } from "../config/testi/anagrafica.js";
 
+const SOTTOSCHEDE = {
+  titoli: SezioneTitoli,
+  immatricolazioni: ImmatricolazioniIscrizioni,
+  abilitazioni: AbilitazioniProfessionali,
+  invalidita: Invalidita,
+};
+
+const SCHEDE = Object.keys(SOTTOSCHEDE).map((id) => ({ id, label: testi.schede[id] }));
+
+/**
+ * Curriculum: sotto-schede segmentate, poi le sezioni della sotto-scheda
+ * direttamente sulla scheda che le contiene (nessun bordo proprio).
+ */
 export default function SchedaCurriculumFormativo({ formData, handleChange }) {
   const [activeTab, setActiveTab] = useState("titoli");
   const pannello = useIngresso(activeTab);
-
-  const tabs = [
-    {
-      id: "titoli",
-      label: "Titoli",
-      component: (
-        <SezioneTitoli formData={formData} handleChange={handleChange} />
-      ),
-    },
-    {
-      id: "immatricolazioni",
-      label: "Immatricolazioni ed iscrizioni",
-      component: (
-        <ImmatricolazioniIscrizioni
-          formData={formData}
-          handleChange={handleChange}
-        />
-      ),
-    },
-    {
-      id: "abilitazioni",
-      label: "Abilitazioni professionali",
-      component: (
-        <AbilitazioniProfessionali
-          formData={formData}
-          handleChange={handleChange}
-        />
-      ),
-    },
-    {
-      id: "invalidita",
-      label: "Invalidità",
-      component: <Invalidita formData={formData} handleChange={handleChange} />,
-    },
-  ];
+  const Sottoscheda = SOTTOSCHEDE[activeTab];
 
   return (
     <div className="schede w-full">
-      <BarraSchede id="curriculum" etichetta="Curriculum formativo" schede={tabs}
-        attiva={activeTab} onChange={setActiveTab} />
+      <BarraSchede id="curriculum" etichetta={testi.etichetta} schede={SCHEDE}
+        attiva={activeTab} onChange={setActiveTab} variante="segmentata" />
       <div ref={pannello} role="tabpanel" id={`curriculum-pannello-${activeTab}`}
         aria-labelledby={`curriculum-scheda-${activeTab}`}
-        className="movimento-scheda schede__pannello schede__pannello--sezioni border-x border-b border-bordo rounded-b-superficie">
-        {tabs.find((tab) => tab.id === activeTab)?.component}
+        className="movimento-scheda schede__pannello schede__pannello--sezioni">
+        <Sottoscheda formData={formData} handleChange={handleChange} />
       </div>
     </div>
   );

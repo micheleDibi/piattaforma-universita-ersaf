@@ -1,24 +1,28 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
-import {
-  campo as classiCampo,
-  etichetta as classiEtichetta,
-} from "../config/styles/campo";
+import { campo as classiCampo } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
-import { scheda } from "../config/styles/superficie";
+import { barraAzioniModulo } from "../config/styles/superficie";
+import { STILI_AZIENDA as stili } from "../config/styles/azienda.js";
+import { TESTI_AZIENDA } from "../config/testi/azienda.js";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
+import CampoModulo from "./shared/CampoModulo.jsx";
+import AlertMessage from "./AlertMessage.jsx";
 import CampiAzienda from "./CampiAzienda.jsx";
 import { VUOTO_AZIENDA } from "../config/campiAzienda.js";
 import DettaglioConvenzioniUniversitarie from "./DettaglioConvenzioniUniversitarie.jsx";
 
+const TESTI = TESTI_AZIENDA.attuatore;
+
+// Dati dell'azienda associata mostrati sotto la ragione sociale.
 const DATI_AZIENDA_VISUALIZZATI = [
-  ["azienda_ragione_sociale", "Ragione sociale"],
-  ["azienda_partitaIVA", "Partita IVA"],
-  ["azienda_codiceFiscale", "Codice fiscale"],
-  ["azienda_email", "Email"],
-  ["azienda_pec", "PEC"],
-  ["azienda_telefono", "Telefono"],
+  "azienda_ragione_sociale",
+  "azienda_partitaIVA",
+  "azienda_codiceFiscale",
+  "azienda_email",
+  "azienda_pec",
+  "azienda_telefono",
 ];
 
 // Solo formato: 11 cifre. Il checksum ufficiale rifiuterebbe P.IVA reali ma
@@ -125,7 +129,7 @@ export default function SchedaAziendaAttuatori({
     setErroreRicerca("");
 
     if (!formatoPivaValido(piva)) {
-      setErroreRicerca("Inserisci 11 cifre.");
+      setErroreRicerca(TESTI.pivaIncompleta);
       return;
     }
 
@@ -168,7 +172,6 @@ export default function SchedaAziendaAttuatori({
     // navigate verso l'elenco attuatori) subito dopo la creazione azienda.
     setErroreModale("");
     setSalvataggioModale(true);
-    // ...resto invariato
 
     const corpo = Object.fromEntries(
       Object.entries(datiNuovaAzienda).filter(([, valore]) => valore !== ""),
@@ -192,7 +195,7 @@ export default function SchedaAziendaAttuatori({
   };
 
   const rimuoviAssociazione = () => {
-    if (!window.confirm("Rimuovere l'azienda associata a questo attuatore?")) {
+    if (!window.confirm(TESTI.confermaRimozione)) {
       return;
     }
     setPiva("");
@@ -203,26 +206,26 @@ export default function SchedaAziendaAttuatori({
     return (
       <IndicatoreCaricamento
         dimensione="grande"
-        messaggio="Caricamento in corso..."
+        messaggio={TESTI_AZIENDA.caricamento}
         centrato
       />
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className={stili.attuatore}>
       {errore && (
-        <div className="whitespace-pre-line rounded-controllo border border-negativo/30 bg-negativo-tenue p-4 text-sm text-negativo">
-          {errore}
-        </div>
+        <AlertMessage message={{ type: "error", text: errore }} separato={false} />
       )}
 
       {modalitaRicerca ? (
-        <div className="flex flex-col gap-3 max-w-sm">
-          <div className="flex flex-col">
-            <label htmlFor="ricerca-piva" className={classiEtichetta()}>
-              PARTITA IVA
-            </label>
+        <div className={stili.ricerca}>
+          <CampoModulo
+            per="ricerca-piva"
+            etichetta={TESTI.etichettaRicerca}
+            nota={erroreRicerca}
+            tonoNota="errore"
+          >
             <input
               id="ricerca-piva"
               type="text"
@@ -230,72 +233,73 @@ export default function SchedaAziendaAttuatori({
               maxLength={11}
               value={piva}
               onChange={(e) => setPiva(e.target.value.replace(/\D/g, ""))}
-              className={classiCampo("comodo")}
-              placeholder="11 cifre"
+              aria-invalid={Boolean(erroreRicerca) || undefined}
+              aria-describedby={erroreRicerca ? "ricerca-piva-nota" : undefined}
+              className={classiCampo("comodo", { errore: Boolean(erroreRicerca) })}
+              placeholder={TESTI.segnapostoRicerca}
             />
-          </div>
-          {erroreRicerca && (
-            <p className="text-sm text-negativo">{erroreRicerca}</p>
-          )}
-          <div className="flex gap-3">
+          </CampoModulo>
+          <div className={stili.azioniRicerca}>
             <button
               type="button"
               onClick={cercaAzienda}
               disabled={ricercaInCorso || associazioneInCorso}
               className={pulsante("primario", "grande")}
             >
-              {ricercaInCorso ? "Ricerca in corso..." : "Cerca azienda"}
+              {ricercaInCorso ? TESTI.ricercaInCorso : TESTI.cerca}
             </button>
             {aziendaId && (
               <button
                 type="button"
                 onClick={() => setModalitaRicerca(false)}
-                className={pulsante("discreto", "grande")}
+                className={pulsante("testuale", "grande")}
               >
-                Annulla
+                {TESTI_AZIENDA.annulla}
               </button>
             )}
           </div>
         </div>
       ) : (
         <>
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">
+          <div className="flex flex-col gap-6">
+            <div className={stili.testataAttuatore}>
+              <h3 className={stili.titoloAttuatore}>
                 {azienda?.azienda_ragione_sociale}
               </h3>
-              <div className="flex gap-3">
+              <div className={stili.azioniAttuatore}>
                 <button
                   type="button"
                   onClick={() => setModalitaRicerca(true)}
                   disabled={associazioneInCorso}
-                  className={pulsante("discreto", "grande")}
+                  className={pulsante("contorno", "medio")}
                 >
-                  Cambia azienda
+                  {TESTI.cambia}
                 </button>
                 <button
                   type="button"
                   onClick={rimuoviAssociazione}
                   disabled={associazioneInCorso}
-                  className={pulsante("discreto", "grande")}
+                  className={pulsante("testuale", "medio")}
                 >
-                  Rimuovi associazione
+                  {TESTI.rimuovi}
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {DATI_AZIENDA_VISUALIZZATI.map(([nome, etichetta]) => (
-                <div key={nome} className="flex flex-col">
-                  <span className={classiEtichetta()}>
-                    {etichetta.toUpperCase()}
-                  </span>
-                  <span className="text-sm">{azienda?.[nome] || "-"}</span>
+            <dl className={stili.datiAttuatore}>
+              {DATI_AZIENDA_VISUALIZZATI.map((nome) => (
+                <div key={nome} className="flex min-w-0 flex-col">
+                  <dt className={stili.etichettaDato}>
+                    {TESTI_AZIENDA.campi[nome]}
+                  </dt>
+                  <dd className={stili.valoreDato}>
+                    {azienda?.[nome] || TESTI_AZIENDA.trattino}
+                  </dd>
                 </div>
               ))}
-            </div>
+            </dl>
           </div>
 
-          <hr className="border-bordo" />
+          <hr className={stili.separatore} />
 
           <DettaglioConvenzioniUniversitarie aziendaId={aziendaId} soloLettura />
         </>
@@ -309,48 +313,48 @@ export default function SchedaAziendaAttuatori({
           l'alert+navigate che portava via dalla pagina a meta' flusso. */}
       {modaleAperto &&
         createPortal(
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className={stili.velo}>
             <form
               onSubmit={creaAzienda}
-              className={`${scheda()} w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8`}
+              aria-labelledby="creazione-azienda-titolo"
+              className={stili.finestra}
             >
-              <h3 className="text-lg font-semibold mb-1">
-                Nessuna azienda trovata con questa Partita IVA
+              <h3 id="creazione-azienda-titolo" className={stili.titoloFinestra}>
+                {TESTI.titoloCreazione}
               </h3>
-              <p className="text-sm text-testo-tenue mb-6">
-                Compila i dati per crearla: verrà associata automaticamente a
-                questo attuatore.
+              <p className={stili.descrizioneFinestra}>
+                {TESTI.descrizioneCreazione}
               </p>
 
-              {erroreModale && (
-                <div className="mb-6 whitespace-pre-line rounded-controllo border border-negativo/30 bg-negativo-tenue p-4 text-sm text-negativo">
-                  {erroreModale}
-                </div>
-              )}
-
-              <div className="mb-8">
+              <div className={stili.corpoFinestra}>
+                {erroreModale && (
+                  <AlertMessage
+                    message={{ type: "error", text: erroreModale }}
+                    separato={false}
+                  />
+                )}
                 <CampiAzienda
                   dati={datiNuovaAzienda}
                   onChange={aggiornaDatiNuovaAzienda}
-                  disabilita={{ azienda_partitaIVA: true }}
+                  soloLettura={{ azienda_partitaIVA: true }}
                   nascondi={{ azienda_codice_nazionale: true }}
                 />
               </div>
 
-              <div className="flex gap-3">
+              <div className={barraAzioniModulo("pagina")}>
+                <button
+                  type="button"
+                  onClick={() => setModaleAperto(false)}
+                  className={pulsante("testuale", "grande")}
+                >
+                  {TESTI_AZIENDA.annulla}
+                </button>
                 <button
                   type="submit"
                   disabled={salvataggioModale}
                   className={pulsante("primario", "grande")}
                 >
-                  {salvataggioModale ? "Creazione..." : "Crea e associa"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModaleAperto(false)}
-                  className={pulsante("discreto", "grande")}
-                >
-                  Annulla
+                  {salvataggioModale ? TESTI.creazione : TESTI.crea}
                 </button>
               </div>
             </form>

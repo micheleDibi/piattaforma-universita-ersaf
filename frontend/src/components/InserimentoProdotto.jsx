@@ -328,7 +328,7 @@ export default function InserimentoProdotto() {
   if (lettura.loading || lettura.errore) return <StatoCaricamentoDettaglio {...lettura} ritorno={ritorno} />;
 
   return (
-    <div className={contenutoPagina()}>
+    <div className={contenutoPagina("modulo")}>
       <IntestazionePagina
         titolo={isModifica ? "Modifica prodotto" : "Nuovo prodotto"}
         indietro={{ rotta: ritorno, etichetta: "Prodotti formativi" }}

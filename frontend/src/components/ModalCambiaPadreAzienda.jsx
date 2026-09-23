@@ -4,7 +4,16 @@ import { campo } from "../config/styles/campo";
 import { pulsante, pulsanteIcona } from "../config/styles/pulsante";
 import { X } from "../config/icone.js";
 import Dialogo from "./shared/Dialogo.jsx";
-import { intestazioneTabella, rigaTabella } from "../config/styles/tabella";
+import {
+  cellaIntestazione,
+  intestazioneTabella,
+  rigaTabella,
+  statoVuoto,
+} from "../config/styles/tabella";
+import { STILI_AZIENDA as stili } from "../config/styles/azienda.js";
+import { TESTI_AZIENDA } from "../config/testi/azienda.js";
+
+const TESTI = TESTI_AZIENDA.finestraPadre;
 
 export default function ModalCambiaPadreAzienda({
   isOpen,
@@ -32,7 +41,7 @@ export default function ModalCambiaPadreAzienda({
       const response = await apiFetch(
         `/aziende/?skip=0&limit=50&search=${encodeURIComponent(search)}`,
       );
-      if (!response.ok) throw new Error("Errore nel recupero delle aziende");
+      if (!response.ok) throw new Error(TESTI.erroreRecupero);
       const data = await response.json();
       // L'azienda che si sta modificando non puo' essere padre di se stessa:
       // la si toglie qui invece che nel backend, dove arriverebbe comunque
@@ -57,31 +66,26 @@ export default function ModalCambiaPadreAzienda({
   }, [searchTerm, isOpen]);
 
   return (
-    <Dialogo
-      aperto={isOpen}
-      onChiudi={onClose}
-      etichetta="Seleziona Nuova Azienda Padre"
-    >
+    <Dialogo aperto={isOpen} onChiudi={onClose} etichetta={TESTI.titolo}>
       <div className="dialogo__contenuto">
-        <div className="mb-4 flex items-center justify-between border-b border-bordo pb-2.5">
-          <h3 className="text-lg font-semibold text-testo">
-            Seleziona Nuova Azienda Padre
-          </h3>
+        <div className={stili.intestazioneFinestra}>
+          <h3 className={stili.titoloFinestra}>{TESTI.titolo}</h3>
           <button
             type="button"
             onClick={onClose}
             className={pulsanteIcona()}
-            aria-label="Chiudi selezione azienda padre"
-            title="Chiudi"
+            aria-label={TESTI.chiudi}
+            title={TESTI.chiudiBreve}
           >
             <X aria-hidden="true" className="size-icona" />
           </button>
         </div>
 
-        <div className="mb-4 flex gap-3">
+        <div className={stili.ricercaFinestra}>
           <input
             type="text"
-            placeholder="Cerca per ragione sociale..."
+            placeholder={TESTI.cerca}
+            aria-label={TESTI.cerca}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className={campo("comodo")}
@@ -90,50 +94,46 @@ export default function ModalCambiaPadreAzienda({
           <button
             type="button"
             onClick={() => onSelectPadre(null)}
-            className={`${pulsante("discreto", "comodo")} whitespace-nowrap`}
+            className={pulsante("contorno", "grande")}
           >
-            Rendi radice (nessun padre)
+            {TESTI.rendiRadice}
           </button>
         </div>
 
-        <div className="h-[350px] overflow-y-auto rounded-superficie border border-bordo bg-superficie">
-          <table className="w-full border-collapse text-left text-sm">
-            <thead>
-              <tr
-                className={`${intestazioneTabella()} sticky top-0 z-10 border-b border-bordo`}
-              >
-                <th className="p-3 font-semibold">Ragione sociale</th>
-                <th className="p-3 font-semibold">Partita IVA</th>
-                <th className="p-3 font-semibold">Città</th>
-                <th className="p-3 font-semibold">Azione</th>
+        <div className={stili.elencoFinestra}>
+          <table className={stili.tabellaFinestra}>
+            <thead className={`${intestazioneTabella()} sticky top-0 z-10`}>
+              <tr>
+                {TESTI.colonne.map((colonna) => (
+                  <th key={colonna} className={cellaIntestazione()}>
+                    {colonna}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {aziende.map((az) => (
                 <tr key={az.azienda_id} className={rigaTabella()}>
-                  <td className="p-3 text-testo">
+                  <td className={stili.cellaFinestra}>
                     {az.azienda_ragione_sociale}
                   </td>
-                  <td className="p-3 text-testo">{az.azienda_partitaIVA}</td>
-                  <td className="p-3 text-testo">{az.azienda_citta}</td>
-                  <td className="p-3">
+                  <td className={stili.cellaFinestra}>{az.azienda_partitaIVA}</td>
+                  <td className={stili.cellaFinestra}>{az.azienda_citta}</td>
+                  <td className={stili.cellaFinestra}>
                     <button
                       type="button"
                       onClick={() => onSelectPadre(az)}
                       className={pulsante("primario", "piccolo")}
                     >
-                      Seleziona
+                      {TESTI.seleziona}
                     </button>
                   </td>
                 </tr>
               ))}
               {aziende.length === 0 && !loadingAziende && (
                 <tr>
-                  <td
-                    colSpan="4"
-                    className="p-[30px] text-center text-testo-tenue"
-                  >
-                    Nessuna azienda trovata.
+                  <td colSpan={TESTI.colonne.length} className={statoVuoto()}>
+                    {TESTI.nessuna}
                   </td>
                 </tr>
               )}
@@ -142,9 +142,7 @@ export default function ModalCambiaPadreAzienda({
         </div>
 
         {loadingAziende && (
-          <div className="mt-2 text-center text-nota text-testo-tenue">
-            Aggiornamento in corso...
-          </div>
+          <div className={stili.aggiornamentoFinestra}>{TESTI.aggiornamento}</div>
         )}
       </div>
     </Dialogo>
