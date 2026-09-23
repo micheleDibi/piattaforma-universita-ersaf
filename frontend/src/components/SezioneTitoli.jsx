@@ -2,18 +2,16 @@ import { useId } from "react";
 import { SEGNAPOSTI_SELEZIONE } from "../config/testi/selezioni.js";
 import { TESTI_TITOLI } from "../config/testi/titoli.js";
 import { campo, etichetta } from "../config/styles/campo";
-import { riquadro, titoloSezione } from "../config/styles/superficie";
+import SezioneModulo from "./shared/SezioneModulo.jsx";
+import { riquadro } from "../config/styles/superficie";
 
 // Gli anni del diploma e dell'anno integrativo sono varchar(45) nel database.
 export default function SezioneTitoli({ formData, handleChange }) {
   const id = useId();
   return (
-    <div className="space-y-10 text-testo">
+    <div>
       {/* SEZIONE 1: Istruzione Secondaria e Anno Integrativo */}
-      <div>
-        <h3 className={titoloSezione("separato")}>
-          Istruzione Secondaria
-        </h3>
+      <SezioneModulo titolo="Diploma di istruzione secondaria" descrizione="Requisito di accesso ai corsi universitari." griglia={false}>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
           {/* Colonna Sinistra */}
@@ -216,13 +214,10 @@ export default function SezioneTitoli({ formData, handleChange }) {
             </div>
           </div>
         </div>
-      </div>
+      </SezioneModulo>
 
       {/* SEZIONE 2: Titolo Universitario */}
-      <div>
-        <h3 className={titoloSezione("separato")}>
-          Titolo Universitario
-        </h3>
+      <SezioneModulo titolo="Titolo universitario" descrizione="Titolo di studio più recente conseguito." griglia={false}>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
           <div className="space-y-4">
@@ -321,13 +316,10 @@ export default function SezioneTitoli({ formData, handleChange }) {
             </div>
           </div>
         </div>
-      </div>
+      </SezioneModulo>
 
       {/* SEZIONE 3: Titoli post-laurea e Altri titoli di studio */}
-      <div>
-        <h3 className={titoloSezione("separato")}>
-          Titoli Post-Laurea e Altri Titoli
-        </h3>
+      <SezioneModulo titolo="Altri titoli" descrizione="Post-laurea e titoli aggiuntivi, facoltativi." griglia={false}>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
           {/* Colonna Sinistra: Post-laurea */}
@@ -456,7 +448,7 @@ export default function SezioneTitoli({ formData, handleChange }) {
             </div>
           </div>
         </div>
-      </div>
+      </SezioneModulo>
     </div>
   );
 }

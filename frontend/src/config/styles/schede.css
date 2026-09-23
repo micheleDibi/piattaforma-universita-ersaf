@@ -57,3 +57,5 @@
 @media (prefers-reduced-motion: reduce) {
   .schede__linguetta { transition: none; translate: none; }
 }
+/* Pannello fatto di sezioni di modulo: le sezioni portano gia' il loro margine. */
+.schede__pannello--sezioni { padding: 0; }

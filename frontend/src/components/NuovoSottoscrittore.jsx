@@ -21,14 +21,19 @@ import AlertMessage from "./AlertMessage.jsx";
 import { ROTTE } from "../config/routes/rotte";
 import { contenutoPagina } from "../config/styles/pagina";
 import { pulsante } from "../config/styles/pulsante";
-import { campo, etichetta } from "../config/styles/campo";
-import { scheda, titoloSezione } from "../config/styles/superficie";
+import { campo } from "../config/styles/campo";
+import { scheda } from "../config/styles/superficie";
+import SezioneModulo from "./shared/SezioneModulo.jsx";
+import CampoModulo from "./shared/CampoModulo.jsx";
 import BarraSchede from "./shared/BarraSchede.jsx";
 import SchedaAziendaAttuatori from "./SchedaAziendaAttuatori";
 import SchedaAbilitazioniPratiche from "./SchedaAbilitazioniPratiche";
 import { useSessione } from "../hooks/useSessione.js";
 import { feedback, STILI_AVVISI } from "../config/styles/feedback.js";
 import { TriangleAlert } from "../config/icone.js";
+
+// Schede composte da SezioneModulo: il pannello non aggiunge margine suo.
+const PANNELLI_A_SEZIONI = new Set(["dati-principali", "utente"]);
 
 const RUOLI_ATTUATORE = ["Aderente", "Provinciale", "Regionale", "Nazionale"];
 
@@ -58,6 +63,8 @@ function NuovoSottoscrittore({ tipoUtente }) {
   const [formData, setFormData] = useState(ANAGRAFICA_INIZIALE);
   const [avviso, setAvviso] = useState(null);
   const [anomalie, setAnomalie] = useState([]);
+  // Stato dell'account letto con l'anagrafica: null se non disponibile.
+  const [attivoSN, setAttivoSN] = useState(null);
 
   // Ruoli disponibili per la select dell'attuatore. Non serve per i
   // sottoscrittori, che restano sempre ruolo "Utente" (0).
@@ -98,6 +105,7 @@ function NuovoSottoscrittore({ tipoUtente }) {
           }
 
           setAnomalie(data.anomalie ?? []);
+          setAttivoSN(data.utente?.utente_attivoSN ?? null);
 
           setFormData((prev) => ({
             ...prev,
@@ -341,8 +349,8 @@ function NuovoSottoscrittore({ tipoUtente }) {
   };
 
   const tabs = [
-    { id: "dati-principali", label: "Dati Principali" },
-    { id: "curriculum", label: "Curriculum Formativo" },
+    { id: "dati-principali", label: "Dati principali" },
+    { id: "curriculum", label: "Curriculum formativo" },
     { id: "utente", label: "Utente" },
     ...(tipoUtente === "attuatore"
       ? [{ id: "azienda", label: "Azienda" }]
@@ -376,6 +384,29 @@ function NuovoSottoscrittore({ tipoUtente }) {
           etichetta:
             tipoUtente === "attuatore" ? "Attuatori" : "Sottoscrittori",
         }}
+        descrizione={
+          isEditMode
+            ? [
+                `${formData.nome} ${formData.cognome}`.trim(),
+                formData.codiceFiscale,
+              ]
+                .filter(Boolean)
+                .join(" · ") || undefined
+            : undefined
+        }
+        azioni={
+          isEditMode && attivoSN !== null ? (
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                Number(attivoSN) === -1
+                  ? "bg-positivo/10 text-positivo"
+                  : "bg-negativo-tenue text-negativo"
+              }`}
+            >
+              {Number(attivoSN) === -1 ? "Attivo" : "Disattivo"}
+            </span>
+          ) : undefined
+        }
       />
       <AlertMessage message={avviso} />
       {anomalie.length > 0 && (
@@ -406,62 +437,63 @@ function NuovoSottoscrittore({ tipoUtente }) {
             role="tabpanel"
             id={`anagrafica-pannello-${activeTab}`}
             aria-labelledby={`anagrafica-scheda-${activeTab}`}
-            className="movimento-scheda schede__pannello"
+            className={`movimento-scheda schede__pannello ${
+              PANNELLI_A_SEZIONI.has(activeTab) ? "schede__pannello--sezioni" : ""
+            }`}
           >
             {activeTab === "dati-principali" ? (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <FormInformazioniPersonali
-                    formData={formData}
-                    handleChange={handleChange}
-                  />
-                  <FormDocumento
-                    formData={formData}
-                    handleChange={handleChange}
-                  />
-                </div>
-
-                {tipoUtente === "attuatore" && (
-                  <>
-                    <hr className="border-bordo my-6" />
-                    <div className="space-y-4">
-                      <h3 className={titoloSezione()}>Ruolo</h3>
-                      <div className="max-w-xs">
-                        <label className={etichetta()}>Ruolo attuatore</label>
-                        <select
-                          name="ruolo"
-                          value={ruoloSelezionato}
-                          onChange={(e) => setRuoloSelezionato(e.target.value)}
-                          className={`${campo("comodo")} transition`}
-                        >
-                          <option value="">Aderente (default)</option>
-                          {ruoli
-                            .filter((r) =>
-                              RUOLI_ATTUATORE.includes(r.ruolo_codice),
-                            )
-                            .map((r) => (
-                              <option key={r.ruolo_id} value={r.ruolo_id}>
-                                {r.ruolo_codice}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <hr className="border-bordo my-6" />
-                <FormResidenzaDomicilio
+              <div>
+                <FormInformazioniPersonali
                   formData={formData}
                   handleChange={handleChange}
-                  handleCopyResidenza={handleCopyResidenza}
                 />
-                <hr className="border-bordo my-6" />
+
+                {tipoUtente === "attuatore" && (
+                  <SezioneModulo
+                    titolo="Ruolo"
+                    descrizione="Livello dell'attuatore nella rete."
+                  >
+                    <CampoModulo
+                      per="ruolo-attuatore"
+                      etichetta="Ruolo attuatore"
+                      colonne={3}
+                    >
+                      <select
+                        id="ruolo-attuatore"
+                        name="ruolo"
+                        value={ruoloSelezionato}
+                        onChange={(e) => setRuoloSelezionato(e.target.value)}
+                        className={`${campo("comodo")} transition`}
+                      >
+                        <option value="">Aderente (default)</option>
+                        {ruoli
+                          .filter((r) =>
+                            RUOLI_ATTUATORE.includes(r.ruolo_codice),
+                          )
+                          .map((r) => (
+                            <option key={r.ruolo_id} value={r.ruolo_id}>
+                              {r.ruolo_codice}
+                            </option>
+                          ))}
+                      </select>
+                    </CampoModulo>
+                  </SezioneModulo>
+                )}
+
                 <FormContatti
                   key={id || "nuovo"}
                   clienteId={id}
                   formData={formData}
                   handleChange={handleChange}
+                />
+                <FormDocumento
+                  formData={formData}
+                  handleChange={handleChange}
+                />
+                <FormResidenzaDomicilio
+                  formData={formData}
+                  handleChange={handleChange}
+                  handleCopyResidenza={handleCopyResidenza}
                 />
               </div>
             ) : activeTab === "utente" ? (
@@ -487,6 +519,10 @@ function NuovoSottoscrittore({ tipoUtente }) {
                   setFormData((prev) => ({ ...prev, [chiave]: valore }))
                 }
               />
+            ) : activeTab === "esami" ? (
+              <div className="rounded-controllo border border-dashed border-bordo py-12 text-center text-sm text-testo-tenue">
+                Nessun esame registrato.
+              </div>
             ) : (
               <div className="py-12 text-center text-testo-tenue">
                 <h3 className="text-lg font-semibold mb-2">
@@ -501,16 +537,22 @@ function NuovoSottoscrittore({ tipoUtente }) {
               </div>
             )}
 
-            <div className="flex justify-end gap-4 pt-8 mt-10 border-t border-bordo">
+            <div
+              className={`flex justify-end gap-3 border-t border-bordo ${
+                PANNELLI_A_SEZIONI.has(activeTab)
+                  ? "px-6 py-5 sm:px-8"
+                  : "pt-8 mt-10"
+              }`}
+            >
               <button
                 type="button"
                 onClick={() => navigate(rottaElenco)}
-                className={pulsante("secondario", "grande")}
+                className={pulsante("discreto", "grande")}
               >
                 Annulla
               </button>
               <button type="submit" className={pulsante("primario", "grande")}>
-                {isEditMode ? "Salva Modifiche" : `Crea ${labelTitolo}`}
+                {isEditMode ? "Salva modifiche" : `Crea ${labelTitolo}`}
               </button>
             </div>
           </div>

@@ -7,7 +7,8 @@ import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
 import { salvaSessione } from "../lib/sessione";
 import { campo, etichetta } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
-import { titoloSezione } from "../config/styles/superficie";
+import SezioneModulo from "./shared/SezioneModulo.jsx";
+import CampoModulo from "./shared/CampoModulo.jsx";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 import AlertMessage from "./AlertMessage.jsx";
 
@@ -211,6 +212,8 @@ export default function SchedaUtente() {
   );
 
   const isAttivo = Number(attivoSN) === -1;
+  const formattaData = (valore) =>
+    valore ? new Date(valore).toLocaleString() : "-";
 
   const ruoliAttuatori = ["1", "2", "3", "5"];
   // Mostra il login automatico solo se il ruolo è ammesso E l'utente è attivo
@@ -218,143 +221,119 @@ export default function SchedaUtente() {
     isAttivo && ruoliAttuatori.includes(String(ruoloId));
 
   return (
-    <div className="w-full text-testo font-sans">
-      <h2 className={titoloSezione("separato")}>Dettagli Utente e Ruolo</h2>
-      <AlertMessage message={avviso} />
-      <div className="mb-8">
-        <div className="grid grid-cols-2 gap-5 mb-4">
-          <div className="flex flex-col">
-            <label className={etichetta()}>UTENTE USERNAME</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className={campo("comodo")}
-            />
-          </div>
-
-          <div className="flex flex-col justify-end">
-            <div className="flex items-center h-[46px] px-3.5 text-sm text-testo-forte">
-              Stato Utente:{" "}
-              <button
-                type="button"
-                onClick={() => setAttivoSN(isAttivo ? 0 : -1)}
-                className={`ml-3 px-4 py-1.5 rounded-full text-xs font-bold text-su-primario transition-colors cursor-pointer ${
-                  isAttivo
-                    ? "bg-positivo hover:opacity-90"
-                    : "bg-negativo hover:opacity-90"
-                }`}
-              >
-                {isAttivo ? "Attivo" : "Disattivo"}
-              </button>
-            </div>
-          </div>
+    <div>
+      {avviso && (
+        <div className="px-6 pt-6 sm:px-8">
+          <AlertMessage message={avviso} separato={false} />
         </div>
+      )}
+      <SezioneModulo
+        titolo="Account e ruolo"
+        descrizione="Credenziali di accesso e gerarchia."
+      >
+        <CampoModulo per="utente-username" etichetta="Username" colonne={3}>
+          <input
+            id="utente-username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className={campo("comodo")}
+          />
+        </CampoModulo>
 
-        <div className="grid grid-cols-2 gap-5 mb-4">
-          <div className="flex flex-col">
-            <label className={etichetta()}>RUOLO</label>
-            <select
-              value={ruoloId}
-              onChange={(e) => setRuoloId(e.target.value)}
-              className={campo("comodo")}
+        <div className="col-span-6 flex flex-col sm:col-span-3">
+          <span className={etichetta()}>Stato</span>
+          <div className="flex min-h-[42px] items-center">
+            <button
+              type="button"
+              onClick={() => setAttivoSN(isAttivo ? 0 : -1)}
+              aria-pressed={isAttivo}
+              title="Clicca per cambiare stato"
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors cursor-pointer ${
+                isAttivo
+                  ? "bg-positivo/10 text-positivo hover:bg-positivo/20"
+                  : "bg-negativo-tenue text-negativo hover:opacity-90"
+              }`}
             >
-              <option value="" data-segnaposto>
-                {SEGNAPOSTI_SELEZIONE.ruolo}
-              </option>
-              <option value="0">Utente</option>
-              <option value="1">Aderente</option>
-              <option value="2">Regionale</option>
-              <option value="3">Provinciale</option>
-              <option value="4">Consulente</option>
-              <option value="5">Nazionale</option>
-              <option value="6">Operatore</option>
-            </select>
-          </div>
-
-          <div className="flex flex-col">
-            <label className={etichetta()}>UTENTE PADRE</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                readOnly
-                value={testoPadre}
-                className={`${campo("comodo")} flex-1`}
-              />
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(true)}
-                className={`${pulsante("ausiliario")} whitespace-nowrap`}
-              >
-                Cambia Padre
-              </button>
-            </div>
+              {isAttivo ? "Attivo" : "Disattivo"}
+            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-5 mb-4">
-          <div className="flex flex-col">
-            <label className={etichetta()}>DATA CREAZIONE</label>
-            <input
-              type="text"
-              readOnly
-              value={
-                cliente.utente?.utente_created_at
-                  ? new Date(cliente.utente.utente_created_at).toLocaleString()
-                  : ""
-              }
-              className={campo("comodo")}
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className={etichetta()}>ULTIMO AGGIORNAMENTO</label>
-            <input
-              type="text"
-              readOnly
-              value={
-                cliente.utente?.utente_updated_at
-                  ? new Date(cliente.utente.utente_updated_at).toLocaleString()
-                  : ""
-              }
-              className={campo("comodo")}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-5 mb-4">
-          <div className="flex flex-col">
-            <label className={etichetta()}>AGGIORNATO DA</label>
-            <input
-              type="text"
-              readOnly
-              value={testoAggiornatoDa}
-              className={campo("comodo")}
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 mt-2.5">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className={pulsante("primario", "grande")}
+        <CampoModulo per="utente-ruolo" etichetta="Ruolo" colonne={3}>
+          <select
+            id="utente-ruolo"
+            value={ruoloId}
+            onChange={(e) => setRuoloId(e.target.value)}
+            className={campo("comodo")}
           >
-            {saving ? "Salvataggio..." : "Salva Modifiche"}
-          </button>
+            <option value="" data-segnaposto>
+              {SEGNAPOSTI_SELEZIONE.ruolo}
+            </option>
+            <option value="0">Utente</option>
+            <option value="1">Aderente</option>
+            <option value="2">Regionale</option>
+            <option value="3">Provinciale</option>
+            <option value="4">Consulente</option>
+            <option value="5">Nazionale</option>
+            <option value="6">Operatore</option>
+          </select>
+        </CampoModulo>
 
+        <div className="col-span-6 flex flex-col sm:col-span-3">
+          <span className={etichetta()}>Utente padre</span>
+          <div className="flex min-h-[42px] items-center justify-between gap-3 rounded-controllo border border-bordo bg-superficie-tenue px-3 py-1.5">
+            <span className="truncate text-sm font-medium text-testo-forte">
+              {testoPadre || "-"}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className={`${pulsante("secondario", "piccolo")} shrink-0`}
+            >
+              Cambia padre
+            </button>
+          </div>
+        </div>
+
+        <div className="col-span-6 flex flex-wrap items-center justify-end gap-3">
           {mostraLoginAutomatico && (
             <button
               onClick={handleLoginAutomatico}
               type="button"
-              className="px-5 py-3 bg-positivo text-su-primario border-none rounded-controllo text-sm font-bold cursor-pointer hover:opacity-90"
+              className={pulsante("ausiliario")}
             >
               Accedi con questo utente
             </button>
           )}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className={pulsante("secondario")}
+          >
+            {saving ? "Salvataggio..." : "Salva utente"}
+          </button>
         </div>
-      </div>
+      </SezioneModulo>
+
+      <SezioneModulo titolo="Cronologia" griglia={false}>
+        <dl className="divide-y divide-bordo text-sm">
+          {[
+            ["Creato il", formattaData(cliente.utente?.utente_created_at)],
+            [
+              "Ultimo aggiornamento",
+              formattaData(cliente.utente?.utente_updated_at),
+            ],
+            ["Aggiornato da", testoAggiornatoDa || "-"],
+          ].map(([voce, valore]) => (
+            <div key={voce} className="flex justify-between gap-4 py-2.5">
+              <dt className="text-testo-tenue">{voce}</dt>
+              <dd className="text-right text-testo-forte">{valore}</dd>
+            </div>
+          ))}
+        </dl>
+      </SezioneModulo>
 
       <ModalCambiaPadre
         isOpen={isModalOpen}

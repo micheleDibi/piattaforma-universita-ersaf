@@ -1,14 +1,12 @@
 import { eVero } from "../lib/flagLegacy";
 import { campo, etichetta, spunta } from "../config/styles/campo";
-import { titoloSezione } from "../config/styles/superficie";
+import SezioneModulo from "./shared/SezioneModulo.jsx";
+
 export default function AbilitazioniProfessionali({ formData, handleChange }) {
   return (
-    <div className="space-y-10 text-testo max-w-4xl">
+    <div>
       {/* SEZIONE 1: Abilitazione Professionale */}
-      <div>
-        <h3 className={titoloSezione("separato")}>
-          Abilitazione Professionale
-        </h3>
+      <SezioneModulo titolo="Abilitazione e qualifica" descrizione="Titoli professionali conseguiti." griglia={false}>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
           <div className="space-y-4">
@@ -93,13 +91,10 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
             </div>
           </div>
         </div>
-      </div>
+      </SezioneModulo>
 
       {/* SEZIONE 2: Albo o Elenco */}
-      <div>
-        <h3 className={titoloSezione("separato")}>
-          Albo o Elenco
-        </h3>
+      <SezioneModulo titolo="Albo o elenco" griglia={false}>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
           <div>
@@ -127,13 +122,10 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
             />
           </div>
         </div>
-      </div>
+      </SezioneModulo>
 
       {/* SEZIONE 3: Richiesta di convalida delle esperienze */}
-      <div>
-        <h3 className={titoloSezione("separato")}>
-          Richiesta di convalida delle esperienze
-        </h3>
+      <SezioneModulo titolo="Convalida esperienze" descrizione="Esperienze per cui si richiede la convalida." griglia={false}>
 
         <div className="space-y-4 max-w-xl">
           {/* Attività Professionalizzanti */}
@@ -178,7 +170,7 @@ export default function AbilitazioniProfessionali({ formData, handleChange }) {
             />
           </div>
         </div>
-      </div>
+      </SezioneModulo>
     </div>
   );
 }

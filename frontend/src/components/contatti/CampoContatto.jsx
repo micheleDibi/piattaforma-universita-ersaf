@@ -1,5 +1,6 @@
 import { campo, etichetta } from "../../config/styles/campo.js";
 import { pulsante } from "../../config/styles/pulsante.js";
+import { Check } from "../../config/icone.js";
 
 export default function CampoContatto({ tipo, valore, onChange, verifica }) {
   const salvato = verifica?.stato?.valore === valore;
@@ -8,9 +9,17 @@ export default function CampoContatto({ tipo, valore, onChange, verifica }) {
   const titolo = tipo === "email" ? "Email" : "Cellulare";
   return (
     <div className="space-y-2">
-      <label htmlFor={`contatto-${tipo}`} className={etichetta()}>
-        {titolo}
-      </label>
+      <div className="flex items-center justify-between gap-2">
+        <label htmlFor={`contatto-${tipo}`} className={`${etichetta()} mb-0`}>
+          {titolo}
+        </label>
+        {verificato && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-positivo/10 px-2 py-0.5 text-xs font-semibold text-positivo">
+            <Check aria-hidden="true" className="size-3" />
+            {tipo === "email" ? "Verificata" : "Verificato"}
+          </span>
+        )}
+      </div>
       <div className="flex items-start gap-2">
         <input
           id={`contatto-${tipo}`}

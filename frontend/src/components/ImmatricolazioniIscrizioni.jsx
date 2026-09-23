@@ -1,15 +1,13 @@
 import { SEGNAPOSTI_SELEZIONE } from "../config/testi/selezioni.js";
 import { daCasella, eVero } from "../lib/flagLegacy";
 import { campo, etichetta, spunta } from "../config/styles/campo";
-import { titoloSezione } from "../config/styles/superficie";
+import SezioneModulo from "./shared/SezioneModulo.jsx";
+
 export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
   return (
-    <div className="space-y-10 text-testo max-w-4xl">
+    <div>
       {/* SEZIONE 1: Anagrafe Nazionale Studenti */}
-      <div>
-        <h3 className={titoloSezione("separato")}>
-          Anagrafe Nazionale Studenti
-        </h3>
+      <SezioneModulo titolo="Anagrafe Nazionale Studenti" descrizione="Situazione accademica attuale." griglia={false}>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
           {/* Colonna Sinistra */}
@@ -152,13 +150,10 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
             </div>
           </div>
         </div>
-      </div>
+      </SezioneModulo>
 
       {/* SEZIONE 2: Attualmente iscritto al seguente corso */}
-      <div>
-        <h3 className={titoloSezione("separato")}>
-          ATTUALMENTE iscritto al seguente corso:
-        </h3>
+      <SezioneModulo titolo="Iscrizione in corso" descrizione="Corso a cui è attualmente iscritto." griglia={false}>
 
         <div className="space-y-4 max-w-2xl">
           {/* Checkbox personalizzata */}
@@ -319,7 +314,7 @@ export default function ImmatricolazioniIscrizioni({ formData, handleChange }) {
             </div>
           </div>
         </div>
-      </div>
+      </SezioneModulo>
     </div>
   );
 }

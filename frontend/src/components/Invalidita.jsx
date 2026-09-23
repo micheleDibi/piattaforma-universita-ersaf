@@ -1,14 +1,14 @@
 import { campo, etichetta } from "../config/styles/campo";
-import { titoloSezione } from "../config/styles/superficie";
+import SezioneModulo from "./shared/SezioneModulo.jsx";
 
 export default function Invalidita({ formData, handleChange }) {
   return (
-    <div className="space-y-6 text-testo max-w-2xl">
-      <h3 className={titoloSezione("separato")}>
-        Dati Invalidità
-      </h3>
-
-      <div className="space-y-4">
+    <SezioneModulo
+      titolo="Dati invalidità"
+      descrizione="Compilare solo se applicabile."
+      griglia={false}
+    >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className={etichetta()}>
             Percentuale
@@ -41,6 +41,6 @@ export default function Invalidita({ formData, handleChange }) {
           />
         </div>
       </div>
-    </div>
+    </SezioneModulo>
   );
 }

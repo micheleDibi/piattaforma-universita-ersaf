@@ -548,7 +548,7 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - Il server allora cancella l'attivazione in attesa, e la verifica dei contatti non attiva più l'account.
   - Il comportamento è dedotto dalla lettura del codice, non da un'esecuzione.
   - `SchedaUtente.jsx:126-133`; `utenti/routers.py:172-174`; `otp/attivazione.py:11-16`.
-- **Due pulsanti "Salva Modifiche" nella stessa scheda.**
+- **Due pulsanti di salvataggio nella scheda Utente ("Salva utente" e "Salva modifiche").**
   - Il pulsante del modulo salva l'anagrafica, ma non username, stato e padre.
   - Per gli attuatori rimanda il ruolo letto all'apertura della pagina. Così sovrascrive un ruolo cambiato nel frattempo dalla scheda Utente.
   - Il commento del codice dice che il ruolo parte solo se cambiato.
@@ -577,7 +577,7 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - L'interfaccia non le usa.
   - `pratiche/opzioni.py:61-66`.
 - **Scheda Esami.**
-  - Mostra "Sezione in fase di sviluppo".
+  - Mostra solo "Nessun esame registrato.": gli esami non sono ancora gestiti.
   - Le schede ammesse nell'indirizzo comprendono anche "prevalutazioni", che non ha una scheda.
   - `NuovoSottoscrittore.jsx:340-342`, `470-481`; `frontend/src/config/routes/query.js:39-51`.
 - **Campi svuotati nella scheda azienda.**
@@ -589,7 +589,7 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - L'interfaccia ignora l'elenco e mostra solo un avviso generico.
   - `aziende/routers.py:285-288`; `aziende_xcod/servizi.py:197-208`; `frontend/src/components/SchedaAziendaAttuatori.jsx:376-381`.
 - **Campi obbligatori dell'anagrafica.**
-  - I campi obbligatori sono marcati solo con l'attributo del browser, e le schede si rendono una per volta: salvando da una scheda diversa da Dati Principali quei campi non sono nel documento e il controllo non scatta.
+  - I campi obbligatori sono marcati solo con l'attributo del browser, e le schede si rendono una per volta: salvando da una scheda diversa da Dati principali quei campi non sono nel documento e il controllo non scatta.
   - Lo schema di modifica ha tutti i campi opzionali, per non bloccare le anagrafiche storiche: in modifica l'obbligo è quindi solo dell'interfaccia.
   - `NuovoSottoscrittore.jsx:376`, `391-394`; `FormInformazioniPersonali.jsx:50`, `63`, `78`, `93`, `118`; `clienti/schemas.py:189-247`.
 - **Messaggi dopo la disattivazione dell'app.**
