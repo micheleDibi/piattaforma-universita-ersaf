@@ -50,7 +50,7 @@ Le modifiche che arrivano su main senza pull request non passano dalla CI: il fr
 | Pagina | Fonte |
 |---|---|
 | `api.md` | OpenAPI dell'applicazione. L'app si importa in un sottoprocesso senza leggere `backend/.env` e senza database; l'accesso richiesto da ogni operazione si ricava dalle sue dipendenze. |
-| `rotte-frontend.md` | `frontend/src/config/routes/` importati con Node e `frontend/src/App.jsx` letto come albero sintattico con `@babel/core`. |
+| `rotte-frontend.md` | `frontend/src/config/routes/` importati con Node e `frontend/src/App.jsx` letto come albero sintattico con `@babel/core`. I ruoli che vedono ogni voce del menu si ricavano chiamando `vociMenuPerRuolo` per ciascun ruolo che accede. |
 | `migrazioni.md` | Intestazioni di `db/migrations/` e file di `db/rollback/`; le anomalie sono calcolate. |
 | `configurazione.md` | Campi di `backend/src/config.py` e `backend/src/notifiche/config_sms.py`, commenti dei file `.env.example`, variabili lette dagli script di deploy e dal frontend. L'obbligatorietà si ricava dalla verifica di avvio con valori finti. |
 
