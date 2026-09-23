@@ -6,7 +6,7 @@
 Pagine registrate nell'applicazione web, nell'ordine in cui sono dichiarate.
 
 - **Accesso**: `pubblica` per tutti; `solo ospiti` rimanda all'applicazione chi ha già una sessione; `sessione` richiede di aver effettuato l'accesso.
-- **Menu**: la voce del menu laterale, se esiste. Una voce "solo Nazionale" è nascosta agli altri ruoli, ma la pagina resta raggiungibile digitando l'indirizzo: vedi i [limiti noti](../sicurezza.md#limiti-noti).
+- **Menu**: la voce del menu laterale, se esiste. Fra parentesi i ruoli che la vedono, quando non sono tutti quelli che accedono. Agli altri la voce è nascosta, ma la pagina resta raggiungibile digitando l'indirizzo: vedi i [limiti noti](../sicurezza.md#limiti-noti).
 
 | Percorso | Pagina | Accesso | Menu |
 |---|---|---|---|
@@ -16,9 +16,9 @@ Pagine registrate nell'applicazione web, nell'ordine in cui sono dichiarate.
 | `/dashboard` | `Dashboard` | sessione | Dashboard |
 | `/profilo` | `MioProfilo` | sessione | — |
 | `/sottoscrittori` | `ElencoClienti` (soloAttuatori=false, soloSottoscrittori=true) | sessione | Sottoscrittori |
-| `/attuatori` | `ElencoClienti` (soloAttuatori=true) | sessione | Attuatori (solo Nazionale) |
-| `/aziende` | `ElencoAziende` (soloAttuatori=true) | sessione | Aziende |
-| `/pratiche` | `ElencoPratiche` | sessione | Pratiche (solo Nazionale) |
+| `/attuatori` | `ElencoClienti` (soloAttuatori=true) | sessione | Attuatori (Nazionale, Regionale, Provinciale) |
+| `/aziende` | `ElencoAziende` (soloAttuatori=true) | sessione | Aziende (Nazionale, Regionale, Provinciale) |
+| `/pratiche` | `ElencoPratiche` | sessione | Pratiche |
 | `/prodotti` | `ElencoProdottiFormativi` (soloAttuatori=true) | sessione | Prodotti formativi (solo Nazionale) |
 | `/sottoscrittori/nuovo` | `NuovoSottoscrittore` (tipoUtente=sottoscrittore) | sessione | — |
 | `/sottoscrittori/:clienteId` | `NuovoSottoscrittore` (tipoUtente=sottoscrittore) | sessione | — |

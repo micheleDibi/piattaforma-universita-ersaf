@@ -30,7 +30,7 @@ Per i permessi dei singoli ruoli vedi [Ruoli e permessi](ruoli-e-permessi.md).
 
 ## Elenchi
 
-Il menu mostra «Sottoscrittori» a tutti e «Attuatori» solo al Nazionale.
+Il menu mostra «Sottoscrittori» a tutti e «Attuatori» a Nazionale, Regionale e Provinciale.
 
 Nota: questo limite è applicato solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 

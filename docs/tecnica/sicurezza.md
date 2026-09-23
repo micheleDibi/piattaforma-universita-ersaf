@@ -458,8 +458,8 @@ Questa sezione elenca i difetti noti di autorizzazione, visibilità e coerenza, 
 
 ### Autorizzazione applicata solo dall'interfaccia
 
-- **Pagine riservate al Nazionale solo nel menu.**
-  - Attuatori, Pratiche e Prodotti formativi sono nascosti nel menu agli altri ruoli; Aziende è nascosta all’Aderente.
+- **Pagine riservate per ruolo solo nel menu.**
+  - Attuatori è nel menu di Nazionale, Regionale e Provinciale; Pratiche anche in quello dell'Aderente; Prodotti formativi solo in quello del Nazionale; Aziende è nascosta all’Aderente.
   - Le pagine però si aprono dall'indirizzo con qualunque sessione valida.
   - `frontend/src/config/routes/rotte.js:20-47`; `frontend/src/App.jsx:35-71`.
 - **Anagrafiche senza controllo di ruolo.**
@@ -479,7 +479,7 @@ Questa sezione elenca i difetti noti di autorizzazione, visibilità e coerenza, 
 - **Pratiche: abilitazioni e ruolo.**
   - Il pannello nella pagina Pratiche abilita i pulsanti solo con l'abilitazione generale e quella dell'ateneo.
   - Elenco, dettaglio, creazione e modifica applicano ora la visibilità per azienda, ma nessuna rotta guarda le abilitazioni né il ruolo: chi ha i pulsanti spenti crea e modifica lo stesso, purché nella propria azienda.
-  - La pagina Pratiche è nel menu del Nazionale e si apre anche dall’indirizzo.
+  - La pagina Pratiche è nel menu di Nazionale, Regionale, Provinciale e Aderente, e si apre anche dall’indirizzo.
   - `frontend/src/components/PannelloPratiche.jsx:39-41`, `94`; `backend/src/pratiche/routers.py:15-19`, `65-95`, `121-143`; `rotte.js:20-41`; `App.jsx:56`.
 - **Prodotti formativi e tipi di corso.**
   - La voce di menu è solo per il Nazionale.

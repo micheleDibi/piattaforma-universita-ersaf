@@ -22,8 +22,11 @@ const richiedi = createRequire(join(frontend, "package.json"));
 const babel = richiedi("@babel/core");
 const importa = (relativo) => import(pathToFileURL(join(frontend, relativo)).href);
 const { ROTTE, PERCORSI } = await importa("src/config/routes/percorsi.js");
-const { VOCI_MENU } = await importa("src/config/routes/rotte.js");
+const { VOCI_MENU, vociMenuPerRuolo } = await importa("src/config/routes/rotte.js");
 const valori = { ROTTE, PERCORSI };
+// I ruoli che accedono alla piattaforma: chi vede una voce lo decide
+// vociMenuPerRuolo, la stessa funzione del menu, non una copia delle regole.
+const RUOLI_CON_ACCESSO = ["nazionale", "regionale", "provinciale", "aderente"];
 
 const WRAPPER = { SoloOspiti: "solo ospiti", RichiediSessione: "sessione" };
 const CONTENITORI = new Set(["GuscioApplicazione", "PaginaEntita"]);
@@ -204,8 +207,12 @@ try {
   const routes = trovaRoutes(albero.program);
   if (!routes) throw new FormaNonRiconosciuta("App.jsx: <Routes> non trovato");
   for (const figlio of figliSignificativi(routes)) visitaFiglio(figlio, "pubblica");
+  const vociPerRuolo = Object.fromEntries(RUOLI_CON_ACCESSO.map(
+    (ruolo) => [ruolo, new Set(vociMenuPerRuolo(ruolo).map((voce) => voce.rotta))],
+  ));
   const menu = VOCI_MENU.map((voce) => ({
     rotta: voce.rotta, etichetta: voce.etichetta, soloNazionale: Boolean(voce.soloNazionale),
+    ruoli: RUOLI_CON_ACCESSO.filter((ruolo) => vociPerRuolo[ruolo].has(voce.rotta)),
   }));
   process.stdout.write(JSON.stringify({ rotte, menu }));
 } catch (eccezione) {

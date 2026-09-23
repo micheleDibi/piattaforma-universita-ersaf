@@ -244,9 +244,28 @@ def test_rotte_del_repository():
     assert percorsi["/"]["accesso"] == "solo ospiti"
     assert percorsi["/attuatori/nuovo"]["proprieta"] == {"tipoUtente": "attuatore"}
     assert percorsi["*"]["pagina"] == "PaginaNonTrovata"
-    assert {v["rotta"] for v in dati["menu"] if v["soloNazionale"]} >= {"/attuatori"}
+    assert {v["rotta"] for v in dati["menu"] if v["soloNazionale"]} >= {"/prodotti"}
+    voci = {v["rotta"]: v for v in dati["menu"]}
+    assert voci["/dashboard"]["ruoli"] == list(rotte.RUOLI_CON_ACCESSO)
+    assert voci["/prodotti"]["ruoli"] == ["nazionale"]
     testo = rotte.componi(dati)
-    assert "| `/attuatori` | `ElencoClienti` (soloAttuatori=true) | sessione | Attuatori (solo Nazionale) |" in testo
+    assert "| `/dashboard` | `Dashboard` | sessione | Dashboard |" in testo
+    assert "Prodotti formativi (solo Nazionale) |" in testo
+
+
+@pytest.mark.parametrize(("voce", "atteso"), [
+    ({"soloNazionale": False, "ruoli": ["nazionale", "regionale", "provinciale", "aderente"]}, ""),
+    ({"soloNazionale": True, "ruoli": ["nazionale"]}, "solo Nazionale"),
+    ({"soloNazionale": False, "ruoli": ["nazionale", "regionale", "provinciale"]},
+     "Nazionale, Regionale, Provinciale"),
+    ({"soloNazionale": False, "ruoli": []}, "nessuno"),
+    ({"soloNazionale": True}, "solo Nazionale"),  # dati senza l'elenco dei ruoli
+    ({"soloNazionale": False}, ""),
+])
+def test_chi_vede_una_voce_del_menu(voce, atteso):
+    from generatori import rotte
+
+    assert rotte.chi_vede(voce) == atteso
 
 
 @lento

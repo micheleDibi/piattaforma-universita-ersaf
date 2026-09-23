@@ -38,8 +38,10 @@ Le voci sono:
 
 - **Dashboard**, per tutti;
 - **Sottoscrittori**, per tutti;
-- **Attuatori**, **Pratiche** e **Prodotti formativi**, solo per il Nazionale;
-- **Aziende**, per Nazionale, Regionale e Provinciale.
+- **Attuatori**, per Nazionale, Regionale e Provinciale;
+- **Aziende**, per Nazionale, Regionale e Provinciale;
+- **Pratiche**, per Nazionale, Regionale, Provinciale e Aderente;
+- **Prodotti formativi**, solo per il Nazionale.
 
 Le voci nascoste non impediscono di aprire un indirizzo: la visibilità dei dati
 è controllata dal server. Vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).

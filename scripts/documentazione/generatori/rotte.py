@@ -6,6 +6,21 @@ from pathlib import Path
 
 from generatori import CARTELLA, cella, esegui_json, intestazione
 
+# Gli stessi di rotte_frontend.mjs: i ruoli che accedono alla piattaforma.
+RUOLI_CON_ACCESSO = ("nazionale", "regionale", "provinciale", "aderente")
+
+
+def chi_vede(voce: dict) -> str:
+    """I ruoli che vedono la voce, se non sono tutti quelli che accedono."""
+    ruoli = voce.get("ruoli")
+    if ruoli is None:  # dati senza l'elenco dei ruoli: vale solo soloNazionale
+        return "solo Nazionale" if voce.get("soloNazionale") else ""
+    if set(ruoli) >= set(RUOLI_CON_ACCESSO):
+        return ""
+    if list(ruoli) == ["nazionale"]:
+        return "solo Nazionale"
+    return ", ".join(ruolo.capitalize() for ruolo in ruoli) if ruoli else "nessuno"
+
 
 def leggi_rotte(radice: Path) -> dict:
     frontend = radice / "frontend"
@@ -30,9 +45,9 @@ def componi(dati: dict) -> str:
         "",
         "- **Accesso**: `pubblica` per tutti; `solo ospiti` rimanda all'applicazione chi ha già una "
         "sessione; `sessione` richiede di aver effettuato l'accesso.",
-        "- **Menu**: la voce del menu laterale, se esiste. Una voce \"solo Nazionale\" è nascosta agli "
-        "altri ruoli, ma la pagina resta raggiungibile digitando l'indirizzo: vedi i "
-        "[limiti noti](../sicurezza.md#limiti-noti).",
+        "- **Menu**: la voce del menu laterale, se esiste. Fra parentesi i ruoli che la vedono, quando "
+        "non sono tutti quelli che accedono. Agli altri la voce è nascosta, ma la pagina resta "
+        "raggiungibile digitando l'indirizzo: vedi i [limiti noti](../sicurezza.md#limiti-noti).",
         "",
         "| Percorso | Pagina | Accesso | Menu |",
         "|---|---|---|---|",
@@ -40,7 +55,8 @@ def componi(dati: dict) -> str:
     for rotta in dati["rotte"]:
         voce = menu.get(rotta["percorso"])
         if voce:
-            testo_menu = voce["etichetta"] + (" (solo Nazionale)" if voce["soloNazionale"] else "")
+            limite = chi_vede(voce)
+            testo_menu = voce["etichetta"] + (f" ({limite})" if limite else "")
         else:
             testo_menu = "—"
         righe.append(f"| `{rotta['percorso']}` | {cella(_pagina(rotta))} | {rotta['accesso']} | "
