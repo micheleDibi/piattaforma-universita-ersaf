@@ -11,6 +11,41 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 9 — 23/09/2026 14:50
+
+<!-- timbro: versione=9 sha=deb3259ce5c887c92fa725e0e0f2bd4e002f4c58 -->
+
+### Novità e correzioni
+
+**Aggiunto**
+
+- Accanto al titolo degli elenchi Sottoscrittori e Attuatori compare il numero di risultati, che segue ricerca e filtri.
+
+**Modificato**
+
+- Negli elenchi Sottoscrittori e Attuatori nome e cognome sono in un'unica colonna Nominativo («Cognome Nome»), con le iniziali in un cerchio e il segnale di avviso subito accanto.
+- Le verifiche di email, cellulare e diploma sono etichette con il loro nome, verdi con la spunta quando sono a posto; la legenda sopra l'elenco non serve più ed è stata tolta.
+- La finestra degli avvisi di un'anagrafica ha come titolo il numero di errori.
+- La pagina Modifica azienda è divisa in sezioni (Dati anagrafici, Sede legale, Contatti, Coordinate bancarie, Gerarchia, Convenzioni universitarie) e mostra subito se la partita IVA non ha 11 cifre.
+- Le percentuali delle convenzioni universitarie sono in una tabella per ateneo e tipologia di corso, sia nella scheda dell'azienda sia nella scheda Azienda dell'attuatore.
+- Le schede di sottoscrittori e attuatori sono divise in sezioni con titolo e descrizione: Informazioni personali, Contatti, Documento, Residenza e Domicilio nei Dati principali; le sezioni del Curriculum formativo; Account e ruolo e Cronologia nella scheda Utente.
+- Sotto il titolo della scheda compaiono nome, cognome e codice fiscale, con lo stato dell'account a destra. Email e cellulare verificati hanno l'indicazione accanto all'etichetta.
+- Il pulsante di salvataggio della scheda Utente si chiama «Salva utente», per distinguerlo da «Salva modifiche» in fondo alla pagina. Il pulsante di copia del domicilio si chiama «Copia da residenza».
+- La scheda Esami mostra «Nessun esame registrato.» al posto del testo provvisorio.
+
+### Dettagli tecnici
+
+**Aggiunto**
+
+- `GET /clienti/conteggio` restituisce `{"totale": n}` con gli stessi filtri e la stessa visibilità di `GET /clienti/`, senza paginazione.
+- Componente `shared/SezioneModulo` e `SEZIONI_AZIENDA` in `config/campiAzienda.js`.
+- Componenti `shared/SezioneModulo` e `shared/CampoModulo`, stili `sezioneModulo`, `introSezioneModulo`, `campiSezioneModulo` e classe `schede__pannello--sezioni`.
+
+**Modificato**
+
+- I filtri di `GET /clienti/` sono in `_filtra_elenco`, condivisa con il conteggio.
+- `DettaglioConvenzioniUniversitarie` accetta `inSezione` per stare dentro una sezione di modulo senza scheda e titolo propri.
+
 ## Versione 8 — 23/09/2026 10:04
 
 <!-- timbro: versione=8 sha=bdd9339c896674b2e77d8406dc6eaf70a20bb47d -->
