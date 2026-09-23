@@ -70,9 +70,13 @@ Nota: l'avviso non rispetta la regola di visibilità; vedi [Limiti noti](../tecn
 
 ## Creare e modificare un'azienda
 
-La scheda si intitola «Nuova azienda» oppure «Modifica azienda». «Salva»
-salva e torna all'elenco; «Annulla» torna all'elenco senza salvare. Un errore
-compare in un riquadro rosso sopra i campi.
+La scheda si intitola «Nuova azienda» oppure «Modifica azienda»; in modifica
+sotto il titolo compare la ragione sociale. I campi sono divisi in sezioni:
+Dati anagrafici, Sede legale, Contatti e Coordinate bancarie; in modifica
+seguono Gerarchia e Convenzioni universitarie. Una partita IVA che non ha 11
+cifre si evidenzia in rosso mentre si scrive. «Salva» (in modifica «Salva
+modifiche») salva e torna all'elenco; «Annulla» torna all'elenco senza
+salvare. Un errore compare in un riquadro rosso sopra i campi.
 
 ### Campi
 
@@ -184,8 +188,10 @@ Ogni azienda ha otto percentuali:
 - SSML - Lauree e SSML - Master;
 - A4U - Master e A4U - Perfezionamenti.
 
-Si vedono nella sezione «Dettaglio convenzioni universitarie», sia nella
-scheda dell'azienda sia nella scheda Azienda di un attuatore, ma si
+Si vedono in una tabella per ateneo e tipologia di corso (le combinazioni che
+non esistono mostrano un trattino): nella sezione «Convenzioni universitarie»
+della scheda dell'azienda e nella sezione «Dettaglio convenzioni
+universitarie» della scheda Azienda di un attuatore. Si
 modificano solo dalla scheda dell'azienda: nella scheda dell'attuatore la
 sezione è in sola lettura. «Salva percentuali» le salva subito,
 indipendentemente dal resto della scheda dell'azienda. Un'azienda senza
@@ -235,7 +241,7 @@ Due effetti si incontrano comunque:
 
 - con la scheda dell'azienda aperta, i campi delle percentuali fanno parte
   della pagina dell'azienda. Un valore fuori da 0 a 100, o non intero, blocca
-  il «Salva» in fondo alla pagina, che non riguarda le percentuali;
+  il «Salva modifiche» in fondo alla pagina, che non riguarda le percentuali;
 - il server accetta solo numeri interi. Un valore con i decimali, salvato con
   «Salva percentuali», viene rifiutato con un messaggio tecnico.
 

@@ -26,3 +26,47 @@ export const FACOLTATIVI = [
 export const VUOTO_AZIENDA = Object.fromEntries(
   [...OBBLIGATORI, ...FACOLTATIVI].map(([campo]) => [campo, ""]),
 );
+
+// Sezioni della scheda azienda: [campo, colonne occupate su 6].
+export const SEZIONI_AZIENDA = [
+  {
+    titolo: "Dati anagrafici",
+    descrizione: "Identificazione fiscale e codici dell'azienda.",
+    campi: [
+      ["azienda_ragione_sociale", 6],
+      ["azienda_partitaIVA", 3],
+      ["azienda_codiceFiscale", 3],
+      ["azienda_fatturazioneSDI", 3],
+      ["azienda_codice_nazionale", 3],
+    ],
+  },
+  {
+    titolo: "Sede legale",
+    descrizione: "Indirizzo completo della sede.",
+    campi: [
+      ["azienda_via", 5],
+      ["azienda_civico", 1],
+      ["azienda_CAP", 2],
+      ["azienda_citta", 3],
+      ["azienda_provincia", 1],
+    ],
+  },
+  {
+    titolo: "Contatti",
+    descrizione: "Recapiti per comunicazioni e fatturazione.",
+    campi: [
+      ["azienda_email", 3],
+      ["azienda_pec", 3],
+      ["azienda_telefono", 3],
+      ["azienda_sitoWeb", 3],
+    ],
+  },
+  {
+    titolo: "Coordinate bancarie",
+    descrizione: "Conto per accrediti e pagamenti.",
+    campi: [
+      ["azienda_iban", 4],
+      ["azienda_codice_bic", 2],
+    ],
+  },
+];
