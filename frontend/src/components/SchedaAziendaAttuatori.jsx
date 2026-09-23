@@ -10,18 +10,7 @@ import { scheda } from "../config/styles/superficie";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 import CampiAzienda from "./CampiAzienda.jsx";
 import { VUOTO_AZIENDA } from "../config/campiAzienda.js";
-import AlertMessage from "./AlertMessage.jsx";
-
-const CAMPI_PERCENTUALI = [
-  ["universita_ecampus_lauree", "eCampus - Lauree"],
-  ["universita_ecampus_master", "eCampus - Master"],
-  ["universita_link_lauree", "Link - Lauree"],
-  ["universita_link_master", "Link - Master"],
-  ["universita_SSML_lauree", "SSML - Lauree"],
-  ["universita_SSML_master", "SSML - Master"],
-  ["universita_A4U_master", "A4U - Master"],
-  ["universita_A4U_perfezionamenti", "A4U - Perfezionamenti"],
-];
+import DettaglioConvenzioniUniversitarie from "./DettaglioConvenzioniUniversitarie.jsx";
 
 const DATI_AZIENDA_VISUALIZZATI = [
   ["azienda_ragione_sociale", "Ragione sociale"],
@@ -54,11 +43,8 @@ export default function SchedaAziendaAttuatori({
   onCambiaAziendaId,
 }) {
   const [azienda, setAzienda] = useState(null);
-  const [dettaglio, setDettaglio] = useState(null);
   const [caricamento, setCaricamento] = useState(Boolean(aziendaId));
   const [errore, setErrore] = useState("");
-  const [salvataggioPercentuali, setSalvataggioPercentuali] = useState(false);
-  const [confermaResetPendente, setConfermaResetPendente] = useState(false);
 
   const [modalitaRicerca, setModalitaRicerca] = useState(!aziendaId);
   const [piva, setPiva] = useState("");
@@ -80,7 +66,6 @@ export default function SchedaAziendaAttuatori({
     setModalitaRicerca(!aziendaId);
     if (!aziendaId) {
       setAzienda(null);
-      setDettaglio(null);
       setCaricamento(false);
     } else {
       setCaricamento(true);
@@ -93,20 +78,14 @@ export default function SchedaAziendaAttuatori({
 
     let annullato = false;
 
-    Promise.all([
-      apiFetch(`/aziende/${aziendaId}`).then(async (risposta) => {
+    apiFetch(`/aziende/${aziendaId}`)
+      .then(async (risposta) => {
         if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
         return risposta.json();
-      }),
-      apiFetch(`/aziende/${aziendaId}/dettagli`).then(async (risposta) => {
-        if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
-        return risposta.json();
-      }),
-    ])
-      .then(([datiAzienda, datiDettaglio]) => {
+      })
+      .then((datiAzienda) => {
         if (annullato) return;
         setAzienda(datiAzienda);
-        setDettaglio(datiDettaglio);
       })
       .catch((err) => {
         if (annullato) return;
@@ -220,45 +199,6 @@ export default function SchedaAziendaAttuatori({
     associaAzienda(null);
   };
 
-  const aggiornaPercentuale = (evento) => {
-    const { name, value } = evento.target;
-    setDettaglio((prec) => ({
-      ...prec,
-      [name]: value === "" ? 0 : Number(value),
-    }));
-  };
-
-  const salvaDettaglio = async (conferma = false) => {
-    setErrore("");
-    setSalvataggioPercentuali(true);
-    try {
-      const corpo = Object.fromEntries(
-        CAMPI_PERCENTUALI.map(([chiave]) => [chiave, dettaglio?.[chiave] ?? 0]),
-      );
-      const query = conferma ? "?conferma_reset=true" : "";
-      const risposta = await apiFetch(
-        `/aziende/${aziendaId}/dettagli${query}`,
-        {
-          method: "PUT",
-          body: JSON.stringify(corpo),
-        },
-      );
-
-      if (risposta.status === 409) {
-        setConfermaResetPendente(true);
-        return;
-      }
-
-      if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
-      setConfermaResetPendente(false);
-      setDettaglio(await leggiJson(risposta));
-    } catch (err) {
-      setErrore(err.message);
-    } finally {
-      setSalvataggioPercentuali(false);
-    }
-  };
-
   if (caricamento) {
     return (
       <IndicatoreCaricamento
@@ -357,73 +297,7 @@ export default function SchedaAziendaAttuatori({
 
           <hr className="border-bordo" />
 
-          <div className={`${scheda()} p-6`}>
-            <h4 className="text-base font-semibold mb-4">
-              Dettaglio convenzioni universitarie
-            </h4>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {CAMPI_PERCENTUALI.map(([nome, etichetta]) => (
-                <div key={nome} className="flex flex-col">
-                  <label htmlFor={nome} className={classiEtichetta()}>
-                    {etichetta.toUpperCase()}
-                  </label>
-                  <input
-                    id={nome}
-                    name={nome}
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={dettaglio?.[nome] ?? 0}
-                    onChange={aggiornaPercentuale}
-                    className={classiCampo("comodo")}
-                  />
-                </div>
-              ))}
-            </div>
-
-            <div className="flex flex-col items-end gap-3 mt-6">
-              {confermaResetPendente && (
-                <div className="flex w-full items-center justify-between gap-4 rounded-controllo border border-bordo p-3">
-                  <AlertMessage
-                    message={{
-                      type: "warning",
-                      text: "Alcune percentuali verranno azzerate. Continuare?",
-                    }}
-                    separato={false}
-                  />
-                  <div className="flex shrink-0 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => salvaDettaglio(true)}
-                      disabled={salvataggioPercentuali}
-                      className={pulsante("primario", "piccolo")}
-                    >
-                      Conferma
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfermaResetPendente(false)}
-                      className={pulsante("discreto", "piccolo")}
-                    >
-                      Annulla
-                    </button>
-                  </div>
-                </div>
-              )}
-              {/* type="button": vive dentro il <form> di NuovoSottoscrittore,
-                  non deve inviare il form del cliente */}
-              <button
-                type="button"
-                onClick={() => salvaDettaglio()}
-                disabled={salvataggioPercentuali}
-                className={pulsante("primario", "grande")}
-              >
-                {salvataggioPercentuali
-                  ? "Salvataggio..."
-                  : "Salva percentuali"}
-              </button>
-            </div>
-          </div>
+          <DettaglioConvenzioniUniversitarie aziendaId={aziendaId} soloLettura />
         </>
       )}
 
@@ -459,6 +333,7 @@ export default function SchedaAziendaAttuatori({
                   dati={datiNuovaAzienda}
                   onChange={aggiornaDatiNuovaAzienda}
                   disabilita={{ azienda_partitaIVA: true }}
+                  nascondi={{ azienda_codice_nazionale: true }}
                 />
               </div>
 

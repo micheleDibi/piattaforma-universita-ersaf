@@ -15,7 +15,7 @@ Pagine registrate nell'applicazione web, nell'ordine in cui sono dichiarate.
 | `/reimposta-password` | `ReimpostaPassword` | pubblica | — |
 | `/dashboard` | `Dashboard` | sessione | Dashboard |
 | `/profilo` | `MioProfilo` | sessione | — |
-| `/sottoscrittori` | `ElencoClienti` (soloAttuatori=false, soloUtenti=true) | sessione | Sottoscrittori |
+| `/sottoscrittori` | `ElencoClienti` (soloAttuatori=false, soloSottoscrittori=true) | sessione | Sottoscrittori |
 | `/attuatori` | `ElencoClienti` (soloAttuatori=true) | sessione | Attuatori (solo Nazionale) |
 | `/aziende` | `ElencoAziende` (soloAttuatori=true) | sessione | Aziende |
 | `/pratiche` | `ElencoPratiche` | sessione | Pratiche (solo Nazionale) |

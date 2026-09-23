@@ -20,7 +20,7 @@ import StatoPagineElenco from "./shared/StatoPagineElenco.jsx";
 import usePagineRemote from "../hooks/usePagineRemote.js";
 import { paginaElenco, queryClienti } from "../lib/queryElenchi.js";
 
-function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
+function ElencoClienti({ soloAttuatori = false, soloSottoscrittori = false }) {
   const [query, aggiornaQuery] = useQueryPagina(QUERY_CLIENTI);
   const searchTerm = query.ricerca;
   const setSearchTerm = ricerca => aggiornaQuery({ ricerca });
@@ -33,7 +33,7 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
   const canSeeAzienda = canSee && soloAttuatori;
   const opzioniRighe = { attuatori: soloAttuatori, mostraAzienda: canSeeAzienda };
 
-  const pagina = usePagineRemote(queryClienti(query, { soloAttuatori, soloUtenti }), paginaElenco, true);
+  const pagina = usePagineRemote(queryClienti(query, { soloAttuatori, soloSottoscrittori }), paginaElenco, true);
   return (
     <div className={contenutoPagina()}>
       <IntestazioneElenco
@@ -74,6 +74,7 @@ function ElencoClienti({ soloAttuatori = false, soloUtenti = false }) {
               <option value="Provinciale">Provinciale</option>
               <option value="Regionale">Regionale</option>
               <option value="Nazionale">Nazionale</option>
+              <option value="Operatore">Operatore</option>
             </select>
             </label>
           ) } : undefined}

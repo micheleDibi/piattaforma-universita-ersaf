@@ -22,10 +22,12 @@ cambia.
 
 ## Come si arriva alle pratiche
 
-Il Nazionale apre **Pratiche** dal menu. Senza un ateneo selezionato, la pagina
-mostra il pannello degli atenei; scegliendo un pulsante si apre l'elenco filtrato.
-Gli altri ruoli possono raggiungere la pagina dal suo indirizzo: il backend
-limita comunque le pratiche all'azienda visibile all'utente.
+La voce "Pratiche" è nel menu per Nazionale, Regionale, Provinciale e
+Aderente. Vedi [Ruoli e permessi](ruoli-e-permessi.md). Senza un ateneo
+selezionato, la pagina mostra il pannello degli atenei; scegliendo un pulsante
+si apre l'elenco filtrato. La pagina si apre anche scrivendo il suo indirizzo
+nel browser: il backend limita comunque le pratiche all'azienda visibile
+all'utente.
 
 ## Pannello degli atenei
 
@@ -109,9 +111,6 @@ Il pulsante "Filtri" apre questi filtri:
 - **Numero pratica**: mostra le pratiche il cui numero contiene il testo
   scritto.
 - **Stato**: uno degli stati disponibili, oppure "Tutti gli stati".
-- **Studenti**: uno o più studenti, fino a cento. Si cercano per nome,
-  cognome o codice. Vengono proposti solo gli studenti che hanno almeno una
-  pratica.
 - **Tipologia corso**: è pensato per i pulsanti che raggruppano più tipi di
   corso. Nessun pulsante della pagina Pratiche lo attiva, quindi non compare.
 
@@ -119,9 +118,9 @@ L'ateneo e i tipi di corso scelti dalla pagina Pratiche non compaiono fra i filt
 Per cambiarli si torna alla pagina Pratiche e si sceglie un altro pulsante.
 
 Accanto alla scritta "Filtri" compare il numero dei filtri attivi. Il
-conteggio e il pulsante "Azzera filtri" riguardano solo numero, stato,
-studenti e tipologia. Non toccano la ricerca, né l'ateneo e i tipi di corso
-scelti dalla pagina Pratiche.
+conteggio e il pulsante "Azzera filtri" riguardano solo numero, stato e
+tipologia. Non toccano la ricerca, né l'ateneo e i tipi di corso scelti dalla
+pagina Pratiche.
 
 Ricerca e filtri restano nell'indirizzo della pagina. Chi torna dalla scheda
 ritrova l'elenco con le stesse scelte.

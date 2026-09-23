@@ -13,6 +13,7 @@ import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 import CampiAzienda from "./CampiAzienda.jsx";
 import { VUOTO_AZIENDA } from "../config/campiAzienda.js";
 import GerarchiaAzienda from "./GerarchiaAzienda.jsx";
+import DettaglioConvenzioniUniversitarie from "./DettaglioConvenzioniUniversitarie.jsx";
 import { TriangleAlert } from "../config/icone.js";
 
 export default function SchedaAzienda() {
@@ -130,9 +131,18 @@ export default function SchedaAzienda() {
         )}
 
         <div className="mb-8">
-          <CampiAzienda dati={dati} onChange={aggiorna} />
+          <CampiAzienda
+            dati={dati}
+            onChange={aggiorna}
+            disabilita={{ azienda_codice_nazionale: true }}
+          />
         </div>
         {inModifica && <GerarchiaAzienda aziendaId={id} />}
+        {inModifica && (
+          <div className="mb-8">
+            <DettaglioConvenzioniUniversitarie aziendaId={id} />
+          </div>
+        )}
         <div className="flex gap-3">
           <button
             type="submit"

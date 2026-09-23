@@ -10,7 +10,7 @@ const id = {
 };
 export const QUERY_CLIENTI = {
   ricerca: testo(),
-  ruolo: scelta(["Aderente", "Regionale", "Provinciale", "Nazionale"]),
+  ruolo: scelta(["Aderente", "Regionale", "Provinciale", "Nazionale", "Operatore"]),
 };
 export const QUERY_AZIENDE = { ricerca: testo() };
 export const QUERY_PRODOTTI = {

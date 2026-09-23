@@ -159,6 +159,7 @@ def leggi_clienti(
     ruolo_codice: Optional[str] = None,
     solo_attuatori: bool = False,
     solo_utenti: bool = False,
+    solo_sottoscrittori: bool = False,
     db: Session = Depends(get_db),
     vis: Visibilita = Depends(visibilita_corrente),
 ):
@@ -167,7 +168,7 @@ def leggi_clienti(
     # 40, e un filtro applicato dopo la paginazione romperebbe lo scroll.
     query = filtra_clienti(db.query(Cliente).options(*_CARICAMENTO_ELENCO), vis)
 
-    if ruolo_codice or solo_attuatori or solo_utenti:
+    if ruolo_codice or solo_attuatori or solo_utenti or solo_sottoscrittori:
         query = query.join(Ruolo, Cliente.cliente_ruolo == Ruolo.ruolo_id)
 
     if ruolo_codice:
@@ -175,11 +176,17 @@ def leggi_clienti(
     elif solo_attuatori:
         query = query.filter(
             Ruolo.ruolo_codice.in_(
-                ["Nazionale", "Regionale", "Provinciale", "Aderente"]
+                ["Nazionale", "Regionale", "Provinciale", "Aderente", "Operatore"]
             )
         )
     elif solo_utenti:
         query = query.filter(Ruolo.ruolo_codice == "Utente")
+        query = query.options(_CARICAMENTO_DIPLOMA)
+    elif solo_sottoscrittori:
+        # L'elenco Sottoscrittori comprende anche Consulente; solo_utenti
+        # resta il solo ruolo Utente, usato dal selettore dello studente
+        # nelle pratiche.
+        query = query.filter(Ruolo.ruolo_codice.in_(["Utente", "Consulente"]))
         query = query.options(_CARICAMENTO_DIPLOMA)
 
     if search:

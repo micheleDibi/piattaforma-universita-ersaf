@@ -56,9 +56,10 @@ test("Pratiche conserva ID multipli senza etichette, scarta invalidi e duplicati
   assert.deepEqual(invalidi.tipoCorso, [3]);
 });
 test("le query frontend preservano i contratti API esistenti", () => {
-  const clienti = new URL(queryClienti({ ricerca: "Rossi", ruolo: "Nazionale" }, { soloUtenti: true }), "http://locale");
+  const clienti = new URL(queryClienti({ ricerca: "Rossi", ruolo: "Nazionale" }, { soloSottoscrittori: true }), "http://locale");
   assert.equal(clienti.searchParams.get("ruolo_codice"), null);
-  assert.equal(clienti.searchParams.get("solo_utenti"), "true");
+  assert.equal(clienti.searchParams.get("solo_sottoscrittori"), "true");
+  assert.equal(clienti.searchParams.get("solo_utenti"), null);
   const prodotti = new URL(queryProdotti({ ricerca: "corso", universita: "Università A&B", tipo: "Master", attivo: "Sì" }), "http://locale");
   assert.equal(prodotti.searchParams.get("attivo"), "-1");
   assert.equal(prodotti.searchParams.get("tipo_corso"), "Master");

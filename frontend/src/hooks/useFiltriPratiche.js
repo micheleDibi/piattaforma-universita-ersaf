@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { queryPratiche } from "../lib/pratiche";
 import { caricaPagina } from "../lib/pagineRemote";
 import useQueryPagina from "./useQueryPagina.js";
-import useSelezioniUrl from "./useSelezioniUrl.js";
 import { QUERY_PRATICHE } from "../config/routes/query.js";
-import { opzioneStudente } from "../lib/opzioniPratica.js";
 
 export default function useFiltriPratiche() {
   const [query, aggiornaQuery] = useQueryPagina(QUERY_PRATICHE);
@@ -17,17 +15,9 @@ export default function useFiltriPratiche() {
     filtroInterno,
     tipoSelezionato,
   } = query;
-  const studenti = useSelezioniUrl(
-    query.studenti,
-    "/clienti",
-    opzioneStudente,
-    "Studente",
-  );
   const setRicerca = (ricerca) => aggiornaQuery({ ricerca });
   const setNumeroPratica = (numeroPratica) => aggiornaQuery({ numeroPratica });
   const setStato = (stato) => aggiornaQuery({ stato });
-  const setStudenti = (studenti) =>
-    aggiornaQuery({ studenti: studenti.map((item) => item.id) });
   const setTipoSelezionato = (tipoSelezionato) =>
     aggiornaQuery({ tipoSelezionato });
 
@@ -61,8 +51,6 @@ export default function useFiltriPratiche() {
     setNumeroPratica,
     stato,
     setStato,
-    studenti,
-    setStudenti,
     ...catalogo,
     universita,
     tipoCorso,
@@ -71,14 +59,10 @@ export default function useFiltriPratiche() {
     setTipoSelezionato,
     riprova: () => setTentativo((n) => n + 1),
     attivi:
-      Number(!!stato) +
-      Number(!!studenti.length) +
-      Number(!!numeroPratica) +
-      Number(!!tipoSelezionato),
+      Number(!!stato) + Number(!!numeroPratica) + Number(!!tipoSelezionato),
     azzera: () =>
       aggiornaQuery({
         stato: "",
-        studenti: [],
         numeroPratica: "",
         tipoSelezionato: "",
       }),
@@ -86,7 +70,7 @@ export default function useFiltriPratiche() {
       ricerca,
       numeroPratica,
       stato,
-      studenti,
+      studenti: [],
       universita,
       tipoCorso,
       tipoSelezionato,

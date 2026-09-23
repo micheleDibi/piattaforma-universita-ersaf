@@ -77,6 +77,8 @@ regole:
       - "backend/src/aziende/**"
       - "backend/src/aziende_xcod/**"
       - "frontend/src/components/*Aziend*.jsx"
+      - "frontend/src/components/DettaglioConvenzioniUniversitarie.jsx"
+      - "frontend/src/config/campiPercentuali.js"
     documenti:
       - docs/funzionale/aziende.md
 

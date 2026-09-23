@@ -53,8 +53,8 @@ def test_paginazione_con_visibili_sparsi(client, db):
     inserisci(db, persone)
     visibili = sorted(u for u, padre, _, _ in persone if padre == io.utente_id)
 
-    prima = ids(client.get("/clienti/?solo_utenti=true&skip=0&limit=40", headers=sessione))
-    seconda = ids(client.get("/clienti/?solo_utenti=true&skip=40&limit=40", headers=sessione))
+    prima = ids(client.get("/clienti/?solo_sottoscrittori=true&skip=0&limit=40", headers=sessione))
+    seconda = ids(client.get("/clienti/?solo_sottoscrittori=true&skip=40&limit=40", headers=sessione))
 
     assert len(prima) == len(seconda) == 40
     assert prima + seconda == visibili[:80]
@@ -77,12 +77,33 @@ def test_ricerca_e_ruolo_solo_fra_i_visibili(client, db):
     db.commit()
 
     assert ids(client.get("/clienti/?ruolo_codice=Aderente&search=rossi", headers=sessione)) == [20_001]
-    assert ids(client.get("/clienti/?solo_utenti=true&search=rossi", headers=sessione)) == [20_003]
+    assert ids(client.get("/clienti/?solo_sottoscrittori=true&search=rossi", headers=sessione)) == [20_003]
     # Il ramo con l'outer join sull'azienda.
     assert ids(client.get("/clienti/?solo_attuatori=true&search=formazione", headers=sessione)) == [20_005]
     assert set(ids(client.get("/clienti/?limit=200", headers=sessione))) == {
         io.cliente_id, 20_001, 20_003, 20_005,
     }
+
+
+def test_sottoscrittori_comprendono_consulenti_e_gli_operatori_sono_attuatori(client, db):
+    """L'elenco Sottoscrittori raccoglie Utente e Consulente, quello degli
+    Attuatori anche l'Operatore; il selettore dello studente delle pratiche
+    resta sul solo ruolo Utente."""
+    io, sessione = accedi(client, db)
+    inserisci(db, [
+        (25_001, io.utente_id, f.RUOLO_SOTTOSCRITTORE, "Utente"),
+        (25_002, io.utente_id, f.RUOLO_CONSULENTE, "Consulente"),
+        (25_003, io.utente_id, f.RUOLO_OPERATORE, "Operatore"),
+        (25_004, io.utente_id, f.RUOLO_ADERENTE, "Aderente"),
+    ])
+
+    assert sorted(ids(client.get("/clienti/?solo_sottoscrittori=true", headers=sessione))) == [
+        25_001, 25_002,
+    ]
+    assert ids(client.get("/clienti/?solo_utenti=true", headers=sessione)) == [25_001]
+    assert sorted(ids(client.get("/clienti/?solo_attuatori=true", headers=sessione))) == [
+        25_003, 25_004,
+    ]
 
 
 def test_il_nazionale_vede_tutti(client, db, mailer):
