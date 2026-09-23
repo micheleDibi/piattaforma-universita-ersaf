@@ -101,9 +101,10 @@ def test_sottoscrittori_comprendono_consulenti_e_gli_operatori_sono_attuatori(cl
         25_001, 25_002,
     ]
     assert ids(client.get("/clienti/?solo_utenti=true", headers=sessione)) == [25_001]
-    assert sorted(ids(client.get("/clienti/?solo_attuatori=true", headers=sessione))) == [
-        25_003, 25_004,
-    ]
+    # Chi accede e' un Regionale: fra gli attuatori che vede compare anche lui.
+    assert sorted(ids(client.get("/clienti/?solo_attuatori=true", headers=sessione))) == sorted([
+        io.cliente_id, 25_003, 25_004,
+    ])
 
 
 def test_il_nazionale_vede_tutti(client, db, mailer):
