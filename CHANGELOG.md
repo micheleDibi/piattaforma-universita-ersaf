@@ -11,6 +11,36 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 7 — 23/09/2026 10:01
+
+<!-- timbro: versione=7 sha=2f65005d42f15d0772fb7e77017f3838c07f0448 -->
+
+### Novità e correzioni
+
+**Modificato**
+
+- L'elenco Sottoscrittori comprende anche i consulenti.
+- L'elenco Attuatori comprende anche gli operatori, che si trovano con il filtro per ruolo; gli operatori continuano a non accedere alla piattaforma.
+- Nel menu la voce Attuatori compare anche a Regionale e Provinciale, e la voce Pratiche anche a Regionale, Provinciale e Aderente.
+- Il codice nazionale di una nuova azienda viene assegnato automaticamente e non si può più modificare.
+- Le percentuali delle convenzioni universitarie stanno nella sezione "Dettaglio convenzioni universitarie": si modificano dalla scheda dell'azienda e si leggono nella scheda Azienda di un attuatore.
+
+**Rimosso**
+
+- Nell'elenco Pratiche non c'è più il filtro per studente.
+
+### Dettagli tecnici
+
+**Aggiunto**
+
+- `GET /clienti/` accetta `solo_sottoscrittori=true` (ruoli Utente e Consulente); `solo_utenti` resta limitato al ruolo Utente, usato dal selettore dello studente nelle pratiche.
+
+**Modificato**
+
+- `solo_attuatori` comprende anche il ruolo Operatore; accesso e recupero della password restano ai ruoli di `RUOLI_ATTUATORE` (Aderente, Regionale, Provinciale, Nazionale).
+- `POST /aziende/` genera `azienda_codice_nazionale` (22 caratteri casuali, univoco) e ignora il valore inviato; `PUT /aziende/{id}` non lo modifica più.
+- Le voci del menu dichiarano i ruoli che le vedono con `ruoliAmmessi` in `frontend/src/config/routes/rotte.js`.
+
 ## Versione 6 — 18/09/2026 12:14
 
 <!-- timbro: versione=6 sha=18bd6255bc7866464cb7519cf7823b96dd537a9c -->
