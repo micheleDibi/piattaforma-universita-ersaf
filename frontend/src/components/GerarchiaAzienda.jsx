@@ -94,22 +94,25 @@ export default function GerarchiaAzienda({ aziendaId }) {
   if (errore) return <p className="text-sm text-negativo">Errore: {errore}</p>;
 
   return (
-    <div className="mb-8 rounded-controllo border border-bordo p-4">
-      <p className={classiEtichetta()}>AZIENDA PADRE</p>
-      <div className="mt-1 flex items-center gap-3">
-        <p>
-          {padre === undefined && "Caricamento..."}
-          {padre === null && "Nessuna (azienda radice)"}
-          {padre &&
-            (padre.azienda_ragione_sociale ?? `Azienda #${padre.azienda_id}`)}
-        </p>
+    <div className="rounded-controllo border border-bordo bg-superficie-tenue px-4 py-3.5">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-col gap-1">
+          <p className={`${classiEtichetta()} mb-0`}>AZIENDA PADRE</p>
+          <p className="font-medium text-testo-forte">
+            {padre === undefined && "Caricamento..."}
+            {padre === null && "Nessuna (azienda radice)"}
+            {padre &&
+              (padre.azienda_ragione_sociale ??
+                `Azienda #${padre.azienda_id}`)}
+          </p>
+        </div>
 
         {eNazionale && (
           <button
             type="button"
             onClick={() => setModaleAperta(true)}
             disabled={salvataggio}
-            className={pulsante("ausiliario")}
+            className={`${pulsante("secondario")} shrink-0`}
           >
             {salvataggio ? "Salvataggio..." : "Cambia padre"}
           </button>

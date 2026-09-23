@@ -11,10 +11,11 @@ import { ROTTE } from "../config/routes/rotte";
 import IntestazionePagina from "./shared/IntestazionePagina";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 import CampiAzienda from "./CampiAzienda.jsx";
-import { VUOTO_AZIENDA } from "../config/campiAzienda.js";
 import GerarchiaAzienda from "./GerarchiaAzienda.jsx";
 import DettaglioConvenzioniUniversitarie from "./DettaglioConvenzioniUniversitarie.jsx";
+import SezioneModulo from "./shared/SezioneModulo.jsx";
 import { TriangleAlert } from "../config/icone.js";
+import { SEZIONI_AZIENDA, VUOTO_AZIENDA } from "../config/campiAzienda.js";
 
 export default function SchedaAzienda() {
   const { aziendaId: id } = useParams();
@@ -108,16 +109,19 @@ export default function SchedaAzienda() {
     <div className={contenutoPagina("modulo")}>
       <IntestazionePagina
         titolo={inModifica ? "Modifica azienda" : "Nuova azienda"}
+        descrizione={
+          inModifica ? dati.azienda_ragione_sociale || undefined : undefined
+        }
         indietro={{ rotta: ritorno, etichetta: "Aziende" }}
       />
-      <form onSubmit={invia} className={`${scheda()} p-6 sm:p-8`}>
+      <form onSubmit={invia} className="flex flex-col gap-5">
         {anomalie.length > 0 && (
-          <div className="mb-6 flex items-start gap-2 rounded-controllo border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+          <div className="flex items-start gap-2 rounded-controllo border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
             <TriangleAlert
               className="size-icona shrink-0 text-amber-500"
               aria-hidden="true"
             />
-            <ul className="list-disc pl-4">
+            <ul className={anomalie.length > 1 ? "list-disc pl-4" : undefined}>
               {anomalie.map((testo) => (
                 <li key={testo}>{testo}</li>
               ))}
@@ -125,38 +129,64 @@ export default function SchedaAzienda() {
           </div>
         )}
         {errore && (
-          <div className="mb-6 whitespace-pre-line rounded-controllo border border-negativo/30 bg-negativo-tenue p-4 text-sm text-negativo">
+          <div className="whitespace-pre-line rounded-controllo border border-negativo/30 bg-negativo-tenue p-4 text-sm text-negativo">
             {errore}
           </div>
         )}
 
-        <div className="mb-8">
-          <CampiAzienda
-            dati={dati}
-            onChange={aggiorna}
-            disabilita={{ azienda_codice_nazionale: true }}
-          />
+        <div className={scheda()}>
+          {SEZIONI_AZIENDA.map(({ titolo, descrizione, campi }) => (
+            <SezioneModulo
+              key={titolo}
+              titolo={titolo}
+              descrizione={descrizione}
+            >
+              <CampiAzienda
+                dati={dati}
+                onChange={aggiorna}
+                disabilita={{ azienda_codice_nazionale: true }}
+                gruppo={campi}
+              />
+            </SezioneModulo>
+          ))}
+          {inModifica && (
+            <SezioneModulo
+              titolo="Gerarchia"
+              descrizione="Azienda a cui questa è collegata."
+              griglia={false}
+            >
+              <GerarchiaAzienda aziendaId={id} />
+            </SezioneModulo>
+          )}
+          {inModifica && (
+            <SezioneModulo
+              titolo="Convenzioni universitarie"
+              descrizione="Percentuali applicate per ateneo e tipologia di corso."
+              griglia={false}
+            >
+              <DettaglioConvenzioniUniversitarie aziendaId={id} inSezione />
+            </SezioneModulo>
+          )}
         </div>
-        {inModifica && <GerarchiaAzienda aziendaId={id} />}
-        {inModifica && (
-          <div className="mb-8">
-            <DettaglioConvenzioniUniversitarie aziendaId={id} />
-          </div>
-        )}
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={salvataggio}
-            className={pulsante("primario", "grande")}
-          >
-            {salvataggio ? "Salvataggio..." : "Salva"}
-          </button>
+
+        <div className="flex justify-end gap-3">
           <button
             type="button"
             onClick={() => navigate(ritorno)}
             className={pulsante("discreto", "grande")}
           >
             Annulla
+          </button>
+          <button
+            type="submit"
+            disabled={salvataggio}
+            className={pulsante("primario", "grande")}
+          >
+            {salvataggio
+              ? "Salvataggio..."
+              : inModifica
+                ? "Salva modifiche"
+                : "Salva"}
           </button>
         </div>
       </form>
