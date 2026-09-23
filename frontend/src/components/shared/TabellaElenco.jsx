@@ -69,6 +69,19 @@ export default function TabellaElenco({ dati, modello, onApri }) {
                         id={idIndicatori(base, riga, indicatori)} />
                     );
                   }
+                  if (campo.rilievo === "persona") {
+                    return (
+                      <span key={campo.id} className="elenco-adattivo__persona">
+                        <span className="elenco-adattivo__iniziali" aria-hidden="true">
+                          {riga.iniziali}
+                        </span>
+                        <span className="elenco-adattivo__valore" data-rilievo="principale">
+                          {valore}
+                        </span>
+                        <AvvisoTooltip messaggi={riga.campi.avviso} />
+                      </span>
+                    );
+                  }
                   if (campo.rilievo === "codice") {
                     return (
                       <span key={campo.id} className="elenco-adattivo__codice">

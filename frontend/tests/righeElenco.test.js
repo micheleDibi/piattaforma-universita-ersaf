@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { rigaCliente, rigaAzienda, rigaPratica, rigaProdotto, vociLegendaCliente, campoIndicatori, idIndicatori } from "../src/lib/righeElenco.js";
+import { rigaCliente, rigaAzienda, rigaPratica, rigaProdotto, campoIndicatori, idIndicatori } from "../src/lib/righeElenco.js";
 import { modelloClienti, MODELLO_AZIENDE, MODELLO_PRATICHE, MODELLO_PRODOTTI } from "../src/config/elenchi.js";
 import { ICONE_CAMPI_ELENCO } from "../src/config/icone.js";
 
@@ -13,15 +13,16 @@ test("ogni icona indicata dai campi degli elenchi esiste nel catalogo", () => {
   }
 });
 
-test("nome e cognome separati e nominativo mobile conservano ID cliente e campi parziali", () => {
+test("nominativo \"Cognome Nome\" con iniziali, anche con campi parziali", () => {
   const item = { cliente_id: 14, utente_id: 9, cliente_nome: " Maria Alessandra ", cliente_cognome: "Della Valle" };
   const opzioni = { attuatori: false, mostraAzienda: false };
   assert.equal(rigaCliente(item, opzioni).id, 14);
-  assert.equal(rigaCliente(item, opzioni).campi.nominativo, "Maria Alessandra Della Valle");
-  assert.equal(rigaCliente(item, opzioni).campi.nome, "Maria Alessandra");
-  assert.equal(rigaCliente(item, opzioni).campi.cognome, "Della Valle");
+  assert.equal(rigaCliente(item, opzioni).campi.nominativo, "Della Valle Maria Alessandra");
+  assert.equal(rigaCliente(item, opzioni).iniziali, "DM");
   assert.equal(rigaCliente({ cliente_cognome: "D'Amico" }, opzioni).campi.nominativo, "D'Amico");
-  assert.equal(rigaCliente({ cliente_cognome: "D'Amico" }, opzioni).campi.nome, "-");
+  assert.equal(rigaCliente({ cliente_cognome: "d'amico" }, opzioni).iniziali, "D");
+  assert.equal(rigaCliente({}, opzioni).campi.nominativo, "-");
+  assert.equal(rigaCliente({}, opzioni).iniziali, "");
 });
 
 test("azienda e ruolo rispettano la visibilità anche nella presentazione mobile", () => {
@@ -82,8 +83,8 @@ const ATTUATORI = { attuatori: true, mostraAzienda: false };
 const SOTTOSCRITTORI = { attuatori: false, mostraAzienda: false };
 const STATO_PIENO = { email_verificata: true, cellulare_verificato: true, diploma_completo: true };
 
-test("stato cliente: due pallini per gli attuatori e tre per i sottoscrittori, sempre nello stesso ordine", () => {
-  const ordine = (opzioni, item = STATO_PIENO) => rigaCliente(item, opzioni).campi.stato.map((i) => i.id);
+test("verifiche cliente: due etichette per gli attuatori e tre per i sottoscrittori, sempre nello stesso ordine", () => {
+  const ordine = (opzioni, item = STATO_PIENO) => rigaCliente(item, opzioni).campi.verifiche.map((i) => i.id);
   assert.deepEqual(ordine(ATTUATORI), ["email", "cellulare"]);
   assert.deepEqual(ordine({ ...ATTUATORI, mostraAzienda: true }), ["email", "cellulare"]);
   assert.deepEqual(ordine(SOTTOSCRITTORI), ["email", "cellulare", "diploma"]);
@@ -92,12 +93,12 @@ test("stato cliente: due pallini per gli attuatori e tre per i sottoscrittori, s
   assert.deepEqual(ordine(ATTUATORI, { ...STATO_PIENO, diploma_completo: false }), ["email", "cellulare"]);
 });
 
-test("stato cliente: verde solo con true, grigio con false, null, assente o valori legacy", () => {
+test("verifiche cliente: verde solo con true, grigio con false, null, assente o valori legacy", () => {
   for (const valore of [true, false, null, undefined, -1, 1, 0, "true", "1"]) {
     for (const campo of ["email_verificata", "cellulare_verificato", "diploma_completo"]) {
       const item = { ...STATO_PIENO, [campo]: valore };
       if (valore === undefined) delete item[campo];
-      const stato = rigaCliente(item, SOTTOSCRITTORI).campi.stato;
+      const stato = rigaCliente(item, SOTTOSCRITTORI).campi.verifiche;
       const indice = ["email_verificata", "cellulare_verificato", "diploma_completo"].indexOf(campo);
       stato.forEach((indicatore, i) => {
         assert.equal(indicatore.attivo, i === indice ? valore === true : true, `${campo}=${String(valore)}, pallino ${i}`);
@@ -106,25 +107,29 @@ test("stato cliente: verde solo con true, grigio con false, null, assente o valo
   }
 });
 
-test("stato cliente: ogni pallino ha l'etichetta del proprio stato", () => {
-  const etichette = (item, opzioni = SOTTOSCRITTORI) => rigaCliente(item, opzioni).campi.stato.map((i) => i.etichetta);
+test("verifiche cliente: ogni etichetta ha l'etichetta del proprio stato", () => {
+  const etichette = (item, opzioni = SOTTOSCRITTORI) => rigaCliente(item, opzioni).campi.verifiche.map((i) => i.etichetta);
   assert.deepEqual(etichette(STATO_PIENO), ["Email verificata", "Cellulare verificato", "Dati diploma completi"]);
   assert.deepEqual(etichette({}), ["Email non verificata", "Cellulare non verificato", "Dati diploma incompleti"]);
   assert.deepEqual(etichette({ email_verificata: false, cellulare_verificato: true }, ATTUATORI),
     ["Email non verificata", "Cellulare verificato"]);
 });
 
-test("stato cliente: la colonna esiste su desktop e su mobile, con i pallini e non con il badge", () => {
+test("verifiche cliente: la colonna esiste su desktop e su mobile, con le etichette e non con il badge", () => {
   for (const opzioni of [ATTUATORI, SOTTOSCRITTORI, { attuatori: true, mostraAzienda: true }]) {
     const modello = modelloClienti(opzioni);
-    const desktop = modello.colonne.flatMap((c) => c.campi).filter((campo) => campo.id === "stato");
-    const mobile = modello.mobile.filter((campo) => campo.id === "stato");
+    const desktop = modello.colonne.flatMap((c) => c.campi).filter((campo) => campo.id === "verifiche");
+    const mobile = modello.mobile.filter((campo) => campo.id === "verifiche");
     assert.equal(desktop.length, 1);
     assert.equal(mobile.length, 1);
     assert.equal(desktop[0].rilievo, "indicatori");
     assert.equal(mobile[0].rilievo, "indicatori");
-    assert.deepEqual(modello.colonne.map((c) => c.id).slice(0, 3), ["nome", "cognome", "stato"]);
-    assert.equal(modello.mobile[1].id, "stato");
+    // Nominativo per primo, verifiche per ultime, come nel design.
+    const colonne = modello.colonne.map((c) => c.id);
+    assert.equal(colonne[0], "nominativo");
+    assert.equal(colonne.at(-1), "verifiche");
+    assert.equal(modello.colonne[0].campi[0].rilievo, "persona");
+    assert.equal(modello.mobile[1].id, "verifiche");
     // Ogni campo del modello ha un valore nella riga.
     const riga = rigaCliente({}, opzioni);
     for (const campo of [...modello.mobile, ...modello.colonne.flatMap((c) => c.campi)]) {
@@ -136,27 +141,23 @@ test("stato cliente: la colonna esiste su desktop e su mobile, con i pallini e n
   assert.equal(MODELLO_PRODOTTI.mobile.find((c) => c.id === "stato").rilievo, "stato");
 });
 
-test("legenda: stesse voci e stesso ordine dei pallini della pagina", () => {
-  const voce = { email: "Email", cellulare: "Cellulare", diploma: "Diploma" };
-  for (const opzioni of [ATTUATORI, SOTTOSCRITTORI]) {
-    const pallini = rigaCliente(STATO_PIENO, opzioni).campi.stato.map((i) => voce[i.id]);
-    assert.deepEqual(vociLegendaCliente(opzioni), pallini);
-  }
-  assert.deepEqual(vociLegendaCliente(ATTUATORI), ["Email", "Cellulare"]);
-  assert.deepEqual(vociLegendaCliente(SOTTOSCRITTORI), ["Email", "Cellulare", "Diploma"]);
+test("verifiche: ogni etichetta ha il testo visibile della propria voce", () => {
+  const voci = (opzioni) => rigaCliente(STATO_PIENO, opzioni).campi.verifiche.map((i) => i.voce);
+  assert.deepEqual(voci(ATTUATORI), ["Email", "Cellulare"]);
+  assert.deepEqual(voci(SOTTOSCRITTORI), ["Email", "Cellulare", "Diploma"]);
 });
 
 test("descrizione accessibile: solo le righe con pallini la ricevono, con id distinti per vista e per riga", () => {
   const modello = modelloClienti(SOTTOSCRITTORI);
   const desktop = campoIndicatori(modello.colonne.flatMap((c) => c.campi));
   const mobile = campoIndicatori(modello.mobile);
-  assert.equal(desktop.id, "stato");
-  assert.equal(mobile.id, "stato");
+  assert.equal(desktop.id, "verifiche");
+  assert.equal(mobile.id, "verifiche");
   const prima = rigaCliente({ cliente_id: 1 }, SOTTOSCRITTORI);
   const seconda = rigaCliente({ cliente_id: 2 }, SOTTOSCRITTORI);
   assert.notEqual(idIndicatori(":a:", prima, desktop), idIndicatori(":b:", prima, mobile));
   assert.notEqual(idIndicatori(":a:", prima, desktop), idIndicatori(":a:", seconda, desktop));
-  assert.equal(idIndicatori(":a:", { id: 3, campi: { stato: [] } }, desktop), undefined);
+  assert.equal(idIndicatori(":a:", { id: 3, campi: { verifiche: [] } }, desktop), undefined);
   // Gli altri elenchi non hanno pallini: nessun aria-describedby.
   for (const altro of [MODELLO_AZIENDE, MODELLO_PRATICHE, MODELLO_PRODOTTI]) {
     const campo = campoIndicatori([...altro.mobile, ...altro.colonne.flatMap((c) => c.campi)]);

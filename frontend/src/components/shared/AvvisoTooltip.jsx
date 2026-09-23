@@ -21,7 +21,7 @@ export default function AvvisoTooltip({ messaggi }) {
         <Dialogo aperto={aperto} onChiudi={() => setAperto(false)} etichetta={TESTI_ELENCO.avvisi}>
           <div className={STILI_AVVISI.contenuto}>
             <div className={STILI_AVVISI.intestazione}>
-              <h2>{TESTI_ELENCO.avvisi}</h2>
+              <h2>{TESTI_ELENCO.errori(messaggi.length)}</h2>
               <button type="button" className={pulsanteIcona()} data-focus-iniziale
                 onClick={() => setAperto(false)} aria-label={TESTI_ELENCO.chiudiAvvisi}>
                 <X aria-hidden="true" />

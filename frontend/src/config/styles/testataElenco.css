@@ -61,3 +61,5 @@
   }
   .testata-elenco[data-compatta="true"] .testata-elenco__titolo { @apply not-sr-only min-w-0 text-titolo-sezione; }
 }
+/* Totale dei risultati accanto al titolo. */
+.testata-elenco__conteggio { @apply ms-2.5 align-baseline text-sm font-normal text-testo-tenue; }

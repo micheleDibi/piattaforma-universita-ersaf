@@ -12,7 +12,8 @@ export default function ListaElenco({ dati, modello, onApri }) {
   const base = useId();
   const indicatori = campoIndicatori(modello.mobile);
   const campoPrincipale =
-    modello.mobile.find((c) => c.rilievo === "principale") || modello.mobile[0];
+    modello.mobile.find((c) => ["principale", "persona"].includes(c.rilievo)) ||
+    modello.mobile[0];
   const campiTecnici = modello.mobile.filter(
     (c) => c.id !== campoPrincipale?.id && RILIEVI_TECNICI.includes(c.rilievo),
   );
@@ -57,6 +58,11 @@ export default function ListaElenco({ dati, modello, onApri }) {
                 return (
                   <div className="elenco-adattivo__principale flex items-center gap-2">
                     <dt className="sr-only">{campoPrincipale.etichetta}</dt>
+                    {campoPrincipale.rilievo === "persona" && riga.iniziali && (
+                      <span className="elenco-adattivo__iniziali" aria-hidden="true">
+                        {riga.iniziali}
+                      </span>
+                    )}
                     <dd className="elenco-adattivo__valore-principale">
                       {valoreMostrato}
                     </dd>

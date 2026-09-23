@@ -46,16 +46,22 @@ Nota: questo limite è applicato solo dall'interfaccia; vedi [Limiti noti](../te
 
 ### Colonne
 
-- Sottoscrittori: Nome, Cognome e Stato.
-- Attuatori: Nome, Cognome, Ruolo e Stato. Il Nazionale vede anche la colonna
-  Azienda.
-- Su uno schermo stretto le righe diventano riquadri, con nome e cognome
-  insieme.
+Accanto al titolo compare il numero di risultati, calcolato con la stessa
+ricerca e gli stessi filtri dell'elenco.
 
-La colonna **Stato** è una fila di pallini, verde quando la cosa è a posto e
-grigio quando non lo è:
+- Sottoscrittori: Nominativo e Verifiche.
+- Attuatori: Nominativo, Ruolo e Verifiche. Il Nazionale vede anche la colonna
+  Azienda, fra Ruolo e Verifiche.
+- Il **Nominativo** è «Cognome Nome», preceduto da un cerchio con le iniziali.
+  Se l'anagrafica ha delle anomalie, subito dopo il nome compare il segnale di
+  avviso: un clic apre l'elenco degli errori, con il loro numero come titolo.
+- Su uno schermo stretto le righe diventano riquadri, con il nominativo in
+  evidenza.
 
-| Pallino | Verde quando |
+La colonna **Verifiche** è una fila di etichette, verdi e con la spunta
+quando la cosa è a posto, grigie quando non lo è:
+
+| Etichetta | Verde quando |
 |---|---|
 | Email | l'indirizzo è stato verificato con un codice |
 | Cellulare | il numero è stato verificato con un codice |
@@ -66,11 +72,9 @@ diploma, anno di conseguimento, istituto, voto ricevuto e voto massimo. Via,
 città e provincia dell'istituto non contano. Uno zero come voto vale come
 valorizzato.
 
-Sopra l'elenco una legenda ricorda l'ordine dei pallini e il significato dei
-due colori. Il significato non dipende solo dal colore: il pallino verde è
-pieno e quello grigio è un anello, passandoci sopra con il mouse compare la
-descrizione a parole, e chi usa un lettore di schermo la sente leggere
-insieme alla riga.
+Il significato non dipende solo dal colore: l'etichetta verde ha la spunta e
+il bordo pieno, passandoci sopra con il mouse compare la descrizione a
+parole, e chi usa un lettore di schermo la sente leggere insieme alla riga.
 
 Nota: la colonna Azienda è nascosta solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 

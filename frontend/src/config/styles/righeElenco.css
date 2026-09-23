@@ -111,3 +111,10 @@
   .elenco-adattivo[data-modello="prodotti"] col[data-colonna="universita"] { width: 18%; }
   .elenco-adattivo[data-modello="prodotti"] col[data-colonna="tipo"] { width: 22%; }
 }
+
+/* Nominativo dei clienti: iniziali, nome e avviso sulla stessa riga. */
+.elenco-adattivo__persona { @apply inline-flex min-w-0 items-center gap-3; }
+.elenco-adattivo__iniziali {
+  @apply inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-primario/10 text-xs font-semibold text-primario;
+}
+.elenco-adattivo__tabella col[data-colonna="verifiche"] { width: 13rem; }

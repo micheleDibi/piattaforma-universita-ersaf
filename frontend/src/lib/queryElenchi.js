@@ -7,6 +7,14 @@ export function queryClienti({ ricerca, ruolo }, { soloAttuatori, soloSottoscrit
   if (soloAttuatori && ruolo) params.set("ruolo_codice", ruolo);
   return `/clienti/?${params}`;
 }
+/** Stessi filtri di queryClienti, senza paginazione: per il totale dei risultati. */
+export function conteggioClienti({ ricerca, ruolo }, { soloAttuatori, soloSottoscrittori }) {
+  const params = new URLSearchParams({ search: ricerca });
+  if (soloAttuatori) params.set("solo_attuatori", "true");
+  if (soloSottoscrittori) params.set("solo_sottoscrittori", "true");
+  if (soloAttuatori && ruolo) params.set("ruolo_codice", ruolo);
+  return `/clienti/conteggio?${params}`;
+}
 export function queryAziende({ ricerca }) {
   return `/aziende/?${new URLSearchParams({ limit: LIMITE, search: ricerca })}`;
 }
