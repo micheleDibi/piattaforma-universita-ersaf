@@ -11,6 +11,22 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 8 — 23/09/2026 10:04
+
+<!-- timbro: versione=8 sha=bdd9339c896674b2e77d8406dc6eaf70a20bb47d -->
+
+### Novità e correzioni
+
+**Aggiunto**
+
+- Il PDF dei corsi speciali SSML si scarica con il modulo dei corsi di formazione SSML.
+
+### Dettagli tecnici
+
+**Modificato**
+
+- Il registro centrale associa i corsi speciali SSML a `ssml-formazione`, riutilizzando impaginazione e compilazione esistenti.
+
 ## Versione 7 — 23/09/2026 10:01
 
 <!-- timbro: versione=7 sha=2f65005d42f15d0772fb7e77017f3838c07f0448 -->
