@@ -1,8 +1,20 @@
-import { campo, etichetta } from "../config/styles/campo";
+import { campo } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
-import { titoloSezione } from "../config/styles/superficie";
 import { useConfermaAzione } from "../hooks/useConfermaAzione.js";
 import { TESTI_COPIA } from "../config/testi/copia.js";
+import SezioneModulo from "./shared/SezioneModulo.jsx";
+import CampoModulo from "./shared/CampoModulo.jsx";
+
+// [suffisso, etichetta, colonne]
+const CAMPI_INDIRIZZO = [
+  ["Indirizzo", "Indirizzo", 5],
+  ["Civico", "Civico", 1],
+  ["Comune", "Comune", 3],
+  ["Cap", "CAP", 2],
+  ["Provincia", "Prov.", 1],
+];
+// In residenza CAP e provincia non sono obbligatori, come prima.
+const OBBLIGATORI_RESIDENZA = new Set(["Indirizzo", "Civico", "Comune"]);
 
 export default function FormResidenzaDomicilio({
   formData,
@@ -10,152 +22,58 @@ export default function FormResidenzaDomicilio({
   handleCopyResidenza,
 }) {
   const { esegui, stato } = useConfermaAzione(handleCopyResidenza);
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {/* Residenza */}
-      <div className="space-y-4">
-        <h3 className={titoloSezione()}>Residenza</h3>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="col-span-2">
-            <label className={etichetta()}>
-              Indirizzo <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="residenzaIndirizzo"
-              value={formData.residenzaIndirizzo}
-              onChange={handleChange}
-              className={`${campo("comodo")} transition`}
-              required
-            />
-          </div>
-          <div>
-            <label className={etichetta()}>
-              Civico <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="residenzaCivico"
-              value={formData.residenzaCivico}
-              onChange={handleChange}
-              className={`${campo("comodo")} transition`}
-              required
-            />
-          </div>
-        </div>
-        <div>
-          <label className={etichetta()}>
-            Comune <span className="text-red-500">*</span>
-          </label>
+
+  const campi = (prefisso) =>
+    CAMPI_INDIRIZZO.map(([suffisso, etichetta, colonne]) => {
+      const nome = `${prefisso}${suffisso}`;
+      const obbligatorio =
+        prefisso === "residenza" && OBBLIGATORI_RESIDENZA.has(suffisso);
+      return (
+        <CampoModulo
+          key={nome}
+          per={nome}
+          etichetta={etichetta}
+          obbligatorio={obbligatorio}
+          colonne={colonne}
+        >
           <input
+            id={nome}
             type="text"
-            name="residenzaComune"
-            value={formData.residenzaComune}
+            name={nome}
+            value={formData[nome]}
             onChange={handleChange}
             className={`${campo("comodo")} transition`}
-            required
+            required={obbligatorio}
           />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className={etichetta()}>CAP</label>
-            <input
-              type="text"
-              name="residenzaCap"
-              value={formData.residenzaCap}
-              onChange={handleChange}
-              className={`${campo("comodo")} transition`}
-            />
-          </div>
-          <div>
-            <label className={etichetta()}>Provincia</label>
-            <input
-              type="text"
-              name="residenzaProvincia"
-              value={formData.residenzaProvincia}
-              onChange={handleChange}
-              className={`${campo("comodo")} transition`}
-            />
-          </div>
-        </div>
-        <div className="pt-2">
+        </CampoModulo>
+      );
+    });
+
+  return (
+    <>
+      <SezioneModulo titolo="Residenza">{campi("residenza")}</SezioneModulo>
+      <SezioneModulo
+        titolo="Domicilio"
+        descrizione="Solo se diverso dalla residenza."
+      >
+        {campi("domicilio")}
+        <div className="col-span-6 flex justify-end">
           <button
             type="button"
             onClick={esegui}
             disabled={stato === "attesa"}
             data-esito={stato}
-            className={pulsante("ausiliario", "normale", {
-              larghezzaPiena: true,
-            })}
+            className={pulsante("ausiliario")}
           >
             {stato === "eseguita"
               ? TESTI_COPIA.confermaResidenza
-              : "Copia Residenza in Domicilio"}
+              : "Copia da residenza"}
           </button>
           <span role="status" className="sr-only">
             {stato === "eseguita" ? TESTI_COPIA.confermaResidenza : ""}
           </span>
         </div>
-      </div>
-
-      {/* Domicilio */}
-      <div className="space-y-4">
-        <h3 className={titoloSezione()}>Domicilio</h3>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="col-span-2">
-            <label className={etichetta()}>Indirizzo Domicilio</label>
-            <input
-              type="text"
-              name="domicilioIndirizzo"
-              value={formData.domicilioIndirizzo}
-              onChange={handleChange}
-              className={`${campo("comodo")} transition`}
-            />
-          </div>
-          <div>
-            <label className={etichetta()}>Civico</label>
-            <input
-              type="text"
-              name="domicilioCivico"
-              value={formData.domicilioCivico}
-              onChange={handleChange}
-              className={`${campo("comodo")} transition`}
-            />
-          </div>
-        </div>
-        <div>
-          <label className={etichetta()}>Comune</label>
-          <input
-            type="text"
-            name="domicilioComune"
-            value={formData.domicilioComune}
-            onChange={handleChange}
-            className={`${campo("comodo")} transition`}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className={etichetta()}>CAP</label>
-            <input
-              type="text"
-              name="domicilioCap"
-              value={formData.domicilioCap}
-              onChange={handleChange}
-              className={`${campo("comodo")} transition`}
-            />
-          </div>
-          <div>
-            <label className={etichetta()}>Provincia</label>
-            <input
-              type="text"
-              name="domicilioProvincia"
-              value={formData.domicilioProvincia}
-              onChange={handleChange}
-              className={`${campo("comodo")} transition`}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+      </SezioneModulo>
+    </>
   );
 }

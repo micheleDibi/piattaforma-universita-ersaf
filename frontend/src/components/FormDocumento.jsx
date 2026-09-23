@@ -1,15 +1,37 @@
 import { SEGNAPOSTI_SELEZIONE } from "../config/testi/selezioni.js";
-import { campo, etichetta } from "../config/styles/campo";
-import { titoloSezione } from "../config/styles/superficie";
+import { campo } from "../config/styles/campo";
+import SezioneModulo from "./shared/SezioneModulo.jsx";
+import CampoModulo from "./shared/CampoModulo.jsx";
 
 export default function FormDocumento({ formData, handleChange }) {
-  return (
-    <div className="space-y-4">
-      <h3 className={titoloSezione()}>Documento</h3>
+  const testo = (nome, etichetta, colonne, tipo = "text") => (
+    <CampoModulo
+      key={nome}
+      per={nome}
+      etichetta={etichetta}
+      obbligatorio
+      colonne={colonne}
+    >
+      <input
+        id={nome}
+        type={tipo}
+        name={nome}
+        value={formData[nome]}
+        onChange={handleChange}
+        className={`${campo("comodo")} transition`}
+        required
+      />
+    </CampoModulo>
+  );
 
-      <div>
-        <label className={etichetta()}>Tipo Documento</label>
+  return (
+    <SezioneModulo
+      titolo="Documento"
+      descrizione="Documento di riconoscimento in corso di validità."
+    >
+      <CampoModulo per="tipoDocumento" etichetta="Tipo documento" colonne={3}>
         <select
+          id="tipoDocumento"
           name="tipoDocumento"
           value={formData.tipoDocumento}
           onChange={handleChange}
@@ -22,64 +44,11 @@ export default function FormDocumento({ formData, handleChange }) {
           <option value="Passaporto">Passaporto</option>
           <option value="Patente">Patente</option>
         </select>
-      </div>
-
-      <div>
-        <label className={etichetta()}>
-          N° Documento <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          name="nDocumento"
-          value={formData.nDocumento}
-          onChange={handleChange}
-          className={`${campo("comodo")} transition`}
-          required
-        />
-      </div>
-
-      <div>
-        <label className={etichetta()}>
-          Comune di Rilascio <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          name="comuneDiRilascio"
-          value={formData.comuneDiRilascio}
-          onChange={handleChange}
-          className={`${campo("comodo")} transition`}
-          required
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={etichetta()}>
-            Data Rilascio <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="date"
-            name="dataInizioRilascio"
-            value={formData.dataInizioRilascio}
-            onChange={handleChange}
-            className={`${campo("comodo")} transition`}
-            required
-          />
-        </div>
-        <div>
-          <label className={etichetta()}>
-            Data Scadenza <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="date"
-            name="dataScadenza"
-            value={formData.dataScadenza}
-            onChange={handleChange}
-            className={`${campo("comodo")} transition`}
-            required
-          />
-        </div>
-      </div>
-    </div>
+      </CampoModulo>
+      {testo("nDocumento", "N° documento", 3)}
+      {testo("comuneDiRilascio", "Comune di rilascio", 2)}
+      {testo("dataInizioRilascio", "Data rilascio", 2, "date")}
+      {testo("dataScadenza", "Data scadenza", 2, "date")}
+    </SezioneModulo>
   );
 }

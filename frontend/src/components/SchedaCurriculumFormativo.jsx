@@ -13,14 +13,14 @@ export default function SchedaCurriculumFormativo({ formData, handleChange }) {
   const tabs = [
     {
       id: "titoli",
-      label: "Sezione Titoli",
+      label: "Titoli",
       component: (
         <SezioneTitoli formData={formData} handleChange={handleChange} />
       ),
     },
     {
       id: "immatricolazioni",
-      label: "Immatricolazioni ed Iscrizioni",
+      label: "Immatricolazioni ed iscrizioni",
       component: (
         <ImmatricolazioniIscrizioni
           formData={formData}
@@ -30,7 +30,7 @@ export default function SchedaCurriculumFormativo({ formData, handleChange }) {
     },
     {
       id: "abilitazioni",
-      label: "Abilitazioni Professionali",
+      label: "Abilitazioni professionali",
       component: (
         <AbilitazioniProfessionali
           formData={formData}
@@ -51,7 +51,7 @@ export default function SchedaCurriculumFormativo({ formData, handleChange }) {
         attiva={activeTab} onChange={setActiveTab} />
       <div ref={pannello} role="tabpanel" id={`curriculum-pannello-${activeTab}`}
         aria-labelledby={`curriculum-scheda-${activeTab}`}
-        className="movimento-scheda schede__pannello border-x border-b border-bordo rounded-b-superficie">
+        className="movimento-scheda schede__pannello schede__pannello--sezioni border-x border-b border-bordo rounded-b-superficie">
         {tabs.find((tab) => tab.id === activeTab)?.component}
       </div>
     </div>

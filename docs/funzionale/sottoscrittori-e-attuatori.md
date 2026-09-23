@@ -22,7 +22,7 @@ Le differenze fra i due tipi:
 
 | | Sottoscrittore | Attuatore |
 |---|---|---|
-| Schede | Dati Principali, Curriculum Formativo, Utente, Esami | Dati Principali, Curriculum Formativo, Utente, Azienda, più Abilitazioni (vedi sotto) |
+| Schede | Dati principali, Curriculum formativo, Utente, Esami | Dati principali, Curriculum formativo, Utente, Azienda, più Abilitazioni (vedi sotto) |
 | Ruolo alla creazione | Utente | quello scelto nella tendina «Ruolo attuatore»; se non si sceglie nulla, Aderente |
 | Abilitazioni alle pratiche alla creazione | tutte spente | tutte accese, tranne SSML Lamezia Terme |
 
@@ -106,21 +106,23 @@ attuatore». Il pulsante è visibile a chiunque apra l'elenco.
 
 ### Cosa si compila
 
-Nella scheda Dati Principali:
+Nella scheda Dati principali, divisa in sezioni con titolo e descrizione a
+sinistra e campi a destra:
 
-- **Informazioni Personali**: codice fiscale, genere, nome, cognome,
-  cittadinanza, luogo e provincia di nascita, data di nascita.
-- **Documento**: tipo (carta d'identità, passaporto, patente), numero, comune
-  di rilascio, data di rilascio, data di scadenza.
+- **Informazioni personali**: nome, cognome, codice fiscale, genere, data di
+  nascita, luogo e provincia di nascita, cittadinanza.
 - **Ruolo**, solo per gli attuatori: tendina «Ruolo attuatore» con la voce
   iniziale «Aderente (default)», seguita da Aderente, Regionale, Provinciale e
   Nazionale, nell'ordine in cui i ruoli sono registrati.
+- **Contatti**: email e cellulare, con lo stato di verifica accanto
+  all'etichetta; poi PEC e telefono.
+- **Documento**: tipo (carta d'identità, passaporto, patente), numero, comune
+  di rilascio, data di rilascio, data di scadenza.
 - **Residenza** e **Domicilio**: indirizzo, civico, comune, CAP, provincia.
-  «Copia Residenza in Domicilio» copia i cinque campi della residenza su
-  quelli del domicilio.
-- **Contatti**: email, PEC, cellulare, telefono.
+  «Copia da residenza», nella sezione Domicilio, copia i cinque campi della
+  residenza su quelli del domicilio.
 
-Già in creazione si possono compilare il Curriculum Formativo e, per un
+Già in creazione si possono compilare il Curriculum formativo e, per un
 attuatore, la scheda Azienda. La scheda Utente mostra «Nessun utente
 selezionato.» finché l'anagrafica non è salvata.
 
@@ -158,7 +160,7 @@ Il server controlla anche:
   «Il documento è scaduto: inserisci una data di scadenza valida.»
 
 Il browser segnala i campi obbligatori vuoti solo se si salva mentre è aperta
-la scheda Dati Principali. Da un'altra scheda la richiesta arriva al server.
+la scheda Dati principali. Da un'altra scheda la richiesta arriva al server.
 Il server risponde con i problemi separati da punto e virgola. Per un campo
 mancante il messaggio è un testo tecnico in inglese, che non nomina il campo;
 i messaggi identici compaiono una volta sola, quindi più campi vuoti dello
@@ -207,22 +209,23 @@ inviate via email.»
 ## La scheda
 
 Un clic sull'elenco apre la scheda, con il titolo «Modifica sottoscrittore» o
-«Modifica attuatore». Un indirizzo che non corrisponde a un'anagrafica mostra
+«Modifica attuatore». Sotto il titolo compaiono nome, cognome e codice
+fiscale; a destra lo stato dell'account («Attivo» o «Disattivo»). Un indirizzo che non corrisponde a un'anagrafica mostra
 «Pagina non trovata».
 
-In fondo ci sono «Annulla» e «Salva Modifiche». Questo «Salva Modifiche»
-salva Dati Principali, Curriculum Formativo, l'azienda collegata e le
+In fondo ci sono «Annulla» e «Salva modifiche». Questo «Salva modifiche»
+salva Dati principali, Curriculum formativo, l'azienda collegata e le
 Abilitazioni. Poi torna all'elenco, senza mostrare alcun messaggio di
 conferma.
 
-### Dati Principali
+### Dati principali
 
 I campi sono quelli della creazione. In modifica il server applica regole
 diverse:
 
 - tutti i campi sono facoltativi: un campo di testo obbligatorio svuotato
   viene salvato vuoto. Una data obbligatoria svuotata invece fa fallire il
-  salvataggio: dalla scheda Dati Principali il browser lo impedisce, da
+  salvataggio: dalla scheda Dati principali il browser lo impedisce, da
   un'altra scheda la richiesta arriva al server e a video compare «Servizio
   temporaneamente non disponibile. Riprova tra poco.»;
 - il codice fiscale, se cambia, viene controllato per lunghezza, struttura e
@@ -235,34 +238,34 @@ diverse:
 
 Nota: in modifica l'obbligo dei campi è controllato solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
-### Curriculum Formativo
+### Curriculum formativo
 
-La scheda ha quattro sezioni:
+La scheda ha quattro sotto-schede, ognuna divisa in sezioni:
 
-- **Sezione Titoli**:
-  - Istruzione Secondaria: diploma, anno di conseguimento, istituto con
+- **Titoli**:
+  - Diploma di istruzione secondaria: diploma, anno di conseguimento, istituto con
     indirizzo, città e provincia, voto ricevuto e voto massimo; anno
     integrativo, con gli stessi dati;
-  - Titolo Universitario: tipo di titolo, corso di laurea, università, data di
+  - Titolo universitario: tipo di titolo, corso di laurea, università, data di
     conseguimento, voti;
-  - Titoli Post-Laurea e Altri Titoli: fino a due titoli post-laurea e due
+  - Altri titoli: fino a due titoli post-laurea e due
     altri titoli di studio, ciascuno con istituto e data.
-- **Immatricolazioni ed Iscrizioni**:
+- **Immatricolazioni ed iscrizioni**:
   - Anagrafe Nazionale Studenti: stato (immatricolato o no), tipo di corso
     (prima o dopo la riforma del D.M. 509/99), data di immatricolazione,
     ateneo, conclusione della carriera (titolo finale, rinuncia, decadenza,
     trasferimento) e relativa data;
-  - corso a cui la persona è attualmente iscritta: casella «Iscritto ad altro
+  - Iscrizione in corso, il corso a cui la persona è attualmente iscritta: casella «Iscritto ad altro
     corso di studi di altre Università», tipo, classe di laurea,
     denominazione, università, anno di iscrizione, modalità (full-time o
     part-time), città e provincia.
-- **Abilitazioni Professionali**: abilitazione professionale e qualifica
+- **Abilitazioni professionali**: abilitazione professionale e qualifica
   professionale con data e luogo; albo o elenco; forze dell'ordine; richiesta
   di convalida di attività professionalizzanti, corsi di formazione e altre
   attività certificate.
 - **Invalidità**: percentuale e tipo.
 
-Il curriculum si salva con il «Salva Modifiche» in fondo alla pagina, oppure
+Il curriculum si salva con il «Salva modifiche» in fondo alla pagina, oppure
 con la creazione. Se per la stessa persona esistono più curricula, la scheda
 mostra il più recente.
 
@@ -274,16 +277,18 @@ caratteri. Sono due dati distinti, e nessuno dei due ha a che vedere con la
 
 ### Utente
 
-La scheda «Dettagli Utente e Ruolo» contiene:
+La scheda ha due sezioni. «Account e ruolo» contiene:
 
 - il nome utente, modificabile;
 - lo stato, un pulsante che passa da «Attivo» a «Disattivo» e viceversa;
 - il ruolo, con tutti i ruoli: Utente, Aderente, Regionale, Provinciale,
   Consulente, Nazionale, Operatore;
-- l'utente padre, con il pulsante «Cambia Padre»;
-- data di creazione, ultimo aggiornamento e «aggiornato da», in sola lettura.
+- l'utente padre, con il pulsante «Cambia padre».
 
-La scheda ha un proprio «Salva Modifiche». Come si salva il ruolo, chi può
+«Cronologia» mostra data di creazione, ultimo aggiornamento e «aggiornato da»,
+in sola lettura.
+
+La scheda ha un proprio pulsante «Salva utente». Come si salva il ruolo, chi può
 salvare gli altri campi e cosa cambia per la persona dopo un cambio di ruolo
 sono descritti in [Ruoli e permessi](ruoli-e-permessi.md). Nella stessa pagina
 è descritto il pulsante «Accedi con questo utente», che compare qui per un
@@ -297,9 +302,9 @@ Restano quattro comportamenti propri di questa pagina:
 - se chi salva non può modificare nome utente, stato e utente padre, il ruolo
   viene comunque salvato per primo: dopo il messaggio di errore il ruolo
   risulta cambiato e il resto no;
-- il «Salva Modifiche» in fondo alla pagina è visibile anche da qui, ma non
+- il «Salva modifiche» in fondo alla pagina è visibile anche da qui, ma non
   salva nome utente, stato e utente padre. Per un attuatore rimanda invece il
-  ruolo scelto nei Dati Principali: se il ruolo è stato cambiato da questa
+  ruolo scelto nei Dati principali: se il ruolo è stato cambiato da questa
   scheda, quel salvataggio riporta il valore di partenza;
 - il nome utente si può cambiare anche in uno già usato da un altro utente. In
   quel caso nessuno dei due riesce più ad accedere;
@@ -325,7 +330,7 @@ salvata. Contiene cinque interruttori:
 - SSML Lamezia Terme;
 - Avatar4University.
 
-Gli interruttori si salvano con il «Salva Modifiche» in fondo alla pagina.
+Gli interruttori si salvano con il «Salva modifiche» in fondo alla pagina.
 Nella Dashboard i pulsanti delle pratiche di un ateneo sono attivi solo con
 l'abilitazione generale e con quella dell'ateneo: vedi [Pratiche](pratiche.md).
 
