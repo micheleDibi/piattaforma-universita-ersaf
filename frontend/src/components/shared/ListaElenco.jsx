@@ -3,6 +3,7 @@ import { ChevronRight, ICONE_CAMPI_ELENCO } from "../../config/icone.js";
 import AvvisoTooltip from "./AvvisoTooltip.jsx";
 import IndicatoriStato from "./IndicatoriStato.jsx";
 import { campoIndicatori, idIndicatori } from "../../lib/righeElenco.js";
+import { TESTI_ELENCO } from "../../config/testi/elenco.js";
 
 const RILIEVI_TECNICI = ["codice", "stato", "indicatori"];
 const vuoto = (valore) =>
@@ -39,7 +40,7 @@ export default function ListaElenco({ dati, modello, onApri }) {
           }}
           tabIndex={0}
           role="button"
-          aria-label={`Visualizza ${riga.nomeAzione}`}
+          aria-label={TESTI_ELENCO.visualizza(riga.nomeAzione)}
           aria-describedby={idIndicatori(base, riga, indicatori)}
         >
           <dl className="elenco-adattivo__corpo">
@@ -50,13 +51,13 @@ export default function ListaElenco({ dati, modello, onApri }) {
                   valoreGrezzo && valoreGrezzo !== "-"
                     ? valoreGrezzo
                     : modello.id === "pratiche"
-                      ? `Pratica #${riga.id}`
+                      ? TESTI_ELENCO.praticaSenzaNumero(riga.id)
                       : riga.nomeAzione && riga.nomeAzione !== "-"
                         ? riga.nomeAzione
-                        : "Elemento";
+                        : TESTI_ELENCO.elementoSenzaNome;
                 const avviso = riga.campi.avviso;
                 return (
-                  <div className="elenco-adattivo__principale flex items-center gap-2">
+                  <div className="elenco-adattivo__principale">
                     <dt className="sr-only">{campoPrincipale.etichetta}</dt>
                     {campoPrincipale.rilievo === "persona" && riga.iniziali && (
                       <span className="elenco-adattivo__iniziali" aria-hidden="true">

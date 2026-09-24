@@ -24,7 +24,7 @@ export default function AzioneCrea({ onClick, etichetta, etichettaEstesa }) {
       className={`${pulsante()} azione-crea`}
       aria-label={etichettaEstesa}
     >
-      <Plus aria-hidden="true" className="size-icona-piccola" />
+      <Plus aria-hidden="true" className="azione-crea__icona" />
       <span className="azione-crea__etichetta">{etichetta}</span>
     </button>
   );

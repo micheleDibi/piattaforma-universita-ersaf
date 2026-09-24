@@ -12,8 +12,8 @@ const VOCE =
 
 export function voceNavigazione(attiva = false) {
   return attiva
-    ? `${VOCE} bg-interazione-selezionata text-primario shadow-selezione hover:bg-interazione-selezionata-hover`
-    : `${VOCE} text-testo-tenue hover:bg-interazione-hover hover:text-testo-forte`;
+    ? `${VOCE} bg-navigazione-selezionata text-primario shadow-selezione hover:bg-navigazione-selezionata-hover`
+    : `${VOCE} text-testo-tenue hover:bg-navigazione-hover hover:text-testo-forte`;
 }
 
 export function iconaNavigazione(attiva = false) {
@@ -25,7 +25,7 @@ export function iconaNavigazione(attiva = false) {
 
 /** L'uscita condivide il feedback delle altre voci del menu. */
 export function voceUscita() {
-  return `${VOCE} text-testo-tenue hover:bg-interazione-hover hover:text-testo-forte`;
+  return `${VOCE} text-testo-tenue hover:bg-navigazione-hover hover:text-testo-forte`;
 }
 
 /**

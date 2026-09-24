@@ -1,21 +1,27 @@
 import PaginaNonTrovata from "./PaginaNonTrovata.jsx";
 import StatoCaricamentoDettaglio from "./shared/StatoCaricamentoDettaglio.jsx";
 import useNavigazioneElenco from "../hooks/useNavigazioneElenco.js";
+import usePadreAzienda from "../hooks/usePadreAzienda.js";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { apiFetch, messaggioErrore } from "../lib/api";
+import { sottotitoloAzienda } from "../lib/schedaAzienda.js";
 import { contenutoPagina } from "../config/styles/pagina";
 import { pulsante } from "../config/styles/pulsante";
-import { scheda } from "../config/styles/superficie";
+import { barraAzioniModulo } from "../config/styles/superficie";
+import { STILI_AZIENDA as stili } from "../config/styles/azienda.js";
 import { ROTTE } from "../config/routes/rotte";
+import { TESTI_AZIENDA } from "../config/testi/azienda.js";
 import IntestazionePagina from "./shared/IntestazionePagina";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 import CampiAzienda from "./CampiAzienda.jsx";
 import GerarchiaAzienda from "./GerarchiaAzienda.jsx";
 import DettaglioConvenzioniUniversitarie from "./DettaglioConvenzioniUniversitarie.jsx";
 import SezioneModulo from "./shared/SezioneModulo.jsx";
-import { TriangleAlert } from "../config/icone.js";
+import AlertMessage from "./AlertMessage.jsx";
 import { SEZIONI_AZIENDA, VUOTO_AZIENDA } from "../config/campiAzienda.js";
+
+const SEZIONI = TESTI_AZIENDA.sezioni;
 
 export default function SchedaAzienda() {
   const { aziendaId: id } = useParams();
@@ -25,10 +31,13 @@ export default function SchedaAzienda() {
 
   const [erroreLettura, setErroreLettura] = useState(null);
   const [dati, setDati] = useState(VUOTO_AZIENDA);
+  // Valori letti dal server: sottotitolo e note dei campi non ancora modificati.
+  const [salvati, setSalvati] = useState(VUOTO_AZIENDA);
   const [anomalie, setAnomalie] = useState([]);
   const [caricamento, setCaricamento] = useState(inModifica);
   const [errore, setErrore] = useState("");
   const [salvataggio, setSalvataggio] = useState(false);
+  const padre = usePadreAzienda(inModifica ? id : undefined);
 
   useEffect(() => {
     if (!inModifica) return;
@@ -44,12 +53,14 @@ export default function SchedaAzienda() {
       })
       .then((azienda) => {
         if (annullato) return;
-        setDati({
+        const valori = {
           ...VUOTO_AZIENDA,
           ...Object.fromEntries(
             Object.entries(azienda).map(([k, v]) => [k, v ?? ""]),
           ),
-        });
+        };
+        setDati(valori);
+        setSalvati(valori);
         setAnomalie(azienda.anomalie ?? []);
         setCaricamento(false);
       })
@@ -100,68 +111,72 @@ export default function SchedaAzienda() {
     return (
       <IndicatoreCaricamento
         dimensione="grande"
-        messaggio="Caricamento in corso..."
+        messaggio={TESTI_AZIENDA.caricamento}
         centrato
       />
     );
 
   return (
-    <div className={contenutoPagina("modulo")}>
+    <div className={contenutoPagina("modulo", { codaAmpia: true })}>
       <IntestazionePagina
-        titolo={inModifica ? "Modifica azienda" : "Nuova azienda"}
-        descrizione={
-          inModifica ? dati.azienda_ragione_sociale || undefined : undefined
+        titolo={
+          inModifica ? TESTI_AZIENDA.titoloModifica : TESTI_AZIENDA.titoloNuova
         }
-        indietro={{ rotta: ritorno, etichetta: "Aziende" }}
+        descrizione={
+          inModifica
+            ? sottotitoloAzienda(salvati.azienda_ragione_sociale, padre.padre)
+            : undefined
+        }
+        indietro={{ rotta: ritorno, etichetta: TESTI_AZIENDA.ritorno }}
       />
       <form onSubmit={invia} className="flex flex-col gap-5">
         {anomalie.length > 0 && (
-          <div className="flex items-start gap-2 rounded-controllo border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
-            <TriangleAlert
-              className="size-icona shrink-0 text-amber-500"
-              aria-hidden="true"
-            />
-            <ul className={anomalie.length > 1 ? "list-disc pl-4" : undefined}>
-              {anomalie.map((testo) => (
-                <li key={testo}>{testo}</li>
-              ))}
-            </ul>
-          </div>
+          <AlertMessage
+            message={{ type: "warning", text: anomalie }}
+            separato={false}
+          />
         )}
         {errore && (
-          <div className="whitespace-pre-line rounded-controllo border border-negativo/30 bg-negativo-tenue p-4 text-sm text-negativo">
-            {errore}
-          </div>
+          <AlertMessage
+            message={{ type: "error", text: errore }}
+            separato={false}
+          />
         )}
 
-        <div className={scheda()}>
-          {SEZIONI_AZIENDA.map(({ titolo, descrizione, campi }) => (
+        <div className={stili.schedaModulo}>
+          {SEZIONI_AZIENDA.map(({ chiave, campi }) => (
             <SezioneModulo
-              key={titolo}
-              titolo={titolo}
-              descrizione={descrizione}
+              key={chiave}
+              titolo={SEZIONI[chiave].titolo}
+              descrizione={SEZIONI[chiave].descrizione}
             >
               <CampiAzienda
                 dati={dati}
                 onChange={aggiorna}
-                disabilita={{ azienda_codice_nazionale: true }}
+                anomalie={anomalie}
+                salvati={salvati}
                 gruppo={campi}
               />
             </SezioneModulo>
           ))}
           {inModifica && (
             <SezioneModulo
-              titolo="Gerarchia"
-              descrizione="Azienda a cui questa è collegata."
+              titolo={SEZIONI.gerarchia.titolo}
+              descrizione={SEZIONI.gerarchia.descrizione}
               griglia={false}
             >
-              <GerarchiaAzienda aziendaId={id} />
+              <GerarchiaAzienda
+                aziendaId={id}
+                padre={padre.padre}
+                errore={padre.errore}
+                onRicarica={padre.ricarica}
+              />
             </SezioneModulo>
           )}
           {inModifica && (
             <SezioneModulo
-              titolo="Convenzioni universitarie"
-              descrizione="Percentuali applicate per ateneo e tipologia di corso."
+              titolo={SEZIONI.convenzioni.titolo}
+              descrizione={SEZIONI.convenzioni.descrizione}
               griglia={false}
             >
               <DettaglioConvenzioniUniversitarie aziendaId={id} inSezione />
@@ -169,13 +184,13 @@ export default function SchedaAzienda() {
           )}
         </div>
 
-        <div className="flex justify-end gap-3">
+        <div className={barraAzioniModulo("pagina")}>
           <button
             type="button"
             onClick={() => navigate(ritorno)}
-            className={pulsante("discreto", "grande")}
+            className={pulsante("testuale", "grande")}
           >
-            Annulla
+            {TESTI_AZIENDA.annulla}
           </button>
           <button
             type="submit"
@@ -183,10 +198,10 @@ export default function SchedaAzienda() {
             className={pulsante("primario", "grande")}
           >
             {salvataggio
-              ? "Salvataggio..."
+              ? TESTI_AZIENDA.salvataggio
               : inModifica
-                ? "Salva modifiche"
-                : "Salva"}
+                ? TESTI_AZIENDA.salvaModifiche
+                : TESTI_AZIENDA.salva}
           </button>
         </div>
       </form>

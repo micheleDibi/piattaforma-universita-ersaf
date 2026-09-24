@@ -4,7 +4,12 @@ import { campo } from "../config/styles/campo";
 import { pulsante, pulsanteIcona } from "../config/styles/pulsante";
 import { X } from "../config/icone.js";
 import Dialogo from "./shared/Dialogo.jsx";
-import { intestazioneTabella, rigaTabella } from "../config/styles/tabella";
+import {
+  cellaIntestazione,
+  intestazioneTabella,
+  rigaTabella,
+  statoVuoto,
+} from "../config/styles/tabella";
 
 export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
   const [attuatori, setAttuatori] = useState([]);
@@ -86,7 +91,7 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
       etichetta="Seleziona Nuovo Utente Padre"
     >
       <div className="dialogo__contenuto">
-        <div className="mb-4 flex items-center justify-between border-b border-bordo pb-2.5">
+        <div className="mb-4 flex items-center justify-between border-b border-divisore pb-2.5">
           <h3 className="text-lg font-semibold text-testo">
             Seleziona Nuovo Utente Padre
           </h3>
@@ -128,32 +133,30 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="h-[350px] overflow-y-auto rounded-superficie border border-bordo bg-superficie"
+          className="h-[350px] overflow-y-auto rounded-riquadro border border-bordo bg-superficie"
         >
           <table className="w-full border-collapse text-left text-sm">
-            <thead>
-              <tr
-                className={`${intestazioneTabella()} sticky top-0 z-10 border-b border-bordo`}
-              >
-                <th className="p-3 font-semibold">Nome</th>
-                <th className="p-3 font-semibold">Cognome</th>
-                <th className="p-3 font-semibold">Ruolo</th>
-                <th className="p-3 font-semibold">Azienda</th>
-                <th className="p-3 font-semibold">Azione</th>
+            <thead className={`${intestazioneTabella()} sticky top-0 z-10`}>
+              <tr>
+                <th className={cellaIntestazione()}>Nome</th>
+                <th className={cellaIntestazione()}>Cognome</th>
+                <th className={cellaIntestazione()}>Ruolo</th>
+                <th className={cellaIntestazione()}>Azienda</th>
+                <th className={cellaIntestazione()}>Azione</th>
               </tr>
             </thead>
             <tbody>
               {attuatori.map((att) => (
                 <tr key={att.cliente_id} className={rigaTabella()}>
-                  <td className="p-3 text-testo">{att.cliente_nome}</td>
-                  <td className="p-3 text-testo">{att.cliente_cognome}</td>
-                  <td className="p-3 text-testo">
+                  <td className="px-4 py-2.5 text-testo">{att.cliente_nome}</td>
+                  <td className="px-4 py-2.5 text-testo">{att.cliente_cognome}</td>
+                  <td className="px-4 py-2.5 text-testo">
                     {att.ruolo?.ruolo_codice || "-"}
                   </td>
-                  <td className="p-3 text-testo">
+                  <td className="px-4 py-2.5 text-testo">
                     {att.azienda?.azienda_ragione_sociale || "-"}
                   </td>
-                  <td className="p-3">
+                  <td className="px-4 py-2.5">
                     <button
                       type="button"
                       onClick={() => onSelectPadre(att)}
@@ -166,10 +169,7 @@ export default function ModalCambiaPadre({ isOpen, onClose, onSelectPadre }) {
               ))}
               {attuatori.length === 0 && !loadingAttuatori && (
                 <tr>
-                  <td
-                    colSpan="5"
-                    className="p-[30px] text-center text-testo-tenue"
-                  >
+                  <td colSpan="5" className={statoVuoto()}>
                     Nessun attuatore trovato.
                   </td>
                 </tr>

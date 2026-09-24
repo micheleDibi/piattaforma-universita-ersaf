@@ -10,7 +10,7 @@ export const STILI_SICUREZZA = {
   titoloSezione: titoloSezione(),
   introduzione: "mt-1 text-sm leading-relaxed text-testo-tenue",
   proposto: "mt-3 text-sm font-medium text-testo-forte",
-  elenco: "divide-y divide-bordo",
+  elenco: "divide-y divide-divisore",
   // Griglia del metodo: una colonna su mobile; da sm testata | azioni in alto
   // e contenuto (le passkey) sotto, su tutta la larghezza.
   riga: "grid gap-4 py-5 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-6",

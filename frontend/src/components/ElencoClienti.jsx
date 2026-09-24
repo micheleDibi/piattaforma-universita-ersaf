@@ -10,7 +10,7 @@ import IntestazioneElenco from "./shared/IntestazioneElenco";
 import CampoRicerca from "./shared/CampoRicerca";
 import AzioneCrea from "./shared/AzioneCrea";
 import RigheElenco from "./shared/RigheElenco.jsx";
-import { modelloClienti } from "../config/elenchi.js";
+import { modelloClienti, RUOLI_FILTRO } from "../config/elenchi.js";
 import { rigaCliente } from "../lib/righeElenco.js";
 import { campo } from "../config/styles/campo";
 import { TESTI_ELENCO } from "../config/testi/elenco.js";
@@ -56,31 +56,24 @@ function ElencoClienti({ soloAttuatori = false, soloSottoscrittori = false }) {
     };
   }, [percorsoConteggio]);
   const totale = conteggio.percorso === percorsoConteggio ? conteggio.totale : null;
+  const testi = TESTI_ELENCO.clienti[soloAttuatori ? "attuatori" : "sottoscrittori"];
   return (
     <div className={contenutoPagina()}>
       <IntestazioneElenco
-        titolo={soloAttuatori ? "Attuatori" : "Sottoscrittori"}
+        titolo={testi.titolo}
         conteggio={totale === null ? undefined : TESTI_ELENCO.risultati(totale)}
         azioni={
           <AzioneCrea
-            onClick={() =>
-              apri(risorsa.nuovo)
-            }
-            etichetta="Nuovo"
-            etichettaEstesa={
-              soloAttuatori ? "Nuovo attuatore" : "Nuovo sottoscrittore"
-            }
+            onClick={() => apri(risorsa.nuovo)}
+            etichetta={testi.nuovo}
+            etichettaEstesa={testi.nuovoEsteso}
           />
         }
         ricerca={
           <CampoRicerca
             valore={searchTerm}
             onCambia={setSearchTerm}
-            segnaposto={
-              soloAttuatori
-                ? "Cerca per nome, cognome o azienda"
-                : "Cerca per nome o cognome"
-            }
+            segnaposto={testi.segnaposto}
           />
         }
         filtri={soloAttuatori ? { attivi: selectedRuolo ? 1 : 0,
@@ -92,12 +85,10 @@ function ElencoClienti({ soloAttuatori = false, soloSottoscrittori = false }) {
               onChange={(e) => setSelectedRuolo(e.target.value)}
               className={campo()}
             >
-              <option value="" data-senza-filtro>Tutti i ruoli</option>
-              <option value="Aderente">Aderente</option>
-              <option value="Provinciale">Provinciale</option>
-              <option value="Regionale">Regionale</option>
-              <option value="Nazionale">Nazionale</option>
-              <option value="Operatore">Operatore</option>
+              <option value="" data-senza-filtro>{TESTI_ELENCO.tuttiRuoli}</option>
+              {RUOLI_FILTRO.map((ruolo) => (
+                <option key={ruolo} value={ruolo}>{ruolo}</option>
+              ))}
             </select>
             </label>
           ) } : undefined}
@@ -107,7 +98,7 @@ function ElencoClienti({ soloAttuatori = false, soloSottoscrittori = false }) {
           dati={pagina.elementi.map((item) => rigaCliente(item, opzioniRighe))}
           modello={modelloClienti(opzioniRighe)}
           onApri={(id) => apri(risorsa.dettaglio(id))}
-          vuoto={!pagina.loading && !pagina.errore && (soloAttuatori ? "Nessun attuatore trovato." : "Nessun sottoscrittore trovato.")}
+          vuoto={!pagina.loading && !pagina.errore && testi.vuoto}
         />
 
         <StatoPagineElenco pagina={pagina} />

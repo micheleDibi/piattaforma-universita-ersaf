@@ -23,7 +23,7 @@ export default function SelezioneRicercabile({ configurazione, selezionati, onCa
           onClick={() => onCambia(selezionati.filter(item => item.id !== opzione.id))}><X aria-hidden="true" /></button>
       </li>)}
     </ul>}
-    <input type="search" className={campo()} value={ricerca} placeholder={segnaposto}
+    <input type="search" className={campo("comodo")} value={ricerca} placeholder={segnaposto}
       aria-label={`Cerca ${titolo.toLowerCase()}`} aria-controls={`${id}-risultati`}
       onChange={event => setRicerca(event.target.value)} />
     <div id={`${id}-risultati`} className="selezione-ricercabile__risultati" aria-busy={pagina.loading}>

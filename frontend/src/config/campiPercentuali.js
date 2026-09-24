@@ -12,3 +12,13 @@ export const CAMPI_PERCENTUALI = [
   ["universita_A4U_master", "A4U - Master"],
   ["universita_A4U_perfezionamenti", "A4U - Perfezionamenti"],
 ];
+
+// Righe della tabella: ateneo e campo per Lauree, Master, Perfezionamenti
+// (intestazioni in TESTI_AZIENDA.convenzioni.tipologie); null = la
+// convenzione non prevede quella tipologia.
+export const CONVENZIONI = [
+  ["eCampus", "universita_ecampus_lauree", "universita_ecampus_master", null],
+  ["Link", "universita_link_lauree", "universita_link_master", null],
+  ["SSML", "universita_SSML_lauree", "universita_SSML_master", null],
+  ["A4U", null, "universita_A4U_master", "universita_A4U_perfezionamenti"],
+];

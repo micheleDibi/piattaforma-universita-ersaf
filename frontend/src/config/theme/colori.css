@@ -1,44 +1,72 @@
-/* Ruoli semantici dell'intera app, derivati dai campioni del logo.
- * I colori luminosi di marca vengono scuriti quando devono portare testo. */
+/* Ruoli semantici dell'intera app. I valori dell'interfaccia richiamano i
+ * campioni esatti del design (palette.css, secondo blocco); le famiglie che il
+ * design non tocca (accento oro, informazione) restano miscele dei campioni del
+ * logo, scurite quando devono portare testo. */
 @theme {
-  --color-primario: var(--color-marchio-viola);
-  --color-primario-scuro: color-mix(in srgb, var(--color-marchio-viola) 80%, var(--color-neutro-nero));
-  --color-primario-tenue: color-mix(in srgb, var(--color-marchio-viola) 6%, var(--color-neutro-bianco));
+  --color-primario: var(--color-indaco-700);
+  --color-primario-hover: var(--color-indaco-600);
+  --color-primario-tenue: var(--color-indaco-100);
+  --color-primario-velo: var(--color-indaco-75);
   --color-su-primario: var(--color-neutro-bianco);
   --color-accento: var(--color-marchio-oro);
   --color-accento-tenue: color-mix(in srgb, var(--color-marchio-oro) 16%, var(--color-neutro-bianco));
-  --color-accento-tenue-hover: color-mix(in srgb, var(--color-marchio-oro) 24%, var(--color-neutro-bianco));
-  --color-interazione-hover: color-mix(in srgb, var(--color-accento) 6%, transparent);
-  --color-interazione-selezionata: color-mix(in srgb, var(--color-accento) 10%, transparent);
-  --color-interazione-selezionata-hover: color-mix(in srgb, var(--color-accento) 14%, transparent);
+  /* Solo il guscio: voce attiva e passaggio nel menu di navigazione. */
+  --color-navigazione-hover: color-mix(in srgb, var(--color-accento) 6%, transparent);
+  --color-navigazione-selezionata: color-mix(in srgb, var(--color-accento) 10%, transparent);
+  --color-navigazione-selezionata-hover: color-mix(in srgb, var(--color-accento) 14%, transparent);
 
-  --color-tela: color-mix(in srgb, var(--color-marchio-viola) 2.5%, var(--color-neutro-bianco));
+  --color-tela: var(--color-ardesia-50);
   --color-superficie: var(--color-neutro-bianco);
-  --color-superficie-tenue: color-mix(in srgb, var(--color-marchio-viola) 3%, var(--color-neutro-bianco));
-  --color-superficie-alta: color-mix(in srgb, var(--color-marchio-viola) 6%, var(--color-neutro-bianco));
+  --color-superficie-tenue: var(--color-ardesia-25);
+  --color-superficie-alta: var(--color-ardesia-100);
+  --color-superficie-premuta: var(--color-ardesia-175);
+  --color-riga-hover: var(--color-indaco-25);
+  --color-evidenza: var(--color-indaco-50);
+  --color-evidenza-bordo: var(--color-indaco-150);
 
-  --color-bordo: color-mix(in srgb, var(--color-marchio-viola) 16%, var(--color-neutro-bianco));
-  --color-bordo-neutro: color-mix(in srgb, var(--color-marchio-carbone) 25%, var(--color-neutro-bianco));
-  --color-bordo-forte: color-mix(in srgb, var(--color-marchio-viola) 30%, var(--color-neutro-bianco));
-  --color-bordo-controllo: var(--color-testo-tenue);
-  --color-testo: var(--color-marchio-carbone);
-  --color-testo-tenue: color-mix(in srgb, var(--color-marchio-carbone) 78%, var(--color-neutro-bianco));
-  --color-testo-forte: color-mix(in srgb, var(--color-marchio-viola) 65%, var(--color-marchio-carbone));
+  --color-bordo: var(--color-ardesia-200);
+  --color-divisore: var(--color-ardesia-150);
+  --color-bordo-forte: var(--color-indaco-200);
+  --color-bordo-controllo: var(--color-ardesia-250);
+  --color-bordo-controllo-tenue: var(--color-ardesia-225);
+  --color-testo: var(--color-ardesia-900);
+  /* Sinonimo di `testo`: i titoli a peso 600 non hanno piu' una tinta propria. */
+  --color-testo-forte: var(--color-testo);
+  --color-testo-secondario: var(--color-ardesia-700);
+  --color-testo-tenue: var(--color-ardesia-600);
+  --color-testo-sola-lettura: var(--color-ardesia-550);
+  --color-testo-attenuato: var(--color-ardesia-500);
+  /* Segnaposto dei campi come nel design, che non dichiara ::placeholder e
+   * lascia il grigio predefinito del browser: campo() e ricerca degli elenchi
+   * (testataElenco.css). Le voci "Seleziona..." dei select restano
+   * testo-attenuato (selezione.css). */
+  --color-testo-segnaposto: var(--color-grigio-550);
+  --color-testo-spento: var(--color-ardesia-400);
 
-  --color-positivo: color-mix(in srgb, var(--color-marchio-verde) 64%, var(--color-neutro-nero));
-  --color-positivo-forte: color-mix(in srgb, var(--color-marchio-verde) 48%, var(--color-neutro-nero));
-  --color-positivo-tenue: color-mix(in srgb, var(--color-marchio-verde) 9%, var(--color-neutro-bianco));
-  --color-positivo-bordo: color-mix(in srgb, var(--color-marchio-verde) 32%, var(--color-neutro-bianco));
+  --color-positivo: var(--color-muschio-700);
+  --color-positivo-forte: var(--color-muschio-700);
+  --color-positivo-tenue: var(--color-muschio-100);
+  --color-positivo-bordo: var(--color-muschio-200);
 
-  --color-attenzione: var(--color-marchio-oro);
-  --color-attenzione-tenue: color-mix(in srgb, var(--color-marchio-oro) 12%, var(--color-neutro-bianco));
-  --color-attenzione-bordo: color-mix(in srgb, var(--color-marchio-oro) 35%, var(--color-neutro-bianco));
-  --color-attenzione-forte: color-mix(in srgb, var(--color-marchio-oro) 43%, var(--color-neutro-nero));
+  --color-attenzione: var(--color-ambra-500);
+  --color-attenzione-tenue: var(--color-ambra-50);
+  --color-attenzione-bordo: var(--color-ambra-300);
+  --color-attenzione-forte: var(--color-ambra-800);
+  /* Testo del banner con piu' voci: il design usa un marrone diverso da quello
+   * della voce singola (attenzione-forte). */
+  --color-attenzione-testo: var(--color-ambra-850);
+  --color-attenzione-profondo: var(--color-ambra-900);
+  --color-attenzione-nota: var(--color-ambra-700);
+  --color-attenzione-campo: var(--color-ambra-25);
+  --color-attenzione-campo-bordo: var(--color-ambra-400);
+  --color-attenzione-comando: var(--color-ambra-100);
+  --color-attenzione-comando-hover: var(--color-ambra-200);
+  --color-attenzione-comando-testo: var(--color-ambra-600);
 
-  --color-negativo: color-mix(in srgb, var(--color-marchio-rosso) 78%, var(--color-neutro-nero));
-  --color-negativo-forte: color-mix(in srgb, var(--color-marchio-rosso) 66%, var(--color-neutro-nero));
-  --color-negativo-tenue: color-mix(in srgb, var(--color-marchio-rosso) 7%, var(--color-neutro-bianco));
-  --color-negativo-bordo: color-mix(in srgb, var(--color-marchio-rosso) 27%, var(--color-neutro-bianco));
+  --color-negativo: var(--color-mattone-600);
+  --color-negativo-forte: color-mix(in srgb, var(--color-mattone-600) 85%, var(--color-neutro-nero));
+  --color-negativo-tenue: color-mix(in srgb, var(--color-mattone-600) 7%, var(--color-neutro-bianco));
+  --color-negativo-bordo: color-mix(in srgb, var(--color-mattone-600) 27%, var(--color-neutro-bianco));
 
   --color-informazione: color-mix(in srgb, var(--color-marchio-blu) 55%, var(--color-neutro-nero));
   --color-informazione-forte: color-mix(in srgb, var(--color-marchio-blu) 50%, var(--color-neutro-nero));
@@ -47,4 +75,7 @@
 
   --color-fuoco: var(--color-primario);
   --shadow-selezione: inset 3px 0 0 var(--color-accento);
+  /* Pannelli ancorati (filtri, avvisi) e segmento attivo delle sotto-schede. */
+  --shadow-popover: 0 8px 24px color-mix(in srgb, var(--color-ombra) 12%, transparent);
+  --shadow-segmento: 0 1px 2px color-mix(in srgb, var(--color-ombra) 10%, transparent);
 }

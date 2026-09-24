@@ -18,6 +18,23 @@
 @import "./config/styles/movimento.css";
 @import "./config/styles/dialogo.css";
 @import "./config/styles/schede.css";
+@import "./config/styles/avvisi.css";
+@import "./config/styles/barraAzioni.css";
+
+/* Distanza e rientro dei pannelli ancorati: registrate, getComputedStyle le
+ * restituisce in px anche quando sono scritte con calc() o --spacing().
+ * Il valore iniziale deve essere in px: con rem (che dipende dalla radice)
+ * il browser scarta l'intera regola e la proprieta' resta non registrata. */
+@property --distanza-popover {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 16px;
+}
+@property --rientro-popover {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
 
 @layer base {
   html {
@@ -30,6 +47,16 @@
 
   input, select, textarea {
     accent-color: var(--color-primario);
+  }
+
+  /* Campi numerici senza frecce: percentuali, voti, anni. */
+  input[type="number"] {
+    appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
   }
 
   ::selection {

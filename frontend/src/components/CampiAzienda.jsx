@@ -1,71 +1,85 @@
+import { campo as classiCampo } from "../config/styles/campo";
+import { STILI_AZIENDA as stili } from "../config/styles/azienda.js";
+import { TESTI_AZIENDA } from "../config/testi/azienda.js";
 import {
-  campo as classiCampo,
-  erroreCampo,
-  etichetta as classiEtichetta,
-} from "../config/styles/campo";
-import { FACOLTATIVI, OBBLIGATORI } from "../config/campiAzienda.js";
+  FACOLTATIVI,
+  OBBLIGATORI,
+  PROPRIETA_CAMPI,
+} from "../config/campiAzienda.js";
+import { noteCampiAzienda, pivaNonConforme } from "../lib/schedaAzienda.js";
+import CampoModulo from "./shared/CampoModulo.jsx";
 
-const ETICHETTE = Object.fromEntries([...OBBLIGATORI, ...FACOLTATIVI]);
-const OBBLIGATORIO = new Set(OBBLIGATORI.map(([nome]) => nome));
-
-// Classi statiche perche' Tailwind non vede quelle composte a runtime.
-const SPAN = {
-  1: "col-span-6 sm:col-span-1",
-  2: "col-span-6 sm:col-span-2",
-  3: "col-span-6 sm:col-span-3",
-  4: "col-span-6 sm:col-span-4",
-  5: "col-span-6 sm:col-span-5",
-  6: "col-span-6",
-};
+const OBBLIGATORIO = new Set(OBBLIGATORI);
 
 /**
- * Campi del modulo azienda. Senza `gruppo` mostra tutti i campi su due
- * colonne; con `gruppo` ([nome, colonne su 6]) solo quelli indicati, pensati
- * per la griglia di SezioneModulo.
+ * Campi del modulo azienda. Con `gruppo` ([nome, colonne su 6]) mostra solo
+ * quelli indicati, dentro la griglia di SezioneModulo; senza `gruppo` mostra
+ * tutti i campi, due per riga (finestra di creazione rapida), salvo quelli
+ * con `colonneFinestra` in PROPRIETA_CAMPI (IBAN e BIC).
+ *
+ * Le note sotto i campi sono avvisi: le anomalie del server sui campi non
+ * ancora modificati (`anomalie`, confrontate con i valori `salvati`) e il
+ * controllo in tempo reale della partita IVA.
+ *
+ * @param {{
+ *   dati: Record<string, string>,
+ *   onChange: (evento: Event) => void,
+ *   anomalie?: string[],
+ *   salvati?: Record<string, string>,
+ *   soloLettura?: Record<string, boolean>,
+ *   nascondi?: Record<string, boolean>,
+ *   gruppo?: [string, number][],
+ * }} props
+ *   soloLettura: campi bloccati oltre al codice nazionale (la partita IVA
+ *   cercata, nella creazione rapida).
  */
 export default function CampiAzienda({
   dati,
   onChange,
-  disabilita = {},
+  anomalie,
+  salvati,
+  soloLettura = {},
   nascondi = {},
   gruppo,
 }) {
+  const note = noteCampiAzienda(anomalie, dati, salvati ?? dati);
+
   const campo = (nome, colonne) => {
-    const etichetta = ETICHETTE[nome];
+    const proprieta = PROPRIETA_CAMPI[nome] ?? {};
     const obbligatorio = OBBLIGATORIO.has(nome);
-    const isPartitaIVA = nome === "azienda_partitaIVA";
-    const pivaNonConforme =
-      isPartitaIVA && dati[nome] !== "" && !/^\d{11}$/.test(dati[nome]);
+    const noteCampo = note[nome] ?? [];
+    const conNota = noteCampo.length > 0;
+    const classi = classiCampo("comodo", { avviso: conNota, fuocoAvviso: "ambra" });
     return (
-      <div
+      <CampoModulo
         key={nome}
-        className={colonne ? `flex flex-col ${SPAN[colonne]}` : "flex flex-col"}
+        per={nome}
+        etichetta={TESTI_AZIENDA.campi[nome]}
+        obbligatorio={obbligatorio}
+        colonne={colonne}
+        nota={noteCampo}
+        tonoNota="avviso"
       >
-        <label htmlFor={nome} className={classiEtichetta()}>
-          {etichetta.toUpperCase()}
-          {obbligatorio && <span className="text-negativo"> *</span>}
-        </label>
         <input
           id={nome}
           name={nome}
           type="text"
           required={obbligatorio}
-          disabled={Boolean(disabilita[nome])}
+          readOnly={Boolean(proprieta.solaLettura || soloLettura[nome])}
           value={dati[nome]}
           onChange={onChange}
-          maxLength={isPartitaIVA ? 11 : undefined}
-          inputMode={isPartitaIVA ? "numeric" : undefined}
-          pattern={isPartitaIVA ? "[0-9]*" : undefined}
-          aria-invalid={pivaNonConforme || undefined}
-          aria-describedby={pivaNonConforme ? `${nome}-nota` : undefined}
-          className={classiCampo("comodo", { errore: pivaNonConforme })}
+          placeholder={TESTI_AZIENDA.segnaposti[nome]}
+          {...proprieta.input}
+          aria-invalid={
+            (nome === "azienda_partitaIVA" && pivaNonConforme(dati[nome])) ||
+            undefined
+          }
+          aria-describedby={conNota ? `${nome}-nota` : undefined}
+          className={
+            proprieta.monospazio ? `${classi} ${stili.monospazio}` : classi
+          }
         />
-        {pivaNonConforme && (
-          <p id={`${nome}-nota`} className={erroreCampo()}>
-            Deve contenere 11 cifre numeriche
-          </p>
-        )}
-      </div>
+      </CampoModulo>
     );
   };
 
@@ -75,11 +89,10 @@ export default function CampiAzienda({
       .map(([nome, colonne]) => campo(nome, colonne));
 
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-      {OBBLIGATORI.map(([nome]) => campo(nome))}
-      {FACOLTATIVI.filter(([nome]) => !nascondi[nome]).map(([nome]) =>
-        campo(nome),
-      )}
+    <div className={stili.grigliaFinestra}>
+      {[...OBBLIGATORI, ...FACOLTATIVI]
+        .filter((nome) => !nascondi[nome])
+        .map((nome) => campo(nome, PROPRIETA_CAMPI[nome]?.colonneFinestra ?? 3))}
     </div>
   );
 }

@@ -554,9 +554,9 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - Il commento del codice dice che il ruolo parte solo se cambiato.
   - `SchedaUtente.jsx:337-345`; `NuovoSottoscrittore.jsx:93-95`, `224-233`, `484-495`.
 - **Contatti mostrati come verificati.**
-  - Un account attivo senza alcuna verifica registrata vede email e cellulare come "Verificato", con il pulsante disabilitato.
+  - Un account attivo senza alcuna verifica registrata vede email e cellulare come verificati ("Verificata", "Verificato"), senza il pulsante "Verifica".
   - Il server non li considera verificati. Per esempio, non li conta come metodo del secondo fattore.
-  - `otp/contatti.py:33-51`; `frontend/src/components/contatti/CampoContatto.jsx:5-6`, `24-31`; `otp/servizio.py:76-78`; `metodi.py:45-46`.
+  - `otp/contatti.py:35-49`; `frontend/src/lib/schedaAnagrafica.js:30-41`; `frontend/src/components/contatti/CampoContatto.jsx:24-25`, `34-49`; `otp/servizio.py:76-78`; `metodi.py:45-46`.
 - **Codice fiscale segnato come obbligatorio.**
   - Il campo ha l'asterisco.
   - Né l'interfaccia né il server lo richiedono.

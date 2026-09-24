@@ -19,10 +19,10 @@ export default function CampoRicerca({
   etichetta = "Cerca",
 }) {
   return (
-    <div className="relative w-full sm:max-w-xs">
+    <div className="relative w-full">
       <Search
         aria-hidden="true"
-        className="pointer-events-none absolute left-3 top-1/2 size-icona-piccola -translate-y-1/2 text-testo-tenue"
+        className="pointer-events-none absolute left-3 top-1/2 size-icona-piccola -translate-y-1/2 text-testo-attenuato"
       />
       <input
         type="search"
@@ -30,7 +30,7 @@ export default function CampoRicerca({
         onChange={(evento) => onCambia(evento.target.value)}
         placeholder={segnaposto}
         aria-label={etichetta}
-        className={`${campo()} pl-9`}
+        className={`${campo("compatto")} pl-8`}
       />
     </div>
   );

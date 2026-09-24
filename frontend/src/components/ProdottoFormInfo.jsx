@@ -17,7 +17,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
               value={formData.listTesta_codice ?? ""}
               onChange={handleChange}
               placeholder="Inserisci o genera codice"
-              className={campo()}
+              className={campo("comodo")}
             />
           </div>
         </div>
@@ -31,7 +31,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             name="listino_tipoCorso_id"
             value={formData.listino_tipoCorso_id ?? ""}
             onChange={handleChange}
-            className={`${campo()} cursor-pointer`}
+            className={`${campo("comodo")} cursor-pointer`}
           >
             <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.tipoCorso}</option>
             <option value={1}>MASTER</option>
@@ -47,8 +47,8 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
           </select>
         </div>
 
-        {/* Checkbox Attivo */}
-        <div className="flex items-center space-x-3 pt-2">
+        {/* Checkbox Attivo: gap e non space-x, che il m-0 di spunta() annullerebbe. */}
+        <div className="flex items-center gap-2.5 pt-2">
           <input
             type="checkbox"
             id="listino_attivoSN"
@@ -74,7 +74,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             name="nome_universita_id"
             value={formData.nome_universita_id ?? ""}
             onChange={handleChange}
-            className={`${campo()} cursor-pointer`}
+            className={`${campo("comodo")} cursor-pointer`}
           >
             <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.universita}</option>
             <option value={1}>Università Telematica eCampus</option>
@@ -99,7 +99,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
           value={formData.listTesta_descrizione ?? ""}
           onChange={handleChange}
           required
-          className={campo()}
+          className={campo("comodo")}
         />
       </div>
 
@@ -113,7 +113,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             name="listTesta_livello"
             value={formData.listTesta_livello ?? ""}
             onChange={handleChange}
-            className={`${campo()} cursor-pointer`}
+            className={`${campo("comodo")} cursor-pointer`}
           >
             <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.livello}</option>
             <option value={1}>1</option>
@@ -130,7 +130,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             name="listino_modalita_id"
             value={formData.listino_modalita_id ?? ""}
             onChange={handleChange}
-            className={`${campo()} cursor-pointer`}
+            className={`${campo("comodo")} cursor-pointer`}
           >
             <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.modalita}</option>
             <option value={1}>FULL ONLINE</option>
@@ -148,7 +148,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             name="listino_facolta_id"
             value={formData.listino_facolta_id ?? ""}
             onChange={handleChange}
-            className={`${campo()} cursor-pointer`}
+            className={`${campo("comodo")} cursor-pointer`}
           >
             <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.facolta}</option>
             <option value={1}>ECONOMIA</option>
@@ -169,7 +169,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             name="listino_corsoLaurea_id"
             value={formData.listino_corsoLaurea_id ?? ""}
             onChange={handleChange}
-            className={`${campo()} cursor-pointer`}
+            className={`${campo("comodo")} cursor-pointer`}
           >
             <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.corsoLaurea}</option>
             <option value={1}>L33 - ECONOMIA E COMMERCIO</option>
@@ -234,7 +234,7 @@ export default function ProdottoFormInfo({ formData, handleChange }) {
             name="listino_durataLaurea_id"
             value={formData.listino_durataLaurea_id ?? ""}
             onChange={handleChange}
-            className={`${campo()} cursor-pointer`}
+            className={`${campo("comodo")} cursor-pointer`}
           >
             <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.durata}</option>
             <option value={1}>TRIENNALE</option>

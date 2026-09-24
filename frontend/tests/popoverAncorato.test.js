@@ -41,3 +41,14 @@ test("offset del viewport visibile: il popup resta raggiungibile con zoom o tast
   assert.ok(p.left >= 66 && p.left + pannello.width <= 424);
   assert.ok(p.top >= 116 && p.top + Math.min(pannello.height, p.maxHeight) <= 484);
 });
+
+test("allineato all'inizio: il pannello parte dal bordo sinistro del comando, meno il rientro", () => {
+  const avvisi = { width: 320, height: 90 };
+  const opzioni = { allinea: "inizio", rientro: 8 };
+  const p = posizionePopover({ left: 380, top: 226, bottom: 254, right: 408 }, avvisi, desktop, 6, opzioni);
+  assert.equal(p.left, 372);
+  assert.equal(p.top, 260);
+  // Vicino ai bordi del viewport resta dentro, a `distanza` dal margine.
+  assert.equal(posizionePopover({ left: 1300, top: 226, bottom: 254, right: 1328 }, avvisi, desktop, 6, opzioni).left, 1114);
+  assert.equal(posizionePopover({ left: 4, top: 226, bottom: 254, right: 32 }, avvisi, desktop, 6, opzioni).left, 6);
+});

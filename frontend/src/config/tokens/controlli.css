@@ -7,9 +7,21 @@
 :root { --soglia-menu-mobile: theme(--breakpoint-lg); }
 
 @theme {
-  /* Raggi: uno per i controlli, uno per le superfici che li contengono. */
+  /* Raggi. Controllo 8 (campi e pulsanti); superficie 14 (schede e testate);
+   * evidenza 12 (schede evidenziate); riquadro 10 (banner, tabelle di modulo,
+   * riquadri, barra segmentata, popover); segmento 7 (voce della barra
+   * segmentata); comando 6 (pulsante minimo, pulsante avviso nelle righe). */
   --radius-controllo: var(--radius-lg);
-  --radius-superficie: var(--radius-xl);
+  --radius-superficie: 0.875rem;
+  --radius-evidenza: var(--radius-xl);
+  --radius-riquadro: 0.625rem;
+  --radius-segmento: 0.4375rem;
+  --radius-comando: var(--radius-md);
+
+  /* Altezze dei controlli: 42 nei moduli, 40 in ricerca, filtri e testate.
+   * Utilita': h-controllo, h-controllo-compatto. */
+  --spacing-controllo: calc(var(--spacing) * 10.5);
+  --spacing-controllo-compatto: calc(var(--spacing) * 10);
 
   /* Icone: nei controlli e nel menu, e nella misura piccola dentro i campi.
    * Utilita': size-icona, size-icona-piccola. */
@@ -22,7 +34,7 @@
   --spacing-barra-laterale: calc(var(--spacing) * 64);
   --spacing-barra-superiore: calc(var(--spacing) * 20);
   --container-filtri-elenco: var(--container-xs);
-  --container-ricerca-elenco: var(--container-sm);
+  --container-ricerca-elenco: 15rem;
   --breakpoint-testata-stretta: 20rem;
 
   /* Soglie del contenitore elenco, non della finestra. */
@@ -34,9 +46,13 @@
   --spacing-colonna-numero: calc(var(--spacing) * 36);
   --spacing-colonna-stato: calc(var(--spacing) * 32);
   --spacing-colonna-stato-compatta: calc(var(--spacing) * 28);
+  /* Stato delle pratiche: il distintivo piu' lungo ("Pratica in Attesa di
+   * Modifica", 195px) sta su una riga anche con i rientri delle celle. */
+  --spacing-colonna-stato-pratiche: 13.5rem;
 
-  /* Larghezza massima del contenuto. Utilita': max-w-pagina per gli elenchi,
-   * max-w-modulo per le pagine di dettaglio con un modulo. */
-  --container-pagina: var(--container-7xl);
-  --container-modulo: var(--container-5xl);
+  /* Larghezza massima del contenuto, esclusi i margini (box-content).
+   * Utilita': max-w-pagina per gli elenchi (1120), max-w-modulo per le pagine
+   * di dettaglio con un modulo (1080). */
+  --container-pagina: 70rem;
+  --container-modulo: 67.5rem;
 }

@@ -1,15 +1,36 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { apiFetch, messaggioErrore } from "../lib/api";
 import { leggiRuolo } from "../lib/sessione";
+import { nomeAzienda } from "../lib/schedaAzienda.js";
 import { pulsante } from "../config/styles/pulsante";
-import { etichetta as classiEtichetta } from "../config/styles/campo";
+import { notaCampo } from "../config/styles/campo";
+import { STILI_AZIENDA as stili } from "../config/styles/azienda.js";
+import { TESTI_AZIENDA } from "../config/testi/azienda.js";
 import ModalCambiaPadreAzienda from "./ModalCambiaPadreAzienda.jsx";
 import AlertMessage from "./AlertMessage.jsx";
 
-export default function GerarchiaAzienda({ aziendaId }) {
-  // undefined = in caricamento, null = nessun padre (azienda radice)
-  const [padre, setPadre] = useState(undefined);
-  const [errore, setErrore] = useState("");
+const TESTI = TESTI_AZIENDA.gerarchia;
+
+/**
+ * Riquadro "Azienda padre" della scheda azienda, con "Cambia padre" per il
+ * Nazionale. Il padre lo legge la scheda (usePadreAzienda), che lo usa anche
+ * nel sottotitolo: qui arriva gia' letto, con `onRicarica` per rileggerlo
+ * dopo un cambio.
+ *
+ * @param {{
+ *   aziendaId: string,
+ *   padre: object|null|undefined,
+ *   errore?: string,
+ *   onRicarica: () => void,
+ * }} props
+ *   padre: undefined in caricamento, null se l'azienda e' radice.
+ */
+export default function GerarchiaAzienda({
+  aziendaId,
+  padre,
+  errore,
+  onRicarica,
+}) {
   const [salvataggio, setSalvataggio] = useState(false);
   const [messaggioSalvataggio, setMessaggioSalvataggio] = useState("");
   const [modaleAperta, setModaleAperta] = useState(false);
@@ -18,42 +39,6 @@ export default function GerarchiaAzienda({ aziendaId }) {
   const [azionePendente, setAzionePendente] = useState(undefined);
 
   const eNazionale = leggiRuolo() === "nazionale";
-
-  // Nuova azienda, nessun errore residuo: si azzera durante il render, non
-  // nell'effetto che carica il padre.
-  const [aziendaIdMostrata, setAziendaIdMostrata] = useState(aziendaId);
-  if (aziendaId !== aziendaIdMostrata) {
-    setAziendaIdMostrata(aziendaId);
-    setErrore("");
-  }
-
-  const caricaPadre = () => {
-    apiFetch(`/aziende-xcod/${aziendaId}/padre`)
-      .then(async (risposta) => {
-        if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
-        return risposta.json();
-      })
-      .then(async (arco) => {
-        if (!arco || arco.azienda_padre_id == null) {
-          setPadre(null);
-          return;
-        }
-        const rispostaAzienda = await apiFetch(
-          `/aziende/${arco.azienda_padre_id}`,
-        );
-        setPadre(
-          rispostaAzienda.ok
-            ? await rispostaAzienda.json()
-            : {
-                azienda_id: arco.azienda_padre_id,
-                azienda_ragione_sociale: null,
-              },
-        );
-      })
-      .catch((err) => setErrore(err.message));
-  };
-
-  useEffect(caricaPadre, [aziendaId]);
 
   // Niente <form>/onSubmit: questo componente vive dentro il <form> di
   // SchedaAzienda.jsx, e React non gestisce form annidati.
@@ -82,8 +67,7 @@ export default function GerarchiaAzienda({ aziendaId }) {
 
       if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
       setAzionePendente(undefined);
-      setErrore("");
-      caricaPadre();
+      onRicarica();
     } catch (err) {
       setMessaggioSalvataggio(err.message);
     } finally {
@@ -91,20 +75,23 @@ export default function GerarchiaAzienda({ aziendaId }) {
     }
   };
 
-  if (errore) return <p className="text-sm text-negativo">Errore: {errore}</p>;
+  if (errore)
+    return (
+      <AlertMessage message={{ type: "error", text: errore }} separato={false} />
+    );
 
   return (
-    <div className="rounded-controllo border border-bordo bg-superficie-tenue px-4 py-3.5">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex min-w-0 flex-col gap-1">
-          <p className={`${classiEtichetta()} mb-0`}>AZIENDA PADRE</p>
-          <p className="font-medium text-testo-forte">
-            {padre === undefined && "Caricamento..."}
-            {padre === null && "Nessuna (azienda radice)"}
-            {padre &&
-              (padre.azienda_ragione_sociale ??
-                `Azienda #${padre.azienda_id}`)}
-          </p>
+    <div className={stili.riquadroPadre}>
+      <div className={stili.rigaPadre}>
+        <div className={stili.testoPadre}>
+          <span className={stili.etichettaPadre}>{TESTI.etichetta}</span>
+          <span className={stili.nomePadre}>
+            {padre === undefined
+              ? TESTI.caricamento
+              : padre === null
+                ? TESTI.radice
+                : nomeAzienda(padre)}
+          </span>
         </div>
 
         {eNazionale && (
@@ -112,41 +99,43 @@ export default function GerarchiaAzienda({ aziendaId }) {
             type="button"
             onClick={() => setModaleAperta(true)}
             disabled={salvataggio}
-            className={`${pulsante("secondario")} shrink-0`}
+            className={`${pulsante("contorno", "medio")} shrink-0`}
           >
-            {salvataggio ? "Salvataggio..." : "Cambia padre"}
+            {salvataggio ? TESTI_AZIENDA.salvataggio : TESTI.cambia}
           </button>
         )}
       </div>
 
       {messaggioSalvataggio && (
-        <p className="mt-2 text-sm text-negativo">{messaggioSalvataggio}</p>
+        <p className={notaCampo("errore")}>{messaggioSalvataggio}</p>
       )}
 
       {azionePendente !== undefined && (
-        <div className="mt-3 flex items-center justify-between gap-4 rounded-controllo border border-bordo p-3">
-          <AlertMessage
-            message={{
-              type: "warning",
-              text: "Alcune percentuali verranno azzerate. Continuare?",
-            }}
-            separato={false}
-          />
-          <div className="flex shrink-0 gap-3">
+        <div className={`${stili.conferma} mt-3`}>
+          <div className={stili.messaggioConferma}>
+            <AlertMessage
+              message={{
+                type: "warning",
+                text: TESTI_AZIENDA.azzeramento.messaggio,
+              }}
+              separato={false}
+            />
+          </div>
+          <div className={stili.pulsantiConferma}>
             <button
               type="button"
               onClick={() => cambiaPadre(azionePendente, true)}
               disabled={salvataggio}
               className={pulsante("primario", "piccolo")}
             >
-              Conferma
+              {TESTI_AZIENDA.azzeramento.conferma}
             </button>
             <button
               type="button"
               onClick={() => setAzionePendente(undefined)}
-              className={pulsante("discreto", "piccolo")}
+              className={pulsante("testuale", "piccolo")}
             >
-              Annulla
+              {TESTI_AZIENDA.azzeramento.annulla}
             </button>
           </div>
         </div>

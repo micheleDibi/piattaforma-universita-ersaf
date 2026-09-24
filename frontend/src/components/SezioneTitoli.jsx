@@ -2,178 +2,110 @@ import { useId } from "react";
 import { SEGNAPOSTI_SELEZIONE } from "../config/testi/selezioni.js";
 import { TESTI_TITOLI } from "../config/testi/titoli.js";
 import { campo, etichetta } from "../config/styles/campo";
+import { intestazioneCampi, rigaCampi, tabellaCampi } from "../config/styles/tabella";
+import {
+  campoDataEvidenziata,
+  colonnaCampo,
+  STILI_ANAGRAFICA as stili,
+} from "../config/styles/anagrafica.js";
 import SezioneModulo from "./shared/SezioneModulo.jsx";
-import { riquadro } from "../config/styles/superficie";
+import CampoModulo from "./shared/CampoModulo.jsx";
+
+// Righe della tabella "Altri titoli": suffisso delle colonne universita_*_<suffisso>.
+const ALTRI_TITOLI = ["pl1", "pl2", "ats1", "ats2"];
+
+// Campi dell'anno integrativo: campi e etichette attenuati.
+const SECONDARIO = { dimensione: "secondario", secondario: true };
 
 // Gli anni del diploma e dell'anno integrativo sono varchar(45) nel database.
+// I due campi degli anni e la data del titolo sono scritti per intero, senza
+// funzioni di supporto: tests/sezioneTitoli.test.js ne legge il sorgente.
 export default function SezioneTitoli({ formData, handleChange }) {
   const id = useId();
+  const t = TESTI_TITOLI;
+
+  const testo = (nome, chiave, etichettaCampo, colonne, { dimensione = "comodo", secondario = false } = {}) => (
+    <CampoModulo per={`${id}-${chiave}`} etichetta={etichettaCampo} colonne={colonne} secondario={secondario}>
+      <input
+        id={`${id}-${chiave}`}
+        type="text"
+        name={nome}
+        value={formData[nome]}
+        onChange={handleChange}
+        className={campo(dimensione)}
+      />
+    </CampoModulo>
+  );
+
+  // Voto ricevuto e massimo: un gruppo con una sola etichetta visibile.
+  const voto = (ricevuto, massimo, chiave, { dimensione = "comodo", secondario = false } = {}) => (
+    <div role="group" aria-labelledby={`${id}-${chiave}`} className={colonnaCampo(3)}>
+      <span id={`${id}-${chiave}`} className={etichetta(secondario ? "secondaria" : "compatta")}>
+        {t.voto}
+      </span>
+      <div className={stili.voto}>
+        <input
+          type="number"
+          name={ricevuto}
+          value={formData[ricevuto]}
+          onChange={handleChange}
+          aria-label={t.votoRicevuto}
+          className={campo(dimensione)}
+        />
+        <span aria-hidden="true" className={stili.separatoreVoto}>{t.separatoreVoto}</span>
+        <input
+          type="number"
+          name={massimo}
+          value={formData[massimo]}
+          onChange={handleChange}
+          aria-label={t.votoMassimo}
+          className={campo(dimensione)}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div>
-      {/* SEZIONE 1: Istruzione Secondaria e Anno Integrativo */}
-      <SezioneModulo titolo="Diploma di istruzione secondaria" descrizione="Requisito di accesso ai corsi universitari." griglia={false}>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-          {/* Colonna Sinistra */}
-          <div className="space-y-4">
-            <div>
-              <label className={etichetta()}>
-                Diploma di istruzione secondaria
-              </label>
-              <input
-                type="text"
-                name="universita_diploma"
-                value={formData.universita_diploma}
-                onChange={handleChange}
-                className={campo()}
-              />
-            </div>
-            <div>
-              <label htmlFor={`${id}-anno-diploma`} className={etichetta()}>
-                Anno di conseguimento
-              </label>
-              <input
-                id={`${id}-anno-diploma`}
-                type="text"
-                name="universita_anno_scolastico"
-                value={formData.universita_anno_scolastico}
-                onChange={handleChange}
-                maxLength={45}
-                placeholder={TESTI_TITOLI.segnapostoAnno}
-                className={campo()}
-              />
-            </div>
-            <div>
-              <label className={etichetta()}>
-                Istituto
-              </label>
-              <input
-                type="text"
-                name="universita_istituto"
-                value={formData.universita_istituto}
-                onChange={handleChange}
-                className={campo()}
-              />
-            </div>
-            <div>
-              <label className={etichetta()}>
-                Indirizzo (via)
-              </label>
-              <input
-                type="text"
-                name="universita_via_istituto"
-                value={formData.universita_via_istituto}
-                onChange={handleChange}
-                className={campo()}
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-2">
-                <label className={etichetta()}>
-                  Città
-                </label>
-                <input
-                  type="text"
-                  name="universita_citta_istituto"
-                  value={formData.universita_citta_istituto}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-              <div>
-                <label className={etichetta()}>
-                  Prov.
-                </label>
-                <input
-                  type="text"
-                  name="universita_provincia_istituto"
-                  value={formData.universita_provincia_istituto}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={etichetta()}>
-                  Voto ricevuto
-                </label>
-                <input
-                  type="number"
-                  name="universita_votoRicevuto_diploma"
-                  value={formData.universita_votoRicevuto_diploma}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-              <div>
-                <label className={etichetta()}>
-                  Voto massimo
-                </label>
-                <input
-                  type="number"
-                  name="universita_votoMassimo_diploma"
-                  value={formData.universita_votoMassimo_diploma}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-            </div>
+      <SezioneModulo
+        titolo={t.diploma.titolo}
+        descrizione={t.diploma.descrizione}
+        etichetta={t.diploma.etichetta}
+        rilievo="evidenziato"
+        evidenziata
+        griglia={false}
+      >
+        <div className={stili.grigliaCampi}>
+          {testo("universita_diploma", "diploma", t.campoDiploma, 6, { dimensione: "evidenziato" })}
+          {testo("universita_istituto", "istituto", t.istituto, 4)}
+          <div className={colonnaCampo(2)}>
+            <label htmlFor={`${id}-anno-diploma`} className={etichetta()}>
+              {t.anno}
+            </label>
+            <input
+              id={`${id}-anno-diploma`}
+              type="text"
+              name="universita_anno_scolastico"
+              value={formData.universita_anno_scolastico}
+              onChange={handleChange}
+              maxLength={45}
+              placeholder={TESTI_TITOLI.segnapostoAnno}
+              className={campo("comodo")}
+            />
           </div>
+          {testo("universita_via_istituto", "via", t.via, 3)}
+          {testo("universita_citta_istituto", "citta", t.citta, 2)}
+          {testo("universita_provincia_istituto", "provincia", t.provincia, 1)}
+          {voto("universita_votoRicevuto_diploma", "universita_votoMassimo_diploma", "voto")}
+        </div>
 
-          {/* Colonna Destra (Anno Integrativo _ai) */}
-          <div className="space-y-4">
-            <div>
-              <label className={etichetta()}>
-                Anno integrativo presso
-              </label>
-              <input
-                type="text"
-                name="universita_istituto_ai"
-                value={formData.universita_istituto_ai}
-                onChange={handleChange}
-                className={campo()}
-              />
-            </div>
-            <div>
-              <label className={etichetta()}>
-                Città
-              </label>
-              <input
-                type="text"
-                name="universita_citta_istituto_ai"
-                value={formData.universita_citta_istituto_ai}
-                onChange={handleChange}
-                className={campo()}
-              />
-            </div>
-            <div>
-              <label className={etichetta()}>
-                Provincia
-              </label>
-              <input
-                type="text"
-                name="universita_provincia_istituto_ai"
-                value={formData.universita_provincia_istituto_ai}
-                onChange={handleChange}
-                className={campo()}
-              />
-            </div>
-            <div>
-              <label className={etichetta()}>
-                Indirizzo (via)
-              </label>
-              <input
-                type="text"
-                name="universita_via_istituto_ai"
-                value={formData.universita_via_istituto_ai}
-                onChange={handleChange}
-                className={campo()}
-              />
-            </div>
-            <div>
-              <label htmlFor={`${id}-anno-integrativo`} className={etichetta()}>
-                Anno di conseguimento
+        <div className={stili.parteFacoltativa}>
+          <span className={stili.didascalia}>{t.integrativo}</span>
+          <div className={stili.grigliaSecondaria}>
+            {testo("universita_istituto_ai", "presso", t.presso, 4, SECONDARIO)}
+            <div className={colonnaCampo(2)}>
+              <label htmlFor={`${id}-anno-integrativo`} className={etichetta("secondaria")}>
+                {t.anno}
               </label>
               <input
                 id={`${id}-anno-integrativo`}
@@ -183,270 +115,95 @@ export default function SezioneTitoli({ formData, handleChange }) {
                 onChange={handleChange}
                 maxLength={45}
                 placeholder={TESTI_TITOLI.segnapostoAnno}
-                className={campo()}
+                className={campo("secondario")}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={etichetta()}>
-                  Voto ricevuto
-                </label>
-                <input
-                  type="number"
-                  name="universita_votoRicevuto_ai"
-                  value={formData.universita_votoRicevuto_ai}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-              <div>
-                <label className={etichetta()}>
-                  Voto massimo
-                </label>
-                <input
-                  type="number"
-                  name="universita_votoMassimo_ai"
-                  value={formData.universita_votoMassimo_ai}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-            </div>
+            {testo("universita_via_istituto_ai", "via-integrativo", t.via, 3, SECONDARIO)}
+            {testo("universita_citta_istituto_ai", "citta-integrativo", t.citta, 2, SECONDARIO)}
+            {testo("universita_provincia_istituto_ai", "provincia-integrativo", t.provincia, 1, SECONDARIO)}
+            {voto("universita_votoRicevuto_ai", "universita_votoMassimo_ai", "voto-integrativo", SECONDARIO)}
           </div>
         </div>
       </SezioneModulo>
 
-      {/* SEZIONE 2: Titolo Universitario */}
-      <SezioneModulo titolo="Titolo universitario" descrizione="Titolo di studio più recente conseguito." griglia={false}>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-          <div className="space-y-4">
-            <div>
-              <label className={etichetta()}>
-                Titolo Universitario
-              </label>
-              <select
-                name="universita_titolo_universitario"
-                value={formData.universita_titolo_universitario}
-                onChange={handleChange}
-                className={campo()}
-              >
-                <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.titolo}</option>
-                <option value="laurea_1_livello">
-                  Laurea (Laurea 1° Livello)
-                </option>
-                <option value="laurea_magistrale">Laurea Magistrale</option>
-                <option value="laurea_specialistica">
-                  Laurea Specialistica
-                </option>
-                <option value="diploma_universitario">
-                  Diploma Universitario
-                </option>
-                <option value="laurea_vecchio_ordinamento">
-                  Laurea vecchio ordinamento
-                </option>
-              </select>
-            </div>
-            <div>
-              <label className={etichetta()}>
-                Corso di Laurea
-              </label>
-              <input
-                type="text"
-                name="universita_materia_titolo"
-                value={formData.universita_materia_titolo}
-                onChange={handleChange}
-                className={campo()}
-              />
-            </div>
-            <div>
-              <label className={etichetta()}>
-                Università
-              </label>
-              <input
-                type="text"
-                name="universita_universita_titolo"
-                value={formData.universita_universita_titolo}
-                onChange={handleChange}
-                className={campo()}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className={etichetta()}>
-                Data di conseguimento
-              </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  name="universita_data_titolo"
-                  value={formData.universita_data_titolo}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={etichetta()}>
-                  Voto ricevuto
-                </label>
-                <input
-                  type="number"
-                  name="universita_votoRicevuto_titolo"
-                  value={formData.universita_votoRicevuto_titolo}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-              <div>
-                <label className={etichetta()}>
-                  Voto massimo
-                </label>
-                <input
-                  type="number"
-                  name="universita_votoMassimo_titolo"
-                  value={formData.universita_votoMassimo_titolo}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+      <SezioneModulo
+        titolo={t.universitario.titolo}
+        descrizione={t.universitario.descrizione}
+        etichetta={t.universitario.etichetta}
+        rilievo="evidenziato"
+        evidenziata
+      >
+        <CampoModulo per={`${id}-titolo`} etichetta={t.titolo} colonne={4}>
+          <select
+            id={`${id}-titolo`}
+            name="universita_titolo_universitario"
+            value={formData.universita_titolo_universitario}
+            onChange={handleChange}
+            className={campo("evidenziato")}
+          >
+            <option value="" data-segnaposto>{SEGNAPOSTI_SELEZIONE.titolo}</option>
+            {t.titoliUniversitari.map(([valore, etichettaTitolo]) => (
+              <option key={valore} value={valore}>{etichettaTitolo}</option>
+            ))}
+          </select>
+        </CampoModulo>
+        <CampoModulo per={`${id}-data-titolo`} etichetta={t.dataConseguimento} colonne={2}>
+          <input
+            id={`${id}-data-titolo`}
+            type="date"
+            name="universita_data_titolo"
+            value={formData.universita_data_titolo}
+            onChange={handleChange}
+            className={campoDataEvidenziata()}
+          />
+        </CampoModulo>
+        {testo("universita_materia_titolo", "corso", t.corso, 3)}
+        {testo("universita_universita_titolo", "universita", t.universita, 3)}
+        {voto("universita_votoRicevuto_titolo", "universita_votoMassimo_titolo", "voto-titolo")}
       </SezioneModulo>
 
-      {/* SEZIONE 3: Titoli post-laurea e Altri titoli di studio */}
-      <SezioneModulo titolo="Altri titoli" descrizione="Post-laurea e titoli aggiuntivi, facoltativi." griglia={false}>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-          {/* Colonna Sinistra: Post-laurea */}
-          <div className="space-y-6">
-            <div className={`${riquadro()} space-y-3`}>
-              <span className="text-xs font-bold text-testo uppercase">
-                Titolo post-laurea (1)
-              </span>
-              <div>
-                <label className={etichetta()}>
-                  Istituto
-                </label>
-                <input
-                  type="text"
-                  name="universita_istituto_pl1"
-                  value={formData.universita_istituto_pl1}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-              <div>
-                <label className={etichetta()}>
-                  DATA
-                </label>
-                <input
-                  type="date"
-                  name="universita_data_pl1"
-                  value={formData.universita_data_pl1}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-            </div>
-
-            <div className={`${riquadro()} space-y-3`}>
-              <span className="text-xs font-bold text-testo uppercase">
-                Titolo post-laurea (2)
-              </span>
-              <div>
-                <label className={etichetta()}>
-                  Istituto
-                </label>
-                <input
-                  type="text"
-                  name="universita_istituto_pl2"
-                  value={formData.universita_istituto_pl2}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-              <div>
-                <label className={etichetta()}>
-                  DATA
-                </label>
-                <input
-                  type="date"
-                  name="universita_data_pl2"
-                  value={formData.universita_data_pl2}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-            </div>
+      <SezioneModulo
+        titolo={t.altri.titolo}
+        descrizione={t.altri.descrizione}
+        rilievo="secondario"
+        griglia={false}
+      >
+        <div role="table" aria-label={t.altri.titolo} className={tabellaCampi()}>
+          <div role="row" className={intestazioneCampi("compatta", "titoli", "tenue")}>
+            <span role="columnheader">{t.titolo}</span>
+            <span role="columnheader">{t.istituto}</span>
+            <span role="columnheader">{t.data}</span>
           </div>
-
-          {/* Colonna Destra: Altri titoli */}
-          <div className="space-y-6">
-            <div className={`${riquadro()} space-y-3`}>
-              <span className="text-xs font-bold text-testo uppercase">
-                Altro titolo di studio (1)
-              </span>
-              <div>
-                <label className={etichetta()}>
-                  Istituto
-                </label>
-                <input
-                  type="text"
-                  name="universita_istituto_ats1"
-                  value={formData.universita_istituto_ats1}
-                  onChange={handleChange}
-                  className={campo()}
-                />
+          {ALTRI_TITOLI.map((suffisso) => {
+            const riga = t.righe[suffisso];
+            const istituto = `universita_istituto_${suffisso}`;
+            const data = `universita_data_${suffisso}`;
+            return (
+              <div key={suffisso} role="row" className={rigaCampi("compatta", "titoli")}>
+                <span role="rowheader" className={stili.titoloRiga}>{riga}</span>
+                <div role="cell">
+                  <input
+                    type="text"
+                    name={istituto}
+                    value={formData[istituto]}
+                    onChange={handleChange}
+                    aria-label={t.campoRiga(t.istituto, riga)}
+                    className={campo("minimo")}
+                  />
+                </div>
+                <div role="cell">
+                  <input
+                    type="date"
+                    name={data}
+                    value={formData[data]}
+                    onChange={handleChange}
+                    aria-label={t.campoRiga(t.data, riga)}
+                    className={campo("minimo")}
+                  />
+                </div>
               </div>
-              <div>
-                <label className={etichetta()}>
-                  DATA
-                </label>
-                <input
-                  type="date"
-                  name="universita_data_ats1"
-                  value={formData.universita_data_ats1}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-            </div>
-
-            <div className={`${riquadro()} space-y-3`}>
-              <span className="text-xs font-bold text-testo uppercase">
-                Altro titolo di studio (2)
-              </span>
-              <div>
-                <label className={etichetta()}>
-                  Istituto
-                </label>
-                <input
-                  type="text"
-                  name="universita_istituto_ats2"
-                  value={formData.universita_istituto_ats2}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-              <div>
-                <label className={etichetta()}>
-                  DATA
-                </label>
-                <input
-                  type="date"
-                  name="universita_data_ats2"
-                  value={formData.universita_data_ats2}
-                  onChange={handleChange}
-                  className={campo()}
-                />
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </SezioneModulo>
     </div>

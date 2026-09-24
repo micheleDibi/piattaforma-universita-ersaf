@@ -58,6 +58,11 @@ regole:
       - "frontend/src/components/ModalCambiaPadre.jsx"
       - "frontend/src/components/CredenzialiCreate.jsx"
       - "frontend/src/components/contatti/**"
+      - "frontend/src/config/testi/anagrafica.js"
+      - "frontend/src/config/testi/anomalie.js"
+      - "frontend/src/config/testi/titoli.js"
+      - "frontend/src/lib/schedaAnagrafica.js"
+      - "frontend/src/lib/anomalieCampi.js"
     documenti:
       - docs/funzionale/sottoscrittori-e-attuatori.md
 
@@ -79,6 +84,12 @@ regole:
       - "frontend/src/components/*Aziend*.jsx"
       - "frontend/src/components/DettaglioConvenzioniUniversitarie.jsx"
       - "frontend/src/config/campiPercentuali.js"
+      - "frontend/src/config/campiAzienda.js"
+      - "frontend/src/config/testi/azienda.js"
+      - "frontend/src/config/testi/anomalie.js"
+      - "frontend/src/hooks/usePadreAzienda.js"
+      - "frontend/src/lib/schedaAzienda.js"
+      - "frontend/src/lib/anomalieCampi.js"
     documenti:
       - docs/funzionale/aziende.md
 
@@ -96,6 +107,7 @@ regole:
       - "frontend/src/lib/schedaPratica.js"
       - "frontend/src/lib/documentoPratica.js"
       - "frontend/src/lib/opzioniPratica.js"
+      - "frontend/src/config/testi/pratiche.js"
     documenti:
       - docs/funzionale/pratiche.md
 

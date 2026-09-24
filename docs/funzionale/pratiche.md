@@ -36,6 +36,9 @@ mostra soltanto il titolo e il messaggio di benvenuto.
 
 ### Blocchi e pulsanti
 
+Il pannello sta in un riquadro sotto il titolo "Pratiche", con un blocco per
+ateneo: il nome, il logo e i pulsanti dei tipi di corso.
+
 | Blocco | Abilitazione del blocco | Pulsanti |
 |---|---|---|
 | Università Telematica eCampus | Università Telematica eCampus | Prevalutazione, Corso di Laurea, Corsi Singoli, Formazione ed Alta Formazione, Master, Corsi di Perfezionamento |
@@ -51,12 +54,14 @@ se l'utente ha entrambe:
 - l'abilitazione generale alle pratiche universitarie;
 - l'abilitazione del blocco.
 
-Negli altri casi i pulsanti restano visibili, ma sono grigi e non si possono
-premere. Senza l'abilitazione generale, in cima alla pagina compare il
-messaggio "Non hai l'abilitazione generale alle pratiche universitarie."
+Negli altri casi i pulsanti restano visibili, ma sono sbiaditi e non si
+possono premere. Senza l'abilitazione generale, in cima al pannello compare un
+riquadro giallo con il messaggio "Non hai l'abilitazione generale alle
+pratiche universitarie."
 
-Mentre legge le abilitazioni, la pagina Pratiche mostra "Caricamento permessi...".
-Se non riesce a leggerle, al posto dei blocchi mostra un messaggio di errore.
+Mentre legge le abilitazioni, la pagina Pratiche mostra "Caricamento permessi…".
+Se non riesce a leggerle, al posto dei blocchi mostra un riquadro rosso con il
+messaggio di errore.
 
 Le abilitazioni si impostano nella scheda di un attuatore: vedi
 [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
@@ -93,8 +98,11 @@ pratica nuova. Selezionando una riga si apre la scheda della pratica.
 - **Codice**: il numero della pratica.
 - **Data creazione**: nel formato giorno-mese-anno.
 - **Sottoscrittore**: nome e cognome dello studente.
-- **Corso**: la denominazione del percorso formativo.
-- **Stato**.
+- **Corso**: la denominazione del percorso formativo. Nella tabella un nome
+  lungo va a capo al massimo su due righe; passando il mouse compare per
+  intero.
+- **Stato**: sempre su una riga. Se lo spazio non basta, il nome si accorcia
+  con i puntini.
 
 Se un valore manca, compare un trattino.
 
@@ -319,9 +327,9 @@ contratto ha anche una seconda firma, per l'approvazione delle clausole.
   inizio e anno di fine. Scritto in altro modo, si riporta com'è.
 - La tabella degli esami ha quindici righe. Se gli esami sono di più, l'ultima
   riga indica quanti ne restano fuori.
-- Gli esami non si inseriscono dalla piattaforma: la sezione "Esami" della
-  scheda del sottoscrittore è ancora in sviluppo. Nel documento compaiono solo
-  gli esami già registrati.
+- Gli esami non si inseriscono dalla piattaforma: non sono ancora gestiti
+  nella scheda del sottoscrittore, e la sezione "Esami" mostra sempre "Nessun
+  esame registrato.". Nel documento compaiono solo gli esami già registrati.
 - La scheda della pratica non permette di indicare firma, azienda e rinnovo.
   Una pratica creata dalla piattaforma produce quindi un documento senza firma
   e senza luogo, e risulta sempre come immatricolazione. Firma, luogo e

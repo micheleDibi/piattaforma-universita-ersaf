@@ -1,6 +1,7 @@
 import { campo, etichetta } from "./campo.js";
 import { pulsante } from "./pulsante.js";
 import { scheda } from "./superficie.js";
+import { titoloPagina } from "./pagina.js";
 import { STILI_LOGO } from "./identita.js";
 
 // Ricette condivise da accesso, richiesta e conferma del recupero.
@@ -12,7 +13,7 @@ export const STILI_ACCESSO = {
   logo: STILI_LOGO.accesso,
   scheda: `${scheda()} p-5 sm:p-8`,
   intestazione: "mb-7 space-y-2",
-  titolo: "text-titolo-pagina text-testo-forte text-balance focus:outline-none",
+  titolo: `${titoloPagina()} text-balance focus:outline-none`,
   descrizione: "text-sm leading-relaxed text-testo-tenue",
   contenuto: "space-y-5",
   modulo: "space-y-5",
