@@ -12,7 +12,7 @@
 
 /* Pallini degli stati: il colore viene dallo stato, misura e distanza dal
  * punto in cui stanno. */
-.pannello-pratiche__punto { @apply inline-block shrink-0 rounded-full; }
+.pannello-pratiche__punto { @apply inline-block shrink-0 rounded-[50%]; }
 .pannello-pratiche__punto[data-stato="bozza"] { background-color: var(--color-stato-bozza); }
 .pannello-pratiche__punto[data-stato="lavorazione"] { background-color: var(--color-stato-lavorazione); }
 .pannello-pratiche__punto[data-stato="attesa"] { background-color: var(--color-stato-attesa); }
@@ -58,13 +58,24 @@
 .pannello-pratiche__colonna-stato { @apply block min-w-0 text-right text-balance; }
 .pannello-pratiche__colonna-stato .pannello-pratiche__punto { @apply mr-1.25 size-1.75 align-[1px]; }
 .pannello-pratiche__colonna-totale { @apply text-right; }
-.pannello-pratiche__riga { @apply min-h-12 items-center border-b border-divisore-tenue text-testo; }
+/* 48 piu' il bordo: nel design l'altezza minima non comprende il bordo
+ * (box-sizing del browser), qui si' (preflight). */
+.pannello-pratiche__riga {
+  @apply items-center border-b border-divisore-tenue text-testo;
+  min-height: calc(var(--spacing) * 12 + 1px);
+}
 .pannello-pratiche__tipologia { @apply py-1.5 text-sm leading-[1.35] font-medium text-primario; }
 .pannello-pratiche__valore { @apply text-right text-sm leading-[normal] tabular-nums text-testo; }
 .pannello-pratiche__totale-riga { @apply text-right text-sm leading-[normal] font-semibold tabular-nums; }
-/* Il chevron sta sul bordo destro della colonna, come il "›" del design:
- * l'icona ha 4px di margine interno a destra (come negli elenchi). */
-.pannello-pratiche__chevron { @apply -mr-1 size-4 justify-self-end text-testo-spento; }
+/* Chevron al posto del "›" del design (16px), con lo stesso inchiostro:
+ * 4,75 x 7,5px, a 0,8px dal bordo destro e 1px sotto il centro della riga.
+ * L'icona ha margine interno: si allarga oltre la colonna. */
+.pannello-pratiche__chevron {
+  @apply size-3 justify-self-end text-testo-spento;
+  margin-right: -3.25px;
+  translate: 0 1.25px;
+  stroke-width: 2.6;
+}
 .pannello-pratiche__somma { @apply min-h-12 items-center bg-superficie-tenue; }
 .pannello-pratiche__somma .pannello-pratiche__valore { @apply font-semibold; }
 .pannello-pratiche__somma-etichetta {
@@ -83,7 +94,15 @@
 .pannello-pratiche__voce-totale {
   @apply whitespace-nowrap text-sm leading-[normal] font-semibold tabular-nums;
 }
-.pannello-pratiche__voce-chevron { @apply inline-block size-3.5 align-[-2px] text-testo-spento; }
+/* Come sopra, per il "›" a 14px accanto al totale: inchiostro 4 x 6,5px e
+ * lo stesso spazio del carattere fra il numero e il bordo. */
+.pannello-pratiche__voce-chevron {
+  @apply inline-block size-2.75 text-testo-spento;
+  margin-left: -2.5px;
+  margin-right: -2.7px;
+  vertical-align: -1.5px;
+  stroke-width: 2.6;
+}
 .pannello-pratiche__voce-celle {
   @apply grid gap-x-4 gap-y-1.5;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -97,6 +116,7 @@
 .pannello-pratiche__voce-somma {
   @apply flex items-center justify-between bg-superficie-tenue px-5 py-3.5;
 }
+.pannello-pratiche__voce-somma .pannello-pratiche__totale-ateneo { @apply text-start; }
 
 /* Valori a zero, in tabella e in lista. */
 .pannello-pratiche [data-nullo] { @apply text-valore-nullo; }
