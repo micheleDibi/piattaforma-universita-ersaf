@@ -88,6 +88,9 @@
 .elenco-adattivo__badge-punto {
   @apply inline-block size-1.5 rounded-full shrink-0 bg-current;
 }
+/* Spunta al posto del pallino (stato delle pratiche): stessa misura e stesso
+ * tratto della spunta di indicatori-stato. */
+.elenco-adattivo__badge-spunta { @apply size-3 shrink-0; stroke-width: 3; }
 
 /* Lista mobile */
 .elenco-adattivo__lista { @apply m-0 list-none p-0; }

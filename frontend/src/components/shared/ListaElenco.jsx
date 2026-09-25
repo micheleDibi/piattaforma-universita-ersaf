@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { ChevronRight, ICONE_CAMPI_ELENCO } from "../../config/icone.js";
+import { ChevronRight, Check, ICONE_CAMPI_ELENCO } from "../../config/icone.js";
 import AvvisoTooltip from "./AvvisoTooltip.jsx";
 import IndicatoriStato from "./IndicatoriStato.jsx";
 import { campoIndicatori, idIndicatori } from "../../lib/righeElenco.js";
@@ -95,11 +95,15 @@ export default function ListaElenco({ dati, modello, onApri }) {
                           className="elenco-adattivo__badge"
                           data-tono={riga.tonoStato}
                         >
-                          {campo.puntino !== false && (
+                          {campo.puntino !== false ? (
                             <span
                               className="elenco-adattivo__badge-punto"
                               aria-hidden="true"
                             />
+                          ) : (
+                            riga.tonoStato === "positivo" && (
+                              <Check className="elenco-adattivo__badge-spunta" />
+                            )
                           )}
                           <span>{valore}</span>
                         </dd>
