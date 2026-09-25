@@ -7,14 +7,19 @@
  * Contenitore del contenuto di una pagina dentro il guscio. La larghezza
  * massima e' quella del contenuto (box-content): i margini si aggiungono.
  * @param {"pagina"|"modulo"} larghezza  pagina: elenchi; modulo: dettagli con un modulo
- * @param {{ codaAmpia?: boolean }} opzioni  codaAmpia: spazio in fondo per le
- *   azioni fuori dalla scheda (Modifica azienda)
+ * @param {{ codaAmpia?: boolean, marginiInclusi?: boolean }} opzioni  codaAmpia:
+ *   spazio in fondo per le azioni fuori dalla scheda (Modifica azienda);
+ *   marginiInclusi: la larghezza massima comprende i margini (box-border), come
+ *   nel design della pagina Pratiche, dove il contenuto arriva a 1064px
  */
-export function contenutoPagina(larghezza = "pagina", { codaAmpia = false } = {}) {
+export function contenutoPagina(
+  larghezza = "pagina",
+  { codaAmpia = false, marginiInclusi = false } = {},
+) {
   if (larghezza === "modulo") {
     return `mx-auto box-content max-w-modulo px-4 pt-6 ${codaAmpia ? "pb-30" : "pb-10"} sm:px-7`;
   }
-  return "mx-auto box-content max-w-pagina px-4 pt-8 pb-15 sm:px-7";
+  return `mx-auto ${marginiInclusi ? "box-border" : "box-content"} max-w-pagina px-4 pt-8 pb-15 sm:px-7`;
 }
 
 /**

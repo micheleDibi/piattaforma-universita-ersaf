@@ -381,8 +381,8 @@ nome; si cambiano anche con un clic sul nome:
 - Avatar4University.
 
 Gli interruttori si salvano con il «Salva modifiche» in fondo alla pagina.
-Nella pagina Pratiche i pulsanti delle pratiche di un ateneo sono attivi solo
-con l'abilitazione generale e con quella dell'ateneo: vedi
+Nella pagina Pratiche le righe di un ateneo si aprono solo con
+l'abilitazione generale e con quella dell'ateneo: vedi
 [Pratiche](pratiche.md#pannello-degli-atenei).
 
 Nota: questo limite è applicato solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).

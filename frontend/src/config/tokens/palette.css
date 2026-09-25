@@ -18,12 +18,15 @@
   --color-ardesia-25: #fbfbfd;
   --color-ardesia-50: #f7f7f9;
   --color-ardesia-100: #f3f3f6;
+  --color-ardesia-125: #f0f0f4;
   --color-ardesia-150: #eeeef3;
   --color-ardesia-175: #ececf2;
   --color-ardesia-200: #e6e6ee;
   --color-ardesia-225: #e4e4ea;
   --color-ardesia-250: #dcdce4;
+  --color-ardesia-300: #c5c5cc;
   --color-ardesia-400: #b5b5be;
+  --color-ardesia-450: #a9a9b4;
   --color-ardesia-500: #8a8a95;
   --color-ardesia-550: #7a7a85;
   --color-ardesia-600: #6b6b76;
@@ -35,16 +38,21 @@
 
   --color-indaco-25: #fafaff;
   --color-indaco-50: #f8f7fc;
+  --color-indaco-60: #f5f4fb;
   --color-indaco-75: #f3f2fa;
   --color-indaco-100: #ecebf7;
   --color-indaco-150: #e2dff2;
+  --color-indaco-175: #d9d7f0;
   --color-indaco-200: #d8d5ea;
   --color-indaco-500: #4a44a0;
   --color-indaco-600: #3b3685;
   --color-indaco-700: #2e2a6b;
 
+  --color-cobalto-500: #4a6fd1;
+
   --color-muschio-100: #e8f3e2;
   --color-muschio-200: #cfe5c4;
+  --color-muschio-500: #4f9a3a;
   --color-muschio-700: #2f6b1f;
 
   --color-ambra-25: #fffdf5;

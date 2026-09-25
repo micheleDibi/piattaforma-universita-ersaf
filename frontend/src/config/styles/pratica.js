@@ -1,6 +1,6 @@
 import { pulsante } from "./pulsante.js";
 import { scheda, titoloSezione } from "./superficie.js";
-import { schedaElenco } from "./tabella.js";
+import { contenutoPagina, descrizionePagina, titoloPagina } from "./pagina.js";
 export const STILI_PRATICA = {
   modulo: `${scheda()} p-6 sm:p-8 space-y-8`,
   sezione: "min-w-0 space-y-5", colonne: "grid grid-cols-1 gap-6 md:grid-cols-2",
@@ -13,17 +13,11 @@ export const STILI_PRATICA = {
   iconaAttesa: "size-icona-piccola shrink-0 animate-spin",
 };
 
-// Pannello delle universita' (/pratiche senza universita'): corpo della scheda
-// sotto la testata, un blocco per ateneo separato dai divisori. I pulsanti non
-// vanno a capo: le colonne crescono con lo spazio (una, due, tre).
+// Pagina Pratiche (/pratiche senza universita'): la larghezza del design
+// comprende i margini. Striscia, schede e tabelle stanno in
+// pannelloPratiche.css, con le soglie del contenitore.
 export const STILI_PANNELLO_PRATICHE = {
-  corpo: `${schedaElenco("corpo")} p-5 sm:px-6`,
-  contenuto: "space-y-10",
-  // first-of-type: anche con l'avviso sopra, il primo ateneo non ha la riga.
-  sezione: "border-t border-divisore pt-4 first-of-type:border-t-0 first-of-type:pt-0",
-  titolo: titoloSezione(),
-  riga: "flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6",
-  logo: "size-24 object-contain shrink-0",
-  tipologie: "grid w-full min-w-0 flex-1 gap-3 md:grid-cols-2 xl:grid-cols-3",
-  tipologia: pulsante("secondario"),
+  pagina: `${contenutoPagina("pagina", { marginiInclusi: true })} pannello-pratiche`,
+  titolo: titoloPagina(),
+  descrizione: descrizionePagina(),
 };
