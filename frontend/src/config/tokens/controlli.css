@@ -50,6 +50,13 @@
    * Modifica", 195px) sta su una riga anche con i rientri delle celle. */
   --spacing-colonna-stato-pratiche: 13.5rem;
 
+  /* Soglie del contenitore della pagina Pratiche, come nel design: striscia
+   * dei totali su tre colonne (480) e su una riga (820), tabella degli atenei
+   * al posto della lista (720). */
+  --breakpoint-pratiche-striscia-media: 30rem;
+  --breakpoint-pratiche-tabella: 45rem;
+  --breakpoint-pratiche-striscia: 51.25rem;
+
   /* Larghezza massima del contenuto, esclusi i margini (box-content).
    * Utilita': max-w-pagina per gli elenchi (1120), max-w-modulo per le pagine
    * di dettaglio con un modulo (1080). */

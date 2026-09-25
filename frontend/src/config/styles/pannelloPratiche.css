@@ -1,0 +1,123 @@
+/* Pagina Pratiche (/pratiche senza ateneo): striscia dei totali e una scheda
+ * per ateneo con la tabella tipologia x stato. Misure del design
+ * Pratiche.dc.html. La pagina stessa e' il contenitore: le soglie guardano la
+ * larghezza del contenuto, come il ResizeObserver del design. Dove il design
+ * non dichiara l'interlinea vale `normal`, e chi fissa una dimensione del
+ * testo la ridichiara: `text-sm` porterebbe con se' 20px. */
+.pannello-pratiche {
+  container: pannello-pratiche / inline-size;
+  @apply flex flex-col gap-6 leading-[normal];
+}
+.pannello-pratiche__intestazione { @apply flex flex-col gap-1; }
+
+/* Pallini degli stati: il colore viene dallo stato, misura e distanza dal
+ * punto in cui stanno. */
+.pannello-pratiche__punto { @apply inline-block shrink-0 rounded-full; }
+.pannello-pratiche__punto[data-stato="bozza"] { background-color: var(--color-stato-bozza); }
+.pannello-pratiche__punto[data-stato="lavorazione"] { background-color: var(--color-stato-lavorazione); }
+.pannello-pratiche__punto[data-stato="attesa"] { background-color: var(--color-stato-attesa); }
+.pannello-pratiche__punto[data-stato="conclusa"] { background-color: var(--color-stato-conclusa); }
+.pannello-pratiche__punto[data-stato="caricata"] { background-color: var(--color-stato-caricata); }
+.pannello-pratiche__punto[data-stato="rifiutata"] { background-color: var(--color-stato-rifiutata); }
+
+/* Striscia dei totali: le celle sono separate dal fondo che traspare dal gap
+ * di 1px. Due colonne, tre da 480px, una riga sola da 820px; finche' non sta
+ * su una riga il totale occupa la prima da solo. */
+.pannello-pratiche__striscia {
+  @apply grid grid-cols-2 gap-px overflow-hidden rounded-superficie border border-bordo bg-divisore;
+}
+.pannello-pratiche__totale { @apply col-span-full flex flex-col gap-1.5 bg-primario px-5 py-4.5; }
+.pannello-pratiche__totale-etichetta { @apply text-etichetta uppercase tracking-wider text-su-primario-tenue; }
+.pannello-pratiche__totale-numero { @apply text-totale text-su-primario tabular-nums; }
+.pannello-pratiche__stato { @apply flex min-w-0 flex-col justify-between gap-1.5 bg-superficie px-4 py-4.5; }
+.pannello-pratiche__stato-etichetta {
+  @apply block text-etichetta leading-[1.35] uppercase tracking-wider text-balance text-testo-tenue;
+}
+.pannello-pratiche__stato-etichetta .pannello-pratiche__punto { @apply mr-1.5 size-2 align-[1px]; }
+.pannello-pratiche__stato-numero { @apply text-conteggio text-testo tabular-nums; }
+
+/* Scheda dell'ateneo. */
+.pannello-pratiche__ateneo { @apply overflow-hidden rounded-superficie border border-bordo bg-superficie; }
+.pannello-pratiche__testata { @apply flex items-center gap-4 border-b border-divisore px-5 py-4.5; }
+.pannello-pratiche__logo { @apply h-12 w-28 shrink-0 object-contain; }
+.pannello-pratiche__identita { @apply flex min-w-0 flex-1 flex-col gap-0.5; }
+.pannello-pratiche__nome { @apply text-base leading-[normal] font-semibold text-testo; }
+.pannello-pratiche__riepilogo { @apply text-dettaglio leading-[normal] text-testo-attenuato; }
+
+/* Tabella, da 720px: intestazione, una riga per tipologia e il totale. */
+.pannello-pratiche__tabella { display: none; }
+.pannello-pratiche__colonne,
+.pannello-pratiche__riga,
+.pannello-pratiche__somma {
+  @apply grid gap-2.5 px-5;
+  grid-template-columns: minmax(120px, 1.5fr) repeat(6, minmax(0, 1fr)) minmax(0, 0.8fr) 16px;
+}
+.pannello-pratiche__colonne {
+  @apply items-end border-b border-bordo bg-tela py-2.5 text-etichetta leading-[1.3] uppercase tracking-[.04em] text-testo-tenue;
+}
+.pannello-pratiche__colonna-stato { @apply block min-w-0 text-right text-balance; }
+.pannello-pratiche__colonna-stato .pannello-pratiche__punto { @apply mr-1.25 size-1.75 align-[1px]; }
+.pannello-pratiche__colonna-totale { @apply text-right; }
+.pannello-pratiche__riga { @apply min-h-12 items-center border-b border-divisore-tenue text-testo; }
+.pannello-pratiche__tipologia { @apply py-1.5 text-sm leading-[1.35] font-medium text-primario; }
+.pannello-pratiche__valore { @apply text-right text-sm leading-[normal] tabular-nums text-testo; }
+.pannello-pratiche__totale-riga { @apply text-right text-sm leading-[normal] font-semibold tabular-nums; }
+/* Il chevron sta sul bordo destro della colonna, come il "›" del design:
+ * l'icona ha 4px di margine interno a destra (come negli elenchi). */
+.pannello-pratiche__chevron { @apply -mr-1 size-4 justify-self-end text-testo-spento; }
+.pannello-pratiche__somma { @apply min-h-12 items-center bg-superficie-tenue; }
+.pannello-pratiche__somma .pannello-pratiche__valore { @apply font-semibold; }
+.pannello-pratiche__somma-etichetta {
+  @apply text-xs leading-[normal] font-semibold uppercase tracking-[.04em] text-testo-tenue;
+}
+.pannello-pratiche__totale-ateneo {
+  @apply text-right text-evidenziato leading-[normal] font-bold tabular-nums text-primario;
+}
+
+/* Lista, sotto i 720px: una voce per tipologia con gli stati in griglia. */
+.pannello-pratiche__voce {
+  @apply flex flex-col gap-2.5 border-b border-divisore-tenue px-5 py-3.5 text-testo;
+}
+.pannello-pratiche__voce-testa { @apply flex items-baseline justify-between gap-3; }
+.pannello-pratiche__voce-nome { @apply text-sm leading-[normal] font-semibold text-primario; }
+.pannello-pratiche__voce-totale {
+  @apply whitespace-nowrap text-sm leading-[normal] font-semibold tabular-nums;
+}
+.pannello-pratiche__voce-chevron { @apply inline-block size-3.5 align-[-2px] text-testo-spento; }
+.pannello-pratiche__voce-celle {
+  @apply grid gap-x-4 gap-y-1.5;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.pannello-pratiche__voce-cella {
+  @apply flex justify-between gap-2 text-dettaglio leading-[normal] text-testo-tenue;
+}
+.pannello-pratiche__voce-stato { @apply flex min-w-0 items-center gap-1.5; }
+.pannello-pratiche__voce-stato .pannello-pratiche__punto { @apply size-1.75; }
+.pannello-pratiche__voce-valore { @apply tabular-nums text-testo; }
+.pannello-pratiche__voce-somma {
+  @apply flex items-center justify-between bg-superficie-tenue px-5 py-3.5;
+}
+
+/* Valori a zero, in tabella e in lista. */
+.pannello-pratiche [data-nullo] { @apply text-valore-nullo; }
+
+/* Righe e voci che aprono l'elenco; sbiadite e ferme se l'ateneo non e'
+ * abilitato, come i pulsanti disattivati. */
+a:is(.pannello-pratiche__riga, .pannello-pratiche__voce) {
+  @apply transition-colors hover:bg-riga-conteggi-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-fuoco;
+}
+:is(.pannello-pratiche__riga, .pannello-pratiche__voce)[aria-disabled="true"] {
+  @apply cursor-not-allowed opacity-50;
+}
+
+@container pannello-pratiche (width >= theme(--breakpoint-pratiche-striscia-media)) {
+  .pannello-pratiche__striscia { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@container pannello-pratiche (width >= theme(--breakpoint-pratiche-tabella)) {
+  .pannello-pratiche__tabella { display: block; }
+  .pannello-pratiche__lista { display: none; }
+}
+@container pannello-pratiche (width >= theme(--breakpoint-pratiche-striscia)) {
+  .pannello-pratiche__striscia { grid-template-columns: minmax(0, 1.2fr) repeat(6, minmax(0, 1fr)); }
+  .pannello-pratiche__totale { grid-column: auto; }
+}

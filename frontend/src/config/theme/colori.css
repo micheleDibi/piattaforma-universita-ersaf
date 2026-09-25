@@ -8,6 +8,8 @@
   --color-primario-tenue: var(--color-indaco-100);
   --color-primario-velo: var(--color-indaco-75);
   --color-su-primario: var(--color-neutro-bianco);
+  /* Etichetta secondaria sul fondo primario: "Totale pratiche". */
+  --color-su-primario-tenue: var(--color-indaco-175);
   --color-accento: var(--color-marchio-oro);
   --color-accento-tenue: color-mix(in srgb, var(--color-marchio-oro) 16%, var(--color-neutro-bianco));
   /* Solo il guscio: voce attiva e passaggio nel menu di navigazione. */
@@ -21,11 +23,15 @@
   --color-superficie-alta: var(--color-ardesia-100);
   --color-superficie-premuta: var(--color-ardesia-175);
   --color-riga-hover: var(--color-indaco-25);
+  /* Righe della pagina Pratiche: il design le evidenzia piu' degli elenchi. */
+  --color-riga-conteggi-hover: var(--color-indaco-60);
   --color-evidenza: var(--color-indaco-50);
   --color-evidenza-bordo: var(--color-indaco-150);
 
   --color-bordo: var(--color-ardesia-200);
   --color-divisore: var(--color-ardesia-150);
+  /* Fra le righe delle tabelle della pagina Pratiche. */
+  --color-divisore-tenue: var(--color-ardesia-125);
   --color-bordo-forte: var(--color-indaco-200);
   --color-bordo-controllo: var(--color-ardesia-250);
   --color-bordo-controllo-tenue: var(--color-ardesia-225);
@@ -42,6 +48,8 @@
    * testo-attenuato (selezione.css). */
   --color-testo-segnaposto: var(--color-grigio-550);
   --color-testo-spento: var(--color-ardesia-400);
+  /* Un conteggio a zero, che resta leggibile ma si fa da parte. */
+  --color-valore-nullo: var(--color-ardesia-300);
 
   --color-positivo: var(--color-muschio-700);
   --color-positivo-forte: var(--color-muschio-700);
@@ -72,6 +80,14 @@
   --color-informazione-forte: color-mix(in srgb, var(--color-marchio-blu) 50%, var(--color-neutro-nero));
   --color-informazione-tenue: color-mix(in srgb, var(--color-marchio-blu) 8%, var(--color-neutro-bianco));
   --color-informazione-bordo: color-mix(in srgb, var(--color-marchio-blu) 30%, var(--color-neutro-bianco));
+
+  /* Stati delle pratiche: pallini della pagina Pratiche. */
+  --color-stato-bozza: var(--color-ardesia-450);
+  --color-stato-lavorazione: var(--color-cobalto-500);
+  --color-stato-attesa: var(--color-ambra-400);
+  --color-stato-conclusa: var(--color-muschio-500);
+  --color-stato-caricata: var(--color-indaco-700);
+  --color-stato-rifiutata: var(--color-mattone-600);
 
   --color-fuoco: var(--color-primario);
   --shadow-selezione: inset 3px 0 0 var(--color-accento);

@@ -15,8 +15,6 @@ import { schedaElenco } from "../config/styles/tabella";
 import StatoPagineElenco from "./shared/StatoPagineElenco.jsx";
 import { BLOCCHI_PRATICHE } from "../lib/configPratiche.js";
 import PannelloPratiche from "./PannelloPratiche";
-import { STILI_PANNELLO_PRATICHE } from "../config/styles/pratica.js";
-import { TESTI_PANNELLO_PRATICHE } from "../config/testi/pratiche.js";
 
 function costruisciTitolo(filtri) {
   const blocco = BLOCCHI_PRATICHE.find(
@@ -60,16 +58,7 @@ export default function ElencoPratiche() {
   const mostraPannello = !filtri.universita;
   const pagina = usePagineRemote(filtri.query, paginaPratiche, !mostraPannello);
 
-  if (mostraPannello) {
-    return (
-      <div className={contenutoPagina()}>
-        <IntestazioneElenco titolo={TESTI_PANNELLO_PRATICHE.titolo} />
-        <div className={STILI_PANNELLO_PRATICHE.corpo}>
-          <PannelloPratiche />
-        </div>
-      </div>
-    );
-  }
+  if (mostraPannello) return <PannelloPratiche />;
 
   return (
     <div className={contenutoPagina()}>
