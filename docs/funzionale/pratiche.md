@@ -24,8 +24,9 @@ cambia.
 
 La voce "Pratiche" è nel menu per Nazionale, Regionale, Provinciale e
 Aderente. Vedi [Ruoli e permessi](ruoli-e-permessi.md). Senza un ateneo
-selezionato, la pagina mostra il pannello degli atenei; scegliendo un pulsante
-si apre l'elenco filtrato. La pagina si apre anche scrivendo il suo indirizzo
+selezionato, la pagina mostra il pannello degli atenei, con il numero di
+pratiche per tipologia di corso e stato; scegliendo una riga si apre l'elenco
+filtrato. La pagina si apre anche scrivendo il suo indirizzo
 nel browser: il backend limita comunque le pratiche all'azienda visibile
 all'utente.
 
@@ -34,58 +35,87 @@ all'utente.
 Il pannello è stato spostato dalla Dashboard alla pagina Pratiche. La Dashboard
 mostra soltanto il titolo e il messaggio di benvenuto.
 
-### Blocchi e pulsanti
+Sotto il titolo "Pratiche" la frase "Numero di pratiche per ateneo, tipologia
+di corso e stato." introduce i numeri delle pratiche.
 
-Il pannello sta in un riquadro sotto il titolo "Pratiche", con un blocco per
-ateneo: il nome, il logo e i pulsanti dei tipi di corso.
+### Totali
 
-| Blocco | Abilitazione del blocco | Pulsanti |
+In cima una striscia riporta il totale delle pratiche e, accanto, il totale di
+ciascuno stato: Bozza, In lavorazione, In attesa di modifica, Conclusa,
+Caricata e Rifiutata. Ogni stato ha un pallino colorato, lo stesso delle
+tabelle degli atenei. Quando lo spazio è poco, i totali degli stati vanno su
+tre o due colonne, sotto il totale delle pratiche.
+
+### Un riquadro per ateneo
+
+Sotto la striscia c'è un riquadro per ateneo, con il logo, il nome e un
+riepilogo come "120 pratiche · 6 tipologie". Nel riquadro, una tabella ha una
+riga per tipologia di corso, una colonna per stato e il totale della riga; in
+fondo, la riga "Totale ateneo". I valori a zero sono in grigio chiaro.
+
+| Ateneo | Abilitazione dell'ateneo | Righe, in quest'ordine |
 |---|---|---|
-| Università Telematica eCampus | Università Telematica eCampus | Prevalutazione, Corso di Laurea, Corsi Singoli, Formazione ed Alta Formazione, Master, Corsi di Perfezionamento |
+| Università Telematica eCampus | Università Telematica eCampus | Prevalutazione, Corso di Laurea, Master, Corsi di Perfezionamento, Formazione ed Alta Formazione, Corsi Singoli |
 | Link Campus University | Link Campus University | Corsi di Perfezionamento, Corsi Singoli |
-| SSML Lamezia Terme | SSML Lamezia Terme | Corsi di Perfezionamento, Alta Formazione per Lauree, Corso di Laurea, Prevalutazione, Master, Corsi Singoli, Corsi Speciali |
-| Avatar4University | Avatar4University | Corsi di Perfezionamento, Master |
+| SSML Lamezia Terme | SSML Lamezia Terme | Prevalutazione, Corso di Laurea, Master, Corsi di Perfezionamento, Alta Formazione per Lauree, Corsi Singoli, Corsi Speciali |
+| Avatar4University | Avatar4University | Master, Corsi di Perfezionamento |
 
-### Quando un pulsante è attivo
+Quando lo spazio è poco, per esempio sul telefono, la tabella diventa un
+elenco: per ogni tipologia il nome e il totale, e sotto i sei stati con il loro
+numero.
 
-Le abilitazioni sono quelle dell'utente collegato. Un pulsante è attivo solo
-se l'utente ha entrambe:
+### Come si contano le pratiche
+
+- Si contano solo le pratiche che l'utente vede, le stesse dell'elenco: vedi
+  [Chi vede le pratiche](#chi-vede-le-pratiche).
+- Una riga somma le pratiche dei tipi di corso della sua tipologia. Due righe
+  raggruppano più tipi di corso:
+  - "Master" conta insieme master, master area scuola e master classi di
+    concorso;
+  - "Formazione ed Alta Formazione" conta insieme i corsi di formazione e i
+    corsi di alta formazione.
+- Ogni totale, dell'ateneo e della striscia, è la somma delle righe. Una
+  pratica che non cade in nessuna riga non si conta: per esempio una pratica
+  senza tipo di corso, o di un tipo di corso che l'ateneo non ha fra le sue
+  righe, come il percorso docenti. Per questo il totale può essere minore del
+  numero di pratiche dell'elenco completo.
+- Si contano solo i sei stati delle colonne.
+- La riga "Prevalutazione" è sempre a zero: le prevalutazioni non sono pratiche
+  e la piattaforma non le gestisce.
+
+### Quando una riga si apre
+
+Le abilitazioni sono quelle dell'utente collegato. Una riga si apre solo se
+l'utente ha entrambe:
 
 - l'abilitazione generale alle pratiche universitarie;
-- l'abilitazione del blocco.
+- l'abilitazione dell'ateneo.
 
-Negli altri casi i pulsanti restano visibili, ma sono sbiaditi e non si
-possono premere. Senza l'abilitazione generale, in cima al pannello compare un
-riquadro giallo con il messaggio "Non hai l'abilitazione generale alle
-pratiche universitarie."
+Negli altri casi le righe restano visibili, con i loro numeri, ma sono
+sbiadite e non si aprono. Senza l'abilitazione generale, sopra la striscia
+compare un riquadro giallo con il messaggio "Non hai l'abilitazione generale
+alle pratiche universitarie."
 
-Mentre legge le abilitazioni, la pagina Pratiche mostra "Caricamento permessi…".
-Se non riesce a leggerle, al posto dei blocchi mostra un riquadro rosso con il
-messaggio di errore.
+Mentre legge i numeri e le abilitazioni, la pagina Pratiche mostra
+"Caricamento pratiche…". Se non riesce a leggerli, al posto della striscia e
+dei riquadri mostra un riquadro rosso con il messaggio di errore.
 
 Le abilitazioni si impostano nella scheda di un attuatore: vedi
 [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
 
-### Dove portano i pulsanti
+### Dove portano le righe
 
-Ogni pulsante apre l'elenco delle pratiche già filtrato per l'ateneo del
-blocco e per i tipi di corso del pulsante. Il titolo dell'elenco lo ricorda:
-"Elenco Pratiche", seguito dal nome dell'ateneo e dai tipi di corso.
-
-Due pulsanti raggruppano più tipi di corso:
-
-- "Master" mostra insieme master, master area scuola e master classi di
-  concorso;
-- "Formazione ed Alta Formazione" mostra insieme i corsi di formazione e i
-  corsi di alta formazione.
+Ogni riga apre l'elenco delle pratiche già filtrato per l'ateneo e per i tipi
+di corso della riga. Il titolo dell'elenco lo ricorda: "Elenco Pratiche",
+seguito dal nome dell'ateneo e dai tipi di corso.
 
 Una pratica creata da un percorso senza tipo di corso non compare in nessuno di
 questi elenchi.
 
-Il pulsante "Prevalutazione" apre la pagina "Pagina non trovata": la funzione
+La riga "Prevalutazione" apre la pagina "Pagina non trovata": la funzione
 non esiste nella piattaforma.
 
-Nota: il pulsante porta a una pagina che non esiste; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Nota: la riga porta a una pagina che non esiste; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 ## Elenco delle pratiche
 
@@ -119,11 +149,11 @@ Il pulsante "Filtri" apre questi filtri:
 - **Numero pratica**: mostra le pratiche il cui numero contiene il testo
   scritto.
 - **Stato**: uno degli stati disponibili, oppure "Tutti gli stati".
-- **Tipologia corso**: è pensato per i pulsanti che raggruppano più tipi di
-  corso. Nessun pulsante della pagina Pratiche lo attiva, quindi non compare.
+- **Tipologia corso**: è pensato per le righe che raggruppano più tipi di
+  corso. Nessuna riga della pagina Pratiche lo attiva, quindi non compare.
 
 L'ateneo e i tipi di corso scelti dalla pagina Pratiche non compaiono fra i filtri.
-Per cambiarli si torna alla pagina Pratiche e si sceglie un altro pulsante.
+Per cambiarli si torna alla pagina Pratiche e si sceglie un'altra riga.
 
 Accanto alla scritta "Filtri" compare il numero dei filtri attivi. Il
 conteggio e il pulsante "Azzera filtri" riguardano solo numero, stato e
@@ -238,9 +268,9 @@ nomi non contano maiuscole, accenti, spazi e punteggiatura.
 
 Il documento guarda l'università e il tipo di corso attuali del prodotto
 formativo, non quelli copiati nella pratica alla creazione. Se il prodotto
-cambia università o tipo di corso, una pratica può comparire sotto un pulsante
+cambia università o tipo di corso, una pratica può comparire sotto una riga
 della pagina Pratiche senza avere il documento, oppure avere il documento senza
-comparire sotto il pulsante corrispondente.
+comparire sotto la riga corrispondente.
 
 Nota: la pagina Pratiche e il documento possono quindi non concordare; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
@@ -376,8 +406,11 @@ o la modifica dei piani di pagamento nell'interfaccia.
 
 Lo stato si sceglie da un elenco. Gli stati sono registrati nell'archivio
 della piattaforma, ma non c'è una pagina per gestirli: aggiungerli o
-rinominarli si può solo agendo direttamente sull'archivio. Questa guida non ne
-riporta i nomi.
+rinominarli si può solo agendo direttamente sull'archivio.
+
+La pagina Pratiche conta le pratiche di sei stati, con nomi brevi: Bozza, In
+lavorazione, In attesa di modifica, Conclusa, Caricata e Rifiutata. Una
+pratica in uno stato diverso non compare nei suoi numeri.
 
 - Qualunque stato si può impostare in qualunque momento. Non c'è un percorso
   obbligato da uno stato all'altro.
@@ -401,9 +434,9 @@ riporta i nomi.
 - Chi non ha un'azienda non vede nessuna pratica, e non può crearne: il
   tentativo viene rifiutato.
 
-La regola vale per l'elenco, la scheda, la disponibilità e il download del PDF e le tendine dei filtri,
-che propongono solo studenti e percorsi presenti fra le pratiche che si
-vedono. Una pratica che non si vede risponde «non trovata» anche aprendola
+La regola vale per l'elenco, i numeri della pagina Pratiche, la scheda, la
+disponibilità e il download del PDF e le tendine dei filtri, che propongono
+solo studenti e percorsi presenti fra le pratiche che si vedono. Una pratica che non si vede risponde «non trovata» anche aprendola
 dall'indirizzo. Per sapere chi accede, vedi
 [Ruoli e permessi](ruoli-e-permessi.md).
 
@@ -411,8 +444,9 @@ Creando una pratica, l'azienda è sempre la propria: non si può indicarne
 un'altra, e nemmeno spostarla in un'altra azienda modificandola. Il Nazionale
 invece può.
 
-Le abilitazioni sono un'altra cosa e limitano solo i pulsanti della pagina Pratiche:
-l'elenco, la scheda, il pulsante "Nuova" e il documento PDF restano
-disponibili anche a chi non ne ha.
+Le abilitazioni sono un'altra cosa e limitano solo le righe della pagina
+Pratiche, che senza abilitazione non si aprono: i numeri, l'elenco, la scheda,
+il pulsante "Nuova" e il documento PDF restano disponibili anche a chi non ne
+ha.
 
 Nota: le abilitazioni sono applicate solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).

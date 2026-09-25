@@ -83,8 +83,8 @@ Quando usarle e come far ripartire i controlli: [Documentazione](documentazione.
 
 ### Autenticazione sul router
 
-- **Regola.** La sessione si richiede sul router, con `APIRouter(..., dependencies=[Depends(get_current_utente)])`. Così una rotta nuova nasce già protetta (`backend/src/pratiche/routers.py:12-18`).
-- **Sotto-router.** Quelli inclusi in un router protetto ereditano la dipendenza, come `backend/src/pratiche/opzioni.py` e `backend/src/documenti/rotte.py` (`backend/src/pratiche/routers.py:20-22`).
+- **Regola.** La sessione si richiede sul router, con `APIRouter(..., dependencies=[Depends(get_current_utente)])`. Così una rotta nuova nasce già protetta (`backend/src/pratiche/routers.py:16-20`).
+- **Sotto-router.** Quelli inclusi in un router protetto ereditano la dipendenza, come `backend/src/pratiche/opzioni.py` e `backend/src/documenti/rotte.py` (`backend/src/pratiche/routers.py:22-24`).
 - **Eccezioni.** Chiedono la sessione solo sulle rotte che ne hanno bisogno:
   - i router dell'accesso: `backend/src/auth/`, `backend/src/otp/accesso.py`, `backend/src/mfa/accesso.py`;
   - `backend/src/profilo/routers.py`.

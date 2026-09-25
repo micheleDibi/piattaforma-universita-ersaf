@@ -11,7 +11,7 @@ I test del backend stanno in `backend/tests/`:
 | Cartella | Cosa contiene |
 |---|---|
 | `unit/` | Logica senza database: configurazione, password, token, authenticator, IP, SMS, layout delle email, dati dei clienti, PDF delle pratiche |
-| `integration/` | Flussi completi con l'API e MariaDB: login, sessioni, recupero password, codici OTP, secondo fattore, clienti, filtri e documento delle pratiche |
+| `integration/` | Flussi completi con l'API e MariaDB: login, sessioni, recupero password, codici OTP, secondo fattore, clienti, filtri, conteggi e documento delle pratiche |
 | `security/` | Proprietà di sicurezza: rotte protette, cookie e CSRF, impersonificazione, risposte indistinguibili, log senza segreti, nessuna password in chiaro, profilo, autorizzazioni. Molti richiedono MariaDB, alcuni no |
 | `db/` | Migrazioni e rollback |
 | `support/` | Aiuti comuni (vedi sotto) |
