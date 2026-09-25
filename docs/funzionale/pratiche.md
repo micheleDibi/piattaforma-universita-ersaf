@@ -133,7 +133,7 @@ pratica nuova. Selezionando una riga si apre la scheda della pratica.
   lungo va a capo al massimo su due righe; passando il mouse compare per
   intero.
 - **Stato**: sempre su una riga. Se lo spazio non basta, il nome si accorcia
-  con i puntini.
+  con i puntini. È verde quando vale «Pratica Conclusa», altrimenti neutro.
 
 Se un valore manca, compare un trattino.
 

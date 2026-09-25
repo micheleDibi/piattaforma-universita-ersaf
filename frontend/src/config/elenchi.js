@@ -10,6 +10,9 @@ const cliente = {
 };
 const corso = { id: "corso", etichetta: "Corso", icona: "corso" };
 const stato = { id: "stato", etichetta: "Stato", rilievo: "stato" };
+// Stato delle pratiche: come le verifiche di attuatori/sottoscrittori, senza
+// il pallino e verde solo a conclusione (vedi tonoStato in rigaPratica).
+const statoPratica = { ...stato, puntino: false };
 // Nominativo dei clienti: iniziali, "Cognome Nome" e avviso delle anomalie.
 // Il nome si ferma a due righe e il title lo mostra per intero.
 const persona = { id: "nominativo", etichetta: "Nominativo", rilievo: "persona", righe: 2 };
@@ -91,8 +94,8 @@ export const MODELLO_PRATICHE = {
   id: "pratiche",
   etichetta: "Pratiche",
   ampiezza: "articolata",
-  colonne: [numero, dataCreazione, cliente, corsoPratica, stato].map(colonna),
-  mobile: [numero, dataCreazione, cliente, corsoPratica, stato],
+  colonne: [numero, dataCreazione, cliente, corsoPratica, statoPratica].map(colonna),
+  mobile: [numero, dataCreazione, cliente, corsoPratica, statoPratica],
 };
 
 export const MODELLO_PRODOTTI = {
