@@ -617,7 +617,7 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
 - **Convenzione -1/0 letta in modi diversi.**
   - L'elenco prodotti considera attivo solo -1, e così anche gli interruttori delle Abilitazioni.
   - La regola generale del frontend e il pannello della pagina Pratiche considerano vero ogni valore diverso da zero.
-  - `righeElenco.js:72`; `frontend/src/components/SchedaAbilitazioniPratiche.jsx:25`; `frontend/src/lib/flagLegacy.js:16-21`; `clienti/routers.py:53-59`.
+  - `righeElenco.js:114`; `frontend/src/components/SchedaAbilitazioniPratiche.jsx:25`; `frontend/src/lib/flagLegacy.js:16-21`; `clienti/routers.py:70-76`; `pannelloPratiche.js:106`.
 - **Messaggio uniforme del recupero password.**
   - Una persona senza ruolo attuatore, o con l'indirizzo condiviso con un altro attuatore attivo, vede lo stesso messaggio degli altri ma non riceve la mail.
   - È una scelta voluta contro l'enumerazione degli account.
@@ -679,7 +679,7 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - In creazione, se la richiesta non invia i cinque campi, gli altri quattro nascono accesi per gli attuatori e i corsi speciali spenti; il valore predefinito del database è invece -1. È un valore predefinito, non una forzatura: una richiesta che invia il valore lo mantiene.
   - Dall'interfaccia il caso non si presenta in creazione, perché i cinque campi non vengono inviati.
   - Il pannello della pagina Pratiche legge i permessi da una relazione non deterministica per chi ha più anagrafiche.
-  - `clienti/servizio.py:56-64`, `211-214`; `backend/src/clienti/models.py:82-86`; `clienti/routers.py:45-59`; `utenti/models.py:73-79`; `servizio_login.py:128-135`.
+  - `clienti/servizio.py:58-66`, `282-285`; `backend/src/clienti/models.py:82-86`; `clienti/routers.py:62-76`; `utenti/models.py:73-79`; `servizio_login.py:128-135`.
 - **Controllo del codice fiscale.**
   - In creazione il server controlla struttura e carattere di controllo.
   - In modifica controlla lunghezza, struttura e carattere di controllo, solo se il valore cambia.

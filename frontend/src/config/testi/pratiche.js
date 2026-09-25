@@ -23,8 +23,10 @@ export const TESTI_PANNELLO_PRATICHE = {
     `${pratiche} ${pratiche === 1 ? "pratica" : "pratiche"} · ${tipologie} ${
       tipologie === 1 ? "tipologia" : "tipologie"
     }`,
-  // Nome accessibile di una riga: per chi usa un lettore di schermo i numeri
-  // delle colonne non hanno intestazione. `stati` e' "Bozza 3, Conclusa 12, …".
+  // Nome accessibile di una riga e del totale dell'ateneo: per chi usa un
+  // lettore di schermo i numeri delle colonne non hanno intestazione.
+  // `stati` e' il risultato di elencoStati: "Bozza 3, Conclusa 12, …".
   descriviTipologia: (tipologia, pratiche, stati) =>
     `${tipologia}: ${pratiche} ${pratiche === 1 ? "pratica" : "pratiche"} (${stati})`,
+  elencoStati: (voci) => voci.map(([stato, n]) => `${stato} ${n}`).join(", "),
 };

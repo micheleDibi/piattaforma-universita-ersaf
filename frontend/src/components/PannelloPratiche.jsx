@@ -21,13 +21,18 @@ function Punto({ stato }) {
   return <span className="pannello-pratiche__punto" data-stato={stato.chiave} />;
 }
 
+/** Nome per il lettore di schermo: le colonne degli stati non hanno intestazione. */
+function descrivi(nome, totale, celle) {
+  return testi.descriviTipologia(
+    nome,
+    totale,
+    testi.elencoStati(STATI_PANNELLO.map((s, i) => [testi.stati[s.chiave], celle[i]])),
+  );
+}
+
 /** Una tipologia: riga della tabella o voce della lista, secondo la forma. */
 function Tipologia({ riga, attiva, className, children }) {
-  const etichetta = testi.descriviTipologia(
-    riga.label,
-    riga.totale,
-    STATI_PANNELLO.map((s, i) => `${testi.stati[s.chiave]} ${riga.celle[i]}`).join(", "),
-  );
+  const etichetta = descrivi(riga.label, riga.totale, riga.celle);
   if (!attiva) {
     return (
       <div className={className} role="link" aria-disabled="true" aria-label={etichetta}>
@@ -98,17 +103,24 @@ function Tabella({ ateneo }) {
         </Tipologia>
       ))}
       <div className="pannello-pratiche__somma">
-        <span className="pannello-pratiche__somma-etichetta">{testi.totaleAteneo}</span>
+        {/* Fuori dalla griglia (sr-only e' posizionato): le celle restano al loro posto. */}
+        <span className="sr-only">{descrivi(testi.totaleAteneo, ateneo.totale, ateneo.somme)}</span>
+        <span className="pannello-pratiche__somma-etichetta" aria-hidden="true">
+          {testi.totaleAteneo}
+        </span>
         {ateneo.somme.map((n, i) => (
           <span
             key={STATI_PANNELLO[i].chiave}
             className="pannello-pratiche__valore"
             data-nullo={n === 0 || undefined}
+            aria-hidden="true"
           >
             {n}
           </span>
         ))}
-        <span className="pannello-pratiche__totale-ateneo">{ateneo.totale}</span>
+        <span className="pannello-pratiche__totale-ateneo" aria-hidden="true">
+          {ateneo.totale}
+        </span>
         <span />
       </div>
     </div>

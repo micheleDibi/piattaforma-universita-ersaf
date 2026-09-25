@@ -134,7 +134,7 @@ Nei log vanno solo gli identificativi: mai token, impronte, hash, password o ind
   - I fogli CSS sono importati da `frontend/src/index.css`.
 - **Colori, misure e movimento:** sono token, in `frontend/src/config/tokens/` e `frontend/src/config/theme/`.
   - Le pagine usano i ruoli semantici, non i colori grezzi della palette (`frontend/src/index.css:4-6`).
-  - La palette (`frontend/src/config/tokens/palette.css`) ha due blocchi: i campioni del logo e i campioni dell'interfaccia, cioè i valori esatti del design (famiglie `ardesia`, `indaco`, `ambra`, `muschio`, `mattone`).
+  - La palette (`frontend/src/config/tokens/palette.css`) ha due blocchi: i campioni del logo e i campioni dell'interfaccia, cioè i valori esatti del design (famiglie `ardesia`, `indaco`, `cobalto`, `ambra`, `muschio`, `mattone`).
   - I ruoli di `frontend/src/config/theme/colori.css` richiamano quei campioni. Un colore nuovo del design diventa prima un campione e poi un ruolo; le pagine usano solo il ruolo.
   - Durate e curve delle animazioni vengono dai token di movimento (`frontend/src/config/tokens/movimento.css`).
 - **Codice meno recente.** Diversi componenti contengono ancora testi e colori scritti in linea, per esempio i moduli dell'anagrafica.

@@ -119,5 +119,6 @@ test("il riepilogo dell'ateneo e il nome delle righe accordano singolare e plura
   assert.equal(testi.riepilogoAteneo(12, 6), "12 pratiche · 6 tipologie");
   assert.equal(testi.riepilogoAteneo(1, 1), "1 pratica · 1 tipologia");
   assert.equal(testi.riepilogoAteneo(0, 2), "0 pratiche · 2 tipologie");
-  assert.equal(testi.descriviTipologia("Master", 1, "Bozza 1"), "Master: 1 pratica (Bozza 1)");
+  assert.equal(testi.descriviTipologia("Master", 1, testi.elencoStati([["Bozza", 1], ["Conclusa", 0]])),
+    "Master: 1 pratica (Bozza 1, Conclusa 0)");
 });

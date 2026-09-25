@@ -51,7 +51,8 @@ tre o due colonne, sotto il totale delle pratiche.
 Sotto la striscia c'è un riquadro per ateneo, con il logo, il nome e un
 riepilogo come "120 pratiche · 6 tipologie". Nel riquadro, una tabella ha una
 riga per tipologia di corso, una colonna per stato e il totale della riga; in
-fondo, la riga "Totale ateneo". I valori a zero sono in grigio chiaro.
+fondo, la riga "Totale ateneo". I numeri degli stati a zero sono in grigio
+chiaro; i totali restano scuri.
 
 | Ateneo | Abilitazione dell'ateneo | Righe, in quest'ordine |
 |---|---|---|
