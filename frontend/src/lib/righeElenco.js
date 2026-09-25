@@ -99,6 +99,7 @@ export function rigaPratica(item) {
   return {
     id: item.pratica_id,
     nomeAzione: numero !== "-" ? numero : testo(item.cliente_nome_completo),
+    tonoStato: item.pratica_stato_descrizione === "Pratica Conclusa" ? "positivo" : "neutro",
     campi: {
       numero,
       cliente: testo(item.cliente_nome_completo),

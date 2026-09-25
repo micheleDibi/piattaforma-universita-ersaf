@@ -56,10 +56,12 @@ export default function TabellaElenco({ dati, modello, onApri }) {
                         className="elenco-adattivo__badge"
                         data-tono={riga.tonoStato}
                       >
-                        <span
-                          className="elenco-adattivo__badge-punto"
-                          aria-hidden="true"
-                        />
+                        {campo.puntino !== false && (
+                          <span
+                            className="elenco-adattivo__badge-punto"
+                            aria-hidden="true"
+                          />
+                        )}
                         <span>{valore}</span>
                       </span>
                     );
