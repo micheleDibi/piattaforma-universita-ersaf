@@ -71,6 +71,14 @@ class Impostazioni(BaseSettings):
     chat_java_secret_file: str = ""
     chat_dataset: str = ""
 
+    # Due database amministrativi separati (stesso server, stesso utente e
+    # password di database_url, nome diverso). A differenza di database_url
+    # sono facoltativi: verifica_configurazione() non li pretende, perche'
+    # nessuna funzionalita' li usa ancora — la connessione e' solo preparata
+    # in anticipo.
+    database_url_gestione_pagamenti: str = ""
+    database_url_sys_admin: str = ""
+
     # --- segreti ------------------------------------------------------------
     # Default vuoto e NESSUN validator: Impostazioni() non solleva mai.
     password_reset_token_pepper: str = ""

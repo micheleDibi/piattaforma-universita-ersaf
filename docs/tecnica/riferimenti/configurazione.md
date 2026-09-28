@@ -17,6 +17,8 @@ Letto da `backend/src/config.py`. "Obbligatoria" indica le variabili senza le qu
 | `CHAT_JAVA_ORIGINE` | testo | (vuoto) | no | Origin gia autorizzata nel servizio Java, inviata esclusivamente dal backend. |
 | `CHAT_JAVA_SECRET_FILE` | testo | (vuoto) | no | File segreto condiviso con UNIVERSITA_BRIDGE_SECRET_FILE del servizio Java. |
 | `CHAT_DATASET` | testo | (vuoto) | no | Identificativo del dataset comune ai due gestionali; deve coincidere con UNIVERSITA_BRIDGE_DATASET. |
+| `DATABASE_URL_GESTIONE_PAGAMENTI` | testo | (vuoto) | no | Due database amministrativi separati, sullo stesso server del DB principale (stesso indirizzo, stesso utente e password), ma con nome diverso. Facoltativi e non ancora usati: engine e sessioni si creano solo alla prima richiesta esplicita. Se mancano o non sono validi, l'import resta possibile. Nei test questi indirizzi vengono ignorati: gli override TEST_DATABASE_URL_* sono ammessi solo su MariaDB loopback:3307/ersaf_test. |
+| `DATABASE_URL_SYS_ADMIN` | testo | (vuoto) | no |  |
 | `PASSWORD_RESET_TOKEN_PEPPER` | testo | (vuoto) | sì | Nel database non finisce mai un token in chiaro: solo SHA-256(token\|\|pepper). Il pepper sta qui e NON nel database, cosi' chi legge un backup non puo' derivare i token. PASSWORD_RESET_TOKEN_PEPPER, SESSION_TOKEN_PEPPER e TOTP_CHIAVE devono essere diversi fra loro e lunghi almeno 32 byte. |
 | `SESSION_TOKEN_PEPPER` | testo | (vuoto) | sì | Nel database non finisce mai un token in chiaro: solo SHA-256(token\|\|pepper). Il pepper sta qui e NON nel database, cosi' chi legge un backup non puo' derivare i token. PASSWORD_RESET_TOKEN_PEPPER, SESSION_TOKEN_PEPPER e TOTP_CHIAVE devono essere diversi fra loro e lunghi almeno 32 byte. |
 | `TOTP_CHIAVE` | testo | (vuoto) | sì | Cifra a riposo i segreti degli authenticator (secondo fattore del Nazionale). Diversa dai pepper. Se si perde, tutti devono riattivare l'app: va nel backup dei segreti insieme alle altre due. |
@@ -65,7 +67,9 @@ Letto da `backend/src/notifiche/config_sms.py`.
 
 | Variabile | Dove |
 |---|---|
-| `TEST_DATABASE_URL` | `backend/src/database.py` |
+| `TEST_DATABASE_URL` | `backend/src/database.py`, `backend/src/database_secondari.py` |
+| `TEST_DATABASE_URL_GESTIONE_PAGAMENTI` | `backend/src/database_secondari.py` |
+| `TEST_DATABASE_URL_SYS_ADMIN` | `backend/src/database_secondari.py` |
 
 ## Deploy (`compose.env` sul server)
 

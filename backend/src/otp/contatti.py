@@ -12,6 +12,7 @@ from src.otp.attivazione import prepara_attivazione, comunica_accesso
 from src.otp.schemas import ConfermaSfida
 from src.security.rete import ip_client
 from src.otp.models import ContattoVerificato
+from src.otp.stato_contatti import stato_contatto
 
 router = APIRouter(prefix="/clienti", dependencies=[Depends(get_current_utente)])
 Tipo = Literal["email", "cellulare"]
@@ -34,27 +35,8 @@ def stato_contatti(db, cliente, utente):
     }
     attivo = utente.utente_attivoSN == -1
 
-    def stato_per_tipo(tipo):
-        verificato_ora = gia_verificato(db, cliente, tipo)
-        # mai_verificato = non esiste nessuna riga storica per questo
-        # contatto: e' il caso dei clienti creati prima del sistema OTP.
-        # Se la riga esiste ma la versione non corrisponde piu' (es. email
-        # cambiata dopo la verifica), NON e' "mai verificato": e' stato
-        # verificato in passato con un valore diverso, quindi il nuovo
-        # valore va comunque riverificato, senza ereditare lo stato
-        # "attivo" dell'utente.
-        mai_verificato = tipo not in righe
-        return {
-            "valore": getattr(cliente, "cliente_" + tipo) or "",
-            "verificato": verificato_ora or (mai_verificato and attivo),
-            "verificato_il": (
-                righe[tipo].verificato.isoformat()
-                if tipo in righe and verificato_ora
-                else None
-            ),
-        }
-
-    return {tipo: stato_per_tipo(tipo) for tipo in ("email", "cellulare")} | {
+    return {tipo: stato_contatto(cliente, tipo, righe.get(tipo), attivo)
+            for tipo in ("email", "cellulare")} | {
         "attivazione": "in_attesa" if db.get(Attivazione, utente.utente_id) else
                        "attivo" if attivo else "disattivato"
     }

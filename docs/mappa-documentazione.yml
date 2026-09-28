@@ -124,6 +124,7 @@ regole:
   - nome: Architettura e ambiente
     percorsi:
       - "backend/src/database.py"
+      - "backend/src/database_secondari.py"
       - "backend/src/config.py"
       - "backend/src/logging_config.py"
       - "backend/src/errori.py"

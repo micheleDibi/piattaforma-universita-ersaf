@@ -560,8 +560,10 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - `SchedaUtente.jsx:337-345`; `NuovoSottoscrittore.jsx:93-95`, `224-233`, `484-495`.
 - **Contatti mostrati come verificati.**
   - Un account attivo senza alcuna verifica registrata vede email e cellulare come verificati ("Verificata", "Verificato"), senza il pulsante "Verifica".
+  - Elenchi e scheda applicano la stessa funzione `otp/stato_contatti.py`: la regola legacy vale solo in assenza di storico. Se esiste una verifica di un valore precedente, il contatto corrente resta da verificare anche per un account attivo.
+  - La modifica del contatto tramite l'anagrafica cancella la riga di verifica: per un account attivo può quindi riattivare la regola legacy e mostrare come verificato il nuovo valore. L'allineamento degli elenchi conserva questo limite della scheda; la verifica effettiva usata per l'accesso resta assente.
   - Il server non li considera verificati. Per esempio, non li conta come metodo del secondo fattore.
-  - `otp/contatti.py:35-49`; `frontend/src/lib/schedaAnagrafica.js:30-41`; `frontend/src/components/contatti/CampoContatto.jsx:24-25`, `34-49`; `otp/servizio.py:76-78`; `metodi.py:45-46`.
+  - `otp/stato_contatti.py`; `otp/contatti.py`; `clienti/models.py`; `frontend/src/lib/schedaAnagrafica.js:30-41`; `frontend/src/components/contatti/CampoContatto.jsx:24-25`, `34-49`; `otp/servizio.py:76-78`; `metodi.py:45-46`.
 - **Codice fiscale segnato come obbligatorio.**
   - Il campo ha l'asterisco.
   - Né l'interfaccia né il server lo richiedono.

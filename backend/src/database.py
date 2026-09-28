@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from src.config import get_impostazioni
+from src.database_secondari import sessione_secondaria
 
 _impostazioni = get_impostazioni()
 
@@ -48,3 +49,18 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# =============================================================================
+# Database amministrativi secondari (facoltativi)
+# =============================================================================
+# Nessuna funzionalita' li usa ancora. Engine e sessioni vengono creati solo
+# alla prima richiesta esplicita, senza effetti sull'import del DB principale.
+
+
+def get_db_gestione_pagamenti():
+    yield from sessione_secondaria("DATABASE_URL_GESTIONE_PAGAMENTI")
+
+
+def get_db_sys_admin():
+    yield from sessione_secondaria("DATABASE_URL_SYS_ADMIN")

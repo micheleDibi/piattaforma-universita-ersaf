@@ -45,7 +45,8 @@ alcuni hanno solo i modelli.
 |---|---|
 | `main.py` | Crea l'app: avvio con verifica della configurazione, CORS, middleware browser, router, gestori di errore, `/salute` |
 | `config.py` | Impostazioni lette da `backend/.env` e verifica di avvio |
-| `database.py` | Engine, sessioni (`get_db`), base dei modelli |
+| `database.py` | Engine, sessioni (`get_db`), base dei modelli; due connessioni facoltative in più verso database amministrativi separati, non ancora usate |
+| `database_secondari.py` | Inizializzazione su richiesta delle sessioni amministrative, errori senza valori sensibili e isolamento del database di test |
 | `errori.py` | Eccezioni dell'applicazione, senza dipendenze |
 | `logging_config.py` | Logging con redazione dei valori sensibili |
 | `auth/` | Login, sessione, logout, recupero password, impersonificazione, limiti del login, dipendenze di sessione (`dipendenze.py`), controlli di ruolo (`autorizzazioni.py`) |
@@ -91,6 +92,17 @@ Quello che serve sapere qui:
   fallire l'import: l'avvio si ferma comunque.
 - `TEST_DATABASE_URL`, se impostata, ha la precedenza su `DATABASE_URL`
   (`database.py`).
+- `DATABASE_URL_GESTIONE_PAGAMENTI` e `DATABASE_URL_SYS_ADMIN` preparano due
+  connessioni verso due database amministrativi separati, sullo stesso server
+  del database principale (stesso utente e password, nome diverso). A
+  differenza di `DATABASE_URL` sono facoltative: `get_db_gestione_pagamenti()`
+  e `get_db_sys_admin()` creano engine e sessioni solo alla prima richiesta.
+  Un valore assente o malformato produce un errore controllato al loro uso,
+  senza mostrare l'indirizzo e senza impedire l'import del backend.
+  In ambiente di test, o quando è impostato `TEST_DATABASE_URL`, ignorano gli
+  indirizzi ordinari: gli override `TEST_DATABASE_URL_GESTIONE_PAGAMENTI` e
+  `TEST_DATABASE_URL_SYS_ADMIN` devono puntare al solo database usa-e-getta
+  descritto in [Test](test.md). Non c'è ancora nessuna funzionalità che li usa.
 
 L'elenco delle variabili è in
 [riferimenti/configurazione.md](riferimenti/configurazione.md).

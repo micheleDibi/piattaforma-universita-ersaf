@@ -287,3 +287,17 @@ API della chat e WebSocket con trasporto Java simulato e sessione reale di test.
 Il vettore `practice_crypto_vector.json` è sintetico e viene verificato sia da
 Python sia dalla suite Java inclusa nel delta. Il gate Università non esegue
 Maven né invia messaggi al servizio pubblicato; vedi [verifiche](chat-e-firma.md#verifiche).
+
+## Stato dei contatti e database facoltativi
+
+`test_stato_clienti.py` confronta elenchi e scheda per account attivi legacy,
+account disattivi, verifica OTP corrente e versioni storiche diverse dal contatto attuale.
+Le prove del numero di query per pagina restano applicate anche agli indicatori.
+
+`test_database_secondari.py` verifica che le connessioni amministrative siano
+inizializzate solo quando richieste, chiudano le sessioni anche su errore e non
+ereditino gli indirizzi ordinari durante i test. Gli override
+`TEST_DATABASE_URL_GESTIONE_PAGAMENTI` e `TEST_DATABASE_URL_SYS_ADMIN` accettano
+soltanto lo stesso MariaDB locale usa-e-getta della suite: nessun database
+aggiuntivo o remoto è necessario. Un indirizzo malformato non viene riportato
+nel messaggio d'errore.

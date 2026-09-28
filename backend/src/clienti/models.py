@@ -112,8 +112,10 @@ class Cliente(Base):
     )
 
     def _contatto_verificato(self, tipo):
-        from src.otp.identita import versione
-        return any(r.tipo == tipo and r.versione == versione(self, tipo) for r in self.verifiche_contatti)
+        from src.otp.stato_contatti import stato_contatto
+        riga = next((r for r in self.verifiche_contatti if r.tipo == tipo), None)
+        attivo = self.utente is not None and self.utente.utente_attivoSN == -1
+        return stato_contatto(self, tipo, riga, attivo)["verificato"]
 
     @property
     def diploma_completo(self) -> Optional[bool]:

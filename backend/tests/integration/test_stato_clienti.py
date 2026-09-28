@@ -28,8 +28,8 @@ DIPLOMA = {
 DA_UNIVERSITA = re.compile(r"\bFROM universita\b")
 
 
-def sottoscrittore(db, padre, ruolo=f.RUOLO_SOTTOSCRITTORE):
-    return f.crea_attuatore(db, email=email_nuova("sott"), ruolo=ruolo, padre=padre)
+def sottoscrittore(db, padre, ruolo=f.RUOLO_SOTTOSCRITTORE, attivo=f.ATTIVO):
+    return f.crea_attuatore(db, email=email_nuova("sott"), ruolo=ruolo, padre=padre, attivo=attivo)
 
 
 def curriculum(db, cliente_id, **campi):
@@ -52,15 +52,17 @@ def sottoscrittori(client, sessione):
 # =============================================================================
 # Email e cellulare
 # =============================================================================
-def test_contatti_verificati_in_elenco_finche_il_valore_non_cambia(client, db):
+@pytest.mark.parametrize("attivo", [f.DISATTIVO, f.ATTIVO])
+def test_contatti_verificati_in_elenco_finche_il_valore_non_cambia(client, db, attivo):
     io, sessione = accedi(client, db)
-    persona = sottoscrittore(db, io.utente_id)
+    persona = sottoscrittore(db, io.utente_id, attivo=attivo)
     riga = db.get(Cliente, persona.cliente_id)
     riga.cliente_cellulare = "+393331234567"
     db.commit()
 
     prima = sottoscrittori(client, sessione)[persona.cliente_id]
-    assert (prima["email_verificata"], prima["cellulare_verificato"]) == (False, False)
+    legacy_attivo = attivo == f.ATTIVO
+    assert (prima["email_verificata"], prima["cellulare_verificato"]) == (legacy_attivo, legacy_attivo)
 
     f.verifica_contatto(db, persona.cliente_id, "email")
     f.verifica_contatto(db, persona.cliente_id, "cellulare")
@@ -74,14 +76,34 @@ def test_contatti_verificati_in_elenco_finche_il_valore_non_cambia(client, db):
     db.commit()
     cambiati = sottoscrittori(client, sessione)[persona.cliente_id]
     assert (cambiati["email_verificata"], cambiati["cellulare_verificato"]) == (False, False)
+    dettaglio = client.get(f"/clienti/{persona.cliente_id}/contatti", headers=sessione)
+    assert dettaglio.status_code == 200
+    assert not dettaglio.json()["email"]["verificato"]
+    assert not dettaglio.json()["cellulare"]["verificato"]
 
 
 def test_anche_gli_attuatori_hanno_i_contatti_verificati(client, db):
     io, sessione = accedi(client, db)
-    attuatore = sottoscrittore(db, io.utente_id, ruolo=f.RUOLO_ADERENTE)
+    attuatore = sottoscrittore(db, io.utente_id, ruolo=f.RUOLO_ADERENTE, attivo=f.DISATTIVO)
     f.verifica_contatto(db, attuatore.cliente_id, "email")
     riga = elenco(client, sessione, solo_attuatori="true")[attuatore.cliente_id]
     assert (riga["email_verificata"], riga["cellulare_verificato"]) == (True, False)
+
+
+def test_contatto_mai_verificato_ma_account_gia_attivo_risulta_verificato_in_elenco(client, db):
+    """Stessa regola condivisa con la scheda: un
+    account gia' attivo, per un contatto senza nessuna verifica storica,
+    conta come verificato anche nell'elenco — prima dell'allineamento
+    risultava verificato solo in scheda."""
+    io, sessione = accedi(client, db)
+    persona = sottoscrittore(db, io.utente_id, attivo=f.ATTIVO)
+    riga = sottoscrittori(client, sessione)[persona.cliente_id]
+    assert (riga["email_verificata"], riga["cellulare_verificato"]) == (True, True)
+    risposta = client.get(f"/clienti/{persona.cliente_id}/contatti", headers=sessione)
+    assert risposta.status_code == 200
+    for tipo in ("email", "cellulare"):
+        assert risposta.json()[tipo]["verificato"] is True
+        assert risposta.json()[tipo]["verificato_il"] is None
 
 
 # =============================================================================
