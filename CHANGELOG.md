@@ -11,6 +11,30 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 11 — 25/09/2026 11:35
+
+<!-- timbro: versione=11 sha=26d6d2d48fee707501c192cd589f7560a20e3bcf -->
+
+### Novità e correzioni
+
+**Modificato**
+
+- La pagina Pratiche mostra il numero di pratiche per ateneo, tipologia di corso e stato: in cima il totale e quello di ogni stato, poi una tabella per ateneo con il totale di ogni riga e dell'ateneo.
+- Nella pagina Pratiche si apre l'elenco filtrato scegliendo la riga di una tipologia, al posto del pulsante; senza abilitazione la riga resta visibile ma sbiadita.
+- Sul telefono e negli spazi stretti la tabella di ogni ateneo diventa un elenco, con i sei stati sotto il nome della tipologia.
+- Nell'elenco delle pratiche lo stato non ha più il pallino: è verde, con la spunta, quando la pratica è conclusa, altrimenti resta neutro.
+
+### Dettagli tecnici
+
+**Aggiunto**
+
+- `GET /pratiche/conteggi` restituisce il numero di pratiche per università, tipo di corso e stato, con la stessa visibilità di `GET /pratiche/` perché passa da `query_filtrata`.
+- Le colonne di stato degli elenchi accettano `puntino: false`, che mostra la spunta al posto del pallino solo con il tono positivo; `rigaPratica` calcola il tono dalla descrizione dello stato.
+
+**Modificato**
+
+- Il pannello somma i gruppi secondo i tipi di corso di ogni riga in `lib/pannelloPratiche.js`; stili in `config/styles/pannelloPratiche.css` con soglie del contenitore a 480, 720 e 820px, nuovi campioni e ruoli di colore per gli stati, tipografia `text-totale` e `text-conteggio`, opzione `marginiInclusi` di `contenutoPagina()`.
+
 ## Versione 10 — 24/09/2026 11:43
 
 <!-- timbro: versione=10 sha=334d3addd4a81b60fd0ccc2f61bbc8209988af27 -->

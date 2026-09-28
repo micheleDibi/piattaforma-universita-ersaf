@@ -404,6 +404,15 @@ Crea Pratica.
 - **Corpo**: `PraticaCreate` (application/json) obbligatorio
 - **Risposta**: `201` `PraticaResponse`
 
+### `GET /pratiche/conteggi`
+
+Conteggi Pratiche.
+
+- **Accesso**: sessione
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` `list[ConteggioPratiche]`
+
 ### `GET /pratiche/filtri/stati`
 
 Stati.
@@ -1201,6 +1210,15 @@ Aggiorna Utente.
 
 | Campo | Tipo | Obbligatorio |
 |---|---|---|
+| `totale` | `integer` | sì |
+
+### ConteggioPratiche
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `listino_tipo_corso_id` | `integer \| null` | no |
+| `nome_universita_id` | `integer` | sì |
+| `pratica_stato_id` | `integer` | sì |
 | `totale` | `integer` | sì |
 
 ### EmittenteBreve

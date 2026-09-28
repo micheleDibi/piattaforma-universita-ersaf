@@ -44,7 +44,7 @@ Anche un sottoscrittore riceve le credenziali quando il suo account si attiva. I
 
 Nota: le voci nascoste non proteggono le pagine. Attuatori e Prodotti formativi si aprono digitando l'indirizzo e il server non controlla il ruolo. Anche la pagina Aziende si apre, ma lì il server applica la regola di visibilità descritta più sotto, per cui l'elenco risulta vuoto. Vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
-La pagina **Pratiche** ospita il pannello degli atenei, che prima stava nella Dashboard, e mostra le pratiche secondo le regole di visibilità descritte sotto. I pulsanti del pannello richiedono l'abilitazione generale e quella dell'ateneo; le abilitazioni non sostituiscono i controlli del server. Vedi [Pratiche](pratiche.md).
+La pagina **Pratiche** ospita il pannello degli atenei, che prima stava nella Dashboard, e mostra le pratiche secondo le regole di visibilità descritte sotto. Il pannello mostra il numero di pratiche per ateneo, tipologia e stato; le sue righe si aprono solo con l'abilitazione generale e quella dell'ateneo; le abilitazioni non sostituiscono i controlli del server. Vedi [Pratiche](pratiche.md).
 
 ### Dentro le pagine, solo per il Nazionale
 

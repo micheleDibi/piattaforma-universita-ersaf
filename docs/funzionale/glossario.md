@@ -4,7 +4,7 @@ Definizioni brevi dei termini usati nella piattaforma e nella sua documentazione
 
 ## Abilitazioni alle pratiche
 
-Interruttori personali che decidono quali pulsanti della Dashboard sono attivi: uno generale per le pratiche universitarie e uno per ogni ateneo. Il Nazionale li cambia nella scheda "Abilitazioni" di un attuatore. Vedi [Ruoli e permessi](ruoli-e-permessi.md).
+Interruttori personali che decidono quali righe della pagina Pratiche si aprono: uno generale per le pratiche universitarie e uno per ogni ateneo. Il Nazionale li cambia nella scheda "Abilitazioni" di un attuatore. Vedi [Ruoli e permessi](ruoli-e-permessi.md).
 
 ## Accesso come altro utente
 
@@ -36,7 +36,7 @@ Scheda della persona con il percorso di studi: titoli (istruzione secondaria o a
 
 ## Dashboard
 
-Pagina con il messaggio di benvenuto e il pannello delle pratiche, diviso per ateneo. Da qui si aprono le Pratiche. Vedi [Pratiche](pratiche.md).
+Pagina con il messaggio di benvenuto. Il pannello delle pratiche, diviso per ateneo, sta nella pagina Pratiche. Vedi [Pratiche](pratiche.md).
 
 ## Frammento di changelog
 

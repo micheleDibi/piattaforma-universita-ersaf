@@ -374,3 +374,16 @@ class PraticaResponse(PraticaBase):
             }
 
         return item_dict
+
+
+class ConteggioPratiche(BaseModel):
+    """Quante pratiche visibili hanno una data universita', tipo di corso e stato.
+
+    Una riga per combinazione presente: le combinazioni senza pratiche non ci
+    sono. Il tipo di corso e' None per le pratiche create da un percorso senza.
+    """
+
+    nome_universita_id: int
+    listino_tipo_corso_id: Optional[int] = None
+    pratica_stato_id: int
+    totale: int

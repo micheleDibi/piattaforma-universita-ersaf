@@ -61,4 +61,13 @@
   /* Testo dei banner di avviso con piu' voci. */
   --text-avviso: 0.875rem;
   --text-avviso--line-height: 1.55;
+
+  /* Numeri della striscia dei totali nella pagina Pratiche: il totale delle
+   * pratiche e quello di ciascuno stato. */
+  --text-totale: 1.75rem;
+  --text-totale--line-height: normal;
+  --text-totale--font-weight: 700;
+  --text-conteggio: 1.5rem;
+  --text-conteggio--line-height: normal;
+  --text-conteggio--font-weight: 600;
 }

@@ -46,7 +46,8 @@ Le voci sono:
 Le voci nascoste non impediscono di aprire un indirizzo: la visibilità dei dati
 è controllata dal server. Vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
-Aprendo **Pratiche** si sceglie l'ateneo e il tipo di corso dal pannello.
+Aprendo **Pratiche** si vedono i numeri delle pratiche per ateneo, tipo di corso
+e stato, e da lì si apre l'elenco di un tipo di corso.
 La Dashboard conserva il messaggio di benvenuto.
 
 In fondo al menu ci sono:
@@ -71,11 +72,11 @@ Le novità delle versioni pubblicate ufficialmente sono raccolte nel [registro d
 ## Le pagine principali
 
 - **Accesso, Password dimenticata, Reimposta password**: entrare e recuperare la password. Vedi [Accesso e sicurezza](accesso-e-sicurezza.md).
-- **Dashboard**: messaggio di benvenuto e pannello delle pratiche, diviso per ateneo. Vedi [Pratiche](pratiche.md).
+- **Dashboard**: messaggio di benvenuto. Il pannello delle pratiche, diviso per ateneo, sta nella pagina Pratiche. Vedi [Pratiche](pratiche.md).
 - **Sottoscrittori**: elenco e schede delle persone che si iscrivono. Vedi [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
 - **Attuatori**: elenco e schede di chi opera nella rete. Vedi [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
 - **Aziende**: elenco, schede e gerarchia delle aziende. Vedi [Aziende](aziende.md).
-- **Pratiche**: elenco con filtri e scheda della pratica; per alcuni tipi di pratica si scarica anche il modulo in PDF. Vedi [Pratiche](pratiche.md).
+- **Pratiche**: numero di pratiche per ateneo, tipo di corso e stato, elenco con filtri e scheda della pratica; per alcuni tipi di pratica si scarica anche il modulo in PDF. Vedi [Pratiche](pratiche.md).
 - **Prodotti formativi**: listino dei percorsi, con prezzi e validità. Vedi [Prodotti formativi](prodotti-formativi.md).
 - **Il mio profilo**: i propri dati, in sola lettura; per il Nazionale anche i metodi del secondo fattore. Vedi [Accesso e sicurezza](accesso-e-sicurezza.md).
 - **Pagina non trovata**: compare quando l'indirizzo non corrisponde a nessuna pagina. Il pulsante "Torna all'applicazione" riporta ai Sottoscrittori.

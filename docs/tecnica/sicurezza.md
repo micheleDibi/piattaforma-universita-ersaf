@@ -411,6 +411,11 @@ tramite `condizione_azienda`, prima di leggere i dati e la firma del documento.
 Sono coperti da test per la propria azienda, azienda diversa, nessuna azienda
 e accesso Nazionale (`tests/integration/test_documento_pratica.py`).
 
+I conteggi della pagina Pratiche (`GET /pratiche/conteggi`) passano dalla
+stessa query dell'elenco, `query_filtrata`, e quindi dalla stessa regola. Sono
+coperti da test per la propria azienda, nessuna azienda e accesso Nazionale
+(`tests/integration/test_conteggi_pratiche.py`).
+
 Il Nazionale non ha filtri. La regola delle anagrafiche e quella delle pratiche stanno in un unico modulo, `backend/src/auth/visibilita.py`: i router la chiamano e non la riscrivono. Ciò che non si vede risponde 404 con lo stesso testo di un id inesistente.
 
 ### I due campi che decidono la visibilità
@@ -477,10 +482,10 @@ Questa sezione elenca i difetti noti di autorizzazione, visibilità e coerenza, 
   - Il server accetta i cinque campi, in creazione e in modifica, da ogni utente autenticato.
   - `NuovoSottoscrittore.jsx:38-41`, `256-271`, `343-345`; `clienti/schemas.py:168-173`, `237-242`; `clienti/servizio.py:211-214`.
 - **Pratiche: abilitazioni e ruolo.**
-  - Il pannello nella pagina Pratiche abilita i pulsanti solo con l'abilitazione generale e quella dell'ateneo.
-  - Elenco, dettaglio, creazione e modifica applicano ora la visibilità per azienda, ma nessuna rotta guarda le abilitazioni né il ruolo: chi ha i pulsanti spenti crea e modifica lo stesso, purché nella propria azienda.
+  - Il pannello nella pagina Pratiche apre le righe solo con l'abilitazione generale e quella dell'ateneo; i numeri li mostra comunque, con la visibilità per azienda.
+  - Elenco, conteggi, dettaglio, creazione e modifica applicano ora la visibilità per azienda, ma nessuna rotta guarda le abilitazioni né il ruolo: chi ha le righe spente crea e modifica lo stesso, purché nella propria azienda.
   - La pagina Pratiche è nel menu di Nazionale, Regionale, Provinciale e Aderente, e si apre anche dall’indirizzo.
-  - `frontend/src/components/PannelloPratiche.jsx:39-41`, `94`; `backend/src/pratiche/routers.py:15-19`, `65-95`, `121-143`; `rotte.js:20-41`; `App.jsx:56`.
+  - `frontend/src/lib/pannelloPratiche.js:106`; `frontend/src/components/PannelloPratiche.jsx:83`, `125`; `backend/src/pratiche/routers.py:16-20`, `66-96`, `145-167`; `rotte.js:20-41`; `App.jsx:56`.
 - **Prodotti formativi e tipi di corso.**
   - La voce di menu è solo per il Nazionale.
   - Creazione e modifica sono aperte a ogni utente autenticato.
@@ -561,13 +566,14 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - Il campo ha l'asterisco.
   - Né l'interfaccia né il server lo richiedono.
   - `frontend/src/components/FormInformazioniPersonali.jsx:12-20`; `clienti/schemas.py:100-101`, `133`.
-- **Pulsante "Prevalutazione".**
+- **Riga "Prevalutazione".**
   - Porta a una pagina che non esiste, quindi a "Pagina non trovata".
-  - `PannelloPratiche.jsx:46-48`; `frontend/src/lib/configPratiche.js:18-22`, `101-105`; `App.jsx:73`.
+  - I suoi numeri sono sempre zero: la piattaforma non conta le prevalutazioni, che non hanno né rotte né una regola di visibilità.
+  - `pannelloPratiche.js:31-33`, `80-82`; `frontend/src/lib/configPratiche.js:18-22`, `101-105`; `App.jsx:73`.
 - **Tendina "Tipologia corso".**
-  - Nessun blocco della Dashboard attiva l'opzione che la mostra.
-  - Quindi, dalla Dashboard, la tendina non compare mai.
-  - `PannelloPratiche.jsx:56`; `configPratiche.js:10-147`; `frontend/src/components/FiltriPratiche.jsx:40`.
+  - Nessuna riga della pagina Pratiche attiva l'opzione che la mostra.
+  - Quindi, dalla pagina Pratiche, la tendina non compare mai.
+  - `pannelloPratiche.js:39`; `configPratiche.js:10-147`; `frontend/src/components/FiltriPratiche.jsx:40`.
 - **Ricerca "per codice" degli studenti.**
   - Nella scheda pratica la ricerca promette il codice, ma il server cerca solo per nome e cognome.
   - Nel filtro Studenti dell'elenco il "codice" è il codice cliente. Per le anagrafiche nuove è un codice interno casuale, non il codice fiscale.
@@ -610,8 +616,8 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - `frontend/src/components/ProdottoFormInfo.jsx:4`, `19`; `frontend/src/components/InserimentoProdotto.jsx:139`, `343`.
 - **Convenzione -1/0 letta in modi diversi.**
   - L'elenco prodotti considera attivo solo -1, e così anche gli interruttori delle Abilitazioni.
-  - La regola generale del frontend e il pannello della Dashboard considerano vero ogni valore diverso da zero.
-  - `righeElenco.js:72`; `frontend/src/components/SchedaAbilitazioniPratiche.jsx:25`; `frontend/src/lib/flagLegacy.js:16-21`; `clienti/routers.py:53-59`.
+  - La regola generale del frontend e il pannello della pagina Pratiche considerano vero ogni valore diverso da zero.
+  - `righeElenco.js:114`; `frontend/src/components/SchedaAbilitazioniPratiche.jsx:25`; `frontend/src/lib/flagLegacy.js:16-21`; `clienti/routers.py:70-76`; `pannelloPratiche.js:106`.
 - **Messaggio uniforme del recupero password.**
   - Una persona senza ruolo attuatore, o con l'indirizzo condiviso con un altro attuatore attivo, vede lo stesso messaggio degli altri ma non riceve la mail.
   - È una scelta voluta contro l'enumerazione degli account.
@@ -668,12 +674,12 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - L'autore della pratica non viene mai registrato.
   - Il prezzo è obbligatorio solo nell'interfaccia.
   - In modifica lo schema accetta ogni campo che dichiara, azienda, consulente e tipo di corso compresi, mentre la scheda ne cambia solo una parte. Il router applica quanto arriva, senza confrontarlo con quello che la scheda mostra.
-  - `pratiche/routers.py:53-102`, `87-101`; `backend/src/pratiche_stati_storico/models.py:16-19`; `backend/src/pratiche/models.py:80-82`, `109-110`, `240`, `280-303`; `frontend/src/lib/praticaForm.js:26-32`.
+  - `pratiche/routers.py:66-96`, `145-167`; `backend/src/pratiche_stati_storico/models.py:16-19`; `backend/src/pratiche/models.py:80-82`, `109-110`, `240`, `280-303`; `frontend/src/lib/praticaForm.js:26-32`.
 - **Abilitazione ai corsi speciali.**
   - In creazione, se la richiesta non invia i cinque campi, gli altri quattro nascono accesi per gli attuatori e i corsi speciali spenti; il valore predefinito del database è invece -1. È un valore predefinito, non una forzatura: una richiesta che invia il valore lo mantiene.
   - Dall'interfaccia il caso non si presenta in creazione, perché i cinque campi non vengono inviati.
-  - Il pannello della Dashboard legge i permessi da una relazione non deterministica per chi ha più anagrafiche.
-  - `clienti/servizio.py:56-64`, `211-214`; `backend/src/clienti/models.py:82-86`; `clienti/routers.py:45-59`; `utenti/models.py:73-79`; `servizio_login.py:128-135`.
+  - Il pannello della pagina Pratiche legge i permessi da una relazione non deterministica per chi ha più anagrafiche.
+  - `clienti/servizio.py:58-66`, `282-285`; `backend/src/clienti/models.py:82-86`; `clienti/routers.py:62-76`; `utenti/models.py:73-79`; `servizio_login.py:128-135`.
 - **Controllo del codice fiscale.**
   - In creazione il server controlla struttura e carattere di controllo.
   - In modifica controlla lunghezza, struttura e carattere di controllo, solo se il valore cambia.

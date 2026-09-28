@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 from typing import Annotated, List
 
@@ -8,7 +9,7 @@ from src.database import get_db
 from src.pratiche.filtri import FiltriPratiche, query_filtrata
 from src.pratiche.opzioni import router as opzioni_router
 from src.documenti.rotte import router as documento_router
-from src.pratiche.models import Pratica, PraticaCreate, PraticaResponse, PraticaUpdate
+from src.pratiche.models import ConteggioPratiche, Pratica, PraticaCreate, PraticaResponse, PraticaUpdate
 
 # Stessa scelta di aziende/routers.py: autenticazione a livello di router,
 # non di singolo endpoint, cosi' una rotta nuova la trova gia' protetta.
@@ -105,6 +106,29 @@ def lista_pratiche(
     return (query_filtrata(db, filtri, vis).options(*_RELAZIONI_ELENCO)
             .order_by(Pratica.pratica_dataCreazione.desc(), Pratica.pratica_id.desc())
             .offset(filtri.skip).limit(filtri.limit).all())
+
+
+# GET CONTEGGI: prima di /{pratica_id}, che altrimenti catturerebbe il percorso
+# e risponderebbe 422.
+@router.get("/conteggi", response_model=List[ConteggioPratiche])
+def conteggi_pratiche(
+    db: Session = Depends(get_db),
+    vis: Visibilita = Depends(visibilita_corrente),
+):
+    """Pratiche visibili per universita', tipo di corso e stato.
+
+    Stessa visibilita' dell'elenco, perche' passa da query_filtrata: la pagina
+    Pratiche somma questi gruppi secondo le tipologie di ogni ateneo.
+    """
+    gruppo = (Pratica.nome_universita_id, Pratica.listino_tipo_corso_id, Pratica.pratica_stato_id)
+    righe = (query_filtrata(db, FiltriPratiche(), vis)
+             .with_entities(*gruppo, func.count(Pratica.pratica_id))
+             .group_by(*gruppo).order_by(*gruppo).all())
+    return [
+        ConteggioPratiche(nome_universita_id=universita, listino_tipo_corso_id=tipo_corso,
+                          pratica_stato_id=stato, totale=totale)
+        for universita, tipo_corso, stato, totale in righe
+    ]
 
 
 # GET BY ID
