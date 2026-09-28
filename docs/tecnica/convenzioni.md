@@ -6,11 +6,16 @@ Queste sono le regole di lavoro per chi modifica il codice. Le regole della docu
 
 Questa è l'unica descrizione del flusso: gli altri documenti rimandano qui.
 
-1. **Ramo personale.** Si lavora su un ramo proprio, mai direttamente su `main`.
+1. **Ramo personale esistente.** Si lavora sul ramo concordato, mai direttamente su `main`. Un nuovo ramo si crea solo quando espressamente autorizzato.
 
    ```
-   git switch -c <ramo>
+   git switch <ramo-esistente>
    ```
+
+   Ogni checkout ha un solo autore di modifiche alla volta. Per lavoro parallelo
+   si usa un worktree isolato e temporaneo: alla fine si integra il lavoro
+   verificato sul ramo concordato, si rimuove il worktree e si elimina
+   l'eventuale ramo temporaneo autorizzato.
 
 2. **Commit frequenti.** I messaggi dicono che cosa cambia (vedi "Stile dei commit").
 3. **Push del ramo** su GitHub.

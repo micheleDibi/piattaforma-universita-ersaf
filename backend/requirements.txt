@@ -60,3 +60,5 @@ typst>=0.15,<0.16
 # La firma salvata dal gestionale sta su una tela quasi quadrata: Pillow la
 # ritaglia sul tratto prima di metterla nel modulo.
 Pillow>=12,<13
+
+websockets>=15,<17

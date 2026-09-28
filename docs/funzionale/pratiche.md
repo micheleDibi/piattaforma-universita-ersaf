@@ -217,7 +217,7 @@ L'applicazione non controlla che il numero della pratica sia unico.
 Nota: l'obbligo di numero, stato, prezzo e data di creazione, e il formato del prezzo, sono applicati solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 Una pratica può contenere anche dati che la scheda non mostra e non modifica:
-per esempio la firma, gli allegati, l'azienda, il consulente e l'indicazione
+per esempio gli allegati, l'azienda, il consulente e l'indicazione
 di rinnovo. Alcuni di questi dati finiscono nel documento PDF.
 
 Nota: in modifica la scheda cambia solo i campi elencati sopra, ma il sistema ne accetta anche altri, fra cui l'azienda, il consulente e il tipo di corso che decide i filtri della pagina Pratiche; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
@@ -362,10 +362,9 @@ contratto ha anche una seconda firma, per l'approvazione delle clausole.
 - Gli esami non si inseriscono dalla piattaforma: non sono ancora gestiti
   nella scheda del sottoscrittore, e la sezione "Esami" mostra sempre "Nessun
   esame registrato.". Nel documento compaiono solo gli esami già registrati.
-- La scheda della pratica non permette di indicare firma, azienda e rinnovo.
-  Una pratica creata dalla piattaforma produce quindi un documento senza firma
-  e senza luogo, e risulta sempre come immatricolazione. Firma, luogo e
-  rinnovo compaiono solo nelle pratiche che li contengono già.
+- La firma si acquisisce nella sezione Firma della pratica e compare nei PDF
+  generati dopo il salvataggio. Azienda e rinnovo non si impostano dal modulo:
+  il luogo e il rinnovo dipendono dai dati già registrati.
 
 ### Corsi singoli e dati che non entrano nel modulo
 
@@ -383,8 +382,7 @@ per intero come testo nella stessa riga, riducendone la dimensione.
 Il vecchio modulo Link per i corsi singoli viene compilato con l'anno
 accademico della pratica al posto di quello prestampato. Le altre condizioni,
 informative e indicazioni di pagamento restano quelle degli originali forniti.
-Nuovi allegati, acquisizione della firma nell'applicazione e salvataggio remoto
-del documento non fanno parte di questa generazione.
+Nuovi allegati e salvataggio remoto del documento non fanno parte di questa generazione.
 
 ### Accordo di rateizzazione eCampus
 
@@ -452,3 +450,31 @@ il pulsante "Nuova" e il documento PDF restano disponibili anche a chi non ne
 ha.
 
 Nota: le abilitazioni sono applicate solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+
+
+## Messaggi della pratica
+
+La sezione Messaggi contiene la stessa conversazione e lo stesso storico di
+Universo, quando il collegamento è attivo. Si possono leggere i messaggi
+precedenti e inviare un testo nuovo. Dopo un'interruzione della connessione
+la pagina si ricollega e recupera ciò che manca. Un messaggio resta in attesa
+finché il servizio non ne conferma il salvataggio; Riprova evita un doppio invio.
+
+L'accesso è riservato ai partecipanti già autorizzati in Universo. Vedere una
+pratica, anche con ruolo Nazionale, non aggiunge automaticamente alla sua chat.
+Le conversazioni personali e i ticket non compaiono in questa pagina.
+Se il collegamento non è configurato o è indisponibile, viene mostrato un errore.
+
+Passare da Messaggi a Dati o Firma conserva la bozza. Ricaricare o abbandonare
+la pagina la perde: se un invio era in attesa, controllare prima lo storico.
+
+## Acquisire la firma
+
+Nella sezione Firma, Acquisisci firma apre l'area in cui disegnare con mouse,
+dito o penna. Cancella il disegno pulisce la bozza; Annulla chiude senza salvare.
+Salva firma registra il disegno nella pratica. La tela vuota non è accettata.
+
+Se esiste una firma, Sostituisci firma permette di disegnarne una nuova.
+La sostituzione avviene soltanto al salvataggio e riguarda i documenti generati
+successivamente. Se la firma cambia in un'altra finestra, il salvataggio viene
+fermato: usare Riprova per ricaricare la versione corrente prima di proseguire.

@@ -742,3 +742,13 @@ per processo API e con timeout di 60 secondi. Le cache native non restano
 nell'API tra documenti diversi. Interruzioni e timeout restituiscono l'errore
 generico di composizione e cancellano i file temporanei della richiesta;
 stdout/stderr del processo non vengono riportati nei log applicativi.
+
+
+## Chat e firma delle pratiche
+
+Le API della firma applicano la stessa visibilità della scheda, CSRF per il
+salvataggio, limiti sul PNG e controllo della versione sotto lock. Il WebSocket
+della chat verifica cookie, Origin e CSRF al collegamento, e ricontrolla sessione
+e accesso durante la connessione. Java verifica separatamente identità e
+partecipazione: il ponte non amplia le ACL di Universo. Chiavi e JWT Java
+restano sul backend. Dettagli in [chat e firma](chat-e-firma.md).

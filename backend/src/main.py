@@ -46,6 +46,7 @@ from src.utenti.routers import router as utente_router
 from src.universita.routers import router as universita_router
 from src.listini_testa.routers import router as listini_testa_router
 from src.pratiche.routers import router as pratiche_router
+from src.chat_pratiche.socket import router as chat_socket_router
 from src.profilo.routers import router as profilo_router
 from src.listino_tipoCorso.routers import router as listini_tipi_corsi_router
 from fastapi.exceptions import RequestValidationError
@@ -104,6 +105,7 @@ async def proteggi_richieste_browser(request: Request, call_next):
         risposta.headers["Cache-Control"] = "no-store"
     return risposta
 
+app.include_router(chat_socket_router)
 app.include_router(utente_router)
 app.include_router(ruolo_router)
 app.include_router(cliente_router)

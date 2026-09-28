@@ -278,3 +278,12 @@ Nessuna CI esegue i test dell'applicazione, né del backend né del frontend.
 L'unico workflow riguarda la documentazione ([documentazione.md](documentazione.md)).
 I test dell'applicazione si lanciano quindi in locale. Il flusso di lavoro è in
 [convenzioni.md](convenzioni.md).
+
+
+## Chat e firma
+
+Le nuove suite coprono acquisizione e concorrenza della firma, riuso nei PDF,
+API della chat e WebSocket con trasporto Java simulato e sessione reale di test.
+Il vettore `practice_crypto_vector.json` è sintetico e viene verificato sia da
+Python sia dalla suite Java inclusa nel delta. Il gate Università non esegue
+Maven né invia messaggi al servizio pubblicato; vedi [verifiche](chat-e-firma.md#verifiche).

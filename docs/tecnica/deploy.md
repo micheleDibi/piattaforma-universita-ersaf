@@ -379,3 +379,13 @@ python scripts/documentazione/timbra_changelog.py --ref=origin/main --versione=N
   - Analisi sintattica degli script PowerShell, che però non gira con la 5.1 e quindi non ne garantisce la compatibilità. Solo per le funzioni del timbro un test cerca alcune sintassi che la 5.1 non conosce.
   - Fine riga e struttura degli script remoti non sono verificate.
 - **Documento collegato.** Una pull request che tocca questi file deve aggiornare anche questo documento, oppure usare l'etichetta di esenzione. Controlli ed etichette sono descritti in [Documentazione](documentazione.md).
+
+
+## Collegamento facoltativo con la chat Universo
+
+Frontend e API includono il ponte WebSocket, ma le variabili `CHAT_*` non
+attivano da sole la connettività. Occorrono anche il Java aggiornato, il file
+segreto dedicato montato in entrambi i servizi e una regola di rete privata
+mirata. Il deploy corrente non apre queste connessioni e non distribuisce
+il WAR Java. Vedi [configurazione e pubblicazione](chat-e-firma.md#configurazione-e-pubblicazione).
+La firma è indipendente da questo collegamento e non richiede migrazioni.

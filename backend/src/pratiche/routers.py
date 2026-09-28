@@ -4,10 +4,13 @@ from sqlalchemy.orm import Session, joinedload
 from typing import Annotated, List
 
 from src.auth.dipendenze import get_current_utente
-from src.auth.visibilita import Visibilita, condizione_azienda, visibilita_corrente
+from src.auth.visibilita import Visibilita, visibilita_corrente
 from src.database import get_db
 from src.pratiche.filtri import FiltriPratiche, query_filtrata
 from src.pratiche.opzioni import router as opzioni_router
+from src.pratiche.firma_rotte import router as firma_router
+from src.chat_pratiche.rotte import router as chat_router
+from src.pratiche.accesso import pratica_visibile
 from src.documenti.rotte import router as documento_router
 from src.pratiche.models import ConteggioPratiche, Pratica, PraticaCreate, PraticaResponse, PraticaUpdate
 
@@ -22,6 +25,8 @@ router = APIRouter(
 router.include_router(opzioni_router)
 # PDF della pratica: stesso prefisso e stessa autenticazione del dettaglio.
 router.include_router(documento_router)
+router.include_router(firma_router)
+router.include_router(chat_router)
 
 # joinedload sulle relazioni che PraticaResponse.estrai_relazioni legge per
 # popolare cliente_nome_completo / pratica_stato_descrizione / listTesta_descrizione.
@@ -44,22 +49,7 @@ AZIENDA_MANCANTE = "Per creare pratiche l'utente deve avere un'azienda associata
 
 
 def _pratica_o_404(db: Session, pratica_id: int, vis: Visibilita) -> Pratica:
-    """Una pratica non visibile risponde come una inesistente."""
-    query = (
-        db.query(Pratica)
-        .options(*_RELAZIONI_ELENCO)
-        .filter(Pratica.pratica_id == pratica_id)
-    )
-    condizione = condizione_azienda(vis, Pratica.azienda_id)
-    if condizione is not None:
-        query = query.filter(condizione)
-    pratica = query.first()
-    if not pratica:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Pratica non trovata.",
-        )
-    return pratica
+    return pratica_visibile(db, pratica_id, vis, opzioni=_RELAZIONI_ELENCO)
 
 
 # POST

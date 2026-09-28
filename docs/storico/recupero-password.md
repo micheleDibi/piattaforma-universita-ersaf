@@ -1,11 +1,11 @@
-# Prompt — Recupero password (piattaforma-universita-ersaf)
+# Specifica iniziale — Recupero password (piattaforma-universita-ersaf)
 
-> Istantanea del 04/09/2026: è il prompt con cui è stato chiesto a un agente di costruire il recupero password. Non descrive lo stato attuale del progetto: per quello vedi la [documentazione](../README.md).
+> Istantanea del 04/09/2026: requisiti iniziali del recupero password. Non descrive lo stato attuale del progetto: per quello vedi la [documentazione](../README.md).
 
 > I conteggi presi dal dump e il nome dello schema sono stati rimossi da questo testo, perché il repository è pubblico: al loro posto ci sono descrizioni qualitative. Le decisioni e i vincoli di allora non cambiano.
 
-> Da incollare a un agente di sviluppo. Scritto dopo l'ispezione del codice e del
-> dump: i nomi dei simboli sono reali, non vanno riverificati da zero.
+> Specifica scritta dopo l'ispezione del codice e del
+> dump: i nomi dei simboli si riferiscono alla versione esaminata.
 > Analisi completa in `docs/ANALISI-progetto.md`.
 
 > Nota (17/09/2026): `docs/ANALISI-progetto.md` non esiste più. Il suo contenuto, aggiornato, è distribuito nei documenti tecnici, a partire da [Sicurezza](../tecnica/sicurezza.md) e [Architettura](../tecnica/architettura.md).

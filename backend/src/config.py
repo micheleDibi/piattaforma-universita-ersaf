@@ -65,6 +65,12 @@ class Impostazioni(BaseSettings):
     # e basta, e verifica_configurazione() lo dice chiaramente.
     database_url: str = ""
 
+    # Ponte interno verso il servizio Java autorevole; vuoto = chat disabilitata.
+    chat_java_url: str = ""
+    chat_java_origine: str = ""
+    chat_java_secret_file: str = ""
+    chat_dataset: str = ""
+
     # --- segreti ------------------------------------------------------------
     # Default vuoto e NESSUN validator: Impostazioni() non solleva mai.
     password_reset_token_pepper: str = ""

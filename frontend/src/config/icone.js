@@ -36,6 +36,7 @@ export {
   Pencil,
   Plus,
   Search,
+  Send,
   SlidersHorizontal,
   Smartphone,
   Trash2,

@@ -155,7 +155,7 @@ def controlla_contenuti(radice, file: list[str]) -> list[Errore]:
             for categoria, valore in sospetti(pulita):
                 errori.append(Errore(
                     f"{categoria} in un documento: {valore!r}. Il repository e' pubblico: usa un "
-                    "segnaposto o un valore di esempio (vedi CLAUDE.md).",
+                    "segnaposto o un valore di esempio (vedi docs/tecnica/documentazione.md).",
                     percorso, numero, "Dato sensibile in un documento"))
     return errori
 

@@ -1,0 +1,10 @@
+.firma__tela {
+  @apply block w-full border border-bordo-controllo rounded-controllo bg-superficie;
+  aspect-ratio: 8 / 3;
+  touch-action: none;
+  cursor: crosshair;
+}
+.firma__anteprima {
+  @apply block w-full max-w-lg object-contain border-b border-divisore;
+  max-height: 12rem;
+}

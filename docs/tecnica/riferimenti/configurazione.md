@@ -13,6 +13,10 @@ Letto da `backend/src/config.py`. "Obbligatoria" indica le variabili senza le qu
 |---|---|---|---|---|
 | `ERSAF_ENV` | sviluppo \| test \| produzione | `sviluppo` | no | sviluppo \| test \| produzione In "produzione" la verifica di avvio diventa piu' severa: pretende EMAIL_BACKEND=smtp, FRONTEND_BASE_URL in https e nessun '*' nei CORS. |
 | `DATABASE_URL` | testo | (vuoto) | sì | Nessun valore di default nel codice: prima c'era un fallback con credenziali di prova cablate che, in assenza di .env, faceva connettere l'app senza dirlo a nessuno. La verifica di avvio rifiuta ancora quel valore. |
+| `CHAT_JAVA_URL` | testo | (vuoto) | no | Chat pratiche: URL interno del servizio Universo Java; vuoto disabilita la chat. |
+| `CHAT_JAVA_ORIGINE` | testo | (vuoto) | no | Origin gia autorizzata nel servizio Java, inviata esclusivamente dal backend. |
+| `CHAT_JAVA_SECRET_FILE` | testo | (vuoto) | no | File segreto condiviso con UNIVERSITA_BRIDGE_SECRET_FILE del servizio Java. |
+| `CHAT_DATASET` | testo | (vuoto) | no | Identificativo del dataset comune ai due gestionali; deve coincidere con UNIVERSITA_BRIDGE_DATASET. |
 | `PASSWORD_RESET_TOKEN_PEPPER` | testo | (vuoto) | sì | Nel database non finisce mai un token in chiaro: solo SHA-256(token\|\|pepper). Il pepper sta qui e NON nel database, cosi' chi legge un backup non puo' derivare i token. PASSWORD_RESET_TOKEN_PEPPER, SESSION_TOKEN_PEPPER e TOTP_CHIAVE devono essere diversi fra loro e lunghi almeno 32 byte. |
 | `SESSION_TOKEN_PEPPER` | testo | (vuoto) | sì | Nel database non finisce mai un token in chiaro: solo SHA-256(token\|\|pepper). Il pepper sta qui e NON nel database, cosi' chi legge un backup non puo' derivare i token. PASSWORD_RESET_TOKEN_PEPPER, SESSION_TOKEN_PEPPER e TOTP_CHIAVE devono essere diversi fra loro e lunghi almeno 32 byte. |
 | `TOTP_CHIAVE` | testo | (vuoto) | sì | Cifra a riposo i segreti degli authenticator (secondo fattore del Nazionale). Diversa dai pepper. Se si perde, tutti devono riattivare l'app: va nel backup dei segreti insieme alle altre due. |

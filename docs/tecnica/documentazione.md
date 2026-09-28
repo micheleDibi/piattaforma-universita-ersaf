@@ -11,10 +11,9 @@ Questa pagina spiega come è organizzata la documentazione, chi aggiorna cosa e 
 | `docs/funzionale/` | chi usa la piattaforma | pagine, ruoli, accesso e flussi, senza termini tecnici |
 | `docs/tecnica/` | chi sviluppa o pubblica | architettura, sviluppo, test, database, deploy, convenzioni, sicurezza |
 | `docs/tecnica/riferimenti/` | chi sviluppa | pagine **generate**: API, pagine del frontend, migrazioni, configurazione |
-| `docs/prompt/` | storico | prompt dati in passato agli agenti; sono istantanee datate |
+| `docs/storico/` | storico | specifiche iniziali, conservate come istantanee datate |
 | [CHANGELOG.md](../../CHANGELOG.md) | tutti | le versioni pubblicate |
 | `changelog/non-pubblicato/` | chi sviluppa | i frammenti delle modifiche non ancora pubblicate |
-| [CLAUDE.md](../../CLAUDE.md) | agenti AI | le regole da seguire nel repository |
 | [db/README.md](../../db/README.md) | chi sviluppa | regole operative delle migrazioni |
 
 Un'informazione ha una sola casa; gli altri documenti ci rimandano. Le case principali:

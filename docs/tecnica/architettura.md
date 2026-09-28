@@ -395,3 +395,11 @@ La pubblicazione parte da Windows con `scripts/deploy.ps1` e usa gli script in
 l'avvio o la verifica della nuova release falliscono, lo script prova a
 riattivare la release precedente; le migrazioni già applicate restano.
 Procedura completa: [deploy.md](deploy.md).
+
+
+## Chat delle pratiche e firma
+
+Il modulo `chat_pratiche` collega la sessione cookie al servizio Java Universo,
+che resta l'unico archivio della conversazione. HTTP e WebSocket sono limitati
+alla pratica autorizzata; la firma usa il blob esistente e il generatore PDF comune.
+Contratto, configurazione e decisioni sono in [chat e firma](chat-e-firma.md).

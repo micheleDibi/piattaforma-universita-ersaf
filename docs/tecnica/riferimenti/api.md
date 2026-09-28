@@ -467,6 +467,42 @@ Documento Disponibile.
 - **Corpo**: —
 - **Risposta**: `200` `dict`
 
+### `GET /pratiche/{pratica_id}/firma`
+
+Leggi Firma.
+
+- **Accesso**: sessione
+- **Parametri**: `pratica_id` (path, obbligatorio): `integer`
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `PUT /pratiche/{pratica_id}/firma`
+
+Salva Firma.
+
+- **Accesso**: sessione
+- **Parametri**: `pratica_id` (path, obbligatorio): `integer`
+- **Corpo**: `FirmaIn` (application/json) obbligatorio
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /pratiche/{pratica_id}/messaggi`
+
+Messaggi.
+
+- **Accesso**: sessione
+- **Parametri**: `pratica_id` (path, obbligatorio): `integer`; `cursor` (query): `string | null`
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /pratiche/{pratica_id}/messaggi/prepara`
+
+Prepara Messaggio.
+
+- **Accesso**: sessione
+- **Parametri**: `pratica_id` (path, obbligatorio): `integer`
+- **Corpo**: `MessaggioIn` (application/json) obbligatorio
+- **Risposta**: `200` schema non dichiarato
+
 ## Profilo personale
 
 ### `GET /profilo/me`
@@ -1230,6 +1266,13 @@ Aggiorna Utente.
 | `cliente_id` | `integer` | sì |
 | `cliente_nome` | `string \| null` | no |
 
+### FirmaIn
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `immagine` | `string` | sì |
+| `versione` | `string` | sì |
+
 ### IndirizzoProfilo
 
 | Campo | Tipo | Obbligatorio |
@@ -1349,6 +1392,13 @@ Aggiorna Utente.
 |---|---|---|
 | `utente_password` | `string` | sì |
 | `utente_username` | `string` | sì |
+
+### MessaggioIn
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `clientMessageId` | `string` | sì |
+| `testo` | `string` | sì |
 
 ### Opzione
 

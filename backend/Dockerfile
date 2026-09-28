@@ -35,4 +35,4 @@ HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
 # (vedi src/security/rete.py). L'API e' raggiungibile solo dal container web
 # sulla rete interna, quindi fidarsi del proxy e' accettabile.
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", \
-     "--proxy-headers", "--forwarded-allow-ips", "*", "--no-server-header"]
+     "--proxy-headers", "--forwarded-allow-ips", "*", "--no-server-header", "--ws-max-size", "4096", "--ws-max-queue", "16"]

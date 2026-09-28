@@ -174,3 +174,17 @@ regole:
       - "changelog/MODELLO.md"
     documenti:
       - docs/tecnica/documentazione.md
+
+  - nome: Chat condivisa e firma delle pratiche
+    percorsi:
+      - "backend/src/chat_pratiche/**"
+      - "backend/src/pratiche/firma*.py"
+      - "frontend/src/lib/chatPratica.js"
+      - "frontend/src/lib/conversazionePratica.js"
+      - "frontend/src/lib/firmaPratica.js"
+      - "frontend/src/lib/trattoFirma.js"
+      - "frontend/src/hooks/useChatPratica.js"
+      - "frontend/src/hooks/useFirmaPratica.js"
+      - "integrazioni/universo-realtime/**"
+    documenti:
+      - docs/tecnica/chat-e-firma.md
