@@ -1,0 +1,5 @@
+# Overlay facoltativo. I file reali restano fuori dalla release.
+services:
+  api:
+    volumes:
+      - ./shared/chat-secrets:/run/secrets/chat:ro

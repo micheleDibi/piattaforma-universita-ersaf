@@ -21,9 +21,10 @@ def main(backend: str) -> None:
     from fastapi.routing import APIRoute, iter_route_contexts
 
     from src.auth.dipendenze import get_current_utente, get_sessione_corrente
+    from src.chat_pratiche.identita_universo import identita_http
     from src.otp.schemas import RichiestaSfida
 
-    sessione = {get_current_utente, get_sessione_corrente}
+    sessione = {get_current_utente, get_sessione_corrente, identita_http}
     accessi = {}
     # iter_route_contexts restituisce la rotta effettiva: le dipendenze dei
     # router che includono altri router sono nel suo dependant.

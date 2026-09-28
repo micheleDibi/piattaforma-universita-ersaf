@@ -138,9 +138,10 @@ def raccogli(backend: str) -> dict:
     main = importa_app(backend)
     import src.config as config
     import src.notifiche.config_sms as config_sms
+    import src.chat_pratiche.configurazione as config_chat
 
     obbligo = obbligatori(config)
-    impostazioni = campi(config.Impostazioni)
+    impostazioni = campi(config.Impostazioni) + campi(config_chat.ConfigChat)
     for voce in impostazioni:
         ambienti = obbligo.get(voce["campo"], [])
         voce["obbligatoria"] = ("sì" if set(ambienti) == set(BASI)

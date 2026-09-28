@@ -117,7 +117,7 @@ def componi(radice: Path, dati: dict) -> str:
 
     righe = [intestazione(
         "Variabili di configurazione",
-        "`backend/src/config.py`, `backend/src/notifiche/config_sms.py`, i file `.env.example` "
+        "`backend/src/config.py`, `backend/src/notifiche/config_sms.py`, `backend/src/chat_pratiche/configurazione.py`, i file `.env.example` "
         "e gli script di `deploy/`").rstrip(), ""]
     righe += [
         "Nomi, valori predefiniti e obbligatorietà delle variabili. I valori reali non compaiono mai: "
@@ -126,7 +126,7 @@ def componi(radice: Path, dati: dict) -> str:
         "",
         "## Backend (`backend/.env`)",
         "",
-        "Letto da `backend/src/config.py`. \"Obbligatoria\" indica le variabili senza le quali la verifica "
+        "Letto da `backend/src/config.py` e `backend/src/chat_pratiche/configurazione.py`. \"Obbligatoria\" indica le variabili senza le quali la verifica "
         "di avvio rifiuta di partire, ricavate dal codice: \"sì\" in ogni ambiente, \"in produzione\" solo "
         "con `ERSAF_ENV=produzione`. La verifica controlla anche coerenza e formato di altri valori.",
         "",

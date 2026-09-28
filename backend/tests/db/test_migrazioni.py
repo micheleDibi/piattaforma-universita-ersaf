@@ -144,7 +144,7 @@ def test_migrazioni_idempotenti(database_vergine):
     assert _istantanea(database_vergine) == prima
 
 
-def test_rollback_riporta_allo_stato_iniziale(database_vergine):
+def test_rollback_riporta_allo_stato_iniziale_preservando_chat_condivisa(database_vergine):
     esegui_file_sql(database_vergine, SCHEMA_BASE)
     prima = _istantanea(database_vergine)
 
@@ -154,7 +154,13 @@ def test_rollback_riporta_allo_stato_iniziale(database_vergine):
 
     for annullamento in ROLLBACK:
         esegui_file_sql(database_vergine, annullamento)
-    assert _istantanea(database_vergine) == prima
+    # La 017 include archivi condivisi con Universo, eventualmente preesistenti:
+    # non ha rollback distruttivo. Tutti gli altri oggetti devono tornare identici.
+    preservate = {"chat_pratica_comando", "chat_pratica_limite", "realtime_delivery",
+                  "realtime_message_time", "realtime_message_key_grant", "realtime_message_state"}
+    dopo = _istantanea(database_vergine)
+    assert {r[0] for r in dopo - prima} == preservate
+    assert {r for r in dopo if r[0] not in preservate} == prima
 
 
 def test_enum_esiti_allineato_al_codice(database_vergine):

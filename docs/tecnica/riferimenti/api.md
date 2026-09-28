@@ -39,6 +39,24 @@ Conferma.
 - **Corpo**: `ConfermaSfida` (application/json) obbligatorio
 - **Risposta**: `200` schema non dichiarato
 
+### `GET /chat-universo/api/v1/messages`
+
+Storico Universo.
+
+- **Accesso**: sessione
+- **Parametri**: `conversationId` (query, obbligatorio): `integer`; `cursor` (query): `string | null`; `destinationType` (query, obbligatorio): `"PRACTICE"`; `limit` (query): `integer`
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /chat-universo/crypto/key`
+
+Chiave Conversazione.
+
+- **Accesso**: sessione
+- **Parametri**: —
+- **Corpo**: `RichiestaChiave` (application/json) obbligatorio
+- **Risposta**: `200` schema non dichiarato
+
 ### `GET /clienti/{cliente_id}/contatti`
 
 Stato.
@@ -1569,6 +1587,17 @@ Aggiorna Utente.
 | `ruolo` | `string \| null` | sì |
 | `telefono` | `string \| null` | sì |
 | `username` | `string` | sì |
+
+### RichiestaChiave
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `destinationType` | `"PRACTICE"` | sì |
+| `epochHour` | `integer \| null` | no |
+| `keyVersion` | `integer \| null` | no |
+| `peerUserId` | `string \| null` | no |
+| `resourceCode` | `string` | sì |
+| `resourceId` | `string` | sì |
 
 ### RichiestaResetRequest
 

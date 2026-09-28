@@ -1,22 +1,18 @@
 # Variabili di configurazione
 
-> Pagina generata da `python scripts/documentazione/genera.py` a partire da `backend/src/config.py`, `backend/src/notifiche/config_sms.py`, i file `.env.example` e gli script di `deploy/`.
+> Pagina generata da `python scripts/documentazione/genera.py` a partire da `backend/src/config.py`, `backend/src/notifiche/config_sms.py`, `backend/src/chat_pratiche/configurazione.py`, i file `.env.example` e gli script di `deploy/`.
 > Non modificarla a mano: rilancia il comando dopo aver cambiato le fonti.
 
 Nomi, valori predefiniti e obbligatorietà delle variabili. I valori reali non compaiono mai: i segreti sono indicati con "—". Come preparare l'ambiente: [sviluppo locale](../sviluppo-locale.md) e [deploy](../deploy.md).
 
 ## Backend (`backend/.env`)
 
-Letto da `backend/src/config.py`. "Obbligatoria" indica le variabili senza le quali la verifica di avvio rifiuta di partire, ricavate dal codice: "sì" in ogni ambiente, "in produzione" solo con `ERSAF_ENV=produzione`. La verifica controlla anche coerenza e formato di altri valori.
+Letto da `backend/src/config.py` e `backend/src/chat_pratiche/configurazione.py`. "Obbligatoria" indica le variabili senza le quali la verifica di avvio rifiuta di partire, ricavate dal codice: "sì" in ogni ambiente, "in produzione" solo con `ERSAF_ENV=produzione`. La verifica controlla anche coerenza e formato di altri valori.
 
 | Variabile | Tipo | Predefinito | Obbligatoria | Descrizione |
 |---|---|---|---|---|
 | `ERSAF_ENV` | sviluppo \| test \| produzione | `sviluppo` | no | sviluppo \| test \| produzione In "produzione" la verifica di avvio diventa piu' severa: pretende EMAIL_BACKEND=smtp, FRONTEND_BASE_URL in https e nessun '*' nei CORS. |
 | `DATABASE_URL` | testo | (vuoto) | sì | Nessun valore di default nel codice: prima c'era un fallback con credenziali di prova cablate che, in assenza di .env, faceva connettere l'app senza dirlo a nessuno. La verifica di avvio rifiuta ancora quel valore. |
-| `CHAT_JAVA_URL` | testo | (vuoto) | no | Chat pratiche: URL interno del servizio Universo Java; vuoto disabilita la chat. |
-| `CHAT_JAVA_ORIGINE` | testo | (vuoto) | no | Origin gia autorizzata nel servizio Java, inviata esclusivamente dal backend. |
-| `CHAT_JAVA_SECRET_FILE` | testo | (vuoto) | no | File segreto condiviso con UNIVERSITA_BRIDGE_SECRET_FILE del servizio Java. |
-| `CHAT_DATASET` | testo | (vuoto) | no | Identificativo del dataset comune ai due gestionali; deve coincidere con UNIVERSITA_BRIDGE_DATASET. |
 | `DATABASE_URL_GESTIONE_PAGAMENTI` | testo | (vuoto) | no | Due database amministrativi separati, sullo stesso server del DB principale (stesso indirizzo, stesso utente e password), ma con nome diverso. Facoltativi e non ancora usati: engine e sessioni si creano solo alla prima richiesta esplicita. Se mancano o non sono validi, l'import resta possibile. Nei test questi indirizzi vengono ignorati: gli override TEST_DATABASE_URL_* sono ammessi solo su MariaDB loopback:3307/ersaf_test. |
 | `DATABASE_URL_SYS_ADMIN` | testo | (vuoto) | no |  |
 | `PASSWORD_RESET_TOKEN_PEPPER` | testo | (vuoto) | sì | Nel database non finisce mai un token in chiaro: solo SHA-256(token\|\|pepper). Il pepper sta qui e NON nel database, cosi' chi legge un backup non puo' derivare i token. PASSWORD_RESET_TOKEN_PEPPER, SESSION_TOKEN_PEPPER e TOTP_CHIAVE devono essere diversi fra loro e lunghi almeno 32 byte. |
@@ -49,6 +45,14 @@ Letto da `backend/src/config.py`. "Obbligatoria" indica le variabili senza le qu
 | `SMTP_FROM` | testo | (valore nel codice) | no | Mittente. Il dominio di esempio va sostituito con quello dell'ambiente. |
 | `SMTP_TLS` | starttls \| ssl \| nessuno | `starttls` | no | Cifratura del canale: starttls \| ssl \| nessuno. |
 | `SMTP_TIMEOUT_SECONDS` | intero | `10` | no | Timeout della connessione SMTP, in secondi. |
+| `CHAT_ABILITATA` | sì/no | `False` | no | Chat pratiche nativa: abilitare dopo migrazione e verifica dell'archivio condiviso. |
+| `CHAT_CHIAVI_FILE` | testo | (vuoto) | no | Keyring compatibile con Universo: elenco versione=percorso, separato da virgole. Ogni file contiene 32 byte casuali codificati Base64, mai una password utente. |
+| `CHAT_CHIAVE_VERSIONE` | intero | `1` | no | Versione corrente presente nel keyring; conservare le versioni storiche. |
+| `CHAT_UNIVERSO_JWT_FILE` | testo | (vuoto) | no | File della chiave di verifica JWT esistente di Universo (Base64), facoltativo. Vuoto disabilita soltanto l'ingresso Universo, non la chat con cookie dell'app. |
+| `CHAT_UNIVERSO_ISSUER` | testo | `universo-realtime` | no | Issuer e audience devono corrispondere alla sessione Universo dello stesso ambiente. |
+| `CHAT_UNIVERSO_AUDIENCE` | testo | `universo-realtime-ws` | no |  |
+| `CHAT_UNIVERSO_ORIGINI` | testo | (vuoto) | no | Origini HTTPS esplicite del client Universo, separate da virgole. |
+| `CHAT_UNIVERSO_INATTIVITA_SECONDI` | intero | `86400` | no | Scadenza di inattivita: deve coincidere con AUTH_SESSION_IDLE_TTL_SECONDS di Universo. |
 
 ## SMS (`backend/.env`)
 
@@ -77,6 +81,7 @@ Gestito dagli script di deploy; non contiene segreti. Le variabili senza descriz
 
 | Variabile | Dove | Descrizione |
 |---|---|---|
+| `CHAT_NATIVA` | `deploy/compose.env.example`, `deploy/remote/00-lib.sh` | Altre chiavi che gli script scrivono quando servono: ESPOSIZIONE e WEB_LAN_IP per la pubblicazione sulla LAN, NOTIFICHE_REALI per gli invii veri di email e SMS. VERSIONE_NUMERO e VERSIONE_AGGIORNATA arrivano dal deploy e non si scrivono qui. Mount delle chiavi chat, da abilitare solo al passaggio coordinato di Universo. |
 | `ESPOSIZIONE` | `deploy/remote/00-lib.sh`, `deploy/remote/25-esposizione.sh` |  |
 | `NOTIFICHE_REALI` | `deploy/remote/00-lib.sh`, `deploy/remote/26-notifiche.sh` |  |
 | `RELEASE_DIR` | `deploy/compose.env.example`, `deploy/compose.yml`, `deploy/remote/70-deploy.sh` | Cartella della release attiva sul server, ricavata da RELEASE_TAG. |

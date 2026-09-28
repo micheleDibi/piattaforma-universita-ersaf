@@ -2,7 +2,6 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, status
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
@@ -47,6 +46,9 @@ from src.universita.routers import router as universita_router
 from src.listini_testa.routers import router as listini_testa_router
 from src.pratiche.routers import router as pratiche_router
 from src.chat_pratiche.socket import router as chat_socket_router
+from src.chat_pratiche.api_universo import router as chat_universo_router
+from src.chat_pratiche.socket_universo import router as chat_universo_socket_router
+from src.chat_pratiche.cors import CorsApplicazioni
 from src.profilo.routers import router as profilo_router
 from src.listino_tipoCorso.routers import router as listini_tipi_corsi_router
 from fastapi.exceptions import RequestValidationError
@@ -69,6 +71,8 @@ async def lifespan(app: FastAPI):
     impostazioni = get_impostazioni()
     configura_logging(impostazioni)
     verifica_configurazione(impostazioni)
+    from src.chat_pratiche.avvio import verifica as verifica_chat
+    verifica_chat()
     sms = ConfigSMS()
     sms.verifica()
     if impostazioni.ersaf_env == "produzione" and sms.sms_backend != "skebby":
@@ -84,20 +88,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Piattaforma Universita ERSAF", lifespan=lifespan)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=get_impostazioni().lista_cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["Retry-After"],
-)
+app.add_middleware(CorsApplicazioni)
 
 
 @app.middleware("http")
 async def proteggi_richieste_browser(request: Request, call_next):
     try:
-        verifica_richiesta_browser(request)
+        # Questo namespace accetta soltanto bearer verificati localmente e
+        # ignora i cookie. Ogni endpoint impone identita_http; niente login qui.
+        if not request.url.path.startswith("/chat-universo/"):
+            verifica_richiesta_browser(request)
     except HTTPException as errore:
         return JSONResponse(status_code=errore.status_code, content={"detail": errore.detail})
     risposta = await call_next(request)
@@ -106,6 +106,8 @@ async def proteggi_richieste_browser(request: Request, call_next):
     return risposta
 
 app.include_router(chat_socket_router)
+app.include_router(chat_universo_router)
+app.include_router(chat_universo_socket_router)
 app.include_router(utente_router)
 app.include_router(ruolo_router)
 app.include_router(cliente_router)

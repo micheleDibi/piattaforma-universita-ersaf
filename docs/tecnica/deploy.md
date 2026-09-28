@@ -381,11 +381,19 @@ python scripts/documentazione/timbra_changelog.py --ref=origin/main --versione=N
 - **Documento collegato.** Una pull request che tocca questi file deve aggiornare anche questo documento, oppure usare l'etichetta di esenzione. Controlli ed etichette sono descritti in [Documentazione](documentazione.md).
 
 
-## Collegamento facoltativo con la chat Universo
+## Chat nativa e client Universo
 
-Frontend e API includono il ponte WebSocket, ma le variabili `CHAT_*` non
-attivano da sole la connettività. Occorrono anche il Java aggiornato, il file
-segreto dedicato montato in entrambi i servizi e una regola di rete privata
-mirata. Il deploy corrente non apre queste connessioni e non distribuisce
-il WAR Java. Vedi [configurazione e pubblicazione](chat-e-firma.md#configurazione-e-pubblicazione).
-La firma è indipendente da questo collegamento e non richiede migrazioni.
+La migrazione 017 aggiunge i metadati compatibili con l'archivio condiviso.
+Il deploy monta `shared/chat-secrets` in sola lettura solo con `CHAT_NATIVA=si`
+in `shared/compose.env`, usando l'overlay `compose.chat.yml`. Le impostazioni
+`CHAT_*` sono in `shared/api.env`. L'attivazione non cambia database, non
+copia chiavi e non distribuisce il client Flutter o il Java. Non serve aprire
+una connessione API–Java: FastAPI legge l'archivio e verifica la sessione locale.
+
+Prima dell'attivazione serve un dataset realmente comune a entrambe le
+applicazioni, con utenti, clienti, pratiche, storico, grant e sessioni coerenti.
+Il clone del collaudo resta isolato fino a una scelta esplicita. Pubblicare
+l'adattatore Flutter con l'origine HTTPS del backend e far terminare i vecchi
+writer PRACTICE con il flag `PRACTICE_CHAT_NATIVE=true` del delta Java; i dettagli e il rollback coordinato sono in
+[configurazione e pubblicazione](chat-e-firma.md#configurazione-e-pubblicazione).
+La 017 non prevede DROP delle tabelle condivise. La firma è indipendente.

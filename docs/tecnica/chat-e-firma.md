@@ -1,71 +1,84 @@
 # Chat condivisa delle pratiche e firma
 
-La conversazione di una pratica ha un solo archivio: il servizio Java di
-Universo. Università legge e invia messaggi attraverso quel servizio, senza
-creare tabelle di messaggistica proprie. La firma usa invece il campo già
-letto dai moduli PDF, `pratiche.pratica_firma`.
+FastAPI gestisce direttamente le conversazioni delle pratiche: partecipanti,
+chiavi, storico, invio e socket. Non richiede sessioni a Java e non inoltra
+richieste HTTP o WebSocket a quel servizio. L'archivio resta la tabella legacy
+`messaggi`, condivisa con Universo; non esiste una seconda copia dello storico.
+Configurazione e limiti operativi sono descritti nelle sezioni seguenti.
 
 ## Sessione e autorizzazione della chat
 
-Il browser parla con FastAPI usando il cookie HttpOnly e il CSRF comuni.
-FastAPI controlla la visibilità della pratica con
-`pratiche/accesso.py`, poi chiede una sessione breve al nuovo ingresso Java
-`POST /internal/practices/session`.
+Università usa la propria sessione cookie HttpOnly e il CSRF comune. La socket
+verifica Origin, cookie e sottoprotocolli `ersaf.pratiche.v1` e
+`csrf.<csrf_token>`; nessun token nell'URL. La sessione e i partecipanti vengono
+ricontrollati prima degli invii e durante l'attesa degli eventi.
 
-Questo ingresso è esclusivamente tra server. Richiede un segreto dedicato
-da file e un identificativo del dataset comune. Java confronta ID utente e
-cliente, username esatto, ID e numero pratica e ID studente con i propri
-dati, risolve ruolo e azienda dal proprio database e applica le ACL della
-chat già usate da Universo. Account ambigui o inattivi vengono rifiutati.
-Non si trasferiscono password, ruoli dichiarati dal browser o credenziali
-del database. La sessione Java dura al massimo quattro minuti, non espone
-un refresh token ed è revocata al termine della richiesta o della connessione.
+Universo usa il token di accesso che possiede già, senza un nuovo login o una
+sessione delegata: FastAPI verifica HS256, issuer, audience, scadenza, identità
+e revoca nella tabella condivisa `realtime_auth_session`. Il namespace
+`/chat-universo/` accetta solo tale identità, mai il cookie Università.
+Le sue origini CORS non ottengono accesso alle API cookie. La socket esterna
+usa `universo.realtime.v1` e `jwt.<token>`, con Origin esplicita per il browser.
+L'assenza di Origin è ammessa per il client nativo autenticato. Queste rotte
+non emettono token né rinnovano sessioni: il login globale Universo resta
+sul servizio attuale, insieme a chat personali, ticket e notifiche globali.
 
-La visibilità della scheda non assegna nuovi partecipanti alla chat. Anche
-un Nazionale deve risultare autorizzato dal servizio Java alla conversazione.
-Le pratiche o gli utenti creati in un clone e assenti in Universo non vengono
-associati per approssimazione: l'accesso viene rifiutato. Questo ponte non
-sincronizza anagrafiche e pratiche fra database diversi.
+La partecipazione replica la regola Universo: utente referente o consulente
+della pratica, oppure cliente studente, aderente o consulente. Servono account
+attivi, un solo cliente per utente e almeno due partecipanti validi. Il ruolo
+Nazionale da solo non concede accesso alla conversazione. ID utente e cliente
+restano distinti; pratiche e utenti non vengono associati per somiglianza.
 
 ## Contratto HTTP e WebSocket
 
-| Percorso, sotto `/pratiche/{id}` | Operazione |
+| Percorso FastAPI | Operazione |
 |---|---|
-| `GET /messaggi?cursor=…` | pagina dello storico Java, 30 elementi, testo decifrato sul backend |
-| `POST /messaggi/prepara` | valida il testo e prepara il ciphertext u2 per un `clientMessageId` |
-| `WS /messaggi/socket` | invio e ricezione degli eventi della sola pratica |
-| `GET /firma` | anteprima e versione della firma corrente |
-| `PUT /firma` | salvataggio PNG con controllo della versione |
+| `GET /pratiche/{id}/messaggi?cursor=…` | storico decifrato, pagine da 30 |
+| `POST /pratiche/{id}/messaggi/prepara` | valida 1000 byte UTF-8 e prepara u2 |
+| `WS /pratiche/{id}/messaggi/socket` | invio ed eventi della sola pratica |
+| `GET /chat-universo/api/v1/messages` | storico cifrato nel contratto Universo, solo PRACTICE |
+| `POST /chat-universo/crypto/key` | chiave derivata per una pratica autorizzata |
+| `WS /chat-universo/ws` | eventi PRACTICE e conferme di consegna |
+| `GET /pratiche/{id}/firma` | anteprima e versione della firma |
+| `PUT /pratiche/{id}/firma` | salvataggio PNG con controllo versione |
 
-L'handshake WebSocket richiede Origin autorizzata, cookie valido e i
-sottoprotocolli `ersaf.pratiche.v1` e `csrf.<csrf_token>`. Il token CSRF
-non compare nell'URL. Nginx inoltra Upgrade/Connection e Vite abilita `ws`
-nel suo proxy facoltativo. Il container limita i frame in entrata a 4096 byte.
-La sessione Università viene ricontrollata prima di ogni invio e ogni venti
-secondi durante la connessione.
+Il proxy pubblico mantiene il prefisso `/api`; Nginx lo rimuove prima di
+inoltrare a FastAPI e gestisce Upgrade/Connection. I frame sono limitati a
+4096 byte. I cursori sono firmati e legati a utente e pratica.
 
-Il ponte ricostruisce il destinatario dal contesto autorizzato. Scarta eventi
-personali, ticket, altre pratiche e notifiche globali. Le conferme di consegna
-sono inoltrate solo per eventi ricevuti in quella connessione e caricati nello
-storico dal browser. Le conferme di consegna non sono ricevute di lettura:
-questa versione non cambia lo stato letto/non letto dello storico Universo.
+`partecipanti.py`, `chiavi.py`, `scrittura.py` e `storico.py` sono il dominio
+comune ai due trasporti. Una sola transazione salva messaggio u3, ricevuta
+idempotente, orario UTC, grant, consegne e notifiche legacy. La notifica contiene
+il ciphertext, mai il testo in chiaro; il distributore notifiche Universo
+esistente la rileva. Le API globali di notifiche, elenchi conversazioni e
+lettura restano Java e leggono le medesime tabelle. Lo storico nativo rispetta
+anche gli stati di lettura in `realtime_message_state`.
 
-La cifratura riprende i formati del servizio: invio u2, storico u3, u2 e
-legacy v1, oltre ai messaggi legacy in chiaro. I grant storici restano quelli
-di Universo: un testo per cui Java non concede la chiave non viene mostrato,
-senza bloccare il resto della conversazione. Le chiavi e il JWT Java restano
-sul backend. Il limite è 1000 byte UTF-8. Il Java mantiene l'unica scrittura
-transazionale, l'idempotenza e la distribuzione ai partecipanti.
+I retry conservano **ID e ciphertext**. Quattro invii simultanei dello stesso
+comando producono una sola scrittura; un ID riutilizzato con contenuto diverso
+è rifiutato. Le ricevute si conservano quanto i messaggi, anche dopo la pulizia
+della coda di consegna. Il limite persistente è 20 nuovi messaggi per utente
+al minuto; i retry validi non consumano la quota. La pratica viene bloccata in
+scrittura per ordinare commit ed eventi della conversazione.
 
-Il browser mantiene un invio pendente in memoria, aspetta la conferma del
-server e ritenta con **lo stesso ID e lo stesso ciphertext**. Dopo la
-riconnessione recupera le pagine mancanti; i messaggi sono deduplicati per ID.
-Bozze e invii non vengono salvati in localStorage: ricaricare o abbandonare
-la pagina perde una bozza non confermata. In questo caso verificare lo
-storico prima di riscriverla. Le schede interne restano montate e conservano
-la bozza quando si passa a Dati o Firma. Solo dopo un rifiuto Java
-`key_epoch_stale`, che segue il controllo di idempotenza e il rollback della
-scrittura, Riprova può ricifrare con la chiave dell'ora corrente mantenendo l'ID.
+Il risveglio locale è immediato; processi diversi recuperano gli eventi dal DB
+ogni 500 ms. Il ritardo tra processi include quindi questa finestra: non viene
+promesso un RTT misurato. La coda `realtime_delivery` recupera le consegne non
+confermate dopo una riconnessione. L'ACK è idempotente, legato all'utente e agli
+ID consegnati sulla connessione; non equivale a una ricevuta di lettura.
+I client deduplicano per ID messaggio e ricaricano lo storico dopo il reconnect.
+
+Cifratura: ingresso u2, archivio u3, lettura u3/u2, legacy v1 e testo precedente.
+HKDF-SHA256 e AES-GCM usano gli stessi contesti/AAD di Universo. Le chiavi
+storiche richiedono i grant esistenti: una chiave mancante non autorizza a
+mostrare il testo. Il browser Università non riceve chiavi master o token Java.
+Il client Universo riceve soltanto le chiavi di conversazione autorizzate.
+
+Bozze e invii pendenti Università restano in memoria, mai nel localStorage.
+Ricaricare o abbandonare la pagina perde una bozza non confermata. Le schede
+interne Dati/Firma conservano la bozza. Solo dopo `key_epoch_stale`, quando il
+server ha escluso una precedente scrittura, Riprova può ricifrare con la chiave
+corrente mantenendo l'ID.
 
 ## Firma
 
@@ -85,45 +98,72 @@ pulizia e il ritaglio comuni. I documenti già scaricati non cambiano.
 
 ## Configurazione e pubblicazione
 
-La chat è disabilitata quando la configurazione manca; l'API restituisce un
-errore di indisponibilità. Le altre funzioni della pratica restano utilizzabili.
+Attivazione esplicita, disabilitata di default. La firma è indipendente.
 
-| Università | Java | Significato |
-|---|---|---|
-| `CHAT_JAVA_URL` | — | origine HTTP(S) interna del servizio, senza prefisso di percorso |
-| `CHAT_JAVA_ORIGINE` | `AUTH_ALLOWED_ORIGINS` | un'Origin autorizzata dal servizio, inviata solo dal backend |
-| `CHAT_JAVA_SECRET_FILE` | `UNIVERSITA_BRIDGE_SECRET_FILE` | file contenenti lo stesso segreto casuale dedicato, almeno 32 byte |
-| `CHAT_DATASET` | `UNIVERSITA_BRIDGE_DATASET` | nome concordato del dataset, identico e specifico dell'ambiente |
+| Variabile | Significato |
+|---|---|
+| `CHAT_ABILITATA` | abilita dominio chat e preflight dello schema |
+| `CHAT_CHIAVI_FILE` | elenco `versione=/run/secrets/chat/file`, separato da virgole |
+| `CHAT_CHIAVE_VERSIONE` | versione usata per i nuovi messaggi |
+| `CHAT_UNIVERSO_JWT_FILE` | chiave di verifica del token Universo dello stesso ambiente |
+| `CHAT_UNIVERSO_ISSUER`, `CHAT_UNIVERSO_AUDIENCE` | emittente e destinatario attesi |
+| `CHAT_UNIVERSO_ORIGINI` | origini HTTPS ammesse, separate da virgole |
+| `CHAT_UNIVERSO_INATTIVITA_SECONDI` | stessa soglia di inattività del servizio Universo |
 
-Montare i file segreti in sola lettura, leggibili dagli utenti dei container.
-Non riutilizzare JWT secret, credenziali SMTP o password di altri ingressi.
-Non esporre `/internal/practices/session` sul proxy pubblico. Collegare solo
-il backend Università all'indirizzo e alla porta interni del Java; con host
-distinti usare una rete privata protetta o TLS. Il database resta isolato.
+I file contengono Base64 standard: 32 byte per ciascuna chiave master, almeno
+32 byte per la chiave JWT. Riutilizzare tutte le versioni storiche del dataset,
+senza generare nuove chiavi per leggere messaggi esistenti. Montare in sola
+lettura con permessi limitati all'utente del container. I segreti reali non
+entrano nella release o nei log. Le vecchie variabili `CHAT_JAVA_*` e
+`CHAT_DATASET` non sono più utilizzate.
 
-Lo stack di collaudo versionato isola l'API dalla LAN e il firewall notifiche
-blocca le reti private. L'attivazione reale richiede quindi anche una regola
-di rete mirata al servizio Java e il mount del file segreto: impostare soltanto
-le variabili non basta. Queste regole dipendono dall'ambiente e non vengono
-attivate automaticamente dal codice o dal deploy corrente.
+La migrazione **017** è additiva: metadati, stato lettura e coda interoperabile,
+più ricevute e limite degli invii nativi. Non ricrea `messaggi` né le notifiche
+legacy. Il preflight richiede le colonne testo capaci di contenere il formato
+cifrato e, per Universo, la tabella delle sessioni esistente. Non amplia né
+popola automaticamente tabelle legacy. La coda può essere ripulita eliminando
+solo le righe con `expires_at < UTC_TIMESTAMP(6)`; conservare grant, ricevute,
+orari e stato lettura insieme allo storico. Nessun rollback con DROP delle
+tabelle condivise.
 
-Le modifiche Java sono applicate nella sorgente locale di Universo e sono
-consegnate anche come [patch riproducibile](../../integrazioni/universo-realtime/istruzioni.md).
-Prima di pubblicare Università, distribuire il Java aggiornato, verificare
-readiness e dataset, configurare il collegamento privato e poi verificare
-l'invio bidirezionale tra le due applicazioni con due account di collaudo.
-Non collegare automaticamente un ambiente di test al servizio di produzione.
+Il deploy include `compose.chat.yml` solo con `CHAT_NATIVA=si` in
+`shared/compose.env`: monta `shared/chat-secrets` in `/run/secrets/chat`.
+Le variabili applicative vanno in `shared/api.env`. Non apre connessioni al
+Java né modifica l'indirizzo del database.
+
+Passaggio coordinato:
+
+1. Scegliere un unico dataset dell'ambiente: identità, clienti, pratiche,
+   messaggi, grant, sessioni e notifiche devono essere gli stessi nelle due
+   applicazioni. Il clone isolato di collaudo non è automaticamente tale archivio.
+2. Eseguire backup, applicare 017 e verificare schema, chiavi e identità su dati
+   sintetici. Configurare mount e origini, quindi pubblicare il backend.
+3. Distribuire il client Universo con
+   `--dart-define=PRACTICE_REALTIME_BASE_URL=https://universita.example.org`
+   sostituendo l'origine con quella dell'ambiente. Il valore vuoto mantiene
+   il vecchio percorso finché il passaggio non è coordinato.
+4. Pubblicare il controllo del writer Java incluso nel delta, impostare
+   `PRACTICE_CHAT_NATIVE=true` nel Compose Java e ricreare il servizio. Far
+   ricaricare i client: i nuovi invii PRACTICE passano solo dal backend nativo. Non esiste
+   fallback automatico in scrittura verso Java. Le altre chat restano lì.
+5. Verificare con due account autorizzati: invio in entrambe le direzioni,
+   storico precedente, modifica/revoca dei permessi, logout, reconnect,
+   notifica e lettura. Le notifiche globali continuano a richiedere il Java.
+
+Il delta Flutter è descritto in [integrazione Universo](../../integrazioni/universo-realtime/istruzioni.md).
+Un rollback richiede il ritorno coordinato di entrambi i client/servizi,
+conservando archivio e chiavi. Non ripristinare solo il backend mentre i client
+puntano al nuovo namespace. Nessuna attivazione reale è stata eseguita durante
+l'implementazione del 28 settembre.
 
 ## Verifiche
 
-- Gate FastAPI/React `scripts/verify-local.ps1 -Gate All`, sul solo database
-  locale usa-e-getta: firma, controllo versione, riuso nei PDF, ACL, CSRF,
-  preparazione messaggi, isolamento WebSocket e revoca della sessione.
-- Suite Java e compilazione WAR con Maven, inclusi ingresso bridge, durata
-  del token e vettore crittografico comune con Python.
-- Test frontend di idempotenza, riconnessione, recupero delle pagine mancanti
-  e cleanup in React StrictMode.
-- Verifica visiva desktop/mobile con fixture sintetiche e HTTP/WS simulati.
-
-Queste verifiche non costituiscono una prova sul servizio Universo pubblicato:
-il collaudo bidirezionale reale resta un passaggio della pubblicazione.
+- Gate FastAPI/React `scripts/verify-local.ps1 -Gate All`, sul MariaDB locale
+  usa-e-getta: firma/PDF, ACL, CSRF, invio, storico, concorrenza, limite,
+  rollback atomico, revoca, grant, cursori e interoperabilità HTTP/WS.
+- Derivazione delle chiavi confrontata con il vettore crittografico sintetico
+  già validato da Java; nessuna richiesta HTTP al Java durante l'invio nativo.
+- Suite Flutter `test/realtime`, instradamento selettivo, stesso token, nessun
+  fallback e chiusura delle connessioni dopo errori.
+- Gate documentazione e sintassi del bundle di deploy. Le prove locali non
+  sostituiscono il collaudo bidirezionale sull'ambiente condiviso pubblicato.

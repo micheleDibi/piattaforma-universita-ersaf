@@ -1,57 +1,42 @@
 [
   {
-    "file": "realtime-service/src/main/java/it/universo/realtime/RealtimeBusinessAuthorizer.java",
-    "sha256_prima": "2c2ab844a1ded799d4812eb8cc3ae50f4b2359563066adf9708b91e57fae2eee",
-    "sha256_dopo": "6f310d20e7bb73b9222f336a3a5508d90ff5dfe9bf2ed75e0cfaec5d41f9fcc1"
+    "file": "lib/services/realtime/realtime_socket_transport.dart",
+    "sha256_prima": "4e763f1f58bd0da62522434344a030cdd109072206fc35fb588c2568bc85ac2c",
+    "sha256_dopo": "76350490b33191aed06858993e5e533cc48111989ccdf680dedce78d175d0aa2"
   },
   {
-    "file": "realtime-service/src/main/java/it/universo/realtime/auth/AuthService.java",
-    "sha256_prima": "c4f657ce4062e36c49f4843ca11c40869de0a4e595f504ff70c875fc780088bb",
-    "sha256_dopo": "225d6abc58b622caa66d805c3b820f6689deb336a86752dc2b405aef7df8955c"
+    "file": "lib/services/realtime/realtime_read_api_client.dart",
+    "sha256_prima": "d05a45633816f9f51e449875ce6727043f38009549acab2f7ddf4f0ecb6b8709",
+    "sha256_dopo": "3846b68015b2f0b4df7e55111bd6bd7ec7da55ec3f8b271f25600b13ee009512"
   },
   {
-    "file": "realtime-service/src/main/java/it/universo/realtime/auth/PracticeBridgeIdentity.java",
+    "file": "lib/services/realtime/realtime_message_key_client.dart",
+    "sha256_prima": "683d79b722f3b3968a581ad2d076e68f9e08999316d5e387c96c15a48f86a279",
+    "sha256_dopo": "060d47335196b02705ca3360e4532292a9672d6b4b8238b1cbbbbcb17ea1091a"
+  },
+  {
+    "file": "lib/models/messages/realtime_inbound_chat.dart",
+    "sha256_prima": "586feb12e71ee232df7f2a98488e26f0b076b27eca806af55d1d9b0e8f472b3c",
+    "sha256_dopo": "0f9332e6e532545c51c1d0f66a9530a79cec717966cabf9ada27b051fdd4ff48"
+  },
+  {
+    "file": "test/realtime/realtime_inbound_chat_test.dart",
+    "sha256_prima": "e6e1894f1e78c7d8c95975e3ec0a8468c711035f8111ec1de81ac7b47298c33f",
+    "sha256_dopo": "e5bc8f86865b9b59bf5dc4a2eb7f343fb6c02adeffe3503e3612bbd2f6b00b6b"
+  },
+  {
+    "file": "lib/services/realtime/practice_realtime_endpoint.dart",
     "sha256_prima": null,
-    "sha256_dopo": "f9e60c363ba36854b4be3537f62517d5c064b67f7e2763dea2f8228bf54b34d7"
+    "sha256_dopo": "386bc81bc59c0897e648ea3f7c41b128a5d90c779c9674e7429c3634d97d0102"
   },
   {
-    "file": "realtime-service/src/main/java/it/universo/realtime/auth/PracticeBridgeRequest.java",
+    "file": "lib/services/realtime/practice_split_transport.dart",
     "sha256_prima": null,
-    "sha256_dopo": "da2444f6aa00fe9e787c6ddbbc2182b3a16082c53782a2f60caf02c9834b2963"
+    "sha256_dopo": "39d43ad23ea05195779b6ca3bf968e47fde831f388c02dc11f275d49cbd6fb6b"
   },
   {
-    "file": "realtime-service/src/main/java/it/universo/realtime/auth/PracticeBridgeServlet.java",
+    "file": "test/realtime/practice_split_transport_test.dart",
     "sha256_prima": null,
-    "sha256_dopo": "26573438d9e923563b57e179c46781a8087ce7424751821a6d51a5caaaac781b"
-  },
-  {
-    "file": "realtime-service/src/main/java/it/universo/realtime/crypto/RealtimeSubmissionCiphertext.java",
-    "sha256_prima": "bc5cb1a37901489d0ef2bf770a487f26b02a9b1593ca73f29418af2081a1a16c",
-    "sha256_dopo": "795baa13ec0dba44fce6b99321e436ac6c585b5d86d30764537c71fefa910912"
-  },
-  {
-    "file": "realtime-service/src/main/webapp/WEB-INF/web.xml",
-    "sha256_prima": "b92db3a37740fe90242b5d2543c0296443ce01673ddfa40b01fdaad828d7f297",
-    "sha256_dopo": "d2728e136198ad71f1d9252aaf2cc9cadc69889ab1305ff4435bca26d7f644ad"
-  },
-  {
-    "file": "realtime-service/src/test/java/it/universo/realtime/RealtimeBusinessAuthorizerPracticeTest.java",
-    "sha256_prima": "235ff2d69c774e071b7fcfdd191f7d8036f86ee05c38000a3fbeec1424e5a3d3",
-    "sha256_dopo": "399ebb090937fd946e65e294ad37c4c344b877cfa4521ef7f30611d85e7401da"
-  },
-  {
-    "file": "realtime-service/src/test/java/it/universo/realtime/auth/PracticeBridgeTest.java",
-    "sha256_prima": null,
-    "sha256_dopo": "c63f7348947e9298848c685874211401d2d53e755d7c5e62221922b393ffa144"
-  },
-  {
-    "file": "realtime-service/src/test/java/it/universo/realtime/crypto/PracticeBridgeCryptoTest.java",
-    "sha256_prima": null,
-    "sha256_dopo": "c145f95b24508e7347c80c5afff8c1e6832a235159853749bdba6f8ed268d23a"
-  },
-  {
-    "file": "realtime-service/src/test/resources/practice_crypto_vector.json",
-    "sha256_prima": null,
-    "sha256_dopo": "c53e42279b58f481e1a41be3955e79fb610ba7ce78f40f676936a1a52587c87e"
+    "sha256_dopo": "c1b6d44a73fd02c4eddeeb43c27a662402833e95062803cc8a2e47d0031c3ff3"
   }
 ]

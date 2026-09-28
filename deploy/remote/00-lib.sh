@@ -86,6 +86,13 @@ current_release_id() {
 compose_rel() {
     local id="$1"; shift
     local file=(-f "$RELEASES/$id/deploy/compose.yml")
+    if [ -f "$SHARED/compose.env" ] && [ "$(compose_env_get CHAT_NATIVA)" = "si" ]; then
+        # Overlay presente solo nelle release native; non ostacola il rollback.
+        if [ -f "$RELEASES/$id/deploy/compose.chat.yml" ]; then
+            [ -d "$SHARED/chat-secrets" ] || die "cartella segreti chat assente"
+            file+=(-f "$RELEASES/$id/deploy/compose.chat.yml")
+        fi
+    fi
     # Quando il collaudo e' pubblicato su un dominio si aggiunge la seconda
     # pubblicazione della porta web sull'indirizzo LAN (25-esposizione.sh).
     if [ -f "$SHARED/compose.env" ] && [ "$(compose_env_get ESPOSIZIONE)" = "si" ]; then

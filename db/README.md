@@ -203,3 +203,13 @@ Qui la parte operativa: l'avanzamento si segue con
 `db/diagnostica/010_stato_migrazione_password.sql`. Quando mostrerà pochi
 utenti rimasti si potrà decidere cosa fare della colonna, con i numeri davanti.
 In questa cartella non esiste nessuno script che la elimini.
+
+## Archivio chat condiviso (017)
+
+La 017 aggiunge sei tabelle compatibili con Universo: grant, orario UTC,
+stato lettura, consegne, ricevute idempotenti e limite degli invii. Conserva
+`messaggi` e notifiche legacy; le colonne cifrate devono avere capienza adeguata.
+Non ha rollback distruttivo: le tabelle possono essere preesistenti e condivise.
+Si annulla l'attivazione applicativa coordinando i client, conservando i dati.
+La suite prova migrazione ripetibile e permanenza degli archivi dopo i rollback
+precedenti. Non usare DROP per tornare a una release precedente.

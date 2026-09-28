@@ -29,22 +29,22 @@ def aad(formato, pratica, mittente, identita, versione, ora, peer=None, utente=N
             f"{campo}={identita}\nkeyVersion={versione}\nepochHour={ora}\nflags=0").encode()
 
 
-def cifra(java, testo, client_id):
+def cifra(conversazione, testo, client_id):
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", client_id) or not testo.strip() or len(testo.encode()) > MAX_TESTO:
         raise ValueError("Messaggio non valido o troppo lungo.")
-    materiale = java.chiave()
+    materiale = conversazione.chiave()
     versione, ora = materiale["keyVersion"], materiale["epochHour"]
     tag = hashlib.sha256(client_id.encode()).digest()[:16]
     nonce = os.urandom(12)
-    c = java.contesto
+    c = conversazione.contesto
     dati = AESGCM(decodifica(materiale["key"])).encrypt(nonce, testo.encode(),
         aad("u2", c.pratica_id, c.utente_id, codifica(tag), versione, ora))
     return "u2." + codifica(struct.pack(">BIB", versione, ora, 0) + tag + nonce + dati)
 
 
-def decifra(java, record):
+def decifra(conversazione, record):
     testo = record["content"]
-    c = java.contesto
+    c = conversazione.contesto
     if testo.startswith(("u2.", "u3.")):
         formato = testo[:2]
         raw = decodifica(testo[3:])
@@ -59,7 +59,7 @@ def decifra(java, record):
         tentativi = [None] if peer is None else [None, peer]
         for destinazione in tentativi:
             try:
-                key = java.chiave(versione, ora, destinazione)
+                key = conversazione.chiave(versione, ora, destinazione)
                 return AESGCM(decodifica(key["key"])).decrypt(raw[offset:offset+12], raw[offset+12:],
                     aad(formato, c.pratica_id, record["senderUserId"], identita, versione, ora,
                         destinazione, c.utente_id)).decode("utf-8")

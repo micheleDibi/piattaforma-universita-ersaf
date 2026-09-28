@@ -8,7 +8,7 @@ from fastapi import HTTPException
 
 from src.chat_pratiche.cifratura import aad, cifra, codifica, decifra, decodifica
 from src.chat_pratiche.contesto import ContestoChat
-from src.chat_pratiche.protocollo import evento_pratica, invio_java
+from src.chat_pratiche.protocollo import valida_invio
 from src.chat_pratiche.socket import verifica_socket
 from src.security.browser import nome_cookie, token_csrf
 
@@ -49,16 +49,10 @@ def test_storico_u3_e_v1_e_testo_precedente():
 
 def test_gateway_non_consente_cambi_di_pratica_o_canale():
     messaggio = dict(tipo="invia", clientMessageId="uno", cifrato=cifra(servizio(), "Ciao", "uno"))
-    result = invio_java(messaggio, CONTESTO)
-    assert result["payload"]["destinationType"] == "PRACTICE"
-    assert result["payload"]["destinationId"] == "101"
+    valida_invio(messaggio)
     for extra in ({"destinationId": "102"}, {"from": "20"}, {"channel": "notification"}):
         with pytest.raises(ValueError):
-            invio_java({**messaggio, **extra}, CONTESTO)
-    evento = {**result, "payload": {**result["payload"], "from": "10", "messaggioId": "42"}}
-    assert evento_pratica(evento, CONTESTO)["id"] == "42"
-    for campo, valore in (("destinationId", "102"), ("destinationType", "PERSON"), ("codice", "altro")):
-        assert evento_pratica({**evento, "payload": {**evento["payload"], campo: valore}}, CONTESTO) is None
+            valida_invio({**messaggio, **extra})
 
 
 def test_handshake_richiede_origin_cookie_e_csrf():

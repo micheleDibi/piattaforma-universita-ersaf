@@ -62,3 +62,5 @@ typst>=0.15,<0.16
 Pillow>=12,<13
 
 websockets>=15,<17
+# Verifica locale dei token Universo durante la migrazione delle sole chat pratiche.
+PyJWT>=2.10,<3

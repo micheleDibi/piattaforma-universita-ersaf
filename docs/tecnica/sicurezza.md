@@ -751,6 +751,9 @@ stdout/stderr del processo non vengono riportati nei log applicativi.
 Le API della firma applicano la stessa visibilità della scheda, CSRF per il
 salvataggio, limiti sul PNG e controllo della versione sotto lock. Il WebSocket
 della chat verifica cookie, Origin e CSRF al collegamento, e ricontrolla sessione
-e accesso durante la connessione. Java verifica separatamente identità e
-partecipazione: il ponte non amplia le ACL di Universo. Chiavi e JWT Java
-restano sul backend. Dettagli in [chat e firma](chat-e-firma.md).
+e accesso durante la connessione. Il dominio nativo applica le ACL dei partecipanti,
+indipendentemente dal ruolo globale. Il namespace Universo verifica il token
+esistente (firma, scadenza, issuer/audience e sessione revocabile condivisa),
+senza creare sessioni delegate o accettare cookie. Le origini esterne non
+abilitano le API cookie; le chiavi master rimangono sul server.
+Dettagli in [chat e firma](chat-e-firma.md).

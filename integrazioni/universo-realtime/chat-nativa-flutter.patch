@@ -1,0 +1,374 @@
+diff --git a/lib/services/realtime/realtime_socket_transport.dart b/lib/services/realtime/realtime_socket_transport.dart
+--- a/lib/services/realtime/realtime_socket_transport.dart
++++ b/lib/services/realtime/realtime_socket_transport.dart
+@@ -4,6 +4,8 @@
+ 
+ import 'realtime_client_exception.dart';
+ import 'realtime_transport.dart';
++import 'practice_realtime_endpoint.dart';
++import 'practice_split_transport.dart';
+ 
+ typedef RealtimeSocketConnector = WebSocketChannel Function(
+   Uri uri, {
+@@ -25,7 +27,15 @@
+ }
+ 
+ RealtimeTransport defaultRealtimeTransportFactory(Uri uri) {
+-  return RealtimeSocketTransport(uri, defaultRealtimeSocketConnector);
++  final legacy = RealtimeSocketTransport(uri, defaultRealtimeSocketConnector);
++  final practiceUri = practiceRealtimeEndpoint('/ws');
++  if (practiceUri == null) return legacy;
++  return PracticeSplitTransport(
++    legacy,
++    RealtimeSocketTransport(
++      practiceUri.replace(scheme: 'wss'), defaultRealtimeSocketConnector,
++    ),
++  );
+ }
+ 
+ class RealtimeSocketTransport implements RealtimeTransport {
+diff --git a/lib/services/realtime/realtime_read_api_client.dart b/lib/services/realtime/realtime_read_api_client.dart
+--- a/lib/services/realtime/realtime_read_api_client.dart
++++ b/lib/services/realtime/realtime_read_api_client.dart
+@@ -4,6 +4,7 @@
+ import 'package:http/http.dart' as http;
+ 
+ import 'realtime_auth_service.dart';
++import 'practice_realtime_endpoint.dart';
+ 
+ final class RealtimeReadApiException implements Exception {
+   const RealtimeReadApiException(this.code, {this.statusCode});
+@@ -102,7 +103,10 @@
+       forceRefresh: attempt > 0,
+     );
+     scope.requireCurrent(_authService);
+-    final uri = baseUri.replace(path: path, queryParameters: query);
++    final original = baseUri.replace(path: path, queryParameters: query);
++    final uri = path == '/api/v1/messages'
++        ? routePracticeRequest(original, query)
++        : original;
+     final headers = {
+       'Authorization': 'Bearer $token',
+       'Accept': 'application/json',
+diff --git a/lib/services/realtime/realtime_message_key_client.dart b/lib/services/realtime/realtime_message_key_client.dart
+--- a/lib/services/realtime/realtime_message_key_client.dart
++++ b/lib/services/realtime/realtime_message_key_client.dart
+@@ -6,6 +6,7 @@
+ 
+ import 'realtime_auth_service.dart';
+ import 'realtime_message_key_context.dart';
++import 'practice_realtime_endpoint.dart';
+ 
+ abstract interface class RealtimeMessageKeyProvider {
+   Future<RealtimeMessageKeyMaterial> fetch(
+@@ -141,7 +142,7 @@
+   ) =>
+       _httpClient
+           .post(
+-            keyUri,
++            routePracticeRequest(keyUri, request),
+             headers: {
+               'Authorization': 'Bearer $token',
+               'Content-Type': 'application/json',
+diff --git a/lib/models/messages/realtime_inbound_chat.dart b/lib/models/messages/realtime_inbound_chat.dart
+--- a/lib/models/messages/realtime_inbound_chat.dart
++++ b/lib/models/messages/realtime_inbound_chat.dart
+@@ -1,3 +1,4 @@
++import '../../services/realtime/realtime_ciphertext_v2.dart';
+ import 'dart:convert';
+ 
+ sealed class RealtimeInboundChatEvent {
+@@ -67,7 +68,7 @@
+       content: _requiredString(
+         json,
+         'content',
+-        maxLength: 255,
++        maxLength: RealtimeCiphertextV2.maximumEncodedLength,
+         preserveWhitespace: true,
+       ),
+       sentAt: _requiredTimestamp(json['timestamp']),
+diff --git a/test/realtime/realtime_inbound_chat_test.dart b/test/realtime/realtime_inbound_chat_test.dart
+--- a/test/realtime/realtime_inbound_chat_test.dart
++++ b/test/realtime/realtime_inbound_chat_test.dart
+@@ -1,3 +1,4 @@
++import 'package:piattaforma_universo/services/realtime/realtime_ciphertext_v2.dart';
+ import 'package:piattaforma_universo/models/messages/realtime_inbound_chat.dart';
+ import 'package:test/test.dart';
+ 
+@@ -29,7 +30,7 @@
+       expect(
+         () => RealtimeInboundChatEvent.parse({
+           ..._ticketPayload(true),
+-          'content': 'valid${' ' * 251}',
++          'content': 'valid${' ' * (RealtimeCiphertextV2.maximumEncodedLength - 4)}',
+         }),
+         throwsFormatException,
+       );
+diff --git a/lib/services/realtime/practice_realtime_endpoint.dart b/lib/services/realtime/practice_realtime_endpoint.dart
+new file mode 100644
+--- /dev/null
++++ b/lib/services/realtime/practice_realtime_endpoint.dart
+@@ -0,0 +1,30 @@
++/// Origine del backend Università. Vuota fino al cutover coordinato.
++const practiceRealtimeBaseUrl = String.fromEnvironment(
++  'PRACTICE_REALTIME_BASE_URL',
++);
++
++Uri? practiceRealtimeEndpoint(
++  String path, {
++  String baseUrl = practiceRealtimeBaseUrl,
++}) {
++  if (baseUrl.isEmpty) return null;
++  final uri = Uri.parse(baseUrl);
++  if (uri.scheme != 'https' ||
++      uri.host.isEmpty ||
++      uri.userInfo.isNotEmpty ||
++      uri.hasQuery ||
++      uri.hasFragment ||
++      (uri.path.isNotEmpty && uri.path != '/')) {
++    throw ArgumentError(
++      'Il backend pratiche richiede una origine HTTPS senza credenziali',
++    );
++  }
++  return uri.replace(path: '/api/chat-universo$path');
++}
++
++Uri routePracticeRequest(Uri original, Map<String, Object?> data) {
++  if (data['destinationType'] != 'PRACTICE') return original;
++  final endpoint = practiceRealtimeEndpoint(original.path);
++  return endpoint?.replace(query: original.hasQuery ? original.query : null) ??
++      original;
++}
+diff --git a/lib/services/realtime/practice_split_transport.dart b/lib/services/realtime/practice_split_transport.dart
+new file mode 100644
+--- /dev/null
++++ b/lib/services/realtime/practice_split_transport.dart
+@@ -0,0 +1,102 @@
++import 'dart:convert';
++
++import 'realtime_transport.dart';
++
++/// Entrambe le connessioni consumano lo stesso access token già posseduto.
++/// Solo CHAT/PRACTICE cambia destinazione; nessun fallback in scrittura.
++final class PracticeSplitTransport implements RealtimeTransport {
++  PracticeSplitTransport(this.legacy, this.practices);
++
++  final RealtimeTransport legacy;
++  final RealtimeTransport practices;
++  final Set<String> _practiceDeliveries = {};
++  bool _closed = false;
++  Future<void>? _closing;
++
++  @override
++  Future<void> open(
++    String accessToken, {
++    required void Function(Object?) onData,
++    required void Function(Object, StackTrace) onError,
++    required void Function() onDone,
++  }) async {
++    void receive(Object? raw, bool practiceSource) {
++      if (_closed) return;
++      try {
++        if (_accept(raw, practiceSource)) onData(raw);
++      } catch (error, stack) {
++        onError(error, stack);
++      }
++    }
++
++    try {
++      await legacy.open(
++        accessToken,
++        onData: (raw) => receive(raw, false),
++        onError: onError,
++        onDone: onDone,
++      );
++      await practices.open(
++        accessToken,
++        onData: (raw) => receive(raw, true),
++        onError: onError,
++        onDone: onDone,
++      );
++    } catch (_) {
++      await close();
++      rethrow;
++    }
++  }
++
++  bool _accept(Object? raw, bool practiceSource) {
++    final envelope = raw is String ? jsonDecode(raw) : raw;
++    if (envelope is! Map) {
++      throw const FormatException('Envelope non valido');
++    }
++    final payload = envelope['payload'];
++    final isPractice = payload is Map && payload['destinationType'] == 'PRACTICE';
++    if (!practiceSource && isPractice && payload['type'] == 'CHAT') return false;
++    if (practiceSource && envelope['channel'] == 'chat' && !isPractice) {
++      throw const FormatException('Destinazione inattesa dal backend pratiche');
++    }
++    if (practiceSource && payload is Map && payload['deliveryId'] is String) {
++      if (_practiceDeliveries.length >= 256) {
++        throw StateError('Troppe consegne pendenti');
++      }
++      _practiceDeliveries.add(payload['deliveryId'] as String);
++    }
++    return true;
++  }
++
++  @override
++  void send(String encodedEnvelope) {
++    if (_closed) throw StateError('Connessione chiusa');
++    final value = jsonDecode(encodedEnvelope) as Map<String, dynamic>;
++    final payload = value['payload'] as Map<String, dynamic>;
++    if (value['channel'] == 'chat' &&
++        payload['type'] == 'CHAT' &&
++        payload['destinationType'] == 'PRACTICE') {
++      practices.send(encodedEnvelope);
++    } else if (value['channel'] == 'system' &&
++        payload['type'] == 'DELIVERY_ACK' &&
++        _practiceDeliveries.contains(payload['deliveryId'])) {
++      practices.send(encodedEnvelope);
++      _practiceDeliveries.remove(payload['deliveryId']);
++    } else {
++      legacy.send(encodedEnvelope);
++    }
++  }
++
++  @override
++  Future<void> close() => _closing ??= _close();
++
++  Future<void> _close() async {
++    _closed = true;
++    _practiceDeliveries.clear();
++    try {
++      await practices.close();
++    } finally {
++      await legacy.close();
++    }
++  }
++}
+diff --git a/test/realtime/practice_split_transport_test.dart b/test/realtime/practice_split_transport_test.dart
+new file mode 100644
+--- /dev/null
++++ b/test/realtime/practice_split_transport_test.dart
+@@ -0,0 +1,121 @@
++import 'dart:convert';
++
++import 'package:flutter_test/flutter_test.dart';
++import 'package:piattaforma_universo/services/realtime/practice_realtime_endpoint.dart';
++import 'package:piattaforma_universo/services/realtime/practice_split_transport.dart';
++import 'package:piattaforma_universo/services/realtime/realtime_transport.dart';
++
++class MemoryTransport implements RealtimeTransport {
++  String? token;
++  bool closed = false;
++  bool fail = false;
++  final sent = <String>[];
++  void Function(Object?)? receive;
++
++  @override
++  Future<void> open(
++    String accessToken, {
++    required void Function(Object?) onData,
++    required void Function(Object, StackTrace) onError,
++    required void Function() onDone,
++  }) async {
++    token = accessToken;
++    receive = onData;
++    if (fail) throw StateError('Connessione non disponibile');
++  }
++
++  @override
++  void send(String encodedEnvelope) => sent.add(encodedEnvelope);
++
++  @override
++  Future<void> close() async {
++    closed = true;
++  }
++}
++
++void main() {
++  test(
++    'stesso token, pratiche sul nuovo servizio e altre chat invariate',
++    () async {
++      final old = MemoryTransport(), practices = MemoryTransport();
++      final transport = PracticeSplitTransport(old, practices);
++      final received = <Object?>[];
++      await transport.open(
++        'sessione-esistente',
++        onData: received.add,
++        onError: (e, s) => fail('$e'),
++        onDone: () {},
++      );
++      expect(old.token, practices.token);
++      final practice = jsonEncode({
++        'channel': 'chat',
++        'payload': {
++          'type': 'CHAT',
++          'destinationType': 'PRACTICE',
++          'deliveryId': 'consegna',
++        },
++      });
++      final personal = jsonEncode({
++        'channel': 'chat',
++        'payload': {'type': 'CHAT', 'destinationType': 'PERSON'},
++      });
++      transport.send(practice);
++      transport.send(personal);
++      expect(practices.sent, [practice]);
++      expect(old.sent, [personal]);
++      old.receive!(practice);
++      practices.receive!(practice);
++      expect(received, [practice]);
++      final ack = jsonEncode({
++        'channel': 'system',
++        'payload': {'type': 'DELIVERY_ACK', 'deliveryId': 'consegna'},
++      });
++      transport.send(ack);
++      expect(practices.sent.last, ack);
++      expect(old.sent, [personal]);
++      await transport.close();
++      expect(old.closed && practices.closed, isTrue);
++    },
++  );
++
++  test(
++    'fallimento nativo chiude entrambi senza reinviare messaggi a Java',
++    () async {
++      final old = MemoryTransport(), practices = MemoryTransport()..fail = true;
++      final transport = PracticeSplitTransport(old, practices);
++      await expectLater(
++        transport.open(
++          'token',
++          onData: (_) {},
++          onError: (_, _) {},
++          onDone: () {},
++        ),
++        throwsStateError,
++      );
++      expect(old.closed && practices.closed, isTrue);
++      expect(old.sent, isEmpty);
++    },
++  );
++
++  test('origine HTTPS esplicita e percorso dedicato', () {
++    expect(practiceRealtimeEndpoint('/ws', baseUrl: ''), isNull);
++    expect(
++      practiceRealtimeEndpoint(
++        '/ws',
++        baseUrl: 'https://universita.example.org',
++      ).toString(),
++      'https://universita.example.org/api/chat-universo/ws',
++    );
++    for (final origin in [
++      'http://universita.example.org',
++      'https://user:password@universita.example.org',
++      'https://universita.example.org/path',
++      'https://universita.example.org?x=1',
++    ]) {
++      expect(
++        () => practiceRealtimeEndpoint('/ws', baseUrl: origin),
++        throwsArgumentError,
++      );
++    }
++  });
++}

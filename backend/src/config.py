@@ -65,12 +65,6 @@ class Impostazioni(BaseSettings):
     # e basta, e verifica_configurazione() lo dice chiaramente.
     database_url: str = ""
 
-    # Ponte interno verso il servizio Java autorevole; vuoto = chat disabilitata.
-    chat_java_url: str = ""
-    chat_java_origine: str = ""
-    chat_java_secret_file: str = ""
-    chat_dataset: str = ""
-
     # Due database amministrativi separati (stesso server, stesso utente e
     # password di database_url, nome diverso). A differenza di database_url
     # sono facoltativi: verifica_configurazione() non li pretende, perche'

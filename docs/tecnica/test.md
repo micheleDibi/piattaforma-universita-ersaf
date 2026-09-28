@@ -282,11 +282,15 @@ I test dell'applicazione si lanciano quindi in locale. Il flusso di lavoro è in
 
 ## Chat e firma
 
-Le nuove suite coprono acquisizione e concorrenza della firma, riuso nei PDF,
-API della chat e WebSocket con trasporto Java simulato e sessione reale di test.
-Il vettore `practice_crypto_vector.json` è sintetico e viene verificato sia da
-Python sia dalla suite Java inclusa nel delta. Il gate Università non esegue
-Maven né invia messaggi al servizio pubblicato; vedi [verifiche](chat-e-firma.md#verifiche).
+Le suite coprono acquisizione e concorrenza della firma, riuso nei PDF e chat
+nativa sul database usa-e-getta. Sono provati invio, storico, idempotenza
+concorrente, limiti, rollback atomico anche delle notifiche, revoca e isolamento
+di cookie/token, grant, cursori e due trasporti WebSocket sul medesimo archivio.
+Il vettore crittografico sintetico è quello già verificato contro Java.
+La suite `test/realtime` Flutter prova l'adattatore Universo separatamente;
+non viene eseguita dal gate FastAPI/React. Vedi [verifiche](chat-e-firma.md#verifiche).
+Il test di rollback conserva esplicitamente le sei tabelle della 017: possono
+essere già condivise con Universo e non devono subire DROP.
 
 ## Stato dei contatti e database facoltativi
 
