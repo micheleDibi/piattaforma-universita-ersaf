@@ -22,6 +22,7 @@ Le regole per applicarle, annullarle e correggere gli errori sono in [db/README.
 | 014 | `014_contenuti_email.sql` | Contenuti email uniformi al modello FindYourGoal | assente |
 | 015 | `015_secondo_fattore.sql` | Secondo fattore a scelta per il ruolo Nazionale (ADR 0009) | `015_secondo_fattore_down.sql` |
 | 016 | `016_indici_visibilita_clienti.sql` | Indici per la visibilita' dei clienti | `016_indici_visibilita_clienti_down.sql` |
+| 017 | `017_contatori_codice_pratica.sql` | Contatori per il codice pratica (numerazione automatica) | `017_contatori_codice_pratica_down.sql` |
 
 ## Anomalie
 

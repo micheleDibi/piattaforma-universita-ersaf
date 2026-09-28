@@ -107,6 +107,31 @@ def test_sottoscrittori_comprendono_consulenti_e_gli_operatori_sono_attuatori(cl
     ])
 
 
+def test_solo_attivi_esclude_chi_non_ha_ancora_un_account_attivo(client, db):
+    """Usato dal selettore dello studente nelle pratiche."""
+    io, sessione = accedi(client, db)
+    db.execute(insert(Utente.__table__), [
+        {"utente_id": 27_001, "utente_username": "u27001", "utente_password": "",
+         "utente_padre": io.utente_id, "utente_attivoSN": f.ATTIVO},
+        {"utente_id": 27_002, "utente_username": "u27002", "utente_password": "",
+         "utente_padre": io.utente_id, "utente_attivoSN": f.DISATTIVO},
+    ])
+    db.execute(insert(Cliente.__table__), [
+        {"cliente_id": 27_001, "utente_id": 27_001, "cliente_ruolo": f.RUOLO_SOTTOSCRITTORE,
+         "cliente_nome": "Attivo", "cliente_cognome": "Prova"},
+        {"cliente_id": 27_002, "utente_id": 27_002, "cliente_ruolo": f.RUOLO_SOTTOSCRITTORE,
+         "cliente_nome": "NonAttivo", "cliente_cognome": "Prova"},
+    ])
+    db.commit()
+
+    assert sorted(ids(client.get("/clienti/?limit=200", headers=sessione))) == sorted([
+        io.cliente_id, 27_001, 27_002,
+    ])
+    assert sorted(ids(client.get("/clienti/?solo_attivi=true&limit=200", headers=sessione))) == sorted([
+        io.cliente_id, 27_001,
+    ])
+
+
 def test_il_conteggio_segue_filtri_e_visibilita_dell_elenco(client, db):
     """Il totale e' quello dell'elenco senza paginazione: stessi ruoli, stessa
     ricerca (anche sull'azienda degli attuatori), solo le righe visibili."""

@@ -163,10 +163,16 @@ def _filtra_elenco(
     solo_attuatori: bool,
     solo_utenti: bool,
     solo_sottoscrittori: bool,
+    solo_attivi: bool = False,
 ):
     """Filtri comuni all'elenco e al suo conteggio: stessi criteri, stessi risultati."""
     if ruolo_codice or solo_attuatori or solo_utenti or solo_sottoscrittori:
         query = query.join(Ruolo, Cliente.cliente_ruolo == Ruolo.ruolo_id)
+
+    if solo_attivi:
+        # Usato dal selettore dello studente nelle pratiche: chi non ha
+        # ancora un account attivo non deve comparire.
+        query = query.join(Cliente.utente).filter(Utente.utente_attivoSN == -1)
 
     if ruolo_codice:
         query = query.filter(Ruolo.ruolo_codice == ruolo_codice)
@@ -210,6 +216,7 @@ def leggi_clienti(
     solo_attuatori: bool = False,
     solo_utenti: bool = False,
     solo_sottoscrittori: bool = False,
+    solo_attivi: bool = False,
     db: Session = Depends(get_db),
     vis: Visibilita = Depends(visibilita_corrente),
 ):
@@ -224,6 +231,7 @@ def leggi_clienti(
         solo_attuatori=solo_attuatori,
         solo_utenti=solo_utenti,
         solo_sottoscrittori=solo_sottoscrittori,
+        solo_attivi=solo_attivi,
     )
     if not ruolo_codice and not solo_attuatori and (solo_utenti or solo_sottoscrittori):
         query = query.options(_CARICAMENTO_DIPLOMA)
@@ -240,6 +248,7 @@ def conta_clienti(
     solo_attuatori: bool = False,
     solo_utenti: bool = False,
     solo_sottoscrittori: bool = False,
+    solo_attivi: bool = False,
     db: Session = Depends(get_db),
     vis: Visibilita = Depends(visibilita_corrente),
 ):
@@ -251,6 +260,7 @@ def conta_clienti(
         solo_attuatori=solo_attuatori,
         solo_utenti=solo_utenti,
         solo_sottoscrittori=solo_sottoscrittori,
+        solo_attivi=solo_attivi,
     )
     return {"totale": query.order_by(None).count()}
 

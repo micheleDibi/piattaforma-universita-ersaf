@@ -193,6 +193,19 @@ migrazione applicata.
    e la `UNIQUE` su `utenti.utente_username` (prima vanno bonificati i duplicati).
 4. `event_scheduler` deve essere `ON` perché gli eventi di retention girino:
    `SHOW VARIABLES LIKE 'event_scheduler';`
+5. `017` lascia a mano, per lo stesso motivo della `005`, la `UNIQUE` su
+   `pratiche.pratica_numero`: verificato sul database reale, quella colonna
+   ha già molti duplicati (codici legacy in formato libero ripetuti, oltre a
+   segnaposto come una stringa di soli trattini o di prova usati più volte
+   per "nessun codice assegnato"). Chi conosce quelle pratiche decide quale
+   riga tiene il codice; poi si applica a mano:
+   ```sql
+   ALTER TABLE `pratiche`
+     ADD UNIQUE KEY IF NOT EXISTS `uq_pratiche_pratica_numero` (`pratica_numero`);
+   ```
+   Fino ad allora l'unicità dei codici *nuovi* resta comunque garantita dal
+   contatore atomico di `pratiche_contatori` (vedi `backend/src/pratiche/codice.py`):
+   questa UNIQUE è una rete di sicurezza in più, non la garanzia principale.
 
 ## Il debito che resta aperto
 

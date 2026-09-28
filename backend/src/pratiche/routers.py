@@ -6,10 +6,14 @@ from typing import Annotated, List
 from src.auth.dipendenze import get_current_utente
 from src.auth.visibilita import Visibilita, condizione_azienda, visibilita_corrente
 from src.database import get_db
+from src.errori import CodicePraticaError
+from src.pratiche.codice import genera_codici_pratica
 from src.pratiche.filtri import FiltriPratiche, query_filtrata
 from src.pratiche.opzioni import router as opzioni_router
 from src.documenti.rotte import router as documento_router
 from src.pratiche.models import ConteggioPratiche, Pratica, PraticaCreate, PraticaResponse, PraticaUpdate
+from src.pratiche_listini.models import PraticaListino
+from src.utenti.models import Utente
 
 # Stessa scelta di aziende/routers.py: autenticazione a livello di router,
 # non di singolo endpoint, cosi' una rotta nuova la trova gia' protetta.
@@ -68,6 +72,7 @@ def crea_pratica(
     pratica_in: PraticaCreate,
     db: Session = Depends(get_db),
     vis: Visibilita = Depends(visibilita_corrente),
+    utente: Utente = Depends(get_current_utente),
 ):
     # exclude_unset=True e' OBBLIGATORIO qui, a differenza di crea_azienda:
     # molti campi di PraticaCreate (listTesta_id, cliente_id, pratica_stato_id,
@@ -78,6 +83,9 @@ def crea_pratica(
     # di lasciar agire il DEFAULT del database - lo stesso bug descritto nei
     # commenti di Cliente/Azienda sui server_default.
     dati = pratica_in.model_dump(exclude_unset=True)
+    # Non e' una colonna di Pratica: si userebbe per costruire le righe di
+    # pratiche_listini piu' sotto, Pratica(**dati) non lo accetterebbe.
+    corsi_singoli = dati.pop("corsi_singoli", None) or []
 
     # Chi non e' Nazionale crea pratiche solo per la propria azienda: il valore
     # inviato non conta. 403 e non 422: il corpo e' valido, e' l'utente a non
@@ -91,6 +99,40 @@ def crea_pratica(
 
     nuova_pratica = Pratica(**dati)
     db.add(nuova_pratica)
+    # flush+refresh, non commit: serve pratica_id e, soprattutto, i campi con
+    # server_default (nome_universita_id puo' non essere stato inviato) prima
+    # di generare il codice. Tutto resta nella stessa transazione: se la
+    # generazione fallisce, ne' la pratica ne' l'incremento del contatore
+    # vengono scritti (vedi src/pratiche/codice.py).
+    db.flush()
+    db.refresh(nuova_pratica)
+
+    try:
+        codici = genera_codici_pratica(
+            db,
+            nome_universita_codice=nuova_pratica.universita.nome_universita_codice,
+            listino_tipo_corso_id=nuova_pratica.listino_tipo_corso_id,
+        )
+    except CodicePraticaError as errore:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(errore)) from errore
+    if codici:
+        nuova_pratica.pratica_numero = codici.numero
+        if codici.codice_asg:
+            nuova_pratica.pratica_codiceASG = codici.codice_asg
+
+    # Corsi Singoli: ogni corso scelto (compreso il primo, gia' in
+    # listTesta_id) diventa una riga in pratiche_listini. Il prezzo e' quello
+    # che il client ha gia' calcolato (vedi CorsoSingoloSelezionato): stessa
+    # scelta di pratica_prezzo, il server non lo ricalcola.
+    for corso in corsi_singoli:
+        db.add(PraticaListino(
+            pratica_id=nuova_pratica.pratica_id,
+            listTesta_id=corso["listTesta_id"],
+            pratica_listini_prezzo=corso.get("prezzo"),
+            pratiche_listini_createdBy=utente.utente_id,
+            pratiche_listini_updatedBy=utente.utente_id,
+        ))
+
     db.commit()
     db.refresh(nuova_pratica)
     return _pratica_o_404(db, nuova_pratica.pratica_id, vis)
