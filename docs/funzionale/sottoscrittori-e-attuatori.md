@@ -69,8 +69,8 @@ quando la cosa è a posto, grigie quando non lo è:
 
 | Etichetta | Verde quando |
 |---|---|
-| Email | l'indirizzo è stato verificato con un codice |
-| Cellulare | il numero è stato verificato con un codice |
+| Email | l'indirizzo è stato verificato con un codice, oppure non è mai stato verificato ma l'account è già attivo (vedi [Anagrafiche precedenti a questo sistema](#anagrafiche-precedenti-a-questo-sistema)) |
+| Cellulare | come sopra, per il numero di cellulare |
 | Diploma | i dati del diploma sono completi (solo nei Sottoscrittori) |
 
 I dati del diploma si considerano completi quando ci sono tutti e cinque:
@@ -466,7 +466,9 @@ Nota: l'interfaccia mostra come verificato un contatto che il server non ha veri
 ### Anagrafiche precedenti a questo sistema
 
 - Un account già attivo, per il quale non risulta nessuna verifica, mostra i
-  contatti come verificati, senza data e senza pulsante «Verifica».
+  contatti come verificati: nella scheda senza data e senza pulsante
+  «Verifica», nella colonna Verifiche dell'elenco con l'etichetta verde come
+  qualunque altro contatto verificato.
 - Le verifiche fatte con il sistema precedente si possono recuperare con
   un'operazione tecnica. Per ogni anagrafica si prende l'ultima verifica
   riuscita dell'email e quella del cellulare. Ciascuna viene riportata solo se

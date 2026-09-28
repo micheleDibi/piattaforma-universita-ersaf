@@ -48,3 +48,71 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# =============================================================================
+# Database amministrativi secondari (facoltativi)
+# =============================================================================
+# Stesso server, stesso utente e password del DB principale, nome diverso.
+# A differenza di SQLALCHEMY_DATABASE_URL non hanno un fallback e non sono
+# richiesti da verifica_configurazione(): se la variabile manca, l'engine e
+# la sessione restano None e get_db_* solleva un errore chiaro solo se
+# qualcuno prova davvero a usarli. Nessuna funzionalita' li usa ancora.
+SQLALCHEMY_DATABASE_URL_GESTIONE_PAGAMENTI = (
+    os.getenv("TEST_DATABASE_URL_GESTIONE_PAGAMENTI")
+    or _impostazioni.database_url_gestione_pagamenti
+    or None
+)
+SQLALCHEMY_DATABASE_URL_SYS_ADMIN = (
+    os.getenv("TEST_DATABASE_URL_SYS_ADMIN")
+    or _impostazioni.database_url_sys_admin
+    or None
+)
+
+
+def _crea_engine_facoltativo(url: str | None):
+    if not url:
+        return None
+    return create_engine(
+        url,
+        pool_pre_ping=True,
+        pool_recycle=1800,
+        hide_parameters=True,
+        echo=False,
+        future=True,
+    )
+
+
+engine_gestione_pagamenti = _crea_engine_facoltativo(SQLALCHEMY_DATABASE_URL_GESTIONE_PAGAMENTI)
+engine_sys_admin = _crea_engine_facoltativo(SQLALCHEMY_DATABASE_URL_SYS_ADMIN)
+
+SessionGestionePagamenti = (
+    sessionmaker(autocommit=False, autoflush=False, bind=engine_gestione_pagamenti)
+    if engine_gestione_pagamenti is not None
+    else None
+)
+SessionSysAdmin = (
+    sessionmaker(autocommit=False, autoflush=False, bind=engine_sys_admin)
+    if engine_sys_admin is not None
+    else None
+)
+
+
+def get_db_gestione_pagamenti():
+    if SessionGestionePagamenti is None:
+        raise RuntimeError("DATABASE_URL_GESTIONE_PAGAMENTI non e' configurata")
+    db = SessionGestionePagamenti()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def get_db_sys_admin():
+    if SessionSysAdmin is None:
+        raise RuntimeError("DATABASE_URL_SYS_ADMIN non e' configurata")
+    db = SessionSysAdmin()
+    try:
+        yield db
+    finally:
+        db.close()

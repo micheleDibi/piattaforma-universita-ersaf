@@ -45,7 +45,7 @@ alcuni hanno solo i modelli.
 |---|---|
 | `main.py` | Crea l'app: avvio con verifica della configurazione, CORS, middleware browser, router, gestori di errore, `/salute` |
 | `config.py` | Impostazioni lette da `backend/.env` e verifica di avvio |
-| `database.py` | Engine, sessioni (`get_db`), base dei modelli |
+| `database.py` | Engine, sessioni (`get_db`), base dei modelli; due connessioni facoltative in più verso database amministrativi separati, non ancora usate |
 | `errori.py` | Eccezioni dell'applicazione, senza dipendenze |
 | `logging_config.py` | Logging con redazione dei valori sensibili |
 | `auth/` | Login, sessione, logout, recupero password, impersonificazione, limiti del login, dipendenze di sessione (`dipendenze.py`), controlli di ruolo (`autorizzazioni.py`) |
@@ -91,6 +91,13 @@ Quello che serve sapere qui:
   fallire l'import: l'avvio si ferma comunque.
 - `TEST_DATABASE_URL`, se impostata, ha la precedenza su `DATABASE_URL`
   (`database.py`).
+- `DATABASE_URL_GESTIONE_PAGAMENTI` e `DATABASE_URL_SYS_ADMIN` preparano due
+  connessioni verso due database amministrativi separati, sullo stesso server
+  del database principale (stesso utente e password, nome diverso). A
+  differenza di `DATABASE_URL` sono facoltative: mancando, `engine` e sessione
+  restano `None` e `get_db_gestione_pagamenti()`/`get_db_sys_admin()`
+  sollevano un errore solo se qualcosa li usa davvero. Non c'è ancora nessuna
+  funzionalità che li usa.
 
 L'elenco delle variabili è in
 [riferimenti/configurazione.md](riferimenti/configurazione.md).

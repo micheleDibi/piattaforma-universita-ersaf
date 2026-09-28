@@ -112,8 +112,19 @@ class Cliente(Base):
     )
 
     def _contatto_verificato(self, tipo):
+        """Stessa regola di stato_per_tipo in otp/contatti.py, cosi' elenco e
+        scheda non siano piu' disallineati: un contatto risulta verificato se
+        c'e' una verifica OTP valida per il valore attuale, oppure se per
+        quel tipo non esiste alcuna riga storica (anagrafica precedente al
+        sistema OTP) e l'account e' gia' attivo.
+        """
         from src.otp.identita import versione
-        return any(r.tipo == tipo and r.versione == versione(self, tipo) for r in self.verifiche_contatti)
+        riga = next((r for r in self.verifiche_contatti if r.tipo == tipo), None)
+        if riga is not None and riga.versione == versione(self, tipo):
+            return True
+        mai_verificato = riga is None
+        attivo = self.utente is not None and self.utente.utente_attivoSN == -1
+        return mai_verificato and attivo
 
     @property
     def diploma_completo(self) -> Optional[bool]:

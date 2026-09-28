@@ -28,8 +28,8 @@ DIPLOMA = {
 DA_UNIVERSITA = re.compile(r"\bFROM universita\b")
 
 
-def sottoscrittore(db, padre, ruolo=f.RUOLO_SOTTOSCRITTORE):
-    return f.crea_attuatore(db, email=email_nuova("sott"), ruolo=ruolo, padre=padre)
+def sottoscrittore(db, padre, ruolo=f.RUOLO_SOTTOSCRITTORE, attivo=f.ATTIVO):
+    return f.crea_attuatore(db, email=email_nuova("sott"), ruolo=ruolo, padre=padre, attivo=attivo)
 
 
 def curriculum(db, cliente_id, **campi):
@@ -54,7 +54,9 @@ def sottoscrittori(client, sessione):
 # =============================================================================
 def test_contatti_verificati_in_elenco_finche_il_valore_non_cambia(client, db):
     io, sessione = accedi(client, db)
-    persona = sottoscrittore(db, io.utente_id)
+    # Non attivo: senza la regola delle anagrafiche precedenti al sistema OTP
+    # (vedi sotto), cosi' il test isola il solo effetto della verifica OTP.
+    persona = sottoscrittore(db, io.utente_id, attivo=f.DISATTIVO)
     riga = db.get(Cliente, persona.cliente_id)
     riga.cliente_cellulare = "+393331234567"
     db.commit()
@@ -78,10 +80,21 @@ def test_contatti_verificati_in_elenco_finche_il_valore_non_cambia(client, db):
 
 def test_anche_gli_attuatori_hanno_i_contatti_verificati(client, db):
     io, sessione = accedi(client, db)
-    attuatore = sottoscrittore(db, io.utente_id, ruolo=f.RUOLO_ADERENTE)
+    attuatore = sottoscrittore(db, io.utente_id, ruolo=f.RUOLO_ADERENTE, attivo=f.DISATTIVO)
     f.verifica_contatto(db, attuatore.cliente_id, "email")
     riga = elenco(client, sessione, solo_attuatori="true")[attuatore.cliente_id]
     assert (riga["email_verificata"], riga["cellulare_verificato"]) == (True, False)
+
+
+def test_contatto_mai_verificato_ma_account_gia_attivo_risulta_verificato_in_elenco(client, db):
+    """Stessa regola della scheda (stato_per_tipo in otp/contatti.py): un
+    account gia' attivo, per un contatto senza nessuna verifica storica,
+    conta come verificato anche nell'elenco — prima dell'allineamento
+    risultava verificato solo in scheda."""
+    io, sessione = accedi(client, db)
+    persona = sottoscrittore(db, io.utente_id, attivo=f.ATTIVO)
+    riga = sottoscrittori(client, sessione)[persona.cliente_id]
+    assert (riga["email_verificata"], riga["cellulare_verificato"]) == (True, True)
 
 
 # =============================================================================

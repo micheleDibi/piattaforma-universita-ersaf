@@ -13,6 +13,8 @@ Letto da `backend/src/config.py`. "Obbligatoria" indica le variabili senza le qu
 |---|---|---|---|---|
 | `ERSAF_ENV` | sviluppo \| test \| produzione | `sviluppo` | no | sviluppo \| test \| produzione In "produzione" la verifica di avvio diventa piu' severa: pretende EMAIL_BACKEND=smtp, FRONTEND_BASE_URL in https e nessun '*' nei CORS. |
 | `DATABASE_URL` | testo | (vuoto) | sì | Nessun valore di default nel codice: prima c'era un fallback con credenziali di prova cablate che, in assenza di .env, faceva connettere l'app senza dirlo a nessuno. La verifica di avvio rifiuta ancora quel valore. |
+| `DATABASE_URL_GESTIONE_PAGAMENTI` | testo | (vuoto) | no | Due database amministrativi separati, sullo stesso server del DB principale (stesso indirizzo, stesso utente e password), ma con nome diverso. Facoltativi: a differenza di DATABASE_URL, se mancano l'app parte comunque — non li usa ancora nessuna funzionalita', e' solo la connessione preparata in anticipo. |
+| `DATABASE_URL_SYS_ADMIN` | testo | (vuoto) | no |  |
 | `PASSWORD_RESET_TOKEN_PEPPER` | testo | (vuoto) | sì | Nel database non finisce mai un token in chiaro: solo SHA-256(token\|\|pepper). Il pepper sta qui e NON nel database, cosi' chi legge un backup non puo' derivare i token. PASSWORD_RESET_TOKEN_PEPPER, SESSION_TOKEN_PEPPER e TOTP_CHIAVE devono essere diversi fra loro e lunghi almeno 32 byte. |
 | `SESSION_TOKEN_PEPPER` | testo | (vuoto) | sì | Nel database non finisce mai un token in chiaro: solo SHA-256(token\|\|pepper). Il pepper sta qui e NON nel database, cosi' chi legge un backup non puo' derivare i token. PASSWORD_RESET_TOKEN_PEPPER, SESSION_TOKEN_PEPPER e TOTP_CHIAVE devono essere diversi fra loro e lunghi almeno 32 byte. |
 | `TOTP_CHIAVE` | testo | (vuoto) | sì | Cifra a riposo i segreti degli authenticator (secondo fattore del Nazionale). Diversa dai pepper. Se si perde, tutti devono riattivare l'app: va nel backup dei segreti insieme alle altre due. |
@@ -62,6 +64,8 @@ Letto da `backend/src/notifiche/config_sms.py`.
 | Variabile | Dove |
 |---|---|
 | `TEST_DATABASE_URL` | `backend/src/database.py` |
+| `TEST_DATABASE_URL_GESTIONE_PAGAMENTI` | `backend/src/database.py` |
+| `TEST_DATABASE_URL_SYS_ADMIN` | `backend/src/database.py` |
 
 ## Deploy (`compose.env` sul server)
 
