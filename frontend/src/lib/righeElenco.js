@@ -38,8 +38,10 @@ export function idIndicatori(base, riga, campo) {
     : undefined;
 }
 
-/** Verde solo per un `true` esplicito: assente o null vale grigio. */
-function statoCliente(item, attuatori) {
+/** Verde solo per un `true` esplicito: assente o null vale grigio. Esportata
+ * per riuso fuori dagli elenchi (ModaleSelezioneStudente.jsx), cosi' le
+ * stesse verifiche hanno sempre lo stesso comportamento. */
+export function statoCliente(item, attuatori) {
   return indicatoriCliente(attuatori).map(({ id, campo }) => {
     const attivo = item[campo] === true;
     const testi = TESTI_ELENCO.indicatori[id];

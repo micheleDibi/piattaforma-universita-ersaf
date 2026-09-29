@@ -2,14 +2,14 @@ import re
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
-from datetime import datetime
+from datetime import date, datetime
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
 from src.auth.dipendenze import get_current_utente
 from src.listini_testa.models import ListinoTestaDB, ListinoTesta, ListinoTestaCreate, ListinoTestaUpdate
-from src.database import get_db 
-from src.listino_tipoCorso.models import ListinoTipoCorsoDB  
-from src.nome_universita.models import NomeUniversitaDB   
+from src.database import get_db
+from src.listino_tipoCorso.models import ListinoTipoCorsoDB
+from src.nome_universita.models import NomeUniversitaDB
 from src.listini_dettagli.models import ListinoDettaglio
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -120,11 +120,26 @@ def get_all(
     universita: Optional[str] = None,
     tipo_corso: Optional[str] = None,
     attivo: Optional[int] = None,
+    # Filtri per id, usati dalla selezione del percorso in una pratica (vedi
+    # frontend/src/config/pratica.js): universita/tipo_corso sopra restano per
+    # l'Elenco Prodotti Formativi, che filtra su descrizione da due tendine.
+    # listino_tipo_corso_id accetta piu' valori perche' alcune voci del
+    # pannello Pratiche raggruppano piu' tipi di corso (es. Formazione ed
+    # Alta formazione = 6 e 7): un solo valore non basterebbe a rappresentarle.
+    nome_universita_id: Optional[int] = None,
+    listino_tipo_corso_id: List[int] = Query(default_factory=list),
+    # Solo i percorsi con un dettaglio (listini_dettagli) valido oggi: niente
+    # data di inizio, oppure non successiva a oggi, e data di fine non
+    # precedente a oggi. Stessa regola di dettaglioAttuale() in
+    # frontend/src/lib/praticaForm.js, applicata qui perche' un filtro fatto
+    # dopo aver scaricato la pagina romperebbe skip/limit.
+    valido_oggi: bool = False,
     db: Session = Depends(get_db)
 ):
     query = db.query(ListinoTestaDB).options(
         joinedload(ListinoTestaDB.universita),
-        joinedload(ListinoTestaDB.tipo_corso)
+        joinedload(ListinoTestaDB.tipo_corso),
+        selectinload(ListinoTestaDB.dettagli),
     )
 
     if search:
@@ -149,6 +164,25 @@ def get_all(
     if attivo is not None:
         query = query.filter(ListinoTestaDB.listino_attivoSN == attivo)
 
+    if nome_universita_id is not None:
+        query = query.filter(ListinoTestaDB.nome_universita_id == nome_universita_id)
+
+    if listino_tipo_corso_id:
+        query = query.filter(ListinoTestaDB.listino_tipoCorso_id.in_(listino_tipo_corso_id))
+
+    if valido_oggi:
+        oggi = date.today()
+        query = query.filter(
+            db.query(ListinoDettaglio)
+            .filter(
+                ListinoDettaglio.listTesta_id == ListinoTestaDB.listTesta_id,
+                or_(ListinoDettaglio.listDettaglio_dataInizioValidazione.is_(None),
+                    ListinoDettaglio.listDettaglio_dataInizioValidazione <= oggi),
+                ListinoDettaglio.listDettaglio_dataFineValidazionoe >= oggi,
+            )
+            .exists()
+        )
+
     return query.order_by(ListinoTestaDB.listTesta_id.asc()).offset(skip).limit(limit).all()
 
 
@@ -160,6 +194,12 @@ def get_by_id(listTesta_id: int, db: Session = Depends(get_db)):
         .options(
             joinedload(ListinoTestaDB.universita),
             joinedload(ListinoTestaDB.tipo_corso),
+            # Le caratteristiche del percorso che la scheda pratica mostra in
+            # sola lettura (vedi ListinoTesta.extract_relations).
+            joinedload(ListinoTestaDB.modalita),
+            joinedload(ListinoTestaDB.facolta),
+            joinedload(ListinoTestaDB.durata_laurea),
+            joinedload(ListinoTestaDB.corso_laurea),
             selectinload(ListinoTestaDB.dettagli) # <-- Carica i dettagli associati
         )
         .filter(ListinoTestaDB.listTesta_id == listTesta_id)

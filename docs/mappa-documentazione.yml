@@ -108,6 +108,9 @@ regole:
       - "frontend/src/lib/documentoPratica.js"
       - "frontend/src/lib/opzioniPratica.js"
       - "frontend/src/config/testi/pratiche.js"
+      - "frontend/src/config/pratica.js"
+      - "frontend/src/config/styles/pratica.js"
+      - "frontend/src/hooks/useSchedaPratica.js"
     documenti:
       - docs/funzionale/pratiche.md
 

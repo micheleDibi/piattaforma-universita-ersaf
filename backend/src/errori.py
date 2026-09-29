@@ -39,3 +39,11 @@ class ErroreTemplateEmail(RuntimeError):
     Tipicamente: un segnaposto {{...}} senza valore corrispondente. Meglio non
     spedire nulla che spedire una mail con "{{link_reset}}" scritto a video.
     """
+
+
+class CodicePraticaError(ValueError):
+    """Impossibile generare il codice di una pratica (vedi pratiche/codice.py).
+
+    Tipicamente un tipo di corso senza prefisso associato, o un contatore che
+    ha esaurito le 999999 cifre disponibili per un prefisso.
+    """

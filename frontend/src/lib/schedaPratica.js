@@ -1,5 +1,4 @@
 import { apiFetch, leggiJson, messaggioErrore } from "./api.js";
-import { opzioneStudente } from "./opzioniPratica.js";
 import { idValido } from "../config/routes/percorsi.js";
 
 async function richiedi(url, opzioni) {
@@ -14,16 +13,34 @@ async function richiedi(url, opzioni) {
   return dati;
 }
 export const caricaProdottoPratica = (id, signal) => richiedi(`/listini-testa/${id}`, { signal });
+
+/** Università e tipi di corso scelti nel pannello Pratiche, letti
+ * dall'indirizzo di ritorno (?universita=&tipoCorso=, uno o più) che
+ * useNavigazioneElenco ricorda in `ritorno`. Puri numeri, senza dover
+ * aspettare che le liste di università/tipi di corso siano state scaricate:
+ * servono subito a useSchedaPratica per sapere se restringere la selezione
+ * del percorso formativo (vedi SchedaPratica.jsx e RelazioniPratica.jsx). */
+export function leggiContestoUrl(ritorno) {
+  const posizione = ritorno.indexOf("?");
+  if (posizione === -1) return { universitaId: null, tipoCorsoIds: [] };
+  const parametri = new URLSearchParams(ritorno.slice(posizione + 1));
+  const universita = parametri.get("universita");
+  return {
+    universitaId: universita ? Number(universita) : null,
+    tipoCorsoIds: parametri.getAll("tipoCorso").map(Number),
+  };
+}
 export async function caricaSchedaPratica(id, signal) {
-  const [pratica, stati, universita] = await Promise.all([
+  const [pratica, stati, universita, tipiCorso] = await Promise.all([
     id ? richiedi(`/pratiche/${id}`, { signal }) : null,
     richiedi("/pratiche/filtri/stati", { signal }),
     richiedi("/listini-testa/opzioni/universita", { signal }),
+    // Solo per il titolo di una pratica nuova (vedi titoloScheda in
+    // SchedaPratica.jsx): traduce gli id di ?tipoCorso= nell'indirizzo di
+    // provenienza nelle etichette da mostrare.
+    richiedi("/listini-tipi-corsi/", { signal }),
   ]);
-  // L'emittente arriva con la pratica. Chiederlo a /clienti/{id} fallirebbe
-  // quando non e' fra i clienti visibili, e con lui l'intera scheda.
-  const emittente = pratica?.emittente ? opzioneStudente(pratica.emittente) : null;
-  return { pratica, stati, universita, emittente };
+  return { pratica, stati, universita, tipiCorso };
 }
 export async function salvaPratica(id, payload) {
   const pratica = await richiedi(id ? `/pratiche/${id}` : "/pratiche/",

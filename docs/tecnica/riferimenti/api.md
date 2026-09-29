@@ -138,7 +138,7 @@ Aggiorna Dettaglio Azienda.
 Leggi Clienti.
 
 - **Accesso**: sessione
-- **Parametri**: `limit` (query): `integer`; `ruolo_codice` (query): `string | null`; `search` (query): `string | null`; `skip` (query): `integer`; `solo_attuatori` (query): `boolean`; `solo_sottoscrittori` (query): `boolean`; `solo_utenti` (query): `boolean`
+- **Parametri**: `limit` (query): `integer`; `ruolo_codice` (query): `string | null`; `search` (query): `string | null`; `skip` (query): `integer`; `solo_attivi` (query): `boolean`; `solo_attuatori` (query): `boolean`; `solo_sottoscrittori` (query): `boolean`; `solo_utenti` (query): `boolean`
 - **Corpo**: —
 - **Risposta**: `200` `list[ClienteResponse]`
 
@@ -156,7 +156,7 @@ Crea Cliente E Utente.
 Conta Clienti.
 
 - **Accesso**: sessione
-- **Parametri**: `ruolo_codice` (query): `string | null`; `search` (query): `string | null`; `solo_attuatori` (query): `boolean`; `solo_sottoscrittori` (query): `boolean`; `solo_utenti` (query): `boolean`
+- **Parametri**: `ruolo_codice` (query): `string | null`; `search` (query): `string | null`; `solo_attivi` (query): `boolean`; `solo_attuatori` (query): `boolean`; `solo_sottoscrittori` (query): `boolean`; `solo_utenti` (query): `boolean`
 - **Corpo**: —
 - **Risposta**: `200` `ConteggioClientiResponse`
 
@@ -214,7 +214,7 @@ Cambia Padre.
 Get All.
 
 - **Accesso**: sessione
-- **Parametri**: `attivo` (query): `integer | null`; `limit` (query): `integer`; `search` (query): `string | null`; `skip` (query): `integer`; `tipo_corso` (query): `string | null`; `universita` (query): `string | null`
+- **Parametri**: `attivo` (query): `integer | null`; `limit` (query): `integer`; `listino_tipo_corso_id` (query): `list[integer]`; `nome_universita_id` (query): `integer | null`; `search` (query): `string | null`; `skip` (query): `integer`; `tipo_corso` (query): `string | null`; `universita` (query): `string | null`; `valido_oggi` (query): `boolean`
 - **Corpo**: —
 - **Risposta**: `200` `list[ListinoTesta]`
 
@@ -1421,6 +1421,13 @@ Aggiorna Utente.
 | `pratica_stato_id` | `integer` | sì |
 | `totale` | `integer` | sì |
 
+### CorsoSingoloSelezionato
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `listTesta_id` | `integer` | sì |
+| `prezzo` | `number \| string \| null` | no |
+
 ### EmittenteBreve
 
 | Campo | Tipo | Obbligatorio |
@@ -1491,9 +1498,13 @@ Aggiorna Utente.
 | `listTesta_updated_at` | `string(date-time) \| null` | no |
 | `listTesta_updated_by` | `integer \| null` | no |
 | `listino_attivoSN` | `integer` | no |
+| `listino_corsoLaurea_descrizione` | `string \| null` | no |
 | `listino_corsoLaurea_id` | `integer \| null` | no |
+| `listino_durataLaurea_descrizione` | `string \| null` | no |
 | `listino_durataLaurea_id` | `integer \| null` | no |
+| `listino_facolta_descrizione` | `string \| null` | no |
 | `listino_facolta_id` | `integer \| null` | no |
+| `listino_modalita_descrizione` | `string \| null` | no |
 | `listino_modalita_id` | `integer \| null` | no |
 | `listino_tipoCorso_descrizione` | `string \| null` | no |
 | `listino_tipoCorso_id` | `integer \| null` | no |
@@ -1597,6 +1608,7 @@ Aggiorna Utente.
 | `cliente_consulente_id` | `integer \| null` | no |
 | `cliente_emittente_aderente_id` | `integer \| null` | no |
 | `cliente_id` | `integer \| null` | no |
+| `corsi_singoli` | `list[CorsoSingoloSelezionato] \| null` | no |
 | `listTesta_corso2_id` | `integer \| null` | no |
 | `listTesta_corso3_id` | `integer \| null` | no |
 | `listTesta_id` | `integer \| null` | no |

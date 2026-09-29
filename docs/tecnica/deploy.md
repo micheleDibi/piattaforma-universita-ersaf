@@ -425,3 +425,35 @@ L'immagine fissa Uvicorn e il trasporto WebSocket verificato: frame massimi
 La coda d'uscita applicativa e l'esecutore sono limitati separatamente.
 Il reverse proxy deve conservare l'upgrade e un timeout compatibile con il
 watchdog. Contratti e prove in [parità realtime](realtime-parita.md).
+
+### Preparazione del clone per il realtime completo
+
+Il clone principale esistente viene conservato. Per le conversazioni personali
+e i ticket serve anche il clone di `admin_gestionale_ticket` sullo stesso MariaDB,
+con schema `universita_ticket_collaudo` e permessi applicativi SELECT/INSERT/UPDATE/DELETE.
+L'export dalla sorgente resta in sola lettura; dump e backup delle chiavi rimangono
+in cartelle riservate del server. Non importare questi dati nelle fixture di test.
+Il clone non riceve automaticamente gli aggiornamenti del servizio originale.
+
+Il keyring storico si copia in `shared/chat-secrets`, leggibile dall'UID 10001;
+non va rigenerato se deve decifrare lo storico. Configurare anche chiave JWT,
+issuer/audience e `REALTIME_SCHEMA_TICKET`. Il token del produttore di collaudo
+è distinto da quello live. Nessun client o produttore live viene riconfigurato.
+
+Con `shared/db-tls/server.cnf` presente, il deploy aggiunge `compose.tls.yml`
+alle release che lo contengono. Il file MariaDB indica CA, certificato e chiave
+sotto `/run/secrets/db`; il certificato include il SAN DNS `db`. L'API monta
+soltanto la CA in `/run/secrets/db-ca.crt` e usa `ERSAF_ENV=produzione`,
+`DATABASE_TRASPORTO=verify-full` e `DATABASE_CA_FILE` con quel percorso.
+La chiave privata della CA resta fuori dai container. Il controllo dopo il
+rilascio deve confermare un cipher TLS nella sessione SQL dell'applicazione.
+Il server conserva l'accesso legacy sulla rete Docker interna per consentire
+il rollback alle immagini precedenti; il nuovo driver non ammette downgrade.
+
+Applicare anche la 020 dei contatori e la 021 per `notifiche.notifica_body`:
+il preflight realtime rifiuta la colonna legacy da 255 caratteri. La 021 mantiene
+il testo esistente ed è idempotente; il rollback conserva la capienza ampliata.
+Prima di interventi salvare il clone principale e lo schema ticket. L'azione
+`backup-db` e lo snapshot automatico delle migrazioni coprono il database
+principale; lo schema ticket richiede un export separato, nello stesso istante
+con tutti i writer fermi se serve un ripristino coerente dei due archivi.

@@ -9,7 +9,7 @@ di scrittura attraverso l'adattatore `chat_pratiche/scrittura.py`.
 API, WebSocket e lavori periodici sono parte dell'avvio normale del backend,
 senza interruttori di abilitazione. Il collegamento del client Universo e la
 dismissione del servizio precedente sono attività successive e indipendenti
-dall'avvio di FastAPI. Questa modifica resta locale. I vecchi delta per
+dall'avvio di FastAPI. Il rilascio di collaudo usa un clone isolato. I vecchi delta per
 il solo trasporto delle pratiche non sono il piano di integrazione corrente.
 
 ## Responsabilità

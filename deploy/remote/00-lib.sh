@@ -86,6 +86,9 @@ current_release_id() {
 compose_rel() {
     local id="$1"; shift
     local file=(-f "$RELEASES/$id/deploy/compose.yml")
+    if [ -f "$SHARED/db-tls/server.cnf" ] && [ -f "$RELEASES/$id/deploy/compose.tls.yml" ]; then
+        file+=(-f "$RELEASES/$id/deploy/compose.tls.yml")
+    fi
     if [ -f "$SHARED/compose.env" ] && [ "$(compose_env_get CHAT_NATIVA)" = "si" ]; then
         # Overlay presente solo nelle release native; non ostacola il rollback.
         if [ -f "$RELEASES/$id/deploy/compose.chat.yml" ]; then

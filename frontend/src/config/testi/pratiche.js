@@ -30,3 +30,37 @@ export const TESTI_PANNELLO_PRATICHE = {
     `${tipologia}: ${pratiche} ${pratiche === 1 ? "pratica" : "pratiche"} (${stati})`,
   elencoStati: (voci) => voci.map(([stato, n]) => `${stato} ${n}`).join(", "),
 };
+
+// Modale di selezione dello studente nella scheda pratica: stesse verifiche
+// (email, cellulare, diploma) e stesso comportamento colonna Stato
+// dell'elenco Sottoscrittori.
+export const TESTI_MODALE_STUDENTE = {
+  titolo: "Seleziona lo studente",
+  segnaposto: "Cerca per nome e cognome",
+  colonne: { codiceFiscale: "Codice fiscale", denominazione: "Denominazione", stato: "Stato" },
+  caricamento: "Ricerca in corso…",
+  vuoto: "Nessun sottoscrittore trovato.",
+  mostraAltri: "Mostra altri",
+  riprova: "Riprova",
+  chiudi: "Chiudi",
+  nonSelezionabile: "Non selezionabile: mancano una o più verifiche (email, cellulare o diploma).",
+};
+
+// Modale di selezione del percorso formativo nella scheda pratica: elenco
+// filtrato per università e tipo di corso, solo prodotti attivi con un
+// listino valido oggi. Singola per la maggior parte dei tipi di corso,
+// multipla solo per Corsi Singoli (vedi ModaleSelezionePercorso.jsx).
+export const TESTI_MODALE_PERCORSO = {
+  titolo: "Seleziona il percorso formativo",
+  titoloMultiplo: "Seleziona i corsi",
+  segnaposto: "Cerca per titolo o codice",
+  colonne: { codice: "Codice", denominazione: "Denominazione", prezzo: "Prezzo (€)", cfu: "CFU" },
+  caricamento: "Ricerca in corso…",
+  vuoto: "Nessun percorso formativo trovato.",
+  mostraAltri: "Mostra altri",
+  riprova: "Riprova",
+  chiudi: "Chiudi",
+  conferma: "Conferma",
+  scelti: (n) => `${n} ${n === 1 ? "corso scelto" : "corsi scelti"}`,
+  totale: (importo) => `Totale: ${importo} €`,
+};

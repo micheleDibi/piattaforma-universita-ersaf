@@ -66,6 +66,7 @@ SCHEMA_BASE = RADICE / "db" / "test" / "schema_base.sql"
 
 # Ordine figlio -> padre. `ruoli` non compare: e' lookup, non stato.
 TABELLE_DA_SVUOTARE = [
+    "pratiche_contatori",
     "auth_passkey", "auth_totp", "auth_mfa_utente",
     "otp_sfide", "otp_contatti", "otp_attivazioni", "otp_limiti",
     "auth_login_limite",

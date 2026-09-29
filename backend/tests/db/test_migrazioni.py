@@ -104,6 +104,27 @@ def test_migrazioni_su_database_pulito(database_vergine):
     }
 
 
+def test_notifica_legacy_ampliata_senza_perdere_testo(database_vergine):
+    url = database_vergine
+    esegui_sql(url, "CREATE TABLE notifiche (notifica_body VARCHAR(255) NOT NULL); "
+                    "INSERT INTO notifiche VALUES ('Testo storico sintetico');")
+    try:
+        percorso = RADICE / "db/migrations/021_capienza_notifiche.sql"
+        esegui_file_sql(url, percorso)
+        esegui_file_sql(url, percorso)
+        esegui_sql(url, "INSERT INTO notifiche VALUES (REPEAT('x', 1403));")
+        esegui_file_sql(url, RADICE / "db/rollback/021_capienza_notifiche_down.sql")
+        motore = sa.create_engine(url)
+        try:
+            with motore.connect() as connessione:
+                testi = connessione.execute(sa.text("SELECT notifica_body FROM notifiche")).scalars().all()
+            assert testi == ["Testo storico sintetico", "x" * 1403]
+        finally:
+            motore.dispose()
+    finally:
+        esegui_sql(url, "DROP TABLE notifiche;")
+
+
 def test_indici_della_visibilita(database_vergine):
     """La 016 aggiunge i due indici su cui poggia la CTE di visibilita':
     senza, ogni passo della ricorsione scansiona tutta `utenti`."""

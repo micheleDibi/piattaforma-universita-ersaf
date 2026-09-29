@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { PERCORSI } from "../config/routes/percorsi.js";
 import useNavigazioneElenco from "../hooks/useNavigazioneElenco.js";
 import IntestazioneElenco from "./shared/IntestazioneElenco";
@@ -10,11 +11,12 @@ import { rigaPratica } from "../lib/righeElenco.js";
 import { paginaPratiche } from "../lib/pratiche";
 import useFiltriPratiche from "../hooks/useFiltriPratiche";
 import usePagineRemote from "../hooks/usePagineRemote";
-import { contenutoPagina } from "../config/styles/pagina";
+import { contenutoPagina, collegamentoIndietro } from "../config/styles/pagina";
 import { schedaElenco } from "../config/styles/tabella";
 import StatoPagineElenco from "./shared/StatoPagineElenco.jsx";
 import { BLOCCHI_PRATICHE } from "../lib/configPratiche.js";
 import PannelloPratiche from "./PannelloPratiche";
+import { ArrowLeft } from "../config/icone.js";
 
 function costruisciTitolo(filtri) {
   const blocco = BLOCCHI_PRATICHE.find(
@@ -62,6 +64,11 @@ export default function ElencoPratiche() {
 
   return (
     <div className={contenutoPagina()}>
+      <Link to={risorsa.elenco} className={`${collegamentoIndietro()} mb-3`}>
+        {/* 11px: con gap-1.5 il testo parte a 17px, come nel collegamento di ritorno delle schede. */}
+        <ArrowLeft aria-hidden="true" className="size-2.75" />
+        Pratiche
+      </Link>
       <IntestazioneElenco
         titolo={costruisciTitolo(filtri)}
         azioni={
