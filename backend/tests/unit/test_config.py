@@ -181,10 +181,36 @@ def test_edunews24_http_completa_passa():
                  "edunews24_url_base": "https://edunews24.invalid:443/api/v1/"})
 
 
-def test_edunews24_http_richiede_url_e_contatto():
+def test_edunews24_http_richiede_l_url_ma_non_il_contatto():
     testo = _problemi_edunews24(edunews24_url_base="", edunews24_contatto="")
     assert "EDUNEWS24_URL_BASE non e' impostata ma EDUNEWS24_BACKEND=http" in testo
-    assert "EDUNEWS24_CONTATTO non e' impostato ma EDUNEWS24_BACKEND=http" in testo
+    assert "EDUNEWS24_CONTATTO" not in testo
+    _verifica(**{**EDUNEWS24_HTTP, "edunews24_contatto": ""})
+    _verifica(**PRODUZIONE, **{**EDUNEWS24_HTTP, "edunews24_contatto": ""})
+    assert "EDUNEWS24_CONTATTO deve essere" in _problemi_edunews24(edunews24_contatto="   ")
+
+
+def test_edunews24_predefiniti_attivano_la_sezione(monkeypatch):
+    """Senza variabili la sezione e' attiva sull'API pubblica, con il contatto
+    predefinito dell'ente, anche in produzione. I valori reali restano solo nel
+    codice."""
+    for campo in Impostazioni.model_fields:
+        if campo.startswith("edunews24_"):
+            monkeypatch.delenv(campo.upper(), raising=False)
+    imp = Impostazioni(_env_file=None)
+    assert imp.edunews24_backend == "http"
+    assert imp.edunews24_url_base and imp.lista_edunews24_host_media
+    assert imp.edunews24_contatto and "(" not in imp.edunews24_contatto
+    verifica_configurazione(Impostazioni(_env_file=None, **VALIDA))
+    verifica_configurazione(Impostazioni(_env_file=None, **VALIDA, **PRODUZIONE))
+
+
+def test_edunews24_env_example_riporta_i_predefiniti():
+    testo = (DIR_BACKEND / ".env.example").read_text(encoding="utf-8")
+    valori = dict(re.findall(r"^(EDUNEWS24_[A-Z0-9_]+)=(.*)$", testo, re.MULTILINE))
+    for campo, info in Impostazioni.model_fields.items():
+        if campo.startswith("edunews24_"):
+            assert valori[campo.upper()] == str(info.default), campo
 
 
 @pytest.mark.parametrize("url", [

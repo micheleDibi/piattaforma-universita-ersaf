@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# 27-edunews24.sh - uscita HTTPS dell'API verso EduNews24 (USCITA_EDUNEWS24=si
-# in shared/compose.env).
+# 27-edunews24.sh - uscita HTTPS dell'API verso EduNews24, attiva per difetto
+# (USCITA_EDUNEWS24 assente, vuota o si in shared/compose.env; no la spegne).
 #
 # deploy/compose.edunews24.yml collega l'API a un bridge dedicato con uscita
 # verso Internet. Le regole installate qui lo limitano a HTTPS (443/tcp) verso
@@ -79,13 +79,13 @@ while iptables -w -D DOCKER-USER -i "$BRIDGE" -j REJECT 2>/dev/null; do :; done
 EOT
 }
 
-# prepara_edunews24: chiamata da cmd_deploy (70-deploy.sh) dopo
-# prepara_notifiche, con ACTIVE_ID uguale alla release nuova. Con
-# NOTIFICHE_REALI=si installa e copia comunque: compose_rel non collega la
+# prepara_edunews24: chiamata da cmd_deploy (70-deploy.sh) dopo prepara_notifiche,
+# con ACTIVE_ID uguale alla release nuova; con l'uscita spenta non fa nulla.
+# Con NOTIFICHE_REALI=si installa e copia comunque: compose_rel non collega la
 # rete, ma spegnendo le notifiche la trova gia' protetta. Con gli SMS reali e
 # senza NOTIFICHE_REALI=si non installa nulla e toglie la copia.
 prepara_edunews24() {
-    [ "$(compose_env_get USCITA_EDUNEWS24)" = si ] || return 0
+    uscita_edunews24_attiva || return 0
     local overlay="$RELEASES/$ACTIVE_ID/deploy/compose.edunews24.yml"
     local copia="$SHARED/compose.edunews24.yml"
     local script=/usr/local/sbin/ersaf-universita-edunews24-firewall
@@ -105,7 +105,7 @@ prepara_edunews24() {
         return 0
     fi
     if [ ! -f "$overlay" ]; then
-        warn "USCITA_EDUNEWS24=si ma la release $ACTIVE_ID non contiene deploy/compose.edunews24.yml: regole e copia in shared/ restano come sono"
+        warn "uscita EduNews24 attiva (USCITA_EDUNEWS24 assente, vuota o si) ma la release $ACTIVE_ID non contiene deploy/compose.edunews24.yml: regole e copia in shared/ restano come sono"
         return 0
     fi
     # Al primo deploy cmd_release non vede l'overlay (la copia in shared/ non

@@ -1,7 +1,7 @@
-# Incluso solo con USCITA_EDUNEWS24=si in shared/compose.env, senza
-# NOTIFICHE_REALI=si, senza SMS_BACKEND=skebby in shared/api.env e dopo che un
-# deploy ha installato le regole di firewall (condizioni in compose_rel,
-# deploy/remote/00-lib.sh).
+# Incluso con USCITA_EDUNEWS24 assente, vuota o si in shared/compose.env (uscita
+# attiva per difetto; no la spegne), senza NOTIFICHE_REALI=si, senza
+# SMS_BACKEND=skebby in shared/api.env e dopo che un deploy ha installato le
+# regole di firewall (condizioni in compose_rel, deploy/remote/00-lib.sh).
 # Aggiunge all'API una rete con uscita verso Internet per le chiamate a
 # EduNews24; non pubblica porte. Il DB resta sulla sola rete interna data.
 # Il firewall installato dal deploy (deploy/remote/27-edunews24.sh) limita

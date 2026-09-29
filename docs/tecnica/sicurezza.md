@@ -340,6 +340,8 @@ Il flusso visto dall'utente è in [sottoscrittori-e-attuatori.md](../funzionale/
 
 Il modulo `backend/src/edunews24/` porta nella piattaforma i contenuti di un portale esterno. Architettura, cache e protezioni sono in [architettura.md](architettura.md#edunews24); qui gli aspetti di sicurezza.
 
+La sezione è attiva per impostazione predefinita: `EDUNEWS24_BACKEND` vale `http`, e indirizzo base dell'API e host dei media hanno come predefiniti quelli pubblici di EduNews24 (`backend/src/config.py:131-134`). Non sono segreti: nel repository stanno solo lì e in `backend/.env.example`, e le pagine generate li mostrano redatti. Si spegne con `EDUNEWS24_BACKEND=disabilitato`.
+
 ### Il browser non chiama EduNews24
 
 - Titoli, sintesi e date arrivano solo dal backend, con la sessione: il router richiede `get_current_utente` (`backend/src/edunews24/routers.py:24-28`), quindi `test_rotte_protette.py` lo verifica da solo.
@@ -348,7 +350,7 @@ Il modulo `backend/src/edunews24/` porta nella piattaforma i contenuti di un por
 - Il corpo si legge con un tetto di 1 MiB sui byte grezzi e decompressi, solo senza compressione o con un singolo `gzip`, e con una scadenza totale (`client.py:85-120`).
 - Si accettano solo i cursori emessi dal backend, legati a risorsa e filtri (`backend/src/edunews24/servizio.py:207-210`).
 - Un 429 di EduNews24 diventa un 503 con `Retry-After`: il browser non riceve mai un 429 da queste rotte (`client.py:245-247`; `servizio.py:81-89`).
-- Lo User-Agent porta `EDUNEWS24_CONTATTO`, in ASCII stampabile e senza parentesi (`backend/src/edunews24/costanti.py:44`; `backend/src/edunews24/verifica.py:17`, `33-40`).
+- Lo User-Agent è fisso e porta un contatto solo se `EDUNEWS24_CONTATTO` è valorizzato. Per impostazione predefinita il contatto è l'indirizzo generico dell'ente, come raccomandano i termini dell'API per le chiamate dai server; svuotando la variabile le chiamate partono senza contatto. Quando c'è, deve essere in ASCII stampabile, senza parentesi né spazi ai bordi (`backend/src/edunews24/costanti.py:44-45`; `backend/src/edunews24/client.py:167`; `backend/src/edunews24/verifica.py:17`, `33-39`).
 - I messaggi d'errore verso il browser sono testi fissi: URL, intestazioni e corpo delle risposte di EduNews24 non vengono inoltrati.
 
 ### Collegamenti, immagini e video
@@ -364,7 +366,7 @@ Il modulo `backend/src/edunews24/` porta nella piattaforma i contenuti di un por
 
 ### Immagini e video nel browser
 
-- Il browser carica immagini e video direttamente dagli host di `EDUNEWS24_HOST_MEDIA`. L'elenco è vuoto per impostazione predefinita, e allora non si carica nulla da terzi.
+- Il browser carica immagini e video direttamente dagli host di `EDUNEWS24_HOST_MEDIA`. Per impostazione predefinita l'elenco contiene solo l'host dei media di EduNews24; vuoto, non si carica nulla da terzi.
 - Quegli host vedono l'indirizzo IP e lo User-Agent di chi guarda. Il Referer non parte (`frontend/index.html:20`, `frontend/nginx.conf:28`): un host che lo pretendesse rifiuterebbe i media, e il comportamento degli host reali non è verificato.
 - Prima del clic si scarica solo la copertina; il `<video>` si monta al clic, con `preload="none"` (`frontend/src/components/edunews24/VideoArticolo.jsx:104-107`).
 - Smontare il player (cambio di voce, di scheda o di filtro, navigazione) ferma anche lo scaricamento: tolte le sorgenti, `load()` chiude la connessione (`svuotaVideo` in `frontend/src/lib/videoEsclusivo.js`).
@@ -434,7 +436,7 @@ I valori non stanno nel repository. L'elenco delle variabili è in [riferimenti/
   - `CORS_ORIGINS` non contiene `*`;
   - le origini WebAuthn sono coerenti;
   - HTTP è ammesso solo su loopback;
-  - con `EDUNEWS24_BACKEND=http`: URL base https assoluto, senza credenziali, query, frammento o porta diversa da 443, con un host pubblico senza `www`; contatto in ASCII stampabile senza parentesi; host dei media pubblici; valori numerici negli intervalli (`backend/src/edunews24/verifica.py:20-64`, chiamata da `config.py:312-314`). Con la funzione spenta, o con `memoria`, questi controlli non girano.
+  - con `EDUNEWS24_BACKEND=http`, il predefinito: URL base presente, https assoluto, senza credenziali, query, frammento o porta diversa da 443, con un host pubblico senza `www`; contatto facoltativo, e se c'è in ASCII stampabile senza parentesi né spazi ai bordi; host dei media pubblici; valori numerici negli intervalli (`backend/src/edunews24/verifica.py:20-63`, chiamata da `config.py:312-314`). I valori predefiniti superano i controlli, anche in produzione. Con la funzione spenta, o con `memoria`, questi controlli non girano.
 - In produzione servono anche:
   - l'invio email via SMTP con un host (`config.py:297-308`);
   - un frontend in HTTPS;
@@ -765,7 +767,7 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
 - **Regioni di EduNews24.**
   - L'elenco chiuso delle aree sta sia nel backend sia nel frontend, come la policy delle password: ogni modifica va replicata.
   - Un test confronta le due copie.
-  - `backend/src/edunews24/costanti.py:73-94`; `frontend/src/config/edunews24.js:18-39`; `backend/tests/unit/test_regioni_allineate.py`.
+  - `backend/src/edunews24/costanti.py:74-95`; `frontend/src/config/edunews24.js:18-39`; `backend/tests/unit/test_regioni_allineate.py`.
 - **Commenti e messaggi superati.**
   - `autorizzazioni.py:29-31` dice che il Nazionale oggi non può accedere, ma il secondo fattore esiste.
   - `password.py:20`, `46` e `passwordPolicy.js:25` parlano di un minimo di 12 caratteri.
@@ -822,6 +824,7 @@ oppure 503, mentre il resto dell'API non ne risente
   - La catena `DOCKER-USER` non viene creata se manca, e nessun controllo verifica che Docker la attraversi.
   - `deploy/remote/26-notifiche.sh:15-27`; `deploy/compose.notifiche.yml`.
 - **Due reti con uscita.** Con `NOTIFICHE_REALI=si` la rete EduNews24 non si collega: l'API avrebbe due gateway, Docker ne sceglierebbe uno e l'SMTP potrebbe finire sulla rete che lo rifiuta. Le chiamate a EduNews24 escono allora dalla rete delle notifiche e ne ereditano il limite sul DNS (`compose_rel` in `deploy/remote/00-lib.sh:122-147`).
+- **Uscita EduNews24 attiva per difetto.** Con `USCITA_EDUNEWS24` assente o vuota in `shared/compose.env` l'uscita è attiva: su un collaudo che non ha la chiave il primo deploy con questi script installa da solo l'unità del firewall e collega la rete. Le protezioni non cambiano: la rete si collega solo dopo che l'unità è partita senza errori, perché solo allora il deploy crea la copia in `shared/`, e mai con `NOTIFICHE_REALI=si` o con gli SMS reali; finché le regole mancano ogni azione lo segnala con un avviso. Solo un valore diverso da `si` la spegne, e anche `SI`, `"si"` fra apici o `si` con spazi la spengono, senza avviso (`uscita_edunews24_attiva` in `deploy/remote/00-lib.sh:155-163`).
 - **Uscita verso EduNews24.** Le regole del bridge dedicato ammettono solo HTTPS verso indirizzi pubblici e il DNS verso i nameserver IPv4 dell'host (`prepara_edunews24` in `deploy/remote/27-edunews24.sh`). Limiti:
   - la porta HTTPS è aperta verso qualunque indirizzo pubblico e vale per tutta l'API, non solo per EduNews24. Il client EduNews24 chiama solo l'indirizzo configurato e non segue i reindirizzamenti, ma anche il fornitore SMS è un servizio HTTPS (`backend/src/notifiche/sms.py:8`). Per questo, con `SMS_BACKEND=skebby` in `shared/api.env` e senza `NOTIFICHE_REALI=si`, gli script di deploy non collegano la rete e il deploy toglie la copia della sua configurazione in `shared/` (`deploy/remote/00-lib.sh:66-84`, `122-147`; `deploy/remote/27-edunews24.sh:93-106`): l'API resta senza uscita e gli SMS reali non partono finché non si attivano le notifiche reali. Le email via SMTP restano bloccate. Il controllo però:
     - sta negli script di deploy, non nell'API: un comando `docker compose` lanciato a mano sul server lo aggira, e un altro client HTTPS aggiunto all'API uscirebbe comunque dalla rete;

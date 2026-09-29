@@ -30,10 +30,9 @@ def problemi_configurazione(imp) -> list[str]:
             "frammento o porta diversa da 443, con un nome di host pubblico senza www"
         )
 
+    # Facoltativo: vuoto, lo User-Agent resta senza contatto.
     contatto = imp.edunews24_contatto
-    if not contatto:
-        problemi.append("EDUNEWS24_CONTATTO non e' impostato ma EDUNEWS24_BACKEND=http")
-    elif not _CONTATTO.fullmatch(contatto) or contatto != contatto.strip():
+    if contatto and (not _CONTATTO.fullmatch(contatto) or contatto != contatto.strip()):
         problemi.append(
             "EDUNEWS24_CONTATTO deve essere in ASCII stampabile, senza parentesi ne' spazi ai bordi, "
             "al massimo 200 caratteri"

@@ -67,6 +67,23 @@ def test_url_intestazioni_e_parametri_in_ordine():
     assert esito.stantia_a_monte is True
 
 
+@pytest.mark.parametrize(("contatto", "atteso"), [
+    (CONTATTO, USER_AGENT),
+    ("", "PiattaformaUniversita/1.0"),     # contatto facoltativo
+])
+def test_user_agent_con_e_senza_contatto(contatto, atteso):
+    richieste = []
+
+    def gestore(request):
+        richieste.append(request)
+        return _json(elenco([]))
+
+    client = ClientEduNews24(URL_BASE, contatto, timeout_connessione=3, timeout_lettura=5, timeout_totale=8,
+                             orologio=OrologioFinto(), trasporto=httpx.MockTransport(gestore))
+    client.leggi("/articles", [])
+    assert richieste[0].headers["user-agent"] == atteso
+
+
 def test_if_none_match_solo_con_un_etag():
     richieste = []
 

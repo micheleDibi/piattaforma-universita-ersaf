@@ -26,11 +26,11 @@ piattaforma non conosce la regione di chi la usa.
 
 - La voce "EduNews24" è l'ultima delle voci del menu per Nazionale,
   Regionale, Provinciale e Aderente. Vedi [Ruoli e permessi](ruoli-e-permessi.md).
-- La sezione si attiva nella configurazione del server. Quando è spenta, come
-  con la configurazione predefinita, la voce resta nel menu: la pagina mostra
-  "EduNews24 non è attivo su questa piattaforma." e la Dashboard ha solo
-  benvenuto e scorciatoie, senza riquadro. Dopo l'attivazione sul server la
-  sezione compare ricaricando la pagina.
+- La sezione è attiva per impostazione predefinita; si spegne dalla
+  configurazione del server. Quando è spenta la voce resta nel menu: la pagina
+  mostra "EduNews24 non è attivo su questa piattaforma." e la Dashboard ha
+  solo benvenuto e scorciatoie, senza riquadro. Quando la si riaccende sul
+  server, la sezione compare ricaricando la pagina.
 
 ## Da dove arrivano i contenuti
 
@@ -181,8 +181,9 @@ giorni che mancano alla scadenza cambiano alla mezzanotte italiana.
 - **Immagini.** Il browser le scarica direttamente dai siti che le ospitano,
   solo se sono fra quelli autorizzati nella configurazione del server. Quei
   siti vedono l'indirizzo IP e il tipo di browser di chi guarda, non la
-  pagina della piattaforma. Con la configurazione predefinita l'elenco è
-  vuoto e la piattaforma non carica nulla da siti esterni.
+  pagina della piattaforma. Con la configurazione predefinita è autorizzato
+  solo il sito che ospita immagini e video di EduNews24; se l'elenco viene
+  svuotato, la piattaforma non carica nulla da siti esterni.
 - Quando un'immagine manca, non è autorizzata o non si carica, al suo posto
   compare una copertina nei colori di EduNews24, con le due forme inclinate
   del logo e il nome della categoria, della stessa misura: la pagina non si

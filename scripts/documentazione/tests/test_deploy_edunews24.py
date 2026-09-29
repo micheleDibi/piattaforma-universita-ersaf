@@ -30,6 +30,10 @@ PONTE, CATENA = "br-uni-edu24", "ERSAF-UNI-EDU24"
 INTERVALLI = ["0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12",
               "192.0.0.0/24", "192.168.0.0/16", "198.18.0.0/15", "224.0.0.0/4", "240.0.0.0/4"]
 STUB = "nameserver 127.0.0.53\noptions edns0 trust-ad\nsearch example.invalid\n"
+# Righe di shared/compose.env con cui l'uscita e' attiva: si, oppure la chiave
+# assente o vuota (attiva per difetto).
+ATTIVA = [pytest.param(["USCITA_EDUNEWS24=si"], id="si"), pytest.param([], id="chiave-assente"),
+          pytest.param(["USCITA_EDUNEWS24="], id="riga-vuota")]
 
 bash = shutil.which("bash")
 pytestmark = pytest.mark.skipif(bash is None, reason="bash non disponibile")
@@ -111,10 +115,11 @@ def test_overlay_della_release_se_presente(server):
     verifica(esegui(server, DUE_CHIAMATE), server, [overlay])
 
 
-def test_escluso_con_le_notifiche_reali(server):
+@pytest.mark.parametrize("uscita", ATTIVA)
+def test_escluso_con_le_notifiche_reali(server, uscita):
     """Con due reti non interne il gateway lo sceglie Docker: l'SMTP potrebbe
     finire sul bridge EduNews24, che ammette solo la 443."""
-    compose_env(server, "USCITA_EDUNEWS24=si", "NOTIFICHE_REALI=si")
+    compose_env(server, *uscita, "NOTIFICHE_REALI=si")
     crea(copia(server))
     crea(della_release(server, "compose.edunews24.yml"))
     # Senza l'overlay delle notifiche compose_rel terminerebbe con die.
@@ -122,22 +127,52 @@ def test_escluso_con_le_notifiche_reali(server):
     verifica(esegui(server, DUE_CHIAMATE), server, [notifiche])
 
 
-def test_senza_copia_avvisa_una_volta_e_non_termina(server):
+@pytest.mark.parametrize("uscita", ATTIVA)
+def test_senza_copia_avvisa_una_volta_e_non_termina(server, uscita):
     """Regole mai installate: la rete resta scollegata anche se la release
     contiene l'overlay, e l'avviso compare una volta sola su stderr."""
-    compose_env(server, "USCITA_EDUNEWS24=si")
+    compose_env(server, *uscita)
     crea(della_release(server, "compose.edunews24.yml"))
     esito = esegui(server, DUE_CHIAMATE)
     verifica(esito, server, [], avvisi=1)
     assert "USCITA_EDUNEWS24" in esito.stderr
 
 
-@pytest.mark.parametrize("riga", ["USCITA_EDUNEWS24=no", "USCITA_EDUNEWS24=si ", 'USCITA_EDUNEWS24="si"',
-                                  "USCITA_EDUNEWS24=SI", "ALTRA_CHIAVE=si", "VECCHIA_USCITA_EDUNEWS24=si",
-                                  "# USCITA_EDUNEWS24=si"])
-def test_chiave_diversa_da_si(server, riga):
-    compose_env(server, riga)
+@pytest.mark.parametrize("righe", [
+    pytest.param([], id="chiave-assente"),
+    pytest.param(["USCITA_EDUNEWS24="], id="riga-vuota"),
+    pytest.param(["USCITA_EDUNEWS24=no", "USCITA_EDUNEWS24="], id="ultima-riga-vuota"),
+    pytest.param(["USCITA_EDUNEWS24=no", "USCITA_EDUNEWS24=si"], id="ultima-occorrenza"),
+    pytest.param(["ALTRA_CHIAVE=no"], id="altra-chiave"),
+    pytest.param(["VECCHIA_USCITA_EDUNEWS24=no"], id="chiave-piu-lunga"),
+    pytest.param(["# USCITA_EDUNEWS24=no"], id="commentata"),
+])
+def test_attiva_per_difetto(server, righe):
+    """Senza un valore esplicito diverso da si l'uscita e' attiva: con la copia
+    in shared/ l'overlay si collega, senza avvisi."""
+    compose_env(server, *righe)
     crea(copia(server))
+    overlay = crea(della_release(server, "compose.edunews24.yml"))
+    verifica(esegui(server, DUE_CHIAMATE), server, [overlay])
+
+
+@pytest.mark.parametrize("situazione", ["copia", "senza-copia", "sms-reali"])
+@pytest.mark.parametrize("righe", [
+    pytest.param(["USCITA_EDUNEWS24=no"], id="no"),
+    pytest.param(["USCITA_EDUNEWS24=si "], id="spazio-in-coda"),
+    pytest.param(['USCITA_EDUNEWS24="si"'], id="apici"),
+    pytest.param(["USCITA_EDUNEWS24=SI"], id="maiuscolo"),
+    pytest.param(["USCITA_EDUNEWS24=off"], id="altro-valore"),
+    pytest.param(["USCITA_EDUNEWS24=si", "USCITA_EDUNEWS24=no"], id="ultima-occorrenza"),
+])
+def test_spenta_con_un_valore_diverso_da_si(server, righe, situazione):
+    """Solo un valore esplicito diverso da si spegne l'uscita: niente overlay e
+    nessun avviso, ne' senza copia ne' con gli SMS reali."""
+    compose_env(server, *righe)
+    if situazione != "senza-copia":
+        crea(copia(server))
+    if situazione == "sms-reali":
+        api_env(server, "SMS_BACKEND=skebby")
     crea(della_release(server, "compose.edunews24.yml"))
     verifica(esegui(server, DUE_CHIAMATE), server, [])
 
@@ -198,9 +233,24 @@ def test_sms_reali_escludono_la_rete(server, notifiche, righe):
     nessun_valore(esito)
 
 
-def test_sms_reali_senza_copia_un_solo_avviso(server):
+@pytest.mark.parametrize("uscita", ATTIVA[1:])
+def test_sms_reali_escludono_la_rete_anche_per_difetto(server, uscita):
+    """Uscita attiva per difetto: gli SMS reali tengono scollegata la rete
+    come con si, con un avviso e senza stampare nulla di api.env."""
+    compose_env(server, *uscita)
+    api_env(server, "SMS_BACKEND=skebby")
+    crea(copia(server))
+    crea(della_release(server, "compose.edunews24.yml"))
+    esito = esegui(server, DUE_CHIAMATE)
+    verifica(esito, server, [], avvisi=1)
+    assert "SMS_BACKEND=skebby" in esito.stderr
+    nessun_valore(esito)
+
+
+@pytest.mark.parametrize("uscita", ATTIVA)
+def test_sms_reali_senza_copia_un_solo_avviso(server, uscita):
     """Senza copia vale l'avviso degli SMS, non quello delle regole mancanti."""
-    compose_env(server, "USCITA_EDUNEWS24=si")
+    compose_env(server, *uscita)
     api_env(server, "SMS_BACKEND=skebby")
     esito = esegui(server, DUE_CHIAMATE)
     verifica(esito, server, [], avvisi=1)
@@ -233,10 +283,11 @@ def test_sms_non_reali_collegano_la_rete(server, righe):
     nessun_valore(esito)
 
 
-def test_sms_reali_con_le_notifiche_reali_invariato(server):
+@pytest.mark.parametrize("uscita", ATTIVA)
+def test_sms_reali_con_le_notifiche_reali_invariato(server, uscita):
     """Con NOTIFICHE_REALI=si gli SMS escono dal bridge delle notifiche: vale
     solo l'esclusione per le due reti, senza avvisi."""
-    compose_env(server, "USCITA_EDUNEWS24=si", "NOTIFICHE_REALI=si")
+    compose_env(server, *uscita, "NOTIFICHE_REALI=si")
     api_env(server, "SMS_BACKEND=skebby")
     crea(copia(server))
     crea(della_release(server, "compose.edunews24.yml"))
@@ -249,11 +300,12 @@ def righe_docker(esito):
     return [r for r in esito.stdout.splitlines() if not r.startswith("[")]
 
 
-def test_prepara_con_sms_reali_toglie_la_copia(server):
+@pytest.mark.parametrize("uscita", ATTIVA)
+def test_prepara_con_sms_reali_toglie_la_copia(server, uscita):
     """Come in cmd_deploy: compose_rel (da cmd_release), poi
     prepara_edunews24, poi di nuovo compose_rel. La copia sparisce, nessuna
     regola si installa, l'avviso compare una volta sola e il deploy prosegue."""
-    compose_env(server, "USCITA_EDUNEWS24=si")
+    compose_env(server, *uscita)
     api_env(server, "SMS_BACKEND=skebby")
     crea(copia(server))
     crea(della_release(server, "compose.edunews24.yml"))
@@ -270,8 +322,9 @@ def test_prepara_con_sms_reali_toglie_la_copia(server):
     nessun_valore(esito)
 
 
-def test_prepara_da_sola_con_sms_reali_avvisa(server):
-    compose_env(server, "USCITA_EDUNEWS24=si", "NOTIFICHE_REALI=no")
+@pytest.mark.parametrize("uscita", ATTIVA)
+def test_prepara_da_sola_con_sms_reali_avvisa(server, uscita):
+    compose_env(server, *uscita, "NOTIFICHE_REALI=no")
     api_env(server, "SMS_BACKEND=skebby")
     crea(copia(server))
     esito = esegui(server, f"ACTIVE_ID={ID}\nprepara_edunews24 </dev/null\n")
@@ -283,15 +336,16 @@ def test_prepara_da_sola_con_sms_reali_avvisa(server):
     assert righe_docker(esito) == []
 
 
+@pytest.mark.parametrize("uscita", ATTIVA)
 @pytest.mark.parametrize(("chiavi", "righe"), [
     pytest.param(["NOTIFICHE_REALI=si"], ["SMS_BACKEND=skebby"], id="notifiche-reali"),
     pytest.param([], ["SMS_BACKEND=memoria"], id="memoria"),
     pytest.param([], [], id="chiave-assente"),
 ])
-def test_prepara_senza_il_caso_sms_non_tocca_la_copia(server, chiavi, righe):
+def test_prepara_senza_il_caso_sms_non_tocca_la_copia(server, chiavi, righe, uscita):
     """Fuori dal caso degli SMS, prepara_edunews24 segue il percorso di sempre:
     con la release senza overlay avvisa e lascia la copia com'e'."""
-    compose_env(server, "USCITA_EDUNEWS24=si", *chiavi)
+    compose_env(server, *uscita, *chiavi)
     api_env(server, *righe)
     crea(copia(server))
     esito = esegui(server, f"ACTIVE_ID={ID}\nprepara_edunews24 </dev/null\n")
@@ -301,11 +355,12 @@ def test_prepara_senza_il_caso_sms_non_tocca_la_copia(server, chiavi, righe):
     assert copia(server).exists()
 
 
-def test_prepara_con_bridge_diverso_toglie_la_copia(server):
+@pytest.mark.parametrize("uscita", ATTIVA)
+def test_prepara_con_bridge_diverso_toglie_la_copia(server, uscita):
     """Overlay della release su un bridge diverso da quello filtrato (release
     di un'altra versione, con -Ref): nessuna regola installata, copia tolta,
     un avviso e il deploy prosegue. /usr/local/sbin non viene toccata."""
-    compose_env(server, "USCITA_EDUNEWS24=si")
+    compose_env(server, *uscita)
     crea(copia(server))
     overlay = della_release(server, "compose.edunews24.yml")
     overlay.write_text("networks:\n  edunews24:\n    driver_opts:\n      com.docker.network.bridge.name: br-uni-altro\n",
@@ -319,6 +374,26 @@ def test_prepara_con_bridge_diverso_toglie_la_copia(server):
     # Solo la validazione dell'overlay con docker, prima del confronto.
     validazione = attesi(server, [overlay])
     assert righe_docker(esito) == validazione[:validazione.index("--quiet") + 1]
+
+
+@pytest.mark.parametrize("righe", [pytest.param([], id="sms-assenti"),
+                                   pytest.param(["SMS_BACKEND=skebby"], id="sms-reali")])
+@pytest.mark.parametrize("uscita", ["USCITA_EDUNEWS24=no", "USCITA_EDUNEWS24=SI"])
+def test_prepara_con_l_uscita_spenta_non_fa_nulla(server, uscita, righe):
+    """Con un valore diverso da si prepara_edunews24 esce subito: nessuna
+    chiamata a docker, nessun log, nessun avviso e copia lasciata com'e',
+    anche con gli SMS reali. L'overlay della release su un altro bridge
+    farebbe altrimenti togliere la copia con un avviso."""
+    compose_env(server, uscita)
+    api_env(server, *righe)
+    crea(copia(server))
+    della_release(server, "compose.edunews24.yml").write_text(
+        "networks:\n  edunews24:\n    driver_opts:\n      com.docker.network.bridge.name: br-uni-altro\n",
+        encoding="utf-8")
+    esito = esegui(server, f"ACTIVE_ID={ID}\nprepara_edunews24 </dev/null\n")
+    assert esito.returncode == 0, esito.stderr
+    assert esito.stdout == "" and esito.stderr == ""
+    assert copia(server).exists()
 
 
 @pytest.mark.parametrize(("host", "resolved", "trovati"), [

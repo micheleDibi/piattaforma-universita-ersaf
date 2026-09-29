@@ -83,7 +83,9 @@ Il conftest imposta:
 - tutte le variabili `EDUNEWS24_*`, **assegnate** e non solo proposte:
   backend `memoria`, URL base e host dei media su host `.invalid`, contatto su
   `example.org`, numeri ai predefiniti; così `backend/.env` non le porta nei
-  test;
+  test e nessun test chiama l'API vera, che è il predefinito del codice. I test
+  dei valori predefiniti tolgono queste variabili dall'ambiente e costruiscono
+  `Impostazioni(_env_file=None)`;
 - frontend, CORS e WebAuthn su un dominio di esempio, un host SMTP che non
   risolve, un pavimento temporale ridotto, nessun file di log,
   `ERSAF_ENV=test`.
@@ -263,7 +265,8 @@ le sue variabili. Si lanciano con lo stesso ambiente virtuale. Comandi e regole:
 
 Fra questi c'è il test di `compose_rel`, del firewall EduNews24, del bridge
 dichiarato dalla sua rete e di `prepara_edunews24` con gli SMS reali o con un
-bridge diverso da quello delle regole (`test_deploy_edunews24.py`), con `docker` e `iptables` finti: richiede `bash`,
+bridge diverso da quello delle regole, con la chiave `USCITA_EDUNEWS24`
+assente, vuota, a `si` o con un altro valore (`test_deploy_edunews24.py`), con `docker` e `iptables` finti: richiede `bash`,
 anche la 3.2 di macOS, e senza viene saltato.
 
 ## scripts/verify-local.ps1

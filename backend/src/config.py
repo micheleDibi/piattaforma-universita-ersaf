@@ -128,10 +128,10 @@ class Impostazioni(BaseSettings):
     smtp_timeout_seconds: int = 10
 
     # --- EduNews24 (descrizioni in .env.example) ------------------------------
-    edunews24_backend: Literal["http", "memoria", "disabilitato"] = "disabilitato"
-    edunews24_url_base: str = ""
-    edunews24_contatto: str = ""
-    edunews24_host_media: str = ""
+    edunews24_backend: Literal["http", "memoria", "disabilitato"] = "http"
+    edunews24_url_base: str = "https://edunews24.it/api/v1"
+    edunews24_contatto: str = "info@ersaf.it"
+    edunews24_host_media: str = "audios234567.s3.eu-north-1.amazonaws.com"
     edunews24_timeout_connessione_secondi: int = 3
     edunews24_timeout_lettura_secondi: int = 5
     edunews24_timeout_totale_secondi: int = 8

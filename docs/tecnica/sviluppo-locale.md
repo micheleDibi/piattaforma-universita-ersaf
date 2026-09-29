@@ -115,19 +115,27 @@ codice, tranne dove indicato.
 
 Le cartelle `backend/var/` e `logs/` sono escluse da git.
 
-**EduNews24.** Con il file d'esempio la sezione è spenta
-(`EDUNEWS24_BACKEND=disabilitato`): la voce di menu c'è, la pagina dice che la
-sezione non è attiva e la Dashboard mostra solo benvenuto e scorciatoie.
+**EduNews24.** La sezione è attiva per impostazione predefinita. Con il file
+d'esempio, uguale ai predefiniti del codice, il backend usa `http` e chiama
+l'API vera di EduNews24, uscendo direttamente verso Internet, e il browser
+carica immagini e video dall'host dei media di EduNews24. Il contatto nello
+User-Agent è per difetto l'indirizzo generico dell'ente.
 
-- Per provarla senza rete: `EDUNEWS24_BACKEND=memoria` con
+- Per lavorare senza rete: `EDUNEWS24_BACKEND=memoria` con
   `EDUNEWS24_URL_BASE=https://edunews24.invalid/api/v1` e, per vedere il
   percorso dei media, `EDUNEWS24_HOST_MEDIA=media.edunews24.invalid`. Le voci
   sono inventate; le immagini non si caricano perché quegli host non esistono,
-  e compare la copertina di ripiego.
-- Con `http` servono `EDUNEWS24_URL_BASE` ed `EDUNEWS24_CONTATTO` veri, più
-  gli host dei media; in locale il backend esce direttamente verso Internet.
-  L'host dell'URL base deve essere esattamente quello dei link degli articoli,
-  senza `www`, altrimenti ogni voce viene scartata.
+  e compare la copertina di ripiego. L'URL base inventato serve: con il
+  predefinito i collegamenti delle voci inventate punterebbero al sito vero.
+- Per spegnerla: `EDUNEWS24_BACKEND=disabilitato`. La voce di menu c'è, la
+  pagina dice che la sezione non è attiva e la Dashboard mostra solo benvenuto
+  e scorciatoie.
+- Un `backend/.env` copiato da una versione precedente del file d'esempio ha
+  ancora `EDUNEWS24_BACKEND=disabilitato` e indirizzo e host dei media vuoti:
+  una riga presente, anche vuota, prevale sul predefinito, quindi quelle righe
+  vanno tolte o allineate a `backend/.env.example`.
+- Con `http` l'host dell'URL base deve essere esattamente quello dei link degli
+  articoli, senza `www`, altrimenti ogni voce viene scartata.
 - Sempre con `http`, al primo caricamento dopo l'avvio del backend il riquadro
   della Dashboard, o la pagina EduNews24, può mostrare l'errore anche se
   EduNews24 risponde. In sviluppo lo StrictMode di React

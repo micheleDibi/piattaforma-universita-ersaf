@@ -23,7 +23,7 @@ from typing import Literal, Protocol
 
 import httpx
 
-from src.edunews24.costanti import LUNGHEZZA_MASSIMA_ETAG, TETTO_BYTE, USER_AGENT
+from src.edunews24.costanti import LUNGHEZZA_MASSIMA_ETAG, TETTO_BYTE, USER_AGENT, USER_AGENT_CON_CONTATTO
 from src.edunews24.protezioni import OROLOGIO_SISTEMA, Orologio, leggi_retry_after
 
 MotivoErrore = Literal[
@@ -164,7 +164,7 @@ class ClientEduNews24:
                  orologio: Orologio = OROLOGIO_SISTEMA,
                  trasporto: httpx.BaseTransport | None = None) -> None:
         self._base = url_base.rstrip("/")
-        self._user_agent = USER_AGENT.format(contatto=contatto)
+        self._user_agent = USER_AGENT_CON_CONTATTO.format(contatto=contatto) if contatto else USER_AGENT
         self._connessione = timeout_connessione
         self._lettura = timeout_lettura
         self._totale = timeout_totale

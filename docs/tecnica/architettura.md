@@ -225,9 +225,9 @@ della pagina successiva, l'istante dell'ultimo aggiornamento e `stantio`.
 
 | Valore | Effetto |
 |---|---|
-| `disabilitato` | Predefinito: ogni rotta risponde 200 con `attiva: false`, `elementi` vuoti e `meta` nullo, senza chiamare nessuno |
-| `http` | Chiamate all'indirizzo di `EDUNEWS24_URL_BASE`; l'avvio controlla URL base, contatto, host dei media e valori numerici (`edunews24/verifica.py`) |
-| `memoria` | Dati inventati su host `.invalid`, per sviluppo e test: passano da cache, normalizzazione e cursori, non dalle protezioni. Rifiutato in produzione |
+| `disabilitato` | Ogni rotta risponde 200 con `attiva: false`, `elementi` vuoti e `meta` nullo, senza chiamare nessuno. È il modo di spegnere la sezione |
+| `http` | Predefinito: chiamate all'indirizzo di `EDUNEWS24_URL_BASE`. Per difetto indirizzo base e host dei media sono quelli pubblici di EduNews24 (valori in `config.py`) e il contatto è l'indirizzo generico dell'ente; l'avvio controlla URL base, contatto se c'è, host dei media e valori numerici (`edunews24/verifica.py`) |
+| `memoria` | Dati inventati, per sviluppo e test: i media stanno su un host `.invalid`, i collegamenti sull'host di `EDUNEWS24_URL_BASE`, che in sviluppo e nei test si imposta su un host `.invalid`. Passano da cache, normalizzazione e cursori, non dalle protezioni. Rifiutato in produzione |
 
 **Cache** (`edunews24/cache.py`). Il processo uvicorn è uno solo, quindi la
 copia è unica per tutti gli utenti: è una cache condivisa nel senso della
@@ -318,8 +318,9 @@ controlli si scarta da sola; solo una forma sbagliata del corpo è un guasto. Il
 logger `ersaf.edunews24` registra solo risorsa, esito, stato HTTP, durata e
 secondi di pausa; `httpx` e `httpcore` stanno a WARNING.
 
-**Rete.** In locale il backend esce direttamente verso Internet. In collaudo
-serve la rete dedicata: vedi [deploy.md](deploy.md#edunews24).
+**Rete.** In locale il backend esce direttamente verso Internet, quindi con i
+predefiniti chiama l'API vera. In collaudo serve la rete dedicata, attiva per
+impostazione predefinita: vedi [deploy.md](deploy.md#edunews24).
 
 **Frontend.**
 
@@ -546,9 +547,11 @@ Schema, migrazioni e debito tecnico: [database-e-migrazioni.md](database-e-migra
 - **Composizione.** I servizi sono descritti in `deploy/compose.yml`.
 - **Uscite di rete.** L'API sta su reti interne; un'uscita verso Internet
   esiste solo con le notifiche reali o con l'uscita EduNews24, ciascuna su un
-  bridge dedicato con regole di firewall installate dal deploy. Per EduNews24
-  sono ammessi solo HTTPS verso indirizzi pubblici e il DNS verso i nameserver
-  dell'host ([deploy.md](deploy.md#edunews24)).
+  bridge dedicato con regole di firewall installate dal deploy. L'uscita
+  EduNews24 è attiva per impostazione predefinita e si collega dopo che il
+  deploy ha installato le sue regole; ammette solo HTTPS verso indirizzi
+  pubblici e il DNS verso i nameserver dell'host
+  ([deploy.md](deploy.md#edunews24)).
 
 La pubblicazione parte da Windows con `scripts/deploy.ps1` e usa gli script in
 `deploy/remote/`. Le migrazioni si applicano prima dell'attivazione. Se

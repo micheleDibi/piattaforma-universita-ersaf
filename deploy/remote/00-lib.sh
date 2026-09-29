@@ -80,7 +80,7 @@ sms_reali_in_api_env() {
 avviso_sms_edunews24() {
     [ -z "${_avviso_sms_edunews24:-}" ] || return 0
     _avviso_sms_edunews24=1
-    warn "USCITA_EDUNEWS24=si ma shared/api.env ha SMS_BACKEND=skebby senza NOTIFICHE_REALI=si: l'API resta senza rete EduNews24, perche' dalla sua porta HTTPS partirebbero gli SMS reali. Per collegarla: SMS_BACKEND diverso da skebby, poi -Action deploy"
+    warn "uscita EduNews24 attiva (USCITA_EDUNEWS24 assente, vuota o si) ma shared/api.env ha SMS_BACKEND=skebby senza NOTIFICHE_REALI=si: l'API resta senza rete EduNews24, perche' dalla sua porta HTTPS partirebbero gli SMS reali. Per collegarla: SMS_BACKEND diverso da skebby, poi -Action deploy; per spegnerla e togliere l'avviso: USCITA_EDUNEWS24=no"
 }
 
 compose_env_set() {
@@ -120,7 +120,7 @@ compose_rel() {
         file+=(-f "$notifiche")
     fi
     # Uscita verso EduNews24 (27-edunews24.sh), solo se valgono tutte e quattro:
-    # - USCITA_EDUNEWS24=si;
+    # - USCITA_EDUNEWS24 assente, vuota o si (uscita_edunews24_attiva, piu' sotto);
     # - notifiche reali spente: con due reti non interne l'API avrebbe un solo
     #   gateway, scelto da Docker, e l'SMTP potrebbe finire sul bridge EduNews24,
     #   che ammette solo la 443 (quello delle notifiche la ammette gia');
@@ -132,7 +132,7 @@ compose_rel() {
     # (verify, che chiama compose da sottoshell, puo' ripeterlo): lo stdout di
     # compose_active e' letto da altre funzioni, e die bloccherebbe anche status
     # e rollback.
-    if [ -f "$SHARED/compose.env" ] && [ "$(compose_env_get USCITA_EDUNEWS24)" = "si" ] \
+    if [ -f "$SHARED/compose.env" ] && uscita_edunews24_attiva \
         && [ "$(compose_env_get NOTIFICHE_REALI)" != "si" ]; then
         if sms_reali_in_api_env; then
             avviso_sms_edunews24
@@ -142,7 +142,7 @@ compose_rel() {
             file+=(-f "$edunews24")
         elif [ -z "${_avviso_edunews24:-}" ]; then
             _avviso_edunews24=1
-            warn "USCITA_EDUNEWS24=si ma le regole non sono installate: l'API resta senza rete EduNews24 finche' un deploy non le installa"
+            warn "uscita EduNews24 attiva (USCITA_EDUNEWS24 assente, vuota o si) ma le regole non sono installate: l'API resta senza rete EduNews24 finche' un deploy non le installa; per spegnerla: USCITA_EDUNEWS24=no"
         fi
     fi
     RELEASE_TAG="$id" RELEASE_DIR="$RELEASES/$id" docker compose \
@@ -151,6 +151,16 @@ compose_rel() {
 }
 
 compose_active() { compose_rel "${ACTIVE_ID:-$(current_release_id)}" "$@"; }
+
+# Vero se l'uscita verso EduNews24 e' attiva. Lo e' per difetto: con
+# USCITA_EDUNEWS24 assente o vuota in shared/compose.env (vale l'ultima riga,
+# come per le altre chiavi) e con si. La spegne solo un valore diverso, per
+# esempio no; anche "si" fra apici, SI o si con spazi la spengono.
+uscita_edunews24_attiva() {
+    local valore
+    valore="$(compose_env_get USCITA_EDUNEWS24)"
+    [ -z "$valore" ] || [ "$valore" = si ]
+}
 
 acquire_lock() {
     mkdir -p "$BASE"

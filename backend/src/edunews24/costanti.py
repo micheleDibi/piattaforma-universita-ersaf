@@ -1,7 +1,7 @@
 """Costanti del modulo EduNews24: numeri, percorsi a monte, regioni, messaggi.
 
-Nessun valore reale: l'indirizzo dell'API e il contatto arrivano solo dalla
-configurazione (EDUNEWS24_URL_BASE, EDUNEWS24_CONTATTO). Gli host qui sotto
+Nessun valore reale: indirizzo dell'API, host dei media e contatto arrivano
+dalla configurazione (EDUNEWS24_*, predefiniti in config.py). Gli host qui sotto
 sono inventati (RFC 6761) e servono al backend `memoria` e ai test.
 """
 
@@ -40,8 +40,9 @@ LUNGHEZZA_MASSIMA_ETAG = 128
 LUNGHEZZA_MASSIMA_URL = 1024
 LUNGHEZZA_MASSIMA_LINK = 2048
 
-# Nessun numero di versione del backend: l'1.0 e' fisso.
-USER_AGENT = "PiattaformaUniversita/1.0 (+{contatto})"
+# Nessun numero di versione del backend: l'1.0 e' fisso. Contatto facoltativo.
+USER_AGENT = "PiattaformaUniversita/1.0"
+USER_AGENT_CON_CONTATTO = USER_AGENT + " (+{contatto})"
 
 # --- risorse a monte --------------------------------------------------------
 PERCORSI = {
