@@ -213,3 +213,15 @@ Non ha rollback distruttivo: le tabelle possono essere preesistenti e condivise.
 Si annulla l'attivazione applicativa coordinando i client, conservando i dati.
 La suite prova migrazione ripetibile e permanenza degli archivi dopo i rollback
 precedenti. Non usare DROP per tornare a una release precedente.
+
+La **018** estende i metadati al servizio realtime completo: sessioni,
+contatti, ricevute, snapshot, bridge notifiche, presenza, eventi e quote.
+Applicarla dopo la 017, prima del backend aggiornato. Non importa gli archivi
+legacy e non ha rollback distruttivo; identità, chiavi e schemi messaggi/ticket
+devono appartenere allo stesso ambiente. Vedi [realtime](../docs/tecnica/realtime.md).
+
+La **019** aggiunge `realtime_delivery_connessione`: registra tentativi e ACK
+per ogni connessione che partecipa a una consegna. Una conferma dal primo
+dispositivo non deve interrompere il recapito agli altri. Applicarla dopo la
+018; è idempotente e non ha rollback distruttivo. La FK elimina questi soli
+metadati quando scade l'outbox, senza cancellare messaggi, chiavi o letture.

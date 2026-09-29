@@ -10,9 +10,11 @@
 
 # --- runtime ----------------------------------------------------------------
 fastapi>=0.115,<1
-uvicorn[standard]>=0.30,<1
+# Trasporto verificato per ping/pong, coda limitata e chiusura su frame eccessivi.
+uvicorn[standard]==0.52.4
 sqlalchemy>=2.0,<3
-PyMySQL>=1.1,<2
+# Rifiuta il downgrade quando il contesto TLS e esplicito.
+PyMySQL==1.2.0
 # Richiesta da PyMySQL per gli schemi di autenticazione sha256/caching_sha2 e
 # per il TLS verso il server. Senza, la connessione fallisce con un errore
 # poco leggibile su alcune configurazioni di MariaDB.
@@ -61,6 +63,6 @@ typst>=0.15,<0.16
 # ritaglia sul tratto prima di metterla nel modulo.
 Pillow>=12,<13
 
-websockets>=15,<17
-# Verifica locale dei token Universo durante la migrazione delle sole chat pratiche.
+websockets==17.1
+# Sessioni del servizio realtime condiviso, verificate ed emesse nel backend.
 PyJWT>=2.10,<3

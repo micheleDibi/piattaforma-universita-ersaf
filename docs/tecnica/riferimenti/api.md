@@ -5,7 +5,7 @@
 
 Elenco delle operazioni esposte dal backend, raggruppate per categoria. Per ognuna:
 
-- **Accesso**: `pubblica`; `sfida di accesso` quando serve la sfida ottenuta con la password, prima che esista una sessione; `sessione` quando serve il cookie di sessione.
+- **Accesso**: `pubblica`; `sfida di accesso` quando serve la sfida ottenuta con la password, prima che esista una sessione; `sessione` quando serve il cookie di sessione; `token realtime` per il servizio condiviso; `token del produttore interno` per l'ingresso notifiche.
 - Le richieste che modificano dati passano anche dai controlli del browser e dal token CSRF descritti in [sicurezza](../sicurezza.md).
 - I controlli sul ruolo avvengono dentro le operazioni e qui non compaiono: vedi [ruoli e permessi](../../funzionale/ruoli-e-permessi.md) e i [limiti noti](../sicurezza.md#limiti-noti).
 - La risposta `422` per i dati non validi vale per tutte le operazioni con parametri o corpo e non viene ripetuta.
@@ -37,24 +37,6 @@ Conferma.
 - **Accesso**: sfida di accesso (dopo la password, prima della sessione)
 - **Parametri**: —
 - **Corpo**: `ConfermaSfida` (application/json) obbligatorio
-- **Risposta**: `200` schema non dichiarato
-
-### `GET /chat-universo/api/v1/messages`
-
-Storico Universo.
-
-- **Accesso**: sessione
-- **Parametri**: `conversationId` (query, obbligatorio): `integer`; `cursor` (query): `string | null`; `destinationType` (query, obbligatorio): `"PRACTICE"`; `limit` (query): `integer`
-- **Corpo**: —
-- **Risposta**: `200` schema non dichiarato
-
-### `POST /chat-universo/crypto/key`
-
-Chiave Conversazione.
-
-- **Accesso**: sessione
-- **Parametri**: —
-- **Corpo**: `RichiestaChiave` (application/json) obbligatorio
 - **Risposta**: `200` schema non dichiarato
 
 ### `GET /clienti/{cliente_id}/contatti`
@@ -531,6 +513,170 @@ Mio Profilo.
 - **Parametri**: —
 - **Corpo**: —
 - **Risposta**: `200` `ProfiloPersonale`
+
+## Realtime
+
+### `GET /realtime/api/v1/conversations`
+
+Conversazioni.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/messages`
+
+Messaggi.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/messages/attention`
+
+Stato Messaggi.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/api/v1/messages/attention`
+
+Visti Messaggi.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/messages/read`
+
+Messaggi Letti.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/api/v1/messages/read`
+
+Leggi Messaggio.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/notifications`
+
+Notifiche.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/api/v1/notifications`
+
+Leggi Notifica.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/notifications/attention`
+
+Stato Notifiche.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/api/v1/notifications/attention`
+
+Viste Notifiche.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/auth/login`
+
+Entra.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/auth/logout`
+
+Esci.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `204` nessun contenuto
+
+### `POST /realtime/auth/recover`
+
+Recupera.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/auth/refresh`
+
+Rinnova.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/crypto/key`
+
+Chiave.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/health`
+
+Health.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/internal/notifications`
+
+Notifica.
+
+- **Accesso**: token del produttore interno
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/ready`
+
+Ready.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
 
 ## Ruoli
 
@@ -1587,17 +1733,6 @@ Aggiorna Utente.
 | `ruolo` | `string \| null` | sì |
 | `telefono` | `string \| null` | sì |
 | `username` | `string` | sì |
-
-### RichiestaChiave
-
-| Campo | Tipo | Obbligatorio |
-|---|---|---|
-| `destinationType` | `"PRACTICE"` | sì |
-| `epochHour` | `integer \| null` | no |
-| `keyVersion` | `integer \| null` | no |
-| `peerUserId` | `string \| null` | no |
-| `resourceCode` | `string` | sì |
-| `resourceId` | `string` | sì |
 
 ### RichiestaResetRequest
 

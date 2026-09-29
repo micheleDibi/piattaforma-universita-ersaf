@@ -756,4 +756,32 @@ indipendentemente dal ruolo globale. Il namespace Universo verifica il token
 esistente (firma, scadenza, issuer/audience e sessione revocabile condivisa),
 senza creare sessioni delegate o accettare cookie. Le origini esterne non
 abilitano le API cookie; le chiavi master rimangono sul server.
-Dettagli in [chat e firma](chat-e-firma.md).
+Il servizio `/realtime` gestisce anche emissione, rotazione e revoca delle
+sessioni esterne. Il refresh riutilizzato revoca la sessione; il recupero è
+limitato all'inattività sullo stesso dispositivo. Il token del produttore di
+notifiche è distinto dai JWT utente. Il login realtime conserva il contratto
+del servizio di messaggistica e non emette la sessione cookie dell'applicazione:
+il secondo fattore del login Università continua a essere obbligatorio.
+Dettagli in [chat e firma](chat-e-firma.md) e [realtime](realtime.md).
+
+L'hardening del servizio precedente è confrontato nella
+[matrice di parità](realtime-parita.md). Comprende quote distinte per tipo di
+comando, chiusura dopo violazioni consecutive, code di lavoro e memoria
+d'uscita limitate, invii serializzati e watchdog. L'ACK di una connessione
+non conclude una consegna ancora dovuta alle altre. Il traffico WebSocket
+non prolunga l'inattività della sessione; refresh, recupero e richieste HTTP
+autenticate seguono il loro contratto. Il refresh ha un tetto alle rotazioni
+e gli esiti di revoca sopravvivono agli errori HTTP.
+
+JSON UTF-8, profondità, duplicati e identificativi sono validati ai confini;
+gli snapshot persistiti vengono ricontrollati e le ACL rivalutate quando si
+applica lo stato visto. Le chiavi storiche rispettano la distinzione originale:
+grant per persone/pratiche, ACL corrente per ticket. Cifratura, hash canonici,
+cursori e conversione delle date sono confrontati con vettori prodotti dalle
+classi Java originali. La pulizia dei buffer controllati non garantisce
+l'azzeramento delle copie interne del runtime.
+
+Le connessioni DB di produzione verificano TLS con CA esplicita e hostname;
+il downgrade prima dell'autenticazione è rifiutato. L'eccezione per traffico
+non cifrato richiede indirizzi RFC1918 letterali e configurazione esplicita.
+Pool e timeout sono comuni al backend: [procedura](deploy.md#trasporto-db-e-websocket).

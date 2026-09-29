@@ -1,4 +1,4 @@
-"""Preflight: abilitazione esplicita e archivio capace di conservare il ciphertext."""
+"""Preflight di chiavi, origini e archivio capace di conservare il ciphertext."""
 from urllib.parse import urlsplit
 
 from sqlalchemy import text
@@ -9,8 +9,6 @@ from src.chat_pratiche.configurazione import configurazione, chiavi, leggi_segre
 
 def verifica():
     config = configurazione()
-    if not config.chat_abilitata:
-        return
     chiavi()
     if not 300 <= config.chat_universo_inattivita_secondi <= 604800:
         raise ValueError("Scadenza della sessione Universo fuori limite.")
@@ -41,6 +39,10 @@ def verifica_schema(db):
         "SELECT utente_id,finestra,tentativi FROM chat_pratica_limite LIMIT 0",
         "SELECT delivery_id,recipient_user_id,payload_json,acknowledged_at FROM realtime_delivery LIMIT 0",
         "SELECT utente_id,item_id,read_at FROM realtime_message_state LIMIT 0",
+        "SELECT sender_user_id,client_message_id,request_hash,canonical_payload FROM realtime_message_command LIMIT 0",
+        "SELECT notification_id,bridge_status FROM realtime_notification_bridge LIMIT 0",
+        "SELECT utente_id,revisione FROM realtime_flusso_utente LIMIT 0",
+        "SELECT utente_id,payload,scadenza FROM realtime_evento LIMIT 0",
     ):
         db.execute(text(query))
     if configurazione().chat_universo_jwt_file:

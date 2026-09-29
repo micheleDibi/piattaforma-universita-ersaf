@@ -21,10 +21,11 @@ def main(backend: str) -> None:
     from fastapi.routing import APIRoute, iter_route_contexts
 
     from src.auth.dipendenze import get_current_utente, get_sessione_corrente
-    from src.chat_pratiche.identita_universo import identita_http
+    from src.realtime.sessioni import identita_http, bearer
+    from src.realtime.api_notifiche import autentica as produttore
     from src.otp.schemas import RichiestaSfida
 
-    sessione = {get_current_utente, get_sessione_corrente, identita_http}
+    sessione = {get_current_utente, get_sessione_corrente}
     accessi = {}
     # iter_route_contexts restituisce la rotta effettiva: le dipendenze dei
     # router che includono altri router sono nel suo dependant.
@@ -33,7 +34,12 @@ def main(backend: str) -> None:
             continue
         campo = contesto.body_field
         corpo = campo.field_info.annotation if campo is not None else None
-        if sessione & dipendenze(contesto.dependant, set()):
+        dipende = dipendenze(contesto.dependant, set())
+        if produttore in dipende:
+            accesso = "produttore"
+        elif {identita_http, bearer} & dipende:
+            accesso = "realtime"
+        elif sessione & dipende:
             accesso = "sessione"
         elif isinstance(corpo, type) and issubclass(corpo, RichiestaSfida):
             accesso = "sfida"

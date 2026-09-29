@@ -147,13 +147,13 @@ def test_limite_persistente_retry_e_notifiche_senza_duplicati(client, db, chat):
 
 
 def test_rollback_atomico_se_fallisce_la_notifica(client, db, chat, monkeypatch):
-    from src.chat_pratiche import scrittura
+    from src.realtime import notifiche_scrittura as scrittura
     p, _, _ = chat
     token = client.cookies.get(nome_cookie())
     ctx, _ = socket_nativo.avvia(token, p.pratica_id)
     def guasto(*args):
         raise RuntimeError("Guasto simulato")
-    monkeypatch.setattr(scrittura, "registra_notifiche", guasto)
+    monkeypatch.setattr(scrittura, "dal_messaggio", guasto)
     with pytest.raises(RuntimeError):
         socket_nativo.invia(token, ctx, preparato(client, p.pratica_id))
     for tabella in ("messaggi", "chat_pratica_comando", "chat_pratica_limite", "realtime_message_time", "realtime_message_key_grant", "realtime_delivery"):
@@ -182,8 +182,7 @@ def test_grant_storici_e_cursori_legati_alla_conversazione(client, db, chat):
 
 
 def test_retry_dopo_cambio_ora_e_pulizia_coda_non_duplica(client, db, chat, monkeypatch):
-    from src.chat_pratiche import scrittura
-    from src.chat_pratiche.consegne import conferma_invio
+    from src.realtime import crypto as scrittura
     p, _, _ = chat
     token = client.cookies.get(nome_cookie())
     ctx, _ = socket_nativo.avvia(token, p.pratica_id)
@@ -194,4 +193,4 @@ def test_retry_dopo_cambio_ora_e_pulizia_coda_non_duplica(client, db, chat, monk
     assert socket_nativo.invia(token, ctx, comando) == primo
     db.execute(text("DELETE FROM realtime_delivery"))
     db.commit()
-    assert conferma_invio(db, ctx, int(primo["id"]), comando["clientMessageId"])["payload"]["messaggioId"] == primo["id"]
+    assert socket_nativo.invia(token, ctx, comando) == primo

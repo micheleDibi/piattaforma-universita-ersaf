@@ -276,3 +276,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\verify-local.ps1 -Ga
 
 Il flusso di lavoro con git e le pull request è in
 [convenzioni.md](convenzioni.md).
+
+## Connessioni DB e realtime
+
+In sviluppo e test il MariaDB locale può restare senza TLS. Il modulo comune
+`database_trasporto` limita pool e attese anche in questi ambienti; non aprire
+connessioni parallele illimitate. Con `ERSAF_ENV=produzione` occorre invece
+configurare il trasporto verificato o l'eccezione di rete privata descritta in
+[deploy](deploy.md#trasporto-db-e-websocket).
+
+Il realtime parte insieme al backend, con gli archivi e le chiavi sintetiche
+preparati per lo sviluppo. Non richiede l'avvio di Java né modifiche al client
+Universo. Le prove automatiche usano soltanto `ersaf_test`; i requisiti per il
+dataset locale e i contratti sono in [realtime](realtime.md).

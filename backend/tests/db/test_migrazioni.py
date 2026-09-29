@@ -154,10 +154,17 @@ def test_rollback_riporta_allo_stato_iniziale_preservando_chat_condivisa(databas
 
     for annullamento in ROLLBACK:
         esegui_file_sql(database_vergine, annullamento)
-    # La 017 include archivi condivisi con Universo, eventualmente preesistenti:
+    # Le 017/018/019 includono archivi condivisi con Universo, eventualmente preesistenti:
     # non ha rollback distruttivo. Tutti gli altri oggetti devono tornare identici.
     preservate = {"chat_pratica_comando", "chat_pratica_limite", "realtime_delivery",
-                  "realtime_message_time", "realtime_message_key_grant", "realtime_message_state"}
+                  "realtime_message_time", "realtime_message_key_grant", "realtime_message_state",
+                  "realtime_auth_session", "realtime_auth_refresh_history",
+                  "realtime_person_contact_acl", "realtime_person_conversation",
+                  "realtime_message_command", "realtime_notification_command",
+                  "realtime_notification_bridge", "realtime_notification_bridge_state",
+                  "realtime_notification_seen", "realtime_notification_seen_snapshot",
+                  "realtime_message_seen_snapshot", "realtime_presenza", "realtime_evento",
+                  "realtime_flusso_utente", "realtime_limite", "realtime_delivery_connessione"}
     dopo = _istantanea(database_vergine)
     assert {r[0] for r in dopo - prima} == preservate
     assert {r for r in dopo if r[0] not in preservate} == prima

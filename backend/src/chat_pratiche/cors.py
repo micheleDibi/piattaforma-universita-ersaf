@@ -16,5 +16,5 @@ class CorsApplicazioni:
             allow_headers=["Authorization", "Content-Type"])
 
     async def __call__(self, scope, receive, send):
-        handler = self.universo if scope.get("path", "").startswith("/chat-universo/") else self.app
+        handler = self.universo if scope.get("path", "").startswith("/realtime/") else self.app
         await handler(scope, receive, send)

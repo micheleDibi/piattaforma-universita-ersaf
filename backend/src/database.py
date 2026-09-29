@@ -5,6 +5,8 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from src.config import get_impostazioni
 from src.database_secondari import sessione_secondaria
+from src.database_trasporto import configura as configura_trasporto
+from src.database_trasporto import limiti_pool
 
 _impostazioni = get_impostazioni()
 
@@ -23,6 +25,7 @@ SQLALCHEMY_DATABASE_URL = (
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
+    **limiti_pool(SQLALCHEMY_DATABASE_URL),
     # La piattaforma legacy tiene MariaDB con un wait_timeout basso: senza
     # questi due, la prima richiesta dopo una pausa fallisce con "server has
     # gone away".
@@ -38,6 +41,8 @@ engine = create_engine(
     echo=False,
     future=True,
 )
+
+configura_trasporto(engine, get_impostazioni)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

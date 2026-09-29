@@ -383,17 +383,45 @@ python scripts/documentazione/timbra_changelog.py --ref=origin/main --versione=N
 
 ## Chat nativa e client Universo
 
-La migrazione 017 aggiunge i metadati compatibili con l'archivio condiviso.
+Le migrazioni 017, 018 e 019 aggiungono i metadati compatibili con l'archivio condiviso.
 Il deploy monta `shared/chat-secrets` in sola lettura solo con `CHAT_NATIVA=si`
 in `shared/compose.env`, usando l'overlay `compose.chat.yml`. Le impostazioni
-`CHAT_*` sono in `shared/api.env`. L'attivazione non cambia database, non
-copia chiavi e non distribuisce il client Flutter o il Java. Non serve aprire
+`CHAT_*` e `REALTIME_*` sono in `shared/api.env`. Il backend aggiornato richiede
+sempre archivio e chiavi realtime configurati: API e socket partono normalmente,
+senza un flag applicativo. Il montaggio dei file segreti deve quindi essere
+presente prima dell'avvio. Avviare FastAPI non cambia database, non copia chiavi
+e non distribuisce il client Flutter o il Java. Non serve aprire
 una connessione API–Java: FastAPI legge l'archivio e verifica la sessione locale.
 
-Prima dell'attivazione serve un dataset realmente comune a entrambe le
-applicazioni, con utenti, clienti, pratiche, storico, grant e sessioni coerenti.
+L'avvio locale o sul clone isolato non richiede il passaggio di Universo.
+Per collegare entrambe le applicazioni allo stesso storico serve invece un
+dataset comune, con utenti, clienti, pratiche, storico, grant e sessioni coerenti.
 Il clone del collaudo resta isolato fino a una scelta esplicita. Pubblicare
-l'adattatore Flutter con l'origine HTTPS del backend e far terminare i vecchi
-writer PRACTICE con il flag `PRACTICE_CHAT_NATIVE=true` del delta Java; i dettagli e il rollback coordinato sono in
-[configurazione e pubblicazione](chat-e-firma.md#configurazione-e-pubblicazione).
-La 017 non prevede DROP delle tabelle condivise. La firma è indipendente.
+il client aggiornato sul solo namespace `/api/realtime` e coordinare il
+passaggio di tutti i writer e dei produttori di notifiche. Questo intervento
+non esegue tale passaggio. I vecchi delta limitati alle pratiche sono superati;
+dettagli e rollback in [servizio realtime](realtime.md#configurazione-e-passaggio-successivo).
+Le 017/018/019 non prevedono DROP delle tabelle condivise. La firma è indipendente.
+
+### Trasporto DB e WebSocket
+
+In produzione il trasporto DB predefinito è `DATABASE_TRASPORTO=verify-full`:
+impostare `DATABASE_CA_FILE` con un certificato CA montato in sola lettura.
+La CA deve verificare la catena del server e il certificato deve corrispondere
+all'host dell'URL. Non c'è un fallback al trust store di Windows/Linux né a
+una connessione non cifrata. L'assenza del supporto TLS lato server ferma il
+driver prima dell'invio delle credenziali.
+
+Per un MariaDB legacy privo di TLS esiste la scelta esplicita
+`DATABASE_TRASPORTO=rete-privata`: tutti gli URL usati devono indicare un IPv4
+letterale RFC1918 (10/8, 172.16/12 o 192.168/16), e `DATABASE_CA_FILE` deve
+essere vuoto. La scelta accetta intenzionalmente traffico non cifrato su quella
+rete; un nome DNS o un indirizzo pubblico viene rifiutato. Vale per DB primario
+e secondari. Il backend non modifica automaticamente la configurazione privata
+esistente: predisporla prima di pubblicare questa versione.
+
+L'immagine fissa Uvicorn e il trasporto WebSocket verificato: frame massimi
+16 KiB, coda ingresso 16, ping 30 s, attesa pong 100 s, compressione disattiva.
+La coda d'uscita applicativa e l'esecutore sono limitati separatamente.
+Il reverse proxy deve conservare l'upgrade e un timeout compatibile con il
+watchdog. Contratti e prove in [parità realtime](realtime-parita.md).

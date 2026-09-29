@@ -23,6 +23,8 @@ Le regole per applicarle, annullarle e correggere gli errori sono in [db/README.
 | 015 | `015_secondo_fattore.sql` | Secondo fattore a scelta per il ruolo Nazionale (ADR 0009) | `015_secondo_fattore_down.sql` |
 | 016 | `016_indici_visibilita_clienti.sql` | Indici per la visibilita' dei clienti | `016_indici_visibilita_clienti_down.sql` |
 | 017 | `017_chat_pratiche.sql` | Chat pratiche nativa con archivio e metadati condivisi con Universo | assente |
+| 018 | `018_realtime_completo.sql` | Metadati del servizio realtime completo; nessun rollback distruttivo | assente |
+| 019 | `019_realtime_consegne_connessioni.sql` | Quorum ACK fra connessioni e worker. Solo metadati, nessuna modifica allo storico | assente |
 
 ## Anomalie
 
@@ -33,3 +35,6 @@ Le regole per applicarle, annullarle e correggere gli errori sono in [db/README.
 - L'intestazione della 013 non riporta il numero.
 - La 014 non ha un file di rollback.
 - La 017 non ha un file di rollback.
+- La 018 non ha un file di rollback.
+- La 019 non ha un file di rollback.
+- L'intestazione della 019 non riporta il numero.

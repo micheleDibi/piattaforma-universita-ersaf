@@ -125,6 +125,7 @@ regole:
     percorsi:
       - "backend/src/database.py"
       - "backend/src/database_secondari.py"
+      - "backend/src/database_trasporto.py"
       - "backend/src/config.py"
       - "backend/src/logging_config.py"
       - "backend/src/errori.py"
@@ -189,3 +190,10 @@ regole:
       - "integrazioni/universo-realtime/**"
     documenti:
       - docs/tecnica/chat-e-firma.md
+
+  - nome: Servizio realtime completo
+    percorsi:
+      - "backend/src/realtime/**"
+    documenti:
+      - docs/tecnica/realtime.md
+      - docs/tecnica/realtime-parita.md

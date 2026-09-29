@@ -287,10 +287,33 @@ nativa sul database usa-e-getta. Sono provati invio, storico, idempotenza
 concorrente, limiti, rollback atomico anche delle notifiche, revoca e isolamento
 di cookie/token, grant, cursori e due trasporti WebSocket sul medesimo archivio.
 Il vettore crittografico sintetico è quello già verificato contro Java.
-La suite `test/realtime` Flutter prova l'adattatore Universo separatamente;
-non viene eseguita dal gate FastAPI/React. Vedi [verifiche](chat-e-firma.md#verifiche).
-Il test di rollback conserva esplicitamente le sei tabelle della 017: possono
-essere già condivise con Universo e non devono subire DROP.
+Le suite `test_realtime_completo.py`, `test_realtime_isolamento.py` e
+`test_realtime_contratti.py` aggiungono chat personali/ticket, login e replay
+del refresh, snapshot immutabili, presenza, bridge legacy, idempotenza del
+produttore e recupero delle consegne via socket. Il conftest fissa lo schema
+ticket a `ersaf_test`; le fixture preparano archivi e segreti sintetici.
+Il gate non esegue test Flutter o la suite Java.
+Vedi [verifiche](realtime.md#verifiche-riproducibili).
+Le fixture HTTP preparano sempre schema e chiavi sintetiche realtime, senza
+flag di abilitazione. Nei test di dominio bridge e manutenzione sono pilotati
+esplicitamente; la prova del ciclo di vita usa invece i lavori reali e verifica
+readiness, autenticazione, connessione WebSocket e invio cifrato. L'avvio con
+keyring o chiave JWT mancanti deve fallire.
+Il test di rollback conserva i metadati condivisi delle 017/018/019: possono essere
+preesistenti e non devono subire DROP.
+
+Le suite `test_realtime_hardening.py` (unitaria e d'integrazione),
+`test_realtime_risorse.py` e `test_realtime_conservazione.py` provano limiti,
+ordine, cancellazioni, multi-connessione, scadenze, input avversi e retention.
+`test_realtime_parita_java.py` confronta 59 vettori sintetici prodotti con
+16 classi Java originali: HKDF, u2/u3, hash, JSON, cursore e date legacy.
+Il normale gate Python non richiede un JDK: usa la fixture congelata, con hash
+di provenienza. `test_realtime_trasporto.py` apre un server Uvicorn su una
+porta loopback temporanea e verifica dimensione dei frame, scadenza silenziosa
+del token e ping/pong, con dati sintetici e dipendenze DB isolate. Le eccezioni
+ai warning sono limitate al trasporto `websockets.legacy` fissato e verificato.
+Sono prove di comportamento e sicurezza, non benchmark. La matrice e gli
+adattamenti sono in [realtime-parita.md](realtime-parita.md).
 
 ## Stato dei contatti e database facoltativi
 
@@ -305,3 +328,8 @@ ereditino gli indirizzi ordinari durante i test. Gli override
 soltanto lo stesso MariaDB locale usa-e-getta della suite: nessun database
 aggiuntivo o remoto è necessario. Un indirizzo malformato non viene riportato
 nel messaggio d'errore.
+
+`test_database_trasporto.py` verifica la policy comune: TLS senza trust store
+implicito, verifica dell'host, rifiuto del downgrade prima dell'invio delle
+credenziali, URL senza override di trasporto e pool limitato. Le prove non
+richiedono connessioni a server esterni né certificati reali.

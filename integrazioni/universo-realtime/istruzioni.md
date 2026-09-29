@@ -1,5 +1,12 @@
 # Client Universo: pratiche sul backend Università
 
+> Documento storico della prima tranche. I delta qui descritti riguardano
+> soltanto le pratiche e non vanno applicati per il nuovo servizio completo.
+> Il contratto corrente è `/api/realtime`, descritto in
+> [servizio realtime](../../docs/tecnica/realtime.md). Il lavoro sul client
+> Universo resta locale e sospeso; aggiornamento del client, dismissione Java
+> e rilascio saranno coordinati separatamente.
+
 Questo delta sostituisce la precedente proposta di ponte Java. Il backend
 Università ora gestisce direttamente storico, cifratura, invio e socket;
 non occorre distribuire `/internal/practices/session` o il suo segreto.

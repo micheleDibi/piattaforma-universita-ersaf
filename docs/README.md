@@ -31,6 +31,7 @@ Per chi sviluppa, rivede o pubblica.
 | [Convenzioni](tecnica/convenzioni.md) | flusso di lavoro, commit, regole di codice |
 | [Sicurezza](tecnica/sicurezza.md) | sessione, password, secondo fattore, limiti noti |
 | [Chat e firma](tecnica/chat-e-firma.md) | conversazione condivisa con Universo, firma e configurazione |
+| [Servizio realtime](tecnica/realtime.md) | sessioni, chat personali/pratiche/ticket, notifiche e consegne |
 | [Documentazione](tecnica/documentazione.md) | come si mantiene tutto questo |
 
 Riferimenti generati dal codice, da non modificare a mano:

@@ -9,6 +9,8 @@ from sqlalchemy.exc import ArgumentError
 from sqlalchemy.orm import sessionmaker
 
 from src.config import get_impostazioni
+from src.database_trasporto import configura as configura_trasporto
+from src.database_trasporto import limiti_pool
 
 VARIABILI = {
     "DATABASE_URL_GESTIONE_PAGAMENTI": "database_url_gestione_pagamenti",
@@ -48,9 +50,10 @@ def _fabbrica(variabile):
         if chiave not in _fabbriche:
             try:
                 engine = create_engine(
-                    indirizzo, pool_pre_ping=True, pool_recycle=1800,
+                    indirizzo, **limiti_pool(indirizzo), pool_pre_ping=True, pool_recycle=1800,
                     hide_parameters=True, echo=False, future=True,
                 )
+                configura_trasporto(engine, get_impostazioni)
             except (ArgumentError, ImportError, ValueError):
                 raise RuntimeError(f"{variabile} non e' valida") from None
             _fabbriche[chiave] = sessionmaker(autocommit=False, autoflush=False, bind=engine)

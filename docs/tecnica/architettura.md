@@ -30,8 +30,9 @@ rimanda ai documenti specifici:
 Le versioni esatte stanno in `backend/requirements.txt` e in
 `frontend/package.json`.
 
-Le rotte dell'API sono funzioni sincrone, eseguite da FastAPI in un pool di
-thread condiviso, con una sola eccezione asincrona. Anche il React Compiler è
+Le operazioni DB sono eseguite nel pool di thread. Le rotte asincrone gestiscono
+stream di richiesta e WebSocket e spostano il lavoro sincrono nel pool.
+Anche il React Compiler è
 attivo nella build del frontend. Le due regole sono in
 [convenzioni.md](convenzioni.md).
 
@@ -415,3 +416,23 @@ Il modulo `chat_pratiche` gestisce nativamente sessione, partecipanti, cifratura
 e scrittura nell'archivio legacy condiviso della conversazione. HTTP e WebSocket sono limitati
 alla pratica autorizzata; la firma usa il blob esistente e il generatore PDF comune.
 Contratto, configurazione e decisioni sono in [chat e firma](chat-e-firma.md).
+
+Il modulo `realtime` centralizza tutte le funzioni del servizio condiviso:
+sessioni Bearer, conversazioni personali/pratiche/ticket, notifiche, presenza,
+letture e consegne persistenti. La scrittura cookie delle pratiche è un
+adattatore dello stesso dominio. Nessuna chiamata al servizio Java;
+coordinamento fra worker su MariaDB, schemi legacy sullo stesso server.
+Il servizio completo parte con il backend: preflight, API, WebSocket e lavori
+periodici non dipendono da flag o dall'integrazione del client Universo.
+Contratto, migrazioni 018/019 e configurazione in [realtime](realtime.md).
+Il confronto dei meccanismi con il servizio precedente è tracciato nella
+[matrice di parità](realtime-parita.md): esecutori limitati, invii serializzati,
+quorum delle conferme, conservazione degli archivi e protezioni crittografiche.
+
+`database_trasporto` centralizza le opzioni PyMySQL del DB principale e dei
+secondari: pool di otto connessioni senza overflow, acquisizione e connessione
+entro cinque secondi, lettura/scrittura entro dieci. In produzione richiede
+TLS con CA esplicita e verifica dell'host; l'eccezione non cifrata è ammessa
+solo con una scelta esplicita e indirizzi privati letterali. Le connessioni
+secondarie restano lazy. La policy viene applicata prima dell'handshake,
+senza includere credenziali nei messaggi d'errore. Dettagli in [deploy](deploy.md).
