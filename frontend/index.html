@@ -11,11 +11,11 @@
       partono durante il parsing dell'head, prima che React monti, e una
       referrer policy non e' retroattiva.
 
-      Vale per tutta l'applicazione. Oggi non costa nulla — non ci sono font da
-      CDN, analytics, iframe o reindirizzamenti verso identity provider — e il
-      backend non guarda il Referer. Se un domani servisse, la mossa e' passare
-      a strict-origin-when-cross-origin, che protegge comunque la query string
-      verso altri domini.
+      Vale per tutta l'applicazione. Le sole risorse esterne sono immagini e
+      video degli articoli EduNews24, dagli host ammessi dal backend (il file
+      video solo dopo il clic su play): partono senza Referer, ed e' voluto.
+      Il backend non guarda il Referer; con strict-origin-when-cross-origin
+      quegli host vedrebbero l'origine della piattaforma.
     -->
     <meta name="referrer" content="no-referrer" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

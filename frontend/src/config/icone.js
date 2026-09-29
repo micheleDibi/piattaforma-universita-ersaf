@@ -12,19 +12,26 @@ import {
 } from "lucide-react";
 
 export {
+  AlarmClock,
   ArrowLeft,
   ArrowUpFromLine,
   Award,
   Building2,
+  CalendarCheck,
+  CalendarX,
+  ChevronLeft,
   ChevronRight,
   CircleAlert,
   CircleCheck,
   CircleUserRound,
+  CloudOff,
+  ExternalLink,
   Eye,
   EyeOff,
   FileDown,
   FileText,
   GraduationCap,
+  History,
   Info,
   KeyRound,
   LayoutDashboard,
@@ -33,7 +40,9 @@ export {
   Mail,
   MapPin,
   Menu,
+  Newspaper,
   Pencil,
+  Play,
   Plus,
   Search,
   SlidersHorizontal,
@@ -43,6 +52,7 @@ export {
   User,
   UserCog,
   Users,
+  Video,
 } from "lucide-react";
 export { Check, Circle, X };
 

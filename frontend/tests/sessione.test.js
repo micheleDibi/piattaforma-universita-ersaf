@@ -6,6 +6,7 @@ import { apiFetch, caricaSessione, messaggioErrore } from "../src/lib/api.js";
 import { logout } from "../src/lib/logout.js";
 import { haSessione, leggiCsrf, leggiUtenteId, pulisciSessione, salvaSessione } from "../src/lib/sessione.js";
 import { conservaDestinazione, destinazioneDopoAccesso, percorsoSicuro } from "../src/lib/ritornoAccesso.js";
+import { ROTTA_INIZIALE } from "../src/config/routes/percorsi.js";
 
 const dati = { utente_id: 42, ruolo_codice: "Regionale", csrf_token: "a".repeat(64) };
 const richieste = [];
@@ -116,6 +117,16 @@ test("401 salva pagina, query e ancora, spiega la scadenza e consuma il ritorno 
   assert.deepEqual(redirect, ["/?sessione=scaduta"]);
   assert.equal(destinazioneDopoAccesso("/dashboard"), "/sottoscrittori?ricerca=rossi#righe");
   assert.equal(destinazioneDopoAccesso("/dashboard"), "/dashboard");
+});
+
+test("senza pagina richiesta si arriva alla Dashboard", () => {
+  assert.equal(destinazioneDopoAccesso(ROTTA_INIZIALE), "/dashboard");
+});
+
+test("un ritorno salvato vince sulla Dashboard, una volta sola", () => {
+  conservaDestinazione();
+  assert.equal(destinazioneDopoAccesso(ROTTA_INIZIALE), "/sottoscrittori?ricerca=rossi#righe");
+  assert.equal(destinazioneDopoAccesso(ROTTA_INIZIALE), "/dashboard");
 });
 
 test("logout fallito conserva la sessione e segnala l'errore", async () => {

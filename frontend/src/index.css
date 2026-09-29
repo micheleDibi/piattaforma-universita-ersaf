@@ -9,6 +9,7 @@
 @import "./config/theme/tipografia.css";
 @import "./config/tokens/controlli.css";
 @import "./config/tokens/movimento.css";
+@import "./config/tokens/edunews24.css";
 @import "./config/styles/testataElenco.css";
 @import "./config/styles/filtriElenco.css";
 @import "./config/styles/selezione.css";
@@ -21,6 +22,8 @@
 @import "./config/styles/schede.css";
 @import "./config/styles/avvisi.css";
 @import "./config/styles/barraAzioni.css";
+@import "./config/styles/dashboard.css";
+@import "./config/styles/edunews24.css";
 
 /* Distanza e rientro dei pannelli ancorati: registrate, getComputedStyle le
  * restituisce in px anche quando sono scritte con calc() o --spacing().
