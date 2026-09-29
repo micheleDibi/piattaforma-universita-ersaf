@@ -21,6 +21,9 @@ def importa_app(backend: str):
     import src.notifiche.config_sms as config_sms
 
     config_sms.ConfigSMS.model_config["env_file"] = None
+    import src.chat_pratiche.configurazione as config_chat
+
+    config_chat.ConfigChat.model_config["env_file"] = None
     import src.main as main
 
     return main

@@ -107,6 +107,9 @@ regole:
       - "frontend/src/lib/documentoPratica.js"
       - "frontend/src/lib/opzioniPratica.js"
       - "frontend/src/config/testi/pratiche.js"
+      - "frontend/src/config/pratica.js"
+      - "frontend/src/config/styles/pratica.js"
+      - "frontend/src/hooks/useSchedaPratica.js"
     documenti:
       - docs/funzionale/pratiche.md
 
@@ -153,6 +156,8 @@ regole:
   - nome: Architettura e ambiente
     percorsi:
       - "backend/src/database.py"
+      - "backend/src/database_secondari.py"
+      - "backend/src/database_trasporto.py"
       - "backend/src/config.py"
       - "backend/src/logging_config.py"
       - "backend/src/errori.py"
@@ -203,3 +208,24 @@ regole:
       - "changelog/MODELLO.md"
     documenti:
       - docs/tecnica/documentazione.md
+
+  - nome: Chat condivisa e firma delle pratiche
+    percorsi:
+      - "backend/src/chat_pratiche/**"
+      - "backend/src/pratiche/firma*.py"
+      - "frontend/src/lib/chatPratica.js"
+      - "frontend/src/lib/conversazionePratica.js"
+      - "frontend/src/lib/firmaPratica.js"
+      - "frontend/src/lib/trattoFirma.js"
+      - "frontend/src/hooks/useChatPratica.js"
+      - "frontend/src/hooks/useFirmaPratica.js"
+      - "integrazioni/universo-realtime/**"
+    documenti:
+      - docs/tecnica/chat-e-firma.md
+
+  - nome: Servizio realtime completo
+    percorsi:
+      - "backend/src/realtime/**"
+    documenti:
+      - docs/tecnica/realtime.md
+      - docs/tecnica/realtime-parita.md

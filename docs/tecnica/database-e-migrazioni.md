@@ -191,3 +191,27 @@ test che ne hanno bisogno le creano dai modelli con `Base.metadata.create_all`:
 in quei test rispecchiano i modelli, non la DDL reale.
 
 Container, variabili e comandi: [test.md](test.md).
+
+## Archivio chat condiviso (017)
+
+La 017 aggiunge sei tabelle compatibili con Universo: grant, orario UTC,
+stato lettura, consegne, ricevute idempotenti e limite degli invii. Conserva
+`messaggi` e notifiche legacy; le colonne cifrate devono avere capienza adeguata.
+Non ha rollback distruttivo: le tabelle possono essere preesistenti e condivise.
+Si annulla l'attivazione applicativa coordinando i client, conservando i dati.
+La suite prova migrazione ripetibile e permanenza degli archivi dopo i rollback
+precedenti. Non usare DROP per tornare a una release precedente.
+
+La **018** completa i metadati con sessioni e refresh, contatti autorizzati,
+mapping delle conversazioni personali, ricevute, snapshot, bridge notifiche,
+presenza, eventi e quote. È additiva e non ha rollback distruttivo. Non crea
+né importa archivi legacy: messaggi personali e ticket devono esistere nello
+schema configurato sullo stesso MariaDB. Conservare i metadati precedenti e
+le chiavi storiche. Contratto e passaggio in [realtime](realtime.md).
+
+La **019** conserva le conferme delle singole connessioni in
+`realtime_delivery_connessione`, collegata con FK alla consegna. Il quorum
+viene ricostruito dalle connessioni attive: un nuovo collegamento partecipa,
+una chiusura lo rimuove. È additiva e idempotente, senza rollback distruttivo;
+la retention della consegna elimina soltanto questi metadati. Le suite di
+migrazione verificano anche la permanenza della tabella dopo i rollback.

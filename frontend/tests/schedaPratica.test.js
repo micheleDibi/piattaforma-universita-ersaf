@@ -1,6 +1,6 @@
 import { beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
-import { caricaSchedaPratica, salvaPratica } from "../src/lib/schedaPratica.js";
+import { caricaSchedaPratica, salvaPratica, leggiContestoUrl } from "../src/lib/schedaPratica.js";
 import { salvaSessione, pulisciSessione } from "../src/lib/sessione.js";
 
 const richieste = [], risposte = [];
@@ -44,25 +44,19 @@ function rispondiPerUrl(mappa) {
 const CATALOGHI = {
   "/pratiche/filtri/stati": [200, [{ id: 1, label: "Aperta" }]],
   "/listini-testa/opzioni/universita": [200, []],
+  "/listini-tipi-corsi/": [200, []],
 };
 
-test("la scheda prende l'emittente dalla pratica, senza chiedere /clienti/", async () => {
+test("la scheda non chiede /clienti/ per l'emittente: non lo mostra più, è deprecato", async () => {
   const emittente = { cliente_id: 7, cliente_nome: "Elena", cliente_cognome: "Rossi", cliente_codice: "COD7" };
   rispondiPerUrl({ ...CATALOGHI,
     "/pratiche/101": [200, { pratica_id: 101, cliente_id: 3, cliente_emittente_aderente_id: 7, emittente }] });
 
   const scheda = await caricaSchedaPratica(101);
 
-  assert.deepEqual(scheda.emittente, { id: 7, label: "Elena Rossi", dettaglio: "COD7" });
+  assert.equal(scheda.emittente, undefined);
   assert.equal(scheda.pratica.cliente_id, 3);
-  assert.equal(richieste.length, 3);
-  assert.ok(richieste.every(({ url }) => !url.includes("/clienti/")));
-});
-
-test("senza emittente nella risposta la scheda non ne inventa uno", async () => {
-  rispondiPerUrl({ ...CATALOGHI,
-    "/pratiche/102": [200, { pratica_id: 102, cliente_emittente_aderente_id: 7, emittente: null }] });
-  assert.equal((await caricaSchedaPratica(102)).emittente, null);
+  assert.equal(richieste.length, 4);
   assert.ok(richieste.every(({ url }) => !url.includes("/clienti/")));
 });
 
@@ -76,7 +70,14 @@ test("una scheda nuova non chiede nessuna pratica", async () => {
   rispondiPerUrl(CATALOGHI);
   const scheda = await caricaSchedaPratica(null);
   assert.equal(scheda.pratica, null);
-  assert.equal(scheda.emittente, null);
-  assert.equal(richieste.length, 2);
+  assert.equal(richieste.length, 3);
+});
+
+test("il contesto di creazione legge università e tipi di corso dall'indirizzo di ritorno", () => {
+  assert.deepEqual(leggiContestoUrl("/pratiche"), { universitaId: null, tipoCorsoIds: [] });
+  assert.deepEqual(leggiContestoUrl("/pratiche?universita=4&tipoCorso=9"),
+    { universitaId: 4, tipoCorsoIds: [9] });
+  assert.deepEqual(leggiContestoUrl("/pratiche?universita=1&tipoCorso=6&tipoCorso=7"),
+    { universitaId: 1, tipoCorsoIds: [6, 7] });
 });
 

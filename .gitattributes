@@ -12,3 +12,5 @@ Dockerfile    text eol=lf
 # differenze solo di fine riga nei checkout Windows.
 *.md                       text eol=lf
 scripts/documentazione/**  text eol=lf
+# Nelle patch una riga di contesto vuota contiene il prefisso spazio del formato.
+integrazioni/**/*.patch    text eol=lf whitespace=-blank-at-eol

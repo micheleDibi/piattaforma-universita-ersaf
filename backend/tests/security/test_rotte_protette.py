@@ -13,6 +13,7 @@ aggiornare un elenco.
 
 from __future__ import annotations
 
+import base64
 import pytest
 from fastapi.routing import APIRoute
 
@@ -39,6 +40,12 @@ PUBBLICHE = {
     ("POST", "/auth/password-reset/request"),
     ("GET", "/auth/password-reset/validate"),
     ("POST", "/auth/password-reset/confirm"),
+    # Credenziali/refresh verificati dal servizio realtime, non da una sessione cookie.
+    ("POST", "/realtime/auth/login"),
+    ("POST", "/realtime/auth/refresh"),
+    ("POST", "/realtime/auth/recover"),
+    ("GET", "/realtime/health"),
+    ("GET", "/realtime/ready"),
 }
 
 # Valori di esempio per i segnaposto: la rotta non deve essere raggiunta, il
@@ -68,6 +75,20 @@ TUTTE = list(_rotte())
 DA_PROTEGGERE = [t for t in TUTTE if (t[0], t[1]) not in PUBBLICHE]
 
 
+@pytest.fixture
+def realtime_attivo(client, tmp_path, monkeypatch):
+    from src.chat_pratiche.configurazione import configurazione
+    chiave = tmp_path / "realtime-test.txt"
+    chiave.write_text(base64.b64encode(bytes(range(32))).decode(), encoding="ascii")
+    produttore = tmp_path / "produttore-test.txt"
+    produttore.write_text("produttore-sintetico-" + "x" * 32, encoding="ascii")
+    monkeypatch.setenv("CHAT_UNIVERSO_JWT_FILE", str(chiave))
+    monkeypatch.setenv("REALTIME_PRODUCER_TOKEN_FILE", str(produttore))
+    configurazione.cache_clear()
+    yield
+    configurazione.cache_clear()
+
+
 def test_l_elenco_delle_rotte_non_e_vuoto():
     """Se il walker smettesse di trovare le rotte, i test sotto passerebbero
     tutti senza provare nulla."""
@@ -82,7 +103,7 @@ def test_l_elenco_delle_rotte_non_e_vuoto():
     [(m, p) for m, _, p in DA_PROTEGGERE],
     ids=[f"{m} {t}" for m, t, _ in DA_PROTEGGERE],
 )
-def test_senza_sessione_risponde_401(client, metodo, percorso):
+def test_senza_sessione_risponde_401(client, metodo, percorso, realtime_attivo):
     risposta = client.request(metodo, percorso, json={})
     assert risposta.status_code == 401, (
         f"{metodo} {percorso} risponde {risposta.status_code} senza token"
@@ -94,7 +115,7 @@ def test_senza_sessione_risponde_401(client, metodo, percorso):
     [(m, p) for m, _, p in DA_PROTEGGERE],
     ids=[f"{m} {t}" for m, t, _ in DA_PROTEGGERE],
 )
-def test_un_token_inventato_non_vale(client, metodo, percorso):
+def test_un_token_inventato_non_vale(client, metodo, percorso, realtime_attivo):
     risposta = client.request(
         metodo, percorso, json={}, headers={"Authorization": "Bearer non-esiste"}
     )

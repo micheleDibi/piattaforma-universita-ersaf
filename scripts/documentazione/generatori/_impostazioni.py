@@ -114,6 +114,8 @@ def obbligatori_sms(config_sms) -> dict[str, str]:
 
 def sms_in_produzione(main, config) -> bool:
     """Vero se l'avvio in produzione rifiuta un SMS_BACKEND diverso da skebby."""
+    from unittest.mock import AsyncMock, patch
+
     ambiente = {k.upper(): v for k, v in BASI["produzione"].items()}
     ambiente.update(SMS_BACKEND="memoria", LOG_FILE="")
     os.environ.update(ambiente)
@@ -124,7 +126,12 @@ def sms_in_produzione(main, config) -> bool:
             pass
 
     try:
-        asyncio.run(avvia())
+        # Questa sonda riguarda solo il requisito SMS: non apre gli archivi
+        # realtime e non legge le chiavi private dell'ambiente di sviluppo.
+        with patch("src.chat_pratiche.avvio.verifica"), \
+                patch("src.realtime.avvio.verifica"), \
+                patch("src.realtime.avvio.ciclo", new=AsyncMock()):
+            asyncio.run(avvia())
     except ValueError as errore:
         return "SMS_BACKEND" in str(errore)
     finally:
@@ -138,9 +145,10 @@ def raccogli(backend: str) -> dict:
     main = importa_app(backend)
     import src.config as config
     import src.notifiche.config_sms as config_sms
+    import src.chat_pratiche.configurazione as config_chat
 
     obbligo = obbligatori(config)
-    impostazioni = campi(config.Impostazioni)
+    impostazioni = campi(config.Impostazioni) + campi(config_chat.ConfigChat)
     for voce in impostazioni:
         ambienti = obbligo.get(voce["campo"], [])
         voce["obbligatoria"] = ("sì" if set(ambienti) == set(BASI)

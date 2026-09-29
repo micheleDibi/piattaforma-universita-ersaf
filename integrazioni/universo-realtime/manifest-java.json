@@ -1,0 +1,22 @@
+[
+  {
+    "file": "realtime-service/src/main/java/it/universo/realtime/delivery/PracticeMessageWriter.java",
+    "sha256_prima": "2c80d7a56571194b945923ee4a302ce22c50e8ad3e4bed1672445306bdcb706d",
+    "sha256_dopo": "70727a237cacbe23327f2371529858ef6f6c812595ba54046c4f11795c56ba96"
+  },
+  {
+    "file": "realtime-service/src/test/java/it/universo/realtime/delivery/PracticeMessageCutoverTest.java",
+    "sha256_prima": null,
+    "sha256_dopo": "55b0c9ae56d24ca6fbc9b7e74f18bf3884f13baad76f651685551c6168607a8b"
+  },
+  {
+    "file": "compose.yaml",
+    "sha256_prima": "0a203ccbd5bd72184fc65a7e1002e971bab85d99ae8ab31c7a3c66f0802f81e6",
+    "sha256_dopo": "422e73db544fd61008d4d7fbd79773068631f81b83811502f494caaa36fe89a1"
+  },
+  {
+    "file": "production/compose.production.yaml",
+    "sha256_prima": "5187f4e474c2e2e0e1a369f1c82a315dc334b5a679ad87ed04c88fc32b2d3efe",
+    "sha256_dopo": "069f7c6ec20a2186bff9d9dbc35228271dc93cd0ec32010e0c23765d5a599f37"
+  }
+]

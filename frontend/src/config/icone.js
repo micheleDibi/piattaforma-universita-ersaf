@@ -45,6 +45,7 @@ export {
   Play,
   Plus,
   Search,
+  Send,
   SlidersHorizontal,
   Smartphone,
   Trash2,

@@ -31,6 +31,8 @@ Per chi sviluppa, rivede o pubblica.
 | [Deploy](tecnica/deploy.md) | pubblicazione sul collaudo, numero di versione, timbro del changelog |
 | [Convenzioni](tecnica/convenzioni.md) | flusso di lavoro, commit, regole di codice |
 | [Sicurezza](tecnica/sicurezza.md) | sessione, password, secondo fattore, limiti noti |
+| [Chat e firma](tecnica/chat-e-firma.md) | conversazione condivisa con Universo, firma e configurazione |
+| [Servizio realtime](tecnica/realtime.md) | sessioni, chat personali/pratiche/ticket, notifiche e consegne |
 | [Documentazione](tecnica/documentazione.md) | come si mantiene tutto questo |
 
 Riferimenti generati dal codice, da non modificare a mano:
@@ -46,9 +48,8 @@ Altri documenti:
 
 - [db/README.md](../db/README.md): regole operative delle migrazioni;
 - [changelog/MODELLO.md](../changelog/MODELLO.md): come si scrive un frammento di changelog;
-- [mappa-documentazione.yml](mappa-documentazione.yml): quali documenti rileggere quando cambia il codice;
-- [CLAUDE.md](../CLAUDE.md): regole per gli agenti AI.
+- [mappa-documentazione.yml](mappa-documentazione.yml): quali documenti rileggere quando cambia il codice.
 
 ## Storico
 
-- [Prompt del recupero password](prompt/recupero-password.md): il prompt con cui è stato chiesto a un agente di costruire il recupero password, conservato come istantanea del 4 settembre 2026. Non descrive lo stato attuale.
+- [Specifica iniziale del recupero password](storico/recupero-password.md): requisiti conservati come istantanea del 4 settembre 2026. Non descrivono lo stato attuale.

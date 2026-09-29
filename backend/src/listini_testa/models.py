@@ -84,6 +84,15 @@ class ListinoTesta(ListinoTestaBase):
 
     nome_universita: Optional[str] = None
     listino_tipoCorso_descrizione: Optional[str] = None
+    # Descrizioni leggibili delle altre decodifiche del percorso: servono alla
+    # scheda pratica per mostrare le caratteristiche del percorso scelto
+    # (vedi docs/funzionale/pratiche.md). Nessuna di queste quattro tabelle ha
+    # un proprio endpoint REST, quindi il client non potrebbe altrimenti
+    # tradurre l'id in un testo.
+    listino_modalita_descrizione: Optional[str] = None
+    listino_facolta_descrizione: Optional[str] = None
+    listino_durataLaurea_descrizione: Optional[str] = None
+    listino_corsoLaurea_descrizione: Optional[str] = None
 
     dettagli: List["ListinoDettaglioResponse"] = []
 
@@ -96,7 +105,7 @@ class ListinoTesta(ListinoTestaBase):
                 item_dict[key] = getattr(data, key, None)
 
             item_dict["dettagli"] = getattr(data, "dettagli", [])
-            
+
             universita_obj = getattr(data, "universita", None)
             if universita_obj:
                 item_dict["nome_universita"] = getattr(universita_obj, "nome_universita_descrizione", None)
@@ -108,6 +117,15 @@ class ListinoTesta(ListinoTestaBase):
                 item_dict["listino_tipoCorso_descrizione"] = getattr(tipo_corso_obj, "listino_tipoCorso_descrizione", None)
             else:
                 item_dict["listino_tipoCorso_descrizione"] = None
+
+            def descrizione(nome_relazione, nome_campo):
+                oggetto = getattr(data, nome_relazione, None)
+                return getattr(oggetto, nome_campo, None) if oggetto else None
+
+            item_dict["listino_modalita_descrizione"] = descrizione("modalita", "listino_modalita_descrizione")
+            item_dict["listino_facolta_descrizione"] = descrizione("facolta", "listino_facolta_descrizione")
+            item_dict["listino_durataLaurea_descrizione"] = descrizione("durata_laurea", "listino_durataLaurea_descrizione")
+            item_dict["listino_corsoLaurea_descrizione"] = descrizione("corso_laurea", "listino_corsoLaurea_descrizione")
 
             return item_dict
         return data

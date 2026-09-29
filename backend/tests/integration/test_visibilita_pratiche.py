@@ -139,6 +139,27 @@ def test_la_creazione_usa_sempre_la_propria_azienda(client, db, mondo):
     assert _azienda(db, senza.json()["pratica_id"]) == mondo["a"]
 
 
+def test_senza_emittente_il_form_collega_il_creatore_non_il_cliente_predefinito(client, db, mondo):
+    from src.chat_pratiche.partecipanti import autorizza
+
+    # Il cliente 1 esiste ma appartiene a un altro utente rispetto al creatore.
+    altro, sessione = accedi(client, db, azienda_id=mondo["a"])
+    assert altro.cliente_id != 1
+    corpo = _corpo(mondo)
+    corpo.pop("cliente_emittente_aderente_id")
+    risposta = client.post("/pratiche/", json=corpo, headers=sessione)
+    assert risposta.status_code == 201, risposta.text
+    pratica_id = risposta.json()["pratica_id"]
+    db.expire_all()
+    pratica = db.get(Pratica, pratica_id)
+    assert pratica.cliente_emittente_aderente_id == altro.cliente_id
+    assert pratica.utente_id == altro.utente_id
+    _, partecipanti = autorizza(db, altro.utente_id, pratica_id)
+    assert {p.utente_id for p in partecipanti} == {
+        altro.utente_id, mondo["studente_altrui"].utente_id,
+    }
+
+
 def test_la_modifica_ignora_l_azienda(client, db, mondo):
     pratica_id = mondo["ids"]["a_mio"]
     risposta = client.put(f"/pratiche/{pratica_id}",

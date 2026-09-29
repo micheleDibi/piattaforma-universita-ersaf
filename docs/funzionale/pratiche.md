@@ -118,8 +118,9 @@ Nota: la riga porta a una pagina che non esiste; vedi [Limiti noti](../tecnica/s
 ## Elenco delle pratiche
 
 L'elenco si intitola "Elenco Pratiche". Se si arriva dalla pagina Pratiche, il
-titolo aggiunge l'ateneo e i tipi di corso. Il pulsante "Nuova" apre una
-pratica nuova. Selezionando una riga si apre la scheda della pratica.
+titolo aggiunge l'ateneo e i tipi di corso. Sopra il titolo, il collegamento
+"Pratiche" torna alla pagina Pratiche. Il pulsante "Nuova" apre una pratica
+nuova. Selezionando una riga si apre la scheda della pratica.
 
 ### Colonne
 
@@ -174,47 +175,125 @@ compare "Nessuna pratica trovata."
 
 ## Scheda della pratica
 
-La scheda si intitola "Nuova pratica", oppure "Pratica" seguito dal numero.
-Ha due sezioni: "Iscrizione" e "Dati della pratica".
+In creazione la scheda si intitola "Nuova Pratica - {università} - {tipo di
+corso}", con università e tipo di corso di chi la riga della pagina Pratiche
+da cui si è aperta la scheda; se la riga raggruppa più tipi di corso compaiono
+tutti, separati da "/". Se questa informazione manca il titolo resta "Nuova
+pratica". In modifica il titolo è "Pratica" seguito dal numero. Ha due
+sezioni fisse, "Iscrizione" e "Dati della pratica", e una terza,
+"Caratteristiche del percorso", che compare solo per alcuni tipi di corso
+(vedi sotto).
 
 ### Iscrizione
 
 | Campo | Come si sceglie |
 |---|---|
-| Studente | Si cerca fra i sottoscrittori, per nome e cognome |
-| Aderente emittente | Si cerca fra gli attuatori con ruolo Aderente, per nome e cognome |
-| Percorso formativo | Si cerca fra i prodotti formativi, per denominazione o codice. Compaiono anche i prodotti non attivi |
+| Studente | Si apre una finestra con l'elenco dei sottoscrittori (vedi sotto) |
+| Percorso formativo (o Corsi, per Corsi Singoli) | Si apre una finestra con l'elenco dei percorsi formativi (vedi sotto) |
 | Università | Non si sceglie: dopo la scelta del percorso compare l'università del percorso |
 
-Il campo Studente invita a cercare anche per codice, ma la ricerca guarda
-solo nome e cognome.
-
-Nota: la ricerca per codice promessa dal campo non esiste; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
-
-In una pratica già salvata questi quattro valori sono solo in lettura: non si
+In una pratica già salvata questi tre valori sono solo in lettura: non si
 possono cambiare.
+
+#### Finestra di selezione dello studente
+
+Il pulsante "Seleziona" (o "Cambia", se uno studente è già scelto) apre una
+finestra con l'elenco dei sottoscrittori: Codice fiscale, Denominazione
+(nome e cognome) e Stato, con una barra di ricerca per nome e cognome sopra
+l'elenco. Vale la stessa regola di visibilità dell'elenco Sottoscrittori, e
+compaiono solo gli account già attivi.
+
+La colonna Stato mostra le stesse tre verifiche (email, cellulare, dati del
+diploma) dell'elenco Sottoscrittori, con lo stesso comportamento e gli
+stessi colori. Uno studente con almeno una delle tre non superata compare
+nell'elenco ma non si può scegliere.
+
+L'emittente non si sceglie nella scheda: per una pratica nuova il sistema
+collega l'utente che la crea, conservando i riferimenti necessari ai permessi
+della conversazione. I riferimenti delle pratiche esistenti restano invariati.
+
+#### Finestra di selezione del percorso formativo
+
+Il pulsante "Seleziona" apre una finestra con l'elenco dei percorsi
+formativi: Codice, Denominazione, Prezzo (€) e CFU, con una barra di ricerca
+per titolo o codice sopra l'elenco. Mostra solo i percorsi dell'università e
+del tipo di corso da cui si è aperta la scheda (la riga della pagina
+Pratiche), attivi e con un listino valido oggi: prezzo e CFU sono quelli del
+listino in corso.
+
+Per tutti i tipi di corso tranne Corsi Singoli si sceglie un solo percorso: un
+clic sceglie e chiude la finestra. Per Corsi Singoli si possono scegliere più
+corsi: un clic li aggiunge o li toglie dalla selezione, un pulsante "Conferma"
+in fondo alla finestra (con il totale) chiude quando si è finito. I corsi
+scelti compaiono come un elenco sotto il campo, ognuno con un pulsante per
+toglierlo; il prezzo della pratica è la somma dei prezzi dei corsi scelti, e
+si aggiorna man mano che se ne aggiungono o tolgono. Una volta salvata la
+pratica l'elenco dei corsi non si modifica più.
+
+### Caratteristiche del percorso
+
+Dopo aver scelto il percorso formativo (in creazione) o per una pratica già
+salvata, la scheda mostra alcune caratteristiche del percorso stesso, sempre
+in sola lettura: non si scelgono né si modificano qui. Per Corsi Singoli, con
+più corsi scelti, sono quelle del primo corso: gli altri restano nel loro
+elenco sopra, con prezzo e CFU propri. Quali compaiono dipende dal tipo di
+corso del percorso:
+
+| Tipo di corso | Caratteristiche mostrate |
+|---|---|
+| Master | Modalità di erogazione, Durata, CFU, Livello |
+| Corsi di perfezionamento | Modalità di erogazione, CFU |
+| Formazione ed Alta formazione | Modalità di erogazione, Durata, CFU |
+| Lauree | Facoltà, Tasse (€), Tipo di Laurea |
+| Corsi singoli | CFU, Corso di Laurea |
+
+Per un percorso di un altro tipo (Percorso docenti, Corsi speciali) la
+sezione non compare: non ha caratteristiche previste.
+
+Durata, CFU e Tasse vengono dal dettaglio del listino valido oggi, lo stesso
+usato per il prezzo (vedi [Dati della pratica](#dati-della-pratica)): se il
+percorso non ne ha uno, questi tre campi restano vuoti («-»). La Durata è in
+mesi.
+
+Nota: i tre campi "Rinnovo primo/secondo/terzo anno" non sono ancora
+mostrati: non esiste un dato che li descriva a livello di percorso
+formativo, solo tre campi sulla singola pratica che oggi nessuna schermata
+valorizza.
 
 ### Dati della pratica
 
 | Campo | Regole |
 |---|---|
-| Numero pratica | Obbligatorio, al massimo 45 caratteri. Gli spazi all'inizio e alla fine si tolgono |
+| Codice pratica | Sempre di sola lettura: non si digita mai. Generato dal server al salvataggio, resta vuoto finché la pratica non è ancora stata creata |
 | Anno accademico | Facoltativo, al massimo 45 caratteri |
 | Sede di erogazione | Facoltativa, al massimo 255 caratteri |
-| Prezzo (€) | Obbligatorio. Un numero non negativo, con al massimo dodici cifre intere e otto decimali |
-| Stato | Obbligatorio, da scegliere nell'elenco degli stati |
-| Data di creazione | Obbligatoria. Propone la data di oggi. In una pratica già salvata non si cambia |
+| Prezzo (€) | Sempre di sola lettura: non si digita mai |
+| Stato | Sempre di sola lettura: in creazione parte su "Bozza", in una pratica già salvata resta quello che ha |
+| Data di creazione | Sempre di sola lettura: in creazione è sempre la data odierna |
 | Note | Testo libero |
 
-Il prezzo si scrive a mano: la piattaforma non lo ricava dalle righe di prezzo
-del prodotto formativo.
+Il prezzo arriva dal percorso formativo scelto: è il prezzo del dettaglio del
+listino valido oggi (quello con la data di inizio validità più recente fra
+quelli non ancora scaduti). Se il percorso non ha un dettaglio di listino
+valido oggi, il salvataggio è bloccato con "Il percorso formativo scelto non
+ha un prezzo attivo.".
 
-L'applicazione non controlla che il numero della pratica sia unico.
+Il codice pratica (es. MT000042, A4U_CP000007) si genera solo per le
+università eCampus/LinkCampus/SSML/A4U che lo prevedono (oggi SSML e A4U): il
+prefisso dipende dal tipo di corso del percorso scelto, il numero è
+progressivo e non si ripete mai, nemmeno fra pratiche create nello stesso
+istante. Per SSML lo stesso codice viene copiato anche nel Codice ASG interno
+della pratica. Se il tipo di corso del percorso non ha un prefisso previsto,
+il salvataggio è bloccato con un errore.
 
-Nota: l'obbligo di numero, stato, prezzo e data di creazione, e il formato del prezzo, sono applicati solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Nota: la scheda non offre ancora un modo per cambiare lo stato di una
+pratica già salvata, né per assegnarle un codice: arriveranno con una
+modifica separata.
+
+Nota: le regole di sola lettura di codice, prezzo, data di creazione e stato sono applicate solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 Una pratica può contenere anche dati che la scheda non mostra e non modifica:
-per esempio la firma, gli allegati, l'azienda, il consulente e l'indicazione
+per esempio gli allegati, l'azienda, il consulente e l'indicazione
 di rinnovo. Alcuni di questi dati finiscono nel documento PDF.
 
 Nota: in modifica la scheda cambia solo i campi elencati sopra, ma il sistema ne accetta anche altri, fra cui l'azienda, il consulente e il tipo di corso che decide i filtri della pagina Pratiche; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
@@ -222,22 +301,19 @@ Nota: in modifica la scheda cambia solo i campi elencati sopra, ma il sistema ne
 ### Salvataggio
 
 Il pulsante "Salva pratica" controlla i dati e salva. Durante il salvataggio
-mostra "Salvataggio…". I messaggi di controllo sono:
+mostra "Salvataggio…".
 
-- "Inserisci il numero della pratica."
-- "Seleziona lo stato della pratica."
-- "Inserisci un prezzo valido, con al massimo otto decimali."
-
-Solo per una pratica nuova:
+Solo per una pratica nuova, i messaggi di controllo sono:
 
 - "Seleziona lo studente."
-- "Seleziona l'aderente emittente."
 - "Seleziona il percorso formativo."
 - "Il percorso deve avere un'università associata."
-- "Inserisci la data di creazione."
+- "Il percorso formativo scelto non ha un prezzo attivo."
 
-Dopo una modifica riuscita compare "Pratica salvata.". Dopo una creazione
-riuscita si apre direttamente la scheda della nuova pratica, senza messaggio.
+Dopo un salvataggio riuscito si lascia la scheda: una modifica torna
+all'elenco di provenienza, una creazione apre direttamente la scheda della
+nuova pratica. In nessuno dei due casi resta visibile un messaggio di
+conferma sulla pagina di partenza.
 
 Il pulsante "Annulla" torna all'elenco senza salvare.
 
@@ -359,10 +435,9 @@ contratto ha anche una seconda firma, per l'approvazione delle clausole.
 - Gli esami non si inseriscono dalla piattaforma: non sono ancora gestiti
   nella scheda del sottoscrittore, e la sezione "Esami" mostra sempre "Nessun
   esame registrato.". Nel documento compaiono solo gli esami già registrati.
-- La scheda della pratica non permette di indicare firma, azienda e rinnovo.
-  Una pratica creata dalla piattaforma produce quindi un documento senza firma
-  e senza luogo, e risulta sempre come immatricolazione. Firma, luogo e
-  rinnovo compaiono solo nelle pratiche che li contengono già.
+- La firma si acquisisce nella sezione Firma della pratica e compare nei PDF
+  generati dopo il salvataggio. Azienda e rinnovo non si impostano dal modulo:
+  il luogo e il rinnovo dipendono dai dati già registrati.
 
 ### Corsi singoli e dati che non entrano nel modulo
 
@@ -380,8 +455,7 @@ per intero come testo nella stessa riga, riducendone la dimensione.
 Il vecchio modulo Link per i corsi singoli viene compilato con l'anno
 accademico della pratica al posto di quello prestampato. Le altre condizioni,
 informative e indicazioni di pagamento restano quelle degli originali forniti.
-Nuovi allegati, acquisizione della firma nell'applicazione e salvataggio remoto
-del documento non fanno parte di questa generazione.
+Nuovi allegati e salvataggio remoto del documento non fanno parte di questa generazione.
 
 ### Accordo di rateizzazione eCampus
 
@@ -449,3 +523,31 @@ il pulsante "Nuova" e il documento PDF restano disponibili anche a chi non ne
 ha.
 
 Nota: le abilitazioni sono applicate solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+
+
+## Messaggi della pratica
+
+La sezione Messaggi contiene la stessa conversazione e lo stesso storico di
+Universo, quando il collegamento è attivo. Si possono leggere i messaggi
+precedenti e inviare un testo nuovo. Dopo un'interruzione della connessione
+la pagina si ricollega e recupera ciò che manca. Un messaggio resta in attesa
+finché il servizio non ne conferma il salvataggio; Riprova evita un doppio invio.
+
+L'accesso è riservato ai partecipanti già autorizzati in Universo. Vedere una
+pratica, anche con ruolo Nazionale, non aggiunge automaticamente alla sua chat.
+Le conversazioni personali e i ticket non compaiono in questa pagina.
+Se il collegamento non è configurato o è indisponibile, viene mostrato un errore.
+
+Passare da Messaggi a Dati o Firma conserva la bozza. Ricaricare o abbandonare
+la pagina la perde: se un invio era in attesa, controllare prima lo storico.
+
+## Acquisire la firma
+
+Nella sezione Firma, Acquisisci firma apre l'area in cui disegnare con mouse,
+dito o penna. Cancella il disegno pulisce la bozza; Annulla chiude senza salvare.
+Salva firma registra il disegno nella pratica. La tela vuota non è accettata.
+
+Se esiste una firma, Sostituisci firma permette di disegnarne una nuova.
+La sostituzione avviene soltanto al salvataggio e riguarda i documenti generati
+successivamente. Se la firma cambia in un'altra finestra, il salvataggio viene
+fermato: usare Riprova per ricaricare la versione corrente prima di proseguire.

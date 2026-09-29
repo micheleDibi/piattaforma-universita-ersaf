@@ -201,13 +201,13 @@ Le migrazioni già applicate restano. Per annullarle si ripristina uno snapshot 
 
 **Notifiche reali.** Per attivarle servono due modifiche manuali sul server, che nessuna azione dello script esegue, e poi una pubblicazione:
 
-1. **In `shared/compose.env`:** `NOTIFICHE_REALI=si`. Con questa chiave ogni comando `compose` aggiunge all'API una rete dedicata con uscita verso l'esterno (`deploy/compose.notifiche.yml`, `deploy/remote/00-lib.sh:114-121`).
-2. **In `shared/api.env`:** i canali di invio reali, cioè `EMAIL_BACKEND=smtp` con i parametri SMTP e `SMS_BACKEND=skebby` con le credenziali del fornitore SMS. Senza quelle credenziali l'API non parte (`backend/src/notifiche/config_sms.py:16-19`, `backend/src/main.py:72-73`).
+1. **In `shared/compose.env`:** `NOTIFICHE_REALI=si`. Con questa chiave ogni comando `compose` aggiunge all'API una rete dedicata con uscita verso l'esterno (`deploy/compose.notifiche.yml`, `deploy/remote/00-lib.sh:124-131`).
+2. **In `shared/api.env`:** i canali di invio reali, cioè `EMAIL_BACKEND=smtp` con i parametri SMTP e `SMS_BACKEND=skebby` con le credenziali del fornitore SMS. Senza quelle credenziali l'API non parte (`backend/src/notifiche/config_sms.py:16-19`, `backend/src/main.py:74-75`).
 3. **Poi `-Action deploy`.** È il deploy a installare le regole di firewall di quella rete: uscita consentita solo verso le porte HTTPS e SMTP, rete locale e servizi del server bloccati (`deploy/remote/26-notifiche.sh:5-48`), con i limiti descritti in [Limiti noti](sicurezza.md#rete-e-deploy). Le regole restano installate e vengono riapplicate al riavvio del server.
 
 **Attenzione.** Le altre azioni che riavviano l'API (`start`, `rollback`, `restore-db`, `refresh-clone`, `publish-domain`, `unpublish-domain`) collegano l'API a quella rete ma non installano le regole. Eseguirne una dopo aver messo `NOTIFICHE_REALI=si` e prima del primo `deploy` lascia l'API con un'uscita verso l'esterno senza restrizioni, fino al deploy successivo (`deploy/remote/80-status.sh:42-48`, `deploy/remote/70-deploy.sh:46`). Vedi [Limiti noti](sicurezza.md#rete-e-deploy).
 
-Da quel momento i messaggi del collaudo partono davvero verso i destinatari presenti nel clone. La verifica del deploy non prova un invio reale: il collaudo gira con l'ambiente di sviluppo (`ERSAF_ENV=sviluppo`, `deploy/remote/20-install.sh:44`), quindi i controlli che in produzione pretendono l'invio via SMTP con un host configurato non si applicano (`backend/src/config.py:297-308`) e una configurazione SMTP incompleta non ferma l'avvio.
+Da quel momento i messaggi del collaudo partono davvero verso i destinatari presenti nel clone. La verifica del deploy non prova un invio reale: il collaudo gira con l'ambiente di sviluppo (`ERSAF_ENV=sviluppo`, `deploy/remote/20-install.sh:44`), quindi i controlli che in produzione pretendono l'invio via SMTP con un host configurato non si applicano (`backend/src/config.py:309-320`) e una configurazione SMTP incompleta non ferma l'avvio.
 
 **Con l'uscita EduNews24.** La porta HTTPS della rete EduNews24 (vedi sotto) vale per tutta l'API, e il fornitore SMS è un servizio HTTPS. Per questo, con `SMS_BACKEND=skebby` in `shared/api.env` e `NOTIFICHE_REALI` diverso da `si`, gli script non collegano la rete EduNews24 e lo segnalano con un avviso, una volta per azione; il deploy toglie anche la copia della sua configurazione in `shared/` e non aggiorna le regole. L'uscita è attiva per impostazione predefinita, quindi l'avviso si ripete a ogni azione finché non si attivano le notifiche reali o non si spegne l'uscita con `USCITA_EDUNEWS24=no` in `shared/compose.env`. Per gli SMS reali servono quindi le due modifiche descritte sopra in "Notifiche reali"; le email via SMTP sulla rete EduNews24 resterebbero comunque bloccate.
 
@@ -222,8 +222,8 @@ La sezione EduNews24 è attiva per impostazione predefinita, e con la configuraz
    - Una riga presente prevale sul predefinito anche se è vuota: `EDUNEWS24_HOST_MEDIA=` lascia la sezione senza immagini né video, `EDUNEWS24_BACKEND=disabilitato` la spegne, e `EDUNEWS24_URL_BASE=` vuota con il backend `http` impedisce all'API di partire. Le righe `EDUNEWS24_*` copiate da una versione precedente del file d'esempio, che spegneva la sezione e lasciava vuoti indirizzo e host dei media, vanno tolte o aggiornate.
    - L'host di `EDUNEWS24_URL_BASE` deve essere esattamente quello dei link canonici degli articoli, senza `www`: con un host diverso ogni voce viene scartata e il log dell'API lo segnala.
    - Un valore di `EDUNEWS24_BACKEND` diverso da `http`, `memoria` e `disabilitato`, o un valore non intero in una variabile numerica, impedisce all'API di partire anche a funzione spenta: la verifica del deploy fallisce e parte il rollback automatico. Il collaudo gira con l'ambiente di sviluppo, quindi `memoria` (dati inventati) vi è ammesso.
-2. **In `shared/compose.env`:** niente da scrivere. `USCITA_EDUNEWS24` assente, vuota o `si` lascia l'uscita attiva; qualunque altro valore la spegne, per esempio `no`, ma anche `SI`, `"si"` fra apici o `si` seguito da spazi. Con più righe vale l'ultima. Da sola la chiave non collega nulla: ogni comando `compose` aggiunge all'API la rete dedicata (`deploy/compose.edunews24.yml`) solo se valgono tutte e quattro queste condizioni (`compose_rel` in `deploy/remote/00-lib.sh:122-147`):
-   - la chiave è assente, vuota o vale `si` (`uscita_edunews24_attiva` in `deploy/remote/00-lib.sh:155-163`);
+2. **In `shared/compose.env`:** niente da scrivere. `USCITA_EDUNEWS24` assente, vuota o `si` lascia l'uscita attiva; qualunque altro valore la spegne, per esempio `no`, ma anche `SI`, `"si"` fra apici o `si` seguito da spazi. Con più righe vale l'ultima. Da sola la chiave non collega nulla: ogni comando `compose` aggiunge all'API la rete dedicata (`deploy/compose.edunews24.yml`) solo se valgono tutte e quattro queste condizioni (`compose_rel` in `deploy/remote/00-lib.sh:132-157`):
+   - la chiave è assente, vuota o vale `si` (`uscita_edunews24_attiva` in `deploy/remote/00-lib.sh:165-173`);
    - `NOTIFICHE_REALI` non vale `si` (vedi "Con le notifiche reali", più sotto);
    - `shared/api.env` non ha `SMS_BACKEND=skebby` (vedi [Email e SMS](#email-e-sms); controllo e avviso in `deploy/remote/00-lib.sh:66-84`);
    - esiste la copia della configurazione in `shared/`, che crea soltanto il deploy, dopo aver installato le regole.
@@ -454,3 +454,81 @@ python scripts/documentazione/timbra_changelog.py --ref=origin/main --versione=N
   - Analisi sintattica degli script PowerShell, che però non gira con la 5.1 e quindi non ne garantisce la compatibilità. Solo per le funzioni del timbro un test cerca alcune sintassi che la 5.1 non conosce.
   - Fine riga e struttura degli script remoti non sono verificate.
 - **Documento collegato.** Una pull request che tocca questi file deve aggiornare anche questo documento, oppure usare l'etichetta di esenzione. Controlli ed etichette sono descritti in [Documentazione](documentazione.md).
+
+
+## Chat nativa e client Universo
+
+Le migrazioni 017, 018 e 019 aggiungono i metadati compatibili con l'archivio condiviso.
+Il deploy monta `shared/chat-secrets` in sola lettura solo con `CHAT_NATIVA=si`
+in `shared/compose.env`, usando l'overlay `compose.chat.yml`. Le impostazioni
+`CHAT_*` e `REALTIME_*` sono in `shared/api.env`. Il backend aggiornato richiede
+sempre archivio e chiavi realtime configurati: API e socket partono normalmente,
+senza un flag applicativo. Il montaggio dei file segreti deve quindi essere
+presente prima dell'avvio. Avviare FastAPI non cambia database, non copia chiavi
+e non distribuisce il client Flutter o il Java. Non serve aprire
+una connessione API–Java: FastAPI legge l'archivio e verifica la sessione locale.
+
+L'avvio locale o sul clone isolato non richiede il passaggio di Universo.
+Per collegare entrambe le applicazioni allo stesso storico serve invece un
+dataset comune, con utenti, clienti, pratiche, storico, grant e sessioni coerenti.
+Il clone del collaudo resta isolato fino a una scelta esplicita. Pubblicare
+il client aggiornato sul solo namespace `/api/realtime` e coordinare il
+passaggio di tutti i writer e dei produttori di notifiche. Questo intervento
+non esegue tale passaggio. I vecchi delta limitati alle pratiche sono superati;
+dettagli e rollback in [servizio realtime](realtime.md#configurazione-e-passaggio-successivo).
+Le 017/018/019 non prevedono DROP delle tabelle condivise. La firma è indipendente.
+
+### Trasporto DB e WebSocket
+
+In produzione il trasporto DB predefinito è `DATABASE_TRASPORTO=verify-full`:
+impostare `DATABASE_CA_FILE` con un certificato CA montato in sola lettura.
+La CA deve verificare la catena del server e il certificato deve corrispondere
+all'host dell'URL. Non c'è un fallback al trust store di Windows/Linux né a
+una connessione non cifrata. L'assenza del supporto TLS lato server ferma il
+driver prima dell'invio delle credenziali.
+
+Per un MariaDB legacy privo di TLS esiste la scelta esplicita
+`DATABASE_TRASPORTO=rete-privata`: tutti gli URL usati devono indicare un IPv4
+letterale RFC1918 (10/8, 172.16/12 o 192.168/16), e `DATABASE_CA_FILE` deve
+essere vuoto. La scelta accetta intenzionalmente traffico non cifrato su quella
+rete; un nome DNS o un indirizzo pubblico viene rifiutato. Vale per DB primario
+e secondari. Il backend non modifica automaticamente la configurazione privata
+esistente: predisporla prima di pubblicare questa versione.
+
+L'immagine fissa Uvicorn e il trasporto WebSocket verificato: frame massimi
+16 KiB, coda ingresso 16, ping 30 s, attesa pong 100 s, compressione disattiva.
+La coda d'uscita applicativa e l'esecutore sono limitati separatamente.
+Il reverse proxy deve conservare l'upgrade e un timeout compatibile con il
+watchdog. Contratti e prove in [parità realtime](realtime-parita.md).
+
+### Preparazione del clone per il realtime completo
+
+Il clone principale esistente viene conservato. Per le conversazioni personali
+e i ticket serve anche il clone di `admin_gestionale_ticket` sullo stesso MariaDB,
+con schema `universita_ticket_collaudo` e permessi applicativi SELECT/INSERT/UPDATE/DELETE.
+L'export dalla sorgente resta in sola lettura; dump e backup delle chiavi rimangono
+in cartelle riservate del server. Non importare questi dati nelle fixture di test.
+Il clone non riceve automaticamente gli aggiornamenti del servizio originale.
+
+Il keyring storico si copia in `shared/chat-secrets`, leggibile dall'UID 10001;
+non va rigenerato se deve decifrare lo storico. Configurare anche chiave JWT,
+issuer/audience e `REALTIME_SCHEMA_TICKET`. Il token del produttore di collaudo
+è distinto da quello live. Nessun client o produttore live viene riconfigurato.
+
+Con `shared/db-tls/server.cnf` presente, il deploy aggiunge `compose.tls.yml`
+alle release che lo contengono. Il file MariaDB indica CA, certificato e chiave
+sotto `/run/secrets/db`; il certificato include il SAN DNS `db`. L'API monta
+soltanto la CA in `/run/secrets/db-ca.crt` e usa `ERSAF_ENV=produzione`,
+`DATABASE_TRASPORTO=verify-full` e `DATABASE_CA_FILE` con quel percorso.
+La chiave privata della CA resta fuori dai container. Il controllo dopo il
+rilascio deve confermare un cipher TLS nella sessione SQL dell'applicazione.
+Il server conserva l'accesso legacy sulla rete Docker interna per consentire
+il rollback alle immagini precedenti; il nuovo driver non ammette downgrade.
+
+Applicare anche la 020 dei contatori e la 021 per `notifiche.notifica_body`:
+il preflight realtime rifiuta la colonna legacy da 255 caratteri. La 021 mantiene
+il testo esistente ed è idempotente; il rollback conserva la capienza ampliata.
+Prima di interventi salvare il clone principale e lo schema ticket. L'azione
+`backup-db` e lo snapshot automatico delle migrazioni coprono il database
+principale; lo schema ticket richiede un export separato, nello stesso istante
+con tutti i writer fermi se serve un ripristino coerente dei due archivi.

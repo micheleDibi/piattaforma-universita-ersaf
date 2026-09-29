@@ -5,7 +5,7 @@
 
 Elenco delle operazioni esposte dal backend, raggruppate per categoria. Per ognuna:
 
-- **Accesso**: `pubblica`; `sfida di accesso` quando serve la sfida ottenuta con la password, prima che esista una sessione; `sessione` quando serve il cookie di sessione.
+- **Accesso**: `pubblica`; `sfida di accesso` quando serve la sfida ottenuta con la password, prima che esista una sessione; `sessione` quando serve il cookie di sessione; `token realtime` per il servizio condiviso; `token del produttore interno` per l'ingresso notifiche.
 - Le richieste che modificano dati passano anche dai controlli del browser e dal token CSRF descritti in [sicurezza](../sicurezza.md).
 - I controlli sul ruolo avvengono dentro le operazioni e qui non compaiono: vedi [ruoli e permessi](../../funzionale/ruoli-e-permessi.md) e i [limiti noti](../sicurezza.md#limiti-noti).
 - La risposta `422` per i dati non validi vale per tutte le operazioni con parametri o corpo e non viene ripetuta.
@@ -138,7 +138,7 @@ Aggiorna Dettaglio Azienda.
 Leggi Clienti.
 
 - **Accesso**: sessione
-- **Parametri**: `limit` (query): `integer`; `ruolo_codice` (query): `string | null`; `search` (query): `string | null`; `skip` (query): `integer`; `solo_attuatori` (query): `boolean`; `solo_sottoscrittori` (query): `boolean`; `solo_utenti` (query): `boolean`
+- **Parametri**: `limit` (query): `integer`; `ruolo_codice` (query): `string | null`; `search` (query): `string | null`; `skip` (query): `integer`; `solo_attivi` (query): `boolean`; `solo_attuatori` (query): `boolean`; `solo_sottoscrittori` (query): `boolean`; `solo_utenti` (query): `boolean`
 - **Corpo**: —
 - **Risposta**: `200` `list[ClienteResponse]`
 
@@ -156,7 +156,7 @@ Crea Cliente E Utente.
 Conta Clienti.
 
 - **Accesso**: sessione
-- **Parametri**: `ruolo_codice` (query): `string | null`; `search` (query): `string | null`; `solo_attuatori` (query): `boolean`; `solo_sottoscrittori` (query): `boolean`; `solo_utenti` (query): `boolean`
+- **Parametri**: `ruolo_codice` (query): `string | null`; `search` (query): `string | null`; `solo_attivi` (query): `boolean`; `solo_attuatori` (query): `boolean`; `solo_sottoscrittori` (query): `boolean`; `solo_utenti` (query): `boolean`
 - **Corpo**: —
 - **Risposta**: `200` `ConteggioClientiResponse`
 
@@ -252,7 +252,7 @@ Cambia Padre.
 Get All.
 
 - **Accesso**: sessione
-- **Parametri**: `attivo` (query): `integer | null`; `limit` (query): `integer`; `search` (query): `string | null`; `skip` (query): `integer`; `tipo_corso` (query): `string | null`; `universita` (query): `string | null`
+- **Parametri**: `attivo` (query): `integer | null`; `limit` (query): `integer`; `listino_tipo_corso_id` (query): `list[integer]`; `nome_universita_id` (query): `integer | null`; `search` (query): `string | null`; `skip` (query): `integer`; `tipo_corso` (query): `string | null`; `universita` (query): `string | null`; `valido_oggi` (query): `boolean`
 - **Corpo**: —
 - **Risposta**: `200` `list[ListinoTesta]`
 
@@ -505,6 +505,42 @@ Documento Disponibile.
 - **Corpo**: —
 - **Risposta**: `200` `dict`
 
+### `GET /pratiche/{pratica_id}/firma`
+
+Leggi Firma.
+
+- **Accesso**: sessione
+- **Parametri**: `pratica_id` (path, obbligatorio): `integer`
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `PUT /pratiche/{pratica_id}/firma`
+
+Salva Firma.
+
+- **Accesso**: sessione
+- **Parametri**: `pratica_id` (path, obbligatorio): `integer`
+- **Corpo**: `FirmaIn` (application/json) obbligatorio
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /pratiche/{pratica_id}/messaggi`
+
+Messaggi.
+
+- **Accesso**: sessione
+- **Parametri**: `pratica_id` (path, obbligatorio): `integer`; `cursor` (query): `string | null`
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /pratiche/{pratica_id}/messaggi/prepara`
+
+Prepara Messaggio.
+
+- **Accesso**: sessione
+- **Parametri**: `pratica_id` (path, obbligatorio): `integer`
+- **Corpo**: `MessaggioIn` (application/json) obbligatorio
+- **Risposta**: `200` schema non dichiarato
+
 ## Profilo personale
 
 ### `GET /profilo/me`
@@ -515,6 +551,170 @@ Mio Profilo.
 - **Parametri**: —
 - **Corpo**: —
 - **Risposta**: `200` `ProfiloPersonale`
+
+## Realtime
+
+### `GET /realtime/api/v1/conversations`
+
+Conversazioni.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/messages`
+
+Messaggi.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/messages/attention`
+
+Stato Messaggi.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/api/v1/messages/attention`
+
+Visti Messaggi.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/messages/read`
+
+Messaggi Letti.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/api/v1/messages/read`
+
+Leggi Messaggio.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/notifications`
+
+Notifiche.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/api/v1/notifications`
+
+Leggi Notifica.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/notifications/attention`
+
+Stato Notifiche.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/api/v1/notifications/attention`
+
+Viste Notifiche.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/auth/login`
+
+Entra.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/auth/logout`
+
+Esci.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `204` nessun contenuto
+
+### `POST /realtime/auth/recover`
+
+Recupera.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/auth/refresh`
+
+Rinnova.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/crypto/key`
+
+Chiave.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/health`
+
+Health.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/internal/notifications`
+
+Notifica.
+
+- **Accesso**: token del produttore interno
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/ready`
+
+Ready.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
 
 ## Ruoli
 
@@ -1274,6 +1474,13 @@ Aggiorna Utente.
 | `pratica_stato_id` | `integer` | sì |
 | `totale` | `integer` | sì |
 
+### CorsoSingoloSelezionato
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `listTesta_id` | `integer` | sì |
+| `prezzo` | `number \| string \| null` | no |
+
 ### ElencoCategorie
 
 | Campo | Tipo | Obbligatorio |
@@ -1306,6 +1513,13 @@ Aggiorna Utente.
 | `cliente_cognome` | `string \| null` | no |
 | `cliente_id` | `integer` | sì |
 | `cliente_nome` | `string \| null` | no |
+
+### FirmaIn
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `immagine` | `string` | sì |
+| `versione` | `string` | sì |
 
 ### IndirizzoProfilo
 
@@ -1361,9 +1575,13 @@ Aggiorna Utente.
 | `listTesta_updated_at` | `string(date-time) \| null` | no |
 | `listTesta_updated_by` | `integer \| null` | no |
 | `listino_attivoSN` | `integer` | no |
+| `listino_corsoLaurea_descrizione` | `string \| null` | no |
 | `listino_corsoLaurea_id` | `integer \| null` | no |
+| `listino_durataLaurea_descrizione` | `string \| null` | no |
 | `listino_durataLaurea_id` | `integer \| null` | no |
+| `listino_facolta_descrizione` | `string \| null` | no |
 | `listino_facolta_id` | `integer \| null` | no |
+| `listino_modalita_descrizione` | `string \| null` | no |
 | `listino_modalita_id` | `integer \| null` | no |
 | `listino_tipoCorso_descrizione` | `string \| null` | no |
 | `listino_tipoCorso_id` | `integer \| null` | no |
@@ -1426,6 +1644,13 @@ Aggiorna Utente.
 |---|---|---|
 | `utente_password` | `string` | sì |
 | `utente_username` | `string` | sì |
+
+### MessaggioIn
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `clientMessageId` | `string` | sì |
+| `testo` | `string` | sì |
 
 ### Notizia
 
@@ -1496,6 +1721,7 @@ Aggiorna Utente.
 | `cliente_consulente_id` | `integer \| null` | no |
 | `cliente_emittente_aderente_id` | `integer \| null` | no |
 | `cliente_id` | `integer \| null` | no |
+| `corsi_singoli` | `list[CorsoSingoloSelezionato] \| null` | no |
 | `listTesta_corso2_id` | `integer \| null` | no |
 | `listTesta_corso3_id` | `integer \| null` | no |
 | `listTesta_id` | `integer \| null` | no |

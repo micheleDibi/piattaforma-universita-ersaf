@@ -268,13 +268,29 @@ class PraticaBase(BaseModel):
     pratica_pathFile_rateizzazione: Optional[str] = Field(default=None, max_length=255)
 
 
+class CorsoSingoloSelezionato(BaseModel):
+    """Un corso scelto per una pratica di tipo Corsi Singoli (vedi crea_pratica
+    in routers.py): diventa una riga in pratiche_listini. Il prezzo arriva dal
+    client gia' calcolato (il dettaglio del listino valido oggi, la stessa
+    regola di pratica_prezzo per le altre pratiche: vedi dettaglioAttuale in
+    frontend/src/lib/praticaForm.js), il server non lo ricalcola."""
+
+    listTesta_id: int
+    prezzo: Optional[Decimal] = None
+
+
 class PraticaCreate(PraticaBase):
     """I campi qui sotto NON hanno default a db ne' server_default: vanno sempre forniti.
 
     Upload/firma (blob) si gestiscono via endpoint dedicati, non in questo payload.
     """
 
-    pass
+    # Solo per una pratica di tipo Corsi Singoli: TUTTI i corsi scelti,
+    # compreso il primo (che il router copia anche in listTesta_id, come per
+    # ogni altra pratica: e' la riga "principale" della pratica). Assente per
+    # tutti gli altri tipi di corso. Non e' un campo di PraticaUpdate: dopo la
+    # creazione l'elenco dei corsi non si modifica piu' da qui.
+    corsi_singoli: Optional[List[CorsoSingoloSelezionato]] = None
 
 
 class PraticaUpdate(BaseModel):

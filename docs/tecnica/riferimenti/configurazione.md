@@ -1,18 +1,22 @@
 # Variabili di configurazione
 
-> Pagina generata da `python scripts/documentazione/genera.py` a partire da `backend/src/config.py`, `backend/src/notifiche/config_sms.py`, i file `.env.example` e gli script di `deploy/`.
+> Pagina generata da `python scripts/documentazione/genera.py` a partire da `backend/src/config.py`, `backend/src/notifiche/config_sms.py`, `backend/src/chat_pratiche/configurazione.py`, i file `.env.example` e gli script di `deploy/`.
 > Non modificarla a mano: rilancia il comando dopo aver cambiato le fonti.
 
 Nomi, valori predefiniti e obbligatorietà delle variabili. I valori reali non compaiono mai: i segreti sono indicati con "—". Come preparare l'ambiente: [sviluppo locale](../sviluppo-locale.md) e [deploy](../deploy.md).
 
 ## Backend (`backend/.env`)
 
-Letto da `backend/src/config.py`. "Obbligatoria" indica le variabili senza le quali la verifica di avvio rifiuta di partire, ricavate dal codice: "sì" in ogni ambiente, "in produzione" solo con `ERSAF_ENV=produzione`. La verifica controlla anche coerenza e formato di altri valori.
+Letto da `backend/src/config.py` e `backend/src/chat_pratiche/configurazione.py`. "Obbligatoria" indica le variabili senza le quali la verifica di avvio rifiuta di partire, ricavate dal codice: "sì" in ogni ambiente, "in produzione" solo con `ERSAF_ENV=produzione`. La verifica controlla anche coerenza e formato di altri valori.
 
 | Variabile | Tipo | Predefinito | Obbligatoria | Descrizione |
 |---|---|---|---|---|
 | `ERSAF_ENV` | sviluppo \| test \| produzione | `sviluppo` | no | sviluppo \| test \| produzione In "produzione" la verifica di avvio diventa piu' severa: pretende EMAIL_BACKEND=smtp, FRONTEND_BASE_URL in https e nessun '*' nei CORS. |
 | `DATABASE_URL` | testo | (vuoto) | sì | Nessun valore di default nel codice: prima c'era un fallback con credenziali di prova cablate che, in assenza di .env, faceva connettere l'app senza dirlo a nessuno. La verifica di avvio rifiuta ancora quel valore. |
+| `DATABASE_TRASPORTO` | testo | `verify-full` | no | Trasporto MariaDB in produzione: CA esplicita, hostname e certificato verificati. L'eccezione rete-privata richiede un IPv4 RFC1918 letterale e CA vuota. In sviluppo/test e ammesso il database locale senza TLS. |
+| `DATABASE_CA_FILE` | testo | (vuoto) | no |  |
+| `DATABASE_URL_GESTIONE_PAGAMENTI` | testo | (vuoto) | no | Due database amministrativi separati, sullo stesso server del DB principale (stesso indirizzo, stesso utente e password), ma con nome diverso. Facoltativi e non ancora usati: engine e sessioni si creano solo alla prima richiesta esplicita. Se mancano o non sono validi, l'import resta possibile. Nei test questi indirizzi vengono ignorati: gli override TEST_DATABASE_URL_* sono ammessi solo su MariaDB loopback:3307/ersaf_test. |
+| `DATABASE_URL_SYS_ADMIN` | testo | (vuoto) | no |  |
 | `PASSWORD_RESET_TOKEN_PEPPER` | testo | (vuoto) | sì | Nel database non finisce mai un token in chiaro: solo SHA-256(token\|\|pepper). Il pepper sta qui e NON nel database, cosi' chi legge un backup non puo' derivare i token. PASSWORD_RESET_TOKEN_PEPPER, SESSION_TOKEN_PEPPER e TOTP_CHIAVE devono essere diversi fra loro e lunghi almeno 32 byte. |
 | `SESSION_TOKEN_PEPPER` | testo | (vuoto) | sì | Nel database non finisce mai un token in chiaro: solo SHA-256(token\|\|pepper). Il pepper sta qui e NON nel database, cosi' chi legge un backup non puo' derivare i token. PASSWORD_RESET_TOKEN_PEPPER, SESSION_TOKEN_PEPPER e TOTP_CHIAVE devono essere diversi fra loro e lunghi almeno 32 byte. |
 | `TOTP_CHIAVE` | testo | (vuoto) | sì | Cifra a riposo i segreti degli authenticator (secondo fattore del Nazionale). Diversa dai pepper. Se si perde, tutti devono riattivare l'app: va nel backup dei segreti insieme alle altre due. |
@@ -54,6 +58,28 @@ Letto da `backend/src/config.py`. "Obbligatoria" indica le variabili senza le qu
 | `EDUNEWS24_STANTIO_MASSIMO_SECONDI` | intero | `86400` | no | Per quanto una copia scaduta puo' ancora coprire un guasto, in secondi (massimo 86400). |
 | `EDUNEWS24_PAUSA_RIPIEGO_SECONDI` | intero | `30` | no | Prima pausa dopo un guasto (timeout, rete, errore del server, risposta non valida) o dopo un rifiuto senza Retry-After valido, in secondi (1-3600): raddoppia a ogni guasto consecutivo fino a 3600 e si azzera al primo successo. |
 | `EDUNEWS24_RICHIESTE_AL_MINUTO` | intero | `30` | no | Chiamate massime verso EduNews24 in 60 secondi, per tutta l'applicazione (1-40). |
+| `CHAT_CHIAVI_FILE` | testo | (vuoto) | no | Chat e realtime sono parte del backend: applicare 017/018/019 prima dell'avvio. Keyring compatibile con Universo: elenco versione=percorso, separato da virgole. Ogni file contiene 32 byte casuali codificati Base64, mai una password utente. |
+| `CHAT_CHIAVE_VERSIONE` | intero | `1` | no | Versione corrente presente nel keyring; conservare le versioni storiche. |
+| `CHAT_UNIVERSO_JWT_FILE` | testo | (vuoto) | no | File della chiave JWT condivisa (Base64), obbligatorio all'avvio del backend. Il servizio realtime verifica ed emette token; il percorso cookie resta distinto. |
+| `CHAT_UNIVERSO_ISSUER` | testo | `universo-realtime` | no | Issuer e audience devono corrispondere alla sessione Universo dello stesso ambiente. |
+| `CHAT_UNIVERSO_AUDIENCE` | testo | `universo-realtime-ws` | no |  |
+| `CHAT_UNIVERSO_ORIGINI` | testo | (vuoto) | no | Origini HTTPS esplicite del client Universo, separate da virgole. |
+| `CHAT_UNIVERSO_INATTIVITA_SECONDI` | intero | `86400` | no | Scadenza di inattivita: deve coincidere con AUTH_SESSION_IDLE_TTL_SECONDS di Universo. |
+| `REALTIME_SCHEMA_TICKET` | testo | `admin_gestionale_ticket` | no | Schema dei messaggi personali e ticket, sullo stesso MariaDB di DATABASE_URL. |
+| `REALTIME_ACCESSO_SECONDI` | intero | `900` | no | Durata del token di accesso in secondi (60-3600). |
+| `REALTIME_REFRESH_GIORNI` | intero | `30` | no | Durata assoluta della sessione e del refresh token (1-90 giorni). |
+| `REALTIME_PRODUCER_TOKEN_FILE` | testo | (vuoto) | no | File del token separato per i produttori di notifiche, testo di 32-512 caratteri. Vuoto rende indisponibile soltanto POST /realtime/internal/notifications. |
+| `REALTIME_MANUTENZIONE_SECONDI` | intero | `60` | no | Intervallo in secondi di pulizia e audit delle notifiche legacy (10-3600). |
+| `REALTIME_MAX_CONNECTIONS` | intero | `2000` | no | Ammissione atomica: totale, per utente e per famiglia di autenticazione. |
+| `REALTIME_MAX_CONNECTIONS_PER_USER` | intero | `8` | no |  |
+| `REALTIME_MAX_CONNECTIONS_PER_AUTH_SESSION` | intero | `4` | no |  |
+| `REALTIME_COMMAND_WORKERS` | intero | `2` | no | Comandi ordinati per utente con code limitate. |
+| `REALTIME_COMMAND_QUEUE` | intero | `256` | no |  |
+| `REALTIME_COMMANDS_PER_USER` | intero | `8` | no |  |
+| `REALTIME_OUTBOUND_QUEUE_FRAMES` | intero | `64` | no | Memoria in uscita: frame, byte per socket e byte per processo. |
+| `REALTIME_OUTBOUND_QUEUE_BYTES` | intero | `131072` | no |  |
+| `REALTIME_OUTBOUND_GLOBAL_QUEUE_BYTES` | intero | `134217728` | no |  |
+| `REALTIME_SEND_TIMEOUT_MILLIS` | intero | `10000` | no | Timeout totale dell'invio, inclusa l'attesa dietro un invio bloccato. |
 
 ## SMS (`backend/.env`)
 
@@ -72,7 +98,9 @@ Letto da `backend/src/notifiche/config_sms.py`.
 
 | Variabile | Dove |
 |---|---|
-| `TEST_DATABASE_URL` | `backend/src/database.py` |
+| `TEST_DATABASE_URL` | `backend/src/database.py`, `backend/src/database_secondari.py` |
+| `TEST_DATABASE_URL_GESTIONE_PAGAMENTI` | `backend/src/database_secondari.py` |
+| `TEST_DATABASE_URL_SYS_ADMIN` | `backend/src/database_secondari.py` |
 
 ## Deploy (`compose.env` sul server)
 
@@ -80,6 +108,7 @@ Gestito dagli script di deploy; non contiene segreti. Le variabili senza descriz
 
 | Variabile | Dove | Descrizione |
 |---|---|---|
+| `CHAT_NATIVA` | `deploy/compose.env.example`, `deploy/remote/00-lib.sh` | Altre chiavi che gli script scrivono quando servono: ESPOSIZIONE e WEB_LAN_IP per la pubblicazione sulla LAN, NOTIFICHE_REALI per gli invii veri di email e SMS. VERSIONE_NUMERO e VERSIONE_AGGIORNATA arrivano dal deploy e non si scrivono qui. Mount delle chiavi chat, da abilitare solo al passaggio coordinato di Universo. |
 | `ESPOSIZIONE` | `deploy/remote/00-lib.sh`, `deploy/remote/25-esposizione.sh` |  |
 | `NOTIFICHE_REALI` | `deploy/remote/00-lib.sh`, `deploy/remote/26-notifiche.sh`, `deploy/remote/27-edunews24.sh` |  |
 | `RELEASE_DIR` | `deploy/compose.env.example`, `deploy/compose.yml`, `deploy/remote/70-deploy.sh` | Cartella della release attiva sul server, ricavata da RELEASE_TAG. |

@@ -31,8 +31,9 @@ rimanda ai documenti specifici:
 Le versioni esatte stanno in `backend/requirements.txt` e in
 `frontend/package.json`.
 
-Le rotte dell'API sono funzioni sincrone, eseguite da FastAPI in un pool di
-thread condiviso, con una sola eccezione asincrona. Anche il React Compiler è
+Le operazioni DB sono eseguite nel pool di thread. Le rotte asincrone gestiscono
+stream di richiesta e WebSocket e spostano il lavoro sincrono nel pool.
+Anche il React Compiler è
 attivo nella build del frontend. Le due regole sono in
 [convenzioni.md](convenzioni.md). Una chiamata lenta a un servizio esterno
 occupa uno di quei thread: il modulo EduNews24 ne limita il numero (vedi
@@ -48,7 +49,8 @@ alcuni hanno solo i modelli.
 |---|---|
 | `main.py` | Crea l'app: avvio con verifica della configurazione, CORS, middleware browser, router, gestori di errore, `/salute` |
 | `config.py` | Impostazioni lette da `backend/.env` e verifica di avvio |
-| `database.py` | Engine, sessioni (`get_db`), base dei modelli |
+| `database.py` | Engine, sessioni (`get_db`), base dei modelli; due connessioni facoltative in più verso database amministrativi separati, non ancora usate |
+| `database_secondari.py` | Inizializzazione su richiesta delle sessioni amministrative, errori senza valori sensibili e isolamento del database di test |
 | `errori.py` | Eccezioni dell'applicazione, senza dipendenze |
 | `logging_config.py` | Logging con redazione dei valori sensibili |
 | `auth/` | Login, sessione, logout, recupero password, impersonificazione, limiti del login, dipendenze di sessione (`dipendenze.py`), controlli di ruolo (`autorizzazioni.py`) |
@@ -95,6 +97,17 @@ Quello che serve sapere qui:
   fallire l'import: l'avvio si ferma comunque.
 - `TEST_DATABASE_URL`, se impostata, ha la precedenza su `DATABASE_URL`
   (`database.py`).
+- `DATABASE_URL_GESTIONE_PAGAMENTI` e `DATABASE_URL_SYS_ADMIN` preparano due
+  connessioni verso due database amministrativi separati, sullo stesso server
+  del database principale (stesso utente e password, nome diverso). A
+  differenza di `DATABASE_URL` sono facoltative: `get_db_gestione_pagamenti()`
+  e `get_db_sys_admin()` creano engine e sessioni solo alla prima richiesta.
+  Un valore assente o malformato produce un errore controllato al loro uso,
+  senza mostrare l'indirizzo e senza impedire l'import del backend.
+  In ambiente di test, o quando è impostato `TEST_DATABASE_URL`, ignorano gli
+  indirizzi ordinari: gli override `TEST_DATABASE_URL_GESTIONE_PAGAMENTI` e
+  `TEST_DATABASE_URL_SYS_ADMIN` devono puntare al solo database usa-e-getta
+  descritto in [Test](test.md). Non c'è ancora nessuna funzionalità che li usa.
 
 L'elenco delle variabili è in
 [riferimenti/configurazione.md](riferimenti/configurazione.md).
@@ -558,3 +571,31 @@ La pubblicazione parte da Windows con `scripts/deploy.ps1` e usa gli script in
 l'avvio o la verifica della nuova release falliscono, lo script prova a
 riattivare la release precedente; le migrazioni già applicate restano.
 Procedura completa: [deploy.md](deploy.md).
+
+
+## Chat delle pratiche e firma
+
+Il modulo `chat_pratiche` gestisce nativamente sessione, partecipanti, cifratura
+e scrittura nell'archivio legacy condiviso della conversazione. HTTP e WebSocket sono limitati
+alla pratica autorizzata; la firma usa il blob esistente e il generatore PDF comune.
+Contratto, configurazione e decisioni sono in [chat e firma](chat-e-firma.md).
+
+Il modulo `realtime` centralizza tutte le funzioni del servizio condiviso:
+sessioni Bearer, conversazioni personali/pratiche/ticket, notifiche, presenza,
+letture e consegne persistenti. La scrittura cookie delle pratiche è un
+adattatore dello stesso dominio. Nessuna chiamata al servizio Java;
+coordinamento fra worker su MariaDB, schemi legacy sullo stesso server.
+Il servizio completo parte con il backend: preflight, API, WebSocket e lavori
+periodici non dipendono da flag o dall'integrazione del client Universo.
+Contratto, migrazioni 018/019 e configurazione in [realtime](realtime.md).
+Il confronto dei meccanismi con il servizio precedente è tracciato nella
+[matrice di parità](realtime-parita.md): esecutori limitati, invii serializzati,
+quorum delle conferme, conservazione degli archivi e protezioni crittografiche.
+
+`database_trasporto` centralizza le opzioni PyMySQL del DB principale e dei
+secondari: pool di otto connessioni senza overflow, acquisizione e connessione
+entro cinque secondi, lettura/scrittura entro dieci. In produzione richiede
+TLS con CA esplicita e verifica dell'host; l'eccezione non cifrata è ammessa
+solo con una scelta esplicita e indirizzi privati letterali. Le connessioni
+secondarie restano lazy. La policy viene applicata prima dell'handshake,
+senza includere credenziali nei messaggi d'errore. Dettagli in [deploy](deploy.md).

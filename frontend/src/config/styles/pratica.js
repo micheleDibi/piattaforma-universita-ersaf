@@ -11,6 +11,10 @@ export const STILI_PRATICA = {
   azioneDocumento: pulsante("secondario"),
   iconaAzione: "size-icona-piccola shrink-0",
   iconaAttesa: "size-icona-piccola shrink-0 animate-spin",
+  // Un corso scelto per Corsi Singoli (RelazioniPratica.jsx): stesso stile
+  // del riquadro del padre in anagrafica.js, qui con un pulsante per toglierlo.
+  elencoCorsi: "space-y-1",
+  rigaCorso: "flex items-center justify-between gap-2.5 rounded-controllo border border-bordo bg-superficie-tenue py-1.5 pr-1 pl-3.5",
 };
 
 // Pagina Pratiche (/pratiche senza universita'): la larghezza del design
@@ -20,4 +24,20 @@ export const STILI_PANNELLO_PRATICHE = {
   pagina: `${contenutoPagina("pagina", { marginiInclusi: true })} pannello-pratiche`,
   titolo: titoloPagina(),
   descrizione: descrizionePagina(),
+};
+
+// Selezioni nel Dialogo condiviso: dimensioni e focus centralizzati.
+export const STILI_MODALE_TABELLA = {
+  contenuto: "dialogo__selezione",
+  titolo: "text-lg font-semibold text-testo",
+  corpo: "mt-4 min-h-0 flex-1 overflow-y-auto",
+  intestazioneColonna: "px-3 py-2 text-left text-etichetta uppercase tracking-wider text-testo-tenue",
+  cella: "px-3 py-2.5 align-top",
+  riga: "border-t border-divisore",
+  rigaSelezionabile: "cursor-pointer hover:bg-riga-hover",
+  rigaScelta: "cursor-pointer bg-primario/10 hover:bg-primario/15",
+  rigaBloccata: "opacity-50",
+  // Piede della selezione multipla: conteggio/totale a sinistra, Conferma a destra.
+  piede: "mt-3 flex items-center justify-between gap-3 border-t border-divisore pt-3",
+  totale: "text-sm text-testo-forte",
 };

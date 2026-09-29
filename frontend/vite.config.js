@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
   // solo con localhost, quindi niente CORS. Senza la variabile non cambia nulla.
   const env = loadEnv(mode, process.cwd(), "");
   const proxy = env.ERSAF_API_PROXY
-    ? { "/api": { target: env.ERSAF_API_PROXY, changeOrigin: true, secure: true } }
+    ? { "/api": { target: env.ERSAF_API_PROXY, changeOrigin: true, secure: true, ws: true } }
     : undefined;
 
   return {

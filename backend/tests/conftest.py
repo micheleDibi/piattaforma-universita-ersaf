@@ -43,6 +43,7 @@ os.environ.setdefault("BCRYPT_COST", "4")
 
 os.environ.setdefault("EMAIL_BACKEND", "memoria")
 os.environ["SMS_BACKEND"] = "memoria"
+os.environ["REALTIME_SCHEMA_TICKET"] = "ersaf_test"
 os.environ.setdefault("FRONTEND_BASE_URL", "https://test.example.org")
 os.environ.setdefault("CORS_ORIGINS", "https://test.example.org")
 os.environ.setdefault("WEBAUTHN_RP_ID", "test.example.org")
@@ -81,6 +82,7 @@ SCHEMA_BASE = RADICE / "db" / "test" / "schema_base.sql"
 
 # Ordine figlio -> padre. `ruoli` non compare: e' lookup, non stato.
 TABELLE_DA_SVUOTARE = [
+    "pratiche_contatori",
     "auth_passkey", "auth_totp", "auth_mfa_utente",
     "otp_sfide", "otp_contatti", "otp_attivazioni", "otp_limiti",
     "auth_login_limite",
@@ -162,6 +164,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
 # =============================================================================
 from src.database import SessionLocal, engine  # noqa: E402
 from tests.support.sqlrunner import esegui_file_sql  # noqa: E402
+from tests.support.realtime_avvio import realtime_configurato  # noqa: E402,F401
 
 
 @pytest.fixture(scope="session")
@@ -283,7 +286,7 @@ def tabella_pratiche(db_pulito):
 # Client HTTP
 # =============================================================================
 @pytest.fixture
-def client(db_pulito):
+def client(db_pulito, realtime_configurato):
     """Client di prova con un indirizzo IP VALIDO.
 
     Senza il parametro `client`, TestClient mette in request.client.host la
@@ -308,7 +311,7 @@ def client(db_pulito):
 
 
 @pytest.fixture
-def client_da(db_pulito):
+def client_da(db_pulito, realtime_configurato):
     """Fabbrica di client con indirizzo IP arbitrario, per il rate limit."""
     from fastapi.testclient import TestClient
 

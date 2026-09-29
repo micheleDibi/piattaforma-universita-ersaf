@@ -2,7 +2,6 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, status
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
@@ -46,6 +45,9 @@ from src.utenti.routers import router as utente_router
 from src.universita.routers import router as universita_router
 from src.listini_testa.routers import router as listini_testa_router
 from src.pratiche.routers import router as pratiche_router
+from src.chat_pratiche.socket import router as chat_socket_router
+from src.realtime.rotte import router as realtime_router
+from src.chat_pratiche.cors import CorsApplicazioni
 from src.profilo.routers import router as profilo_router
 from src.listino_tipoCorso.routers import router as listini_tipi_corsi_router
 from src.edunews24.routers import router as edunews24_router
@@ -79,32 +81,35 @@ async def lifespan(app: FastAPI):
         impostazioni.email_backend,
         impostazioni.bcrypt_cost,
     )
-    yield
+    from src.realtime import avvio as realtime
+    async with realtime.servizio(app):
+        yield
 
 
 app = FastAPI(title="Piattaforma Universita ERSAF", lifespan=lifespan)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=get_impostazioni().lista_cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["Retry-After"],
-)
+app.add_middleware(CorsApplicazioni)
 
 
 @app.middleware("http")
 async def proteggi_richieste_browser(request: Request, call_next):
     try:
-        verifica_richiesta_browser(request)
+        # Il namespace realtime ignora i cookie: accesso/refresh e bearer
+        # hanno controlli dedicati. Non estende le origini delle API cookie.
+        if not request.url.path.startswith("/realtime/"):
+            verifica_richiesta_browser(request)
     except HTTPException as errore:
         return JSONResponse(status_code=errore.status_code, content={"detail": errore.detail})
     risposta = await call_next(request)
+    if request.url.path.startswith("/realtime/"):
+        risposta.headers.update({"Cache-Control":"no-store","Pragma":"no-cache",
+            "X-Content-Type-Options":"nosniff","Referrer-Policy":"no-referrer"})
     if request.url.path.startswith(("/auth/", "/profilo/", "/edunews24/")) or "/contatti" in request.url.path or risposta.status_code in (401, 403, 429):
         risposta.headers["Cache-Control"] = "no-store"
     return risposta
 
+app.include_router(chat_socket_router)
+app.include_router(realtime_router)
 app.include_router(utente_router)
 app.include_router(ruolo_router)
 app.include_router(cliente_router)
@@ -121,6 +126,12 @@ app.include_router(pratiche_router)
 app.include_router(profilo_router)
 app.include_router(listini_tipi_corsi_router)
 app.include_router(edunews24_router)
+
+
+@app.exception_handler(HTTPException)
+async def gestisci_errore_http(request: Request, exc: HTTPException):
+    campo = "error" if request.url.path.startswith("/realtime/") else "detail"
+    return JSONResponse(status_code=exc.status_code,content={campo:exc.detail},headers=exc.headers)
 
 
 @app.exception_handler(IntegrityError)
@@ -173,6 +184,8 @@ async def gestisci_errori_validazione(request: Request, exc: RequestValidationEr
 @app.exception_handler(SQLAlchemyError)
 async def gestisci_errore_database(request: Request, exc: SQLAlchemyError):
     logger.exception("errore di database su %s %s", request.method, request.url.path)
+    if request.url.path.startswith("/realtime/"):
+        return JSONResponse(status_code=503,content={"error":"realtime_unavailable"})
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "Errore interno. Riprova, e se persiste segnala l'errore."},

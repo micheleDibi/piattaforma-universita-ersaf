@@ -6,11 +6,16 @@ Queste sono le regole di lavoro per chi modifica il codice. Le regole della docu
 
 Questa è l'unica descrizione del flusso: gli altri documenti rimandano qui.
 
-1. **Ramo personale.** Si lavora su un ramo proprio, mai direttamente su `main`.
+1. **Ramo personale esistente.** Si lavora sul ramo concordato, mai direttamente su `main`. Un nuovo ramo si crea solo quando espressamente autorizzato.
 
    ```
-   git switch -c <ramo>
+   git switch <ramo-esistente>
    ```
+
+   Ogni checkout ha un solo autore di modifiche alla volta. Per lavoro parallelo
+   si usa un worktree isolato e temporaneo: alla fine si integra il lavoro
+   verificato sul ramo concordato, si rimuove il worktree e si elimina
+   l'eventuale ramo temporaneo autorizzato.
 
 2. **Commit frequenti.** I messaggi dicono che cosa cambia (vedi "Stile dei commit").
 3. **Push del ramo** su GitHub.
@@ -149,7 +154,7 @@ Nei log vanno solo gli identificativi: mai token, impronte, hash, password o ind
   - gli indirizzi dei profili social di EduNews24 in `frontend/src/config/edunews24.js`, sorvegliati da `frontend/tests/edunews24Sorgenti.test.js`;
   - i valori predefiniti dell'indirizzo base dell'API, dell'host dei media di EduNews24 e del contatto per lo User-Agent (l'indirizzo generico dell'ente) in `backend/src/config.py`, ripetuti solo nelle righe corrispondenti di `backend/.env.example`: `backend/tests/unit/test_config.py` controlla che il file d'esempio riporti i predefiniti del codice senza scriverli, e le pagine generate li redigono.
 
-  Nei documenti si controlla a mano: i valori non si scrivono, si descrivono. Alcuni commenti e test meno recenti contengono ancora valori reali, per esempio `backend/src/config.py:107`, `frontend/src/config/identita.js:4` e `backend/tests/unit/test_config.py:29`: si sostituiscono con valori inventati quando si modificano quelle righe.
+  Nei documenti si controlla a mano: i valori non si scrivono, si descrivono. Alcuni commenti e test meno recenti contengono ancora valori reali, per esempio `backend/src/config.py:119`, `frontend/src/config/identita.js:4` e `backend/tests/unit/test_config.py:29`: si sostituiscono con valori inventati quando si modificano quelle righe.
 - **Codice meno recente.** Diversi componenti contengono ancora testi e colori scritti in linea, per esempio i moduli dell'anagrafica.
 
 ### Icone

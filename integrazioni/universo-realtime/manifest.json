@@ -1,0 +1,42 @@
+[
+  {
+    "file": "lib/services/realtime/realtime_socket_transport.dart",
+    "sha256_prima": "4e763f1f58bd0da62522434344a030cdd109072206fc35fb588c2568bc85ac2c",
+    "sha256_dopo": "76350490b33191aed06858993e5e533cc48111989ccdf680dedce78d175d0aa2"
+  },
+  {
+    "file": "lib/services/realtime/realtime_read_api_client.dart",
+    "sha256_prima": "d05a45633816f9f51e449875ce6727043f38009549acab2f7ddf4f0ecb6b8709",
+    "sha256_dopo": "3846b68015b2f0b4df7e55111bd6bd7ec7da55ec3f8b271f25600b13ee009512"
+  },
+  {
+    "file": "lib/services/realtime/realtime_message_key_client.dart",
+    "sha256_prima": "683d79b722f3b3968a581ad2d076e68f9e08999316d5e387c96c15a48f86a279",
+    "sha256_dopo": "060d47335196b02705ca3360e4532292a9672d6b4b8238b1cbbbbcb17ea1091a"
+  },
+  {
+    "file": "lib/models/messages/realtime_inbound_chat.dart",
+    "sha256_prima": "586feb12e71ee232df7f2a98488e26f0b076b27eca806af55d1d9b0e8f472b3c",
+    "sha256_dopo": "0f9332e6e532545c51c1d0f66a9530a79cec717966cabf9ada27b051fdd4ff48"
+  },
+  {
+    "file": "test/realtime/realtime_inbound_chat_test.dart",
+    "sha256_prima": "e6e1894f1e78c7d8c95975e3ec0a8468c711035f8111ec1de81ac7b47298c33f",
+    "sha256_dopo": "e5bc8f86865b9b59bf5dc4a2eb7f343fb6c02adeffe3503e3612bbd2f6b00b6b"
+  },
+  {
+    "file": "lib/services/realtime/practice_realtime_endpoint.dart",
+    "sha256_prima": null,
+    "sha256_dopo": "386bc81bc59c0897e648ea3f7c41b128a5d90c779c9674e7429c3634d97d0102"
+  },
+  {
+    "file": "lib/services/realtime/practice_split_transport.dart",
+    "sha256_prima": null,
+    "sha256_dopo": "39d43ad23ea05195779b6ca3bf968e47fde831f388c02dc11f275d49cbd6fb6b"
+  },
+  {
+    "file": "test/realtime/practice_split_transport_test.dart",
+    "sha256_prima": null,
+    "sha256_dopo": "c1b6d44a73fd02c4eddeeb43c27a662402833e95062803cc8a2e47d0031c3ff3"
+  }
+]

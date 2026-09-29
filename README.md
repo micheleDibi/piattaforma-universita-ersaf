@@ -6,7 +6,6 @@ Applicazione web della rete ERSAF per gestire sottoscrittori, attuatori, aziende
 
 - **Chi usa la piattaforma** (committente, operatori, collaudatori): la [guida funzionale](docs/funzionale/panoramica.md) spiega pagine, ruoli e flussi.
 - **Chi sviluppa o pubblica**: la [documentazione tecnica](docs/README.md#documentazione-tecnica) parte dall'[architettura](docs/tecnica/architettura.md).
-- **Agenti AI**: le regole sono in [CLAUDE.md](CLAUDE.md).
 
 L'indice completo è in [docs/README.md](docs/README.md). Le versioni pubblicate sono nel [registro delle modifiche](CHANGELOG.md).
 

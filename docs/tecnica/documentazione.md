@@ -11,10 +11,9 @@ Questa pagina spiega come è organizzata la documentazione, chi aggiorna cosa e 
 | `docs/funzionale/` | chi usa la piattaforma | pagine, ruoli, accesso e flussi, senza termini tecnici |
 | `docs/tecnica/` | chi sviluppa o pubblica | architettura, sviluppo, test, database, deploy, convenzioni, sicurezza |
 | `docs/tecnica/riferimenti/` | chi sviluppa | pagine **generate**: API, pagine del frontend, migrazioni, configurazione |
-| `docs/prompt/` | storico | prompt dati in passato agli agenti; sono istantanee datate |
+| `docs/storico/` | storico | specifiche iniziali, conservate come istantanee datate |
 | [CHANGELOG.md](../../CHANGELOG.md) | tutti | le versioni pubblicate |
 | `changelog/non-pubblicato/` | chi sviluppa | i frammenti delle modifiche non ancora pubblicate |
-| [CLAUDE.md](../../CLAUDE.md) | agenti AI | le regole da seguire nel repository |
 | [db/README.md](../../db/README.md) | chi sviluppa | regole operative delle migrazioni |
 
 Un'informazione ha una sola casa; gli altri documenti ci rimandano. Le case principali:
@@ -49,7 +48,7 @@ Le modifiche che arrivano su main senza pull request non passano dalla CI: il fr
 
 | Pagina | Fonte |
 |---|---|
-| `api.md` | OpenAPI dell'applicazione. L'app si importa in un sottoprocesso senza leggere `backend/.env` e senza database; l'accesso richiesto da ogni operazione si ricava dalle sue dipendenze. |
+| `api.md` | OpenAPI dell'applicazione. L'app si importa in un sottoprocesso senza leggere `backend/.env` e senza database; dalle dipendenze si distinguono accesso pubblico, sfida, cookie, token realtime e token del produttore. |
 | `rotte-frontend.md` | `frontend/src/config/routes/` importati con Node e `frontend/src/App.jsx` letto come albero sintattico con `@babel/core`. I ruoli che vedono ogni voce del menu si ricavano chiamando `vociMenuPerRuolo` per ciascun ruolo che accede. |
 | `migrazioni.md` | Intestazioni di `db/migrations/` e file di `db/rollback/`; le anomalie sono calcolate. |
 | `configurazione.md` | Campi di `backend/src/config.py` e `backend/src/notifiche/config_sms.py`, commenti dei file `.env.example`, variabili lette dagli script di deploy e dal frontend. L'obbligatorietà si ricava dalla verifica di avvio con valori finti. |
