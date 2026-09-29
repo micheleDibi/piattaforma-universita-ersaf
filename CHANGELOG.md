@@ -11,6 +11,69 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 12 — 29/09/2026 09:32
+
+<!-- timbro: versione=12 sha=a536652fc4463a38f886fd14c7fcd2d7747ee579 -->
+
+### Novità e correzioni
+
+**Aggiunto**
+
+- Nella scheda della pratica si può consultare e utilizzare la conversazione condivisa con Universo, quando il collegamento è configurato.
+- La firma della pratica si può disegnare con mouse, dito o penna e usare nei documenti generati successivamente.
+- Codice automatico per le nuove pratiche SSML e A4U, con progressivi distinti per tipo di corso.
+
+**Modificato**
+
+- Le chat delle pratiche sono gestite dal backend della piattaforma, mantenendo lo storico condiviso con Universo.
+- La creazione pratica propone studenti verificati e percorsi validi, con scelta multipla per i corsi singoli e relativo totale.
+
+**Corretto**
+
+- I tentativi ripetuti dopo un'interruzione della connessione non duplicano messaggi e notifiche.
+- Negli elenchi Sottoscrittori e Attuatori gli indicatori di verifica dei contatti seguono la stessa regola della scheda, anche per gli account attivi precedenti al sistema OTP.
+- Le finestre di selezione usano la gestione condivisa di focus ed Escape e si adattano all'altezza disponibile.
+- Il totale dei corsi mantiene i decimali esatti; la nuova pratica collega il creatore anche ai permessi della conversazione.
+
+**Sicurezza**
+
+- Il salvataggio avvisa se la firma è stata modificata nel frattempo da un'altra finestra.
+
+### Dettagli tecnici
+
+**Aggiunto**
+
+- Ponte FastAPI verso le API e il WebSocket Java esistenti, con sessione interna breve e controllo dei partecipanti alla pratica.
+- Configurazione facoltativa CHAT_JAVA_URL, CHAT_JAVA_ORIGINE, CHAT_JAVA_SECRET_FILE e CHAT_DATASET; attivazione subordinata alla pubblicazione del delta Java e alla configurazione della rete privata.
+- API dedicate per firma PNG con CSRF e versione ottimistica; riutilizzato il campo pratica_firma senza nuove migrazioni.
+- **Incompatibile.** Migrazione additiva 017, grant storici, coda durevole, limite per utente e verifiche di revoca.
+- **Incompatibile.** Blocco configurabile del vecchio writer Java per un passaggio senza due percorsi di inserimento attivi.
+- DATABASE_URL_GESTIONE_PAGAMENTI e DATABASE_URL_SYS_ADMIN predispongono due connessioni facoltative, inizializzate solo al primo utilizzo e ancora prive di funzionalità collegate.
+- **Incompatibile.** Servizio realtime FastAPI completo per sessioni, chat personali, pratiche, ticket pubblici e privati, notifiche, presenza, letture e recupero delle consegne.
+- **Incompatibile.** Migrazione `018_realtime_completo.sql`, additiva e senza rollback distruttivo degli archivi condivisi; applicarla dopo la 017 e prima del backend aggiornato.
+- **Incompatibile.** Configurazione `REALTIME_SCHEMA_TICKET`, `REALTIME_ACCESSO_SECONDI`, `REALTIME_REFRESH_GIORNI`, `REALTIME_PRODUCER_TOKEN_FILE` e `REALTIME_MANUTENZIONE_SECONDI`. API, WebSocket, invio e lavori periodici partono con il backend senza flag applicativi; schema e chiavi sono richiesti all'avvio, indipendentemente dall'integrazione di Universo.
+- **Incompatibile.** Migrazione `019_realtime_consegne_connessioni.sql`, da applicare dopo la 018, per le conferme di consegna di ogni connessione. Una conferma non interrompe il recapito agli altri dispositivi attivi; chiusure e nuovi collegamenti aggiornano il quorum.
+- **Incompatibile.** Migrazione `021_capienza_notifiche.sql` per il ciphertext nel corpo delle notifiche legacy; il rollback conserva la capienza per non perdere dati.
+
+**Modificato**
+
+- Nginx e proxy di sviluppo inoltrano l'upgrade WebSocket; il container API limita dimensione e coda dei frame.
+- Indici della documentazione e specifiche storiche riordinati; chiarito il riuso del ramo personale e il ciclo di vita dei checkout temporanei.
+- **Incompatibile.** Dominio FastAPI comune a sessione cookie e token Universo esistente; rimossi sessioni delegate e trasporto verso Java.
+- **Incompatibile.** Attivazione coordinata tramite configurazione e delta Flutter; nessuna migrazione automatica tra dataset e nessun deploy implicito.
+- Lo stato dei contatti mostrato nell'anagrafica è calcolato da una funzione condivisa; restano distinte le verifiche richieste per l'accesso e il secondo fattore.
+- **Incompatibile.** Il namespace `/realtime` sostituisce `/chat-universo`; la scrittura delle pratiche con cookie riusa il medesimo dominio. L'integrazione del client e il passaggio dal servizio precedente richiedono un rilascio coordinato.
+- **Incompatibile.** Integrato il commit `41665a5` di Login con chat, firma e realtime completo; la migrazione dei contatori diventa `020_contatori_codice_pratica.sql` per conservare la 017 della chat.
+- **Incompatibile.** Lo staging del realtime richiede anche l'archivio ticket clonato sullo stesso MariaDB, il keyring storico e una configurazione privata completa. Il client Universo e il servizio Java restano indipendenti dal rilascio.
+
+**Sicurezza**
+
+- Le connessioni facoltative ignorano la configurazione ordinaria durante i test e accettano solo il database locale usa-e-getta. Gli errori di configurazione non espongono indirizzi o credenziali.
+- **Incompatibile.** Sessioni revocabili, rotazione del refresh con rilevamento del riuso, ACL condivise, limiti persistenti e snapshot di lettura immutabili; cookie applicativi e token realtime restano distinti.
+- **Incompatibile.** Ripresi limiti per tipo di comando, ammissione dei collegamenti, code limitate, invii serializzati, watchdog, rotazioni limitate e conservazione degli archivi. Validazione UTF-8/JSON e snapshot rigorosa; compatibilità crittografica e dei dati verificata con vettori Java sintetici.
+- **Incompatibile.** Policy DB comune con pool e timeout limitati. In produzione `DATABASE_TRASPORTO=verify-full` richiede `DATABASE_CA_FILE`; l'eccezione `rete-privata` richiede IPv4 RFC1918 letterali. Predisporre la configurazione privata prima del rilascio: nessun fallback TLS silenzioso.
+- **Incompatibile.** Overlay `compose.tls.yml` per la CA e i certificati del clone; `verify-full` verifica la connessione dell'API al database.
+
 ## Versione 11 — 25/09/2026 11:35
 
 <!-- timbro: versione=11 sha=26d6d2d48fee707501c192cd589f7560a20e3bcf -->
