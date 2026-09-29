@@ -45,6 +45,7 @@ Letto da `backend/src/config.py`. "Obbligatoria" indica le variabili senza le qu
 | `SMTP_FROM` | testo | (valore nel codice) | no | Mittente. Il dominio di esempio va sostituito con quello dell'ambiente. |
 | `SMTP_TLS` | starttls \| ssl \| nessuno | `starttls` | no | Cifratura del canale: starttls \| ssl \| nessuno. |
 | `SMTP_TIMEOUT_SECONDS` | intero | `10` | no | Timeout della connessione SMTP, in secondi. |
+| `EMAIL_NOTIFICHE_PRATICHE` | testo | (valore nel codice) | no | Destinatario della notifica "nuova pratica caricata" (vedi src/pratiche/notifiche.py). Il dominio di esempio va sostituito con quello dell'ambiente. |
 
 ## SMS (`backend/.env`)
 

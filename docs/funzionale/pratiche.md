@@ -271,7 +271,7 @@ valorizza.
 | Anno accademico | Facoltativo, al massimo 45 caratteri |
 | Sede di erogazione | Facoltativa, al massimo 255 caratteri |
 | Prezzo (€) | Sempre di sola lettura: non si digita mai |
-| Stato | Sempre di sola lettura: in creazione parte su "Bozza", in una pratica già salvata resta quello che ha |
+| Stato | In creazione sempre "Bozza", di sola lettura. In una pratica già salvata, solo il Nazionale vede una tendina per cambiarlo; per tutti gli altri resta di sola lettura |
 | Data di creazione | Sempre di sola lettura: in creazione è sempre la data odierna |
 | Note | Testo libero |
 
@@ -289,11 +289,11 @@ istante. Per SSML lo stesso codice viene copiato anche nel Codice ASG interno
 della pratica. Se il tipo di corso del percorso non ha un prefisso previsto,
 il salvataggio è bloccato con un errore.
 
-Nota: la scheda non offre ancora un modo per cambiare lo stato di una
-pratica già salvata, né per assegnarle un codice: arriveranno con una
-modifica separata.
-
-Nota: le regole di sola lettura di codice, prezzo, data di creazione e stato sono applicate solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Nota: le regole di sola lettura di codice, prezzo e data di creazione sono
+applicate solo dall'interfaccia; per lo stato, invece, il server ignora in
+silenzio la modifica se chi chiama non è Nazionale (la richiesta risponde
+comunque 200, lo stato resta quello di prima). Vedi
+[Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 Una pratica può contenere anche dati che la scheda non mostra e non modifica:
 per esempio la firma, gli allegati, l'azienda, il consulente e l'indicazione
@@ -490,10 +490,17 @@ La pagina Pratiche conta le pratiche di sei stati, con nomi brevi: Bozza, In
 lavorazione, In attesa di modifica, Conclusa, Caricata e Rifiutata. Una
 pratica in uno stato diverso non compare nei suoi numeri.
 
-- Qualunque stato si può impostare in qualunque momento. Non c'è un percorso
-  obbligato da uno stato all'altro.
-- Il cambio di stato non attiva altre azioni.
-- Non si tiene uno storico dei cambi di stato.
+- Una pratica nasce sempre in Bozza: non è possibile crearla già in un altro
+  stato, nemmeno per il Nazionale.
+- Da lì lo stato lo cambia solo il Nazionale, in un secondo momento. Qualunque
+  stato si può impostare in qualunque momento: non c'è un percorso obbligato
+  da uno stato all'altro.
+- Ogni cambio di stato (compreso quello iniziale, alla creazione) si registra
+  in uno storico, non visibile da nessuna pagina.
+- La *prima volta* che una pratica raggiunge lo stato Bozza, il sottoscrittore
+  riceve un'email di conferma. La *prima volta* che raggiunge lo stato
+  Caricata, la riceve l'ufficio pratiche universitarie di ERSAF. Tornare più
+  tardi su uno di questi due stati non manda una seconda email.
 - Lo stato si usa come filtro nell'elenco.
 
 ## Cosa non si può fare

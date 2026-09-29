@@ -1,8 +1,13 @@
 import { CAMPI_PRATICA } from "../../config/pratica.js";
 import { campo, etichetta } from "../../config/styles/campo.js";
 import { STILI_PRATICA as stili } from "../../config/styles/pratica.js";
+import { leggiRuolo } from "../../lib/sessione.js";
 
 export default function DatiPratica({ form, nuova }) {
+  // Lo stato lo cambia solo il Nazionale, e solo in modifica: una pratica
+  // nasce sempre in Bozza, il server lo impone comunque (vedi crea_pratica
+  // in backend/src/pratiche/routers.py).
+  const eNazionale = leggiRuolo() === "nazionale";
   return <section className={stili.sezione} aria-labelledby="dati-pratica">
     <h2 id="dati-pratica" className={stili.titolo}>Dati della pratica</h2>
     <div className={stili.colonne}>
@@ -21,11 +26,21 @@ export default function DatiPratica({ form, nuova }) {
         <input id="pratica_prezzo" name="pratica_prezzo" type="number" min="0" step="any" required
           readOnly value={form.dati.pratica_prezzo} onChange={form.aggiorna} className={campo("comodo")} />
       </div>
-      {/* Sempre di sola lettura: nessuno strumento la cambia da qui, ne' in
-          creazione (parte su "Bozza") ne' in modifica. */}
-      <div><span className={etichetta()}>Stato</span>
-        <p className={stili.valore}>{nuova ? (form.statoIniziale?.label ?? "Bozza") : form.dati.pratica_stato_descrizione}</p>
-      </div>
+      {/* In creazione sempre di sola lettura, parte su "Bozza": il server la
+          impone comunque. In modifica la cambia solo il Nazionale, con la
+          tendina; per tutti gli altri resta di sola lettura. */}
+      {!nuova && eNazionale ? (
+        <div><label htmlFor="pratica_stato_id" className={etichetta()}>Stato</label>
+          <select id="pratica_stato_id" name="pratica_stato_id" value={form.dati.pratica_stato_id}
+            onChange={form.aggiorna} className={campo("comodo")}>
+            {form.stati?.map(stato => <option key={stato.id} value={stato.id}>{stato.label}</option>)}
+          </select>
+        </div>
+      ) : (
+        <div><span className={etichetta()}>Stato</span>
+          <p className={stili.valore}>{nuova ? (form.statoIniziale?.label ?? "Bozza") : form.dati.pratica_stato_descrizione}</p>
+        </div>
+      )}
       {/* Sempre di sola lettura: in creazione e' sempre la data odierna, non
           modificabile; in modifica resta quella storica della pratica. */}
       <div><label htmlFor="pratica_dataCreazione" className={etichetta()}>Data di creazione</label>
