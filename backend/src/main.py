@@ -48,6 +48,7 @@ from src.listini_testa.routers import router as listini_testa_router
 from src.pratiche.routers import router as pratiche_router
 from src.profilo.routers import router as profilo_router
 from src.listino_tipoCorso.routers import router as listini_tipi_corsi_router
+from src.edunews24.routers import router as edunews24_router
 from fastapi.exceptions import RequestValidationError
 
 logger = logging.getLogger(NOME_LOGGER)
@@ -100,7 +101,7 @@ async def proteggi_richieste_browser(request: Request, call_next):
     except HTTPException as errore:
         return JSONResponse(status_code=errore.status_code, content={"detail": errore.detail})
     risposta = await call_next(request)
-    if request.url.path.startswith(("/auth/", "/profilo/")) or "/contatti" in request.url.path or risposta.status_code in (401, 403, 429):
+    if request.url.path.startswith(("/auth/", "/profilo/", "/edunews24/")) or "/contatti" in request.url.path or risposta.status_code in (401, 403, 429):
         risposta.headers["Cache-Control"] = "no-store"
     return risposta
 
@@ -119,6 +120,7 @@ app.include_router(listini_testa_router)
 app.include_router(pratiche_router)
 app.include_router(profilo_router)
 app.include_router(listini_tipi_corsi_router)
+app.include_router(edunews24_router)
 
 
 @app.exception_handler(IntegrityError)

@@ -52,6 +52,22 @@ os.environ.setdefault("PASSWORD_RESET_BUDGET_MS", "150")
 os.environ.setdefault("LOG_FILE", "")  # nessun file di log durante i test
 os.environ.setdefault("ERSAF_ENV", "test")
 
+# EduNews24: tutte ASSEGNATE, come SMS_BACKEND. Con setdefault i valori di un
+# backend/.env locale entrerebbero nei test (il backend http farebbe rete).
+# L'host del sito e quello dei media sono gli stessi dei dati di `memoria`,
+# altrimenti la validazione degli URL scarterebbe ogni voce.
+os.environ["EDUNEWS24_BACKEND"] = "memoria"
+os.environ["EDUNEWS24_URL_BASE"] = "https://edunews24.invalid/api/v1"
+os.environ["EDUNEWS24_CONTATTO"] = "https://example.org/contatti"
+os.environ["EDUNEWS24_HOST_MEDIA"] = "media.edunews24.invalid"
+os.environ["EDUNEWS24_TIMEOUT_CONNESSIONE_SECONDI"] = "3"
+os.environ["EDUNEWS24_TIMEOUT_LETTURA_SECONDI"] = "5"
+os.environ["EDUNEWS24_TIMEOUT_TOTALE_SECONDI"] = "8"
+os.environ["EDUNEWS24_TTL_RIPIEGO_SECONDI"] = "300"
+os.environ["EDUNEWS24_STANTIO_MASSIMO_SECONDI"] = "86400"
+os.environ["EDUNEWS24_PAUSA_RIPIEGO_SECONDI"] = "30"
+os.environ["EDUNEWS24_RICHIESTE_AL_MINUTO"] = "30"
+
 # --- da qui in poi si puo' importare src ------------------------------------
 import pytest  # noqa: E402
 import sqlalchemy as sa  # noqa: E402
@@ -348,3 +364,12 @@ def sms():
     yield memoria_sms
     memoria_sms.inviati.clear()
     memoria_sms.errore = False
+
+
+@pytest.fixture(autouse=True)
+def stato_edunews24():
+    """Ogni test parte senza cache, cursori, pausa ne' budget di EduNews24."""
+    from src.edunews24.servizio import azzera_servizio
+    azzera_servizio()
+    yield
+    azzera_servizio()
