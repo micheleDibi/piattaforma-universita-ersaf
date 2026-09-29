@@ -43,6 +43,17 @@ Letto da `backend/src/config.py`. "Obbligatoria" indica le variabili senza le qu
 | `SMTP_FROM` | testo | (valore nel codice) | no | Mittente. Il dominio di esempio va sostituito con quello dell'ambiente. |
 | `SMTP_TLS` | starttls \| ssl \| nessuno | `starttls` | no | Cifratura del canale: starttls \| ssl \| nessuno. |
 | `SMTP_TIMEOUT_SECONDS` | intero | `10` | no | Timeout della connessione SMTP, in secondi. |
+| `EDUNEWS24_BACKEND` | http \| memoria \| disabilitato | `disabilitato` | no | Sorgente dei contenuti: http \| memoria \| disabilitato. disabilitato spegne la sezione: la voce di menu resta, la pagina dice che non e' attiva e la Dashboard non mostra il riquadro; memoria usa dati inventati per sviluppo e test ed e' rifiutata in produzione; http chiama l'API di EduNews24. |
+| `EDUNEWS24_URL_BASE` | testo | (vuoto) | no | Indirizzo base dell'API, per esempio https://example.org/api/v1: https, senza credenziali, query o frammento, porta assente o 443. L'host deve essere esattamente quello dei link degli articoli (senza www o altre varianti), altrimenti ogni voce viene scartata. Obbligatorio con EDUNEWS24_BACKEND=http. |
+| `EDUNEWS24_CONTATTO` | testo | (vuoto) | no | Contatto (URL o email) messo nello User-Agent, come chiedono i termini dell'API. Solo caratteri ASCII stampabili, senza parentesi. Obbligatorio con EDUNEWS24_BACKEND=http. |
+| `EDUNEWS24_HOST_MEDIA` | testo | (vuoto) | no | Host da cui il browser carica immagini e video degli articoli, separati da virgole: nomi di host pubblici, senza schema, porta, percorso o caratteri jolly (niente IP, nomi di una sola etichetta o suffissi di rete interna). Vuoto: nessuna immagine e nessun player. |
+| `EDUNEWS24_TIMEOUT_CONNESSIONE_SECONDI` | intero | `3` | no | Tempo massimo per aprire la connessione verso EduNews24, in secondi (1-10). |
+| `EDUNEWS24_TIMEOUT_LETTURA_SECONDI` | intero | `5` | no | Tempo massimo di attesa fra due blocchi della risposta, in secondi (1-30). |
+| `EDUNEWS24_TIMEOUT_TOTALE_SECONDI` | intero | `8` | no | Durata massima di una chiamata, in secondi: almeno quanto il maggiore dei due timeout precedenti, al massimo 30. Si controlla all'arrivo delle intestazioni e durante la lettura del corpo: prima valgono solo i timeout di connessione e di lettura, che contano ogni singola attesa. |
+| `EDUNEWS24_TTL_RIPIEGO_SECONDI` | intero | `300` | no | Durata in cache di una risposta che non dichiara s-maxage ne' max-age, in secondi (30-3600). |
+| `EDUNEWS24_STANTIO_MASSIMO_SECONDI` | intero | `86400` | no | Per quanto una copia scaduta puo' ancora coprire un guasto, in secondi (massimo 86400). |
+| `EDUNEWS24_PAUSA_RIPIEGO_SECONDI` | intero | `30` | no | Prima pausa dopo un guasto (timeout, rete, errore del server, risposta non valida) o dopo un rifiuto senza Retry-After valido, in secondi (1-3600): raddoppia a ogni guasto consecutivo fino a 3600 e si azzera al primo successo. |
+| `EDUNEWS24_RICHIESTE_AL_MINUTO` | intero | `30` | no | Chiamate massime verso EduNews24 in 60 secondi, per tutta l'applicazione (1-40). |
 
 ## SMS (`backend/.env`)
 
@@ -70,10 +81,11 @@ Gestito dagli script di deploy; non contiene segreti. Le variabili senza descriz
 | Variabile | Dove | Descrizione |
 |---|---|---|
 | `ESPOSIZIONE` | `deploy/remote/00-lib.sh`, `deploy/remote/25-esposizione.sh` |  |
-| `NOTIFICHE_REALI` | `deploy/remote/00-lib.sh`, `deploy/remote/26-notifiche.sh` |  |
+| `NOTIFICHE_REALI` | `deploy/remote/00-lib.sh`, `deploy/remote/26-notifiche.sh`, `deploy/remote/27-edunews24.sh` |  |
 | `RELEASE_DIR` | `deploy/compose.env.example`, `deploy/compose.yml`, `deploy/remote/70-deploy.sh` | Cartella della release attiva sul server, ricavata da RELEASE_TAG. |
 | `RELEASE_TAG` | `deploy/compose.env.example`, `deploy/compose.yml`, `deploy/remote/00-lib.sh`, `deploy/remote/30-release.sh`, `deploy/remote/70-deploy.sh`, `deploy/remote/80-status.sh` | Identificativo della release attiva, scritto dallo script all'attivazione. |
 | `TZ` | `deploy/compose.env.example`, `deploy/compose.yml` | Fuso orario dei container. |
+| `USCITA_EDUNEWS24` | `deploy/compose.env.example`, `deploy/remote/00-lib.sh`, `deploy/remote/27-edunews24.sh` | Uscita HTTPS dell'API verso EduNews24 (deploy/compose.edunews24.yml): si per attivarla, poi -Action deploy, che installa le regole di firewall del bridge dedicato. Ignorata con NOTIFICHE_REALI=si: in quel caso l'API esce dal bridge delle notifiche. Ignorata, con un avviso, anche con SMS_BACKEND=skebby in api.env senza NOTIFICHE_REALI=si: la porta HTTPS vale per tutta l'API e ne farebbe partire gli SMS reali. Il deploy toglie allora la copia dell'overlay in shared/: per ricollegare la rete serve un nuovo deploy. |
 | `VERSIONE_AGGIORNATA` | `deploy/compose.yml` |  |
 | `VERSIONE_NUMERO` | `deploy/compose.yml` |  |
 | `WEB_LAN_IP` | `deploy/compose.esposizione.yml`, `deploy/remote/25-esposizione.sh` |  |

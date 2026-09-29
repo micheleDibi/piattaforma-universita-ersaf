@@ -115,6 +115,37 @@ codice, tranne dove indicato.
 
 Le cartelle `backend/var/` e `logs/` sono escluse da git.
 
+**EduNews24.** Con il file d'esempio la sezione è spenta
+(`EDUNEWS24_BACKEND=disabilitato`): la voce di menu c'è, la pagina dice che la
+sezione non è attiva e la Dashboard mostra solo benvenuto e scorciatoie.
+
+- Per provarla senza rete: `EDUNEWS24_BACKEND=memoria` con
+  `EDUNEWS24_URL_BASE=https://edunews24.invalid/api/v1` e, per vedere il
+  percorso dei media, `EDUNEWS24_HOST_MEDIA=media.edunews24.invalid`. Le voci
+  sono inventate; le immagini non si caricano perché quegli host non esistono,
+  e compare la copertina di ripiego.
+- Con `http` servono `EDUNEWS24_URL_BASE` ed `EDUNEWS24_CONTATTO` veri, più
+  gli host dei media; in locale il backend esce direttamente verso Internet.
+  L'host dell'URL base deve essere esattamente quello dei link degli articoli,
+  senza `www`, altrimenti ogni voce viene scartata.
+- Sempre con `http`, al primo caricamento dopo l'avvio del backend il riquadro
+  della Dashboard, o la pagina EduNews24, può mostrare l'errore anche se
+  EduNews24 risponde. In sviluppo lo StrictMode di React
+  (`frontend/src/main.jsx`) esegue due volte l'effetto che carica la sezione:
+  il browser annulla la prima richiesta, ma il backend la porta
+  avanti, e la seconda aspetta quella chiamata al più 1,5 secondi, meno di
+  quanto può durare una chiamata a freddo. Passati i 5 secondi indicati,
+  "Riprova" trova la copia. Non è un guasto: vedi la chiamata unica per chiave
+  in [Architettura](architettura.md#edunews24).
+- Le variabili si passano sulla riga di comando di uvicorn, senza modificare
+  `backend/.env`. Da `backend/`:
+
+```bash
+EDUNEWS24_BACKEND=memoria EDUNEWS24_URL_BASE=https://edunews24.invalid/api/v1 \
+EDUNEWS24_HOST_MEDIA=media.edunews24.invalid \
+.venv/bin/python -m uvicorn src.main:app --reload
+```
+
 **Attenzione.** Se `TEST_DATABASE_URL` è impostata, nella shell oppure in
 `backend/.env`, backend e script usano quella al posto di `DATABASE_URL`.
 

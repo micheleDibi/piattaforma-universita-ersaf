@@ -32,9 +32,6 @@ all'utente.
 
 ## Pannello degli atenei
 
-Il pannello è stato spostato dalla Dashboard alla pagina Pratiche. La Dashboard
-mostra soltanto il titolo e il messaggio di benvenuto.
-
 Sotto il titolo "Pratiche" la frase "Numero di pratiche per ateneo, tipologia
 di corso e stato." introduce i numeri delle pratiche.
 

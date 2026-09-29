@@ -100,7 +100,6 @@ regole:
       - "backend/src/documenti/**"
       - "frontend/src/components/*Pratic*.jsx"
       - "frontend/src/components/pratiche/**"
-      - "frontend/src/components/Dashboard.jsx"
       - "frontend/src/lib/pratiche.js"
       - "frontend/src/lib/configPratiche.js"
       - "frontend/src/lib/praticaForm.js"
@@ -120,6 +119,36 @@ regole:
       - "frontend/src/lib/prodottoPayload.js"
     documenti:
       - docs/funzionale/prodotti-formativi.md
+
+  - nome: Dashboard
+    percorsi:
+      - "frontend/src/components/Dashboard.jsx"
+      - "frontend/src/components/dashboard/**"
+      - "frontend/src/config/testi/dashboard.js"
+      - "frontend/src/config/styles/dashboard.css"
+      - "frontend/src/lib/dashboard.js"
+    documenti:
+      - docs/funzionale/panoramica.md
+
+  - nome: EduNews24
+    percorsi:
+      - "backend/src/edunews24/**"
+      - "frontend/src/components/edunews24/**"
+      - "frontend/src/config/edunews24.js"
+      - "frontend/src/config/testi/edunews24.js"
+      - "frontend/src/config/tokens/edunews24.css"
+      - "frontend/src/config/styles/edunews24.*"
+      - "frontend/src/assets/edunews24/**"
+      - "frontend/src/lib/edunews24*.js"
+      - "frontend/src/lib/videoEsclusivo.js"
+      - "frontend/src/hooks/*EduNews24.js"
+      - "frontend/src/hooks/useFasciaScorrevole.js"
+      - "frontend/src/hooks/useAttesaRiprova.js"
+      - "frontend/src/hooks/useComparsaRitardata.js"
+    documenti:
+      - docs/funzionale/edunews24.md
+      - docs/tecnica/architettura.md
+      - docs/tecnica/sicurezza.md
 
   - nome: Architettura e ambiente
     percorsi:

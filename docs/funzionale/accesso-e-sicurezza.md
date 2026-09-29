@@ -16,7 +16,7 @@ Se l'accesso non riesce, il messaggio è sempre lo stesso: **"Username o passwor
 
 Il messaggio non dice quale sia il motivo: è una scelta voluta, per non dare indizi a chi prova ad indovinare.
 
-Dopo l'accesso si arriva all'elenco dei Sottoscrittori. Chi rientra dopo una sessione scaduta torna invece alla pagina che aveva aperto.
+Dopo l'accesso si arriva alla Dashboard. Chi rientra dopo una sessione scaduta, o chi aveva aperto l'indirizzo di una pagina senza essere collegato, torna invece a quella pagina.
 
 Chi ha già una sessione valida e apre la pagina di accesso entra direttamente, senza rivedere il modulo.
 

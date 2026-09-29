@@ -61,7 +61,7 @@ Il codice cita questa decisione come "ADR 0008", ma il documento non è nel repo
 
 ### Middleware
 
-Un middleware controlla ogni richiesta con un metodo diverso da GET, HEAD e OPTIONS, anche senza sessione (`backend/src/main.py:96-105`; `browser.py:56-69`). I controlli sono tre:
+Un middleware controlla ogni richiesta con un metodo diverso da GET, HEAD e OPTIONS, anche senza sessione (`backend/src/main.py:97-106`; `browser.py:56-69`). I controlli sono tre:
 - l'intestazione `Origin`, se presente, deve essere l'origine di `FRONTEND_BASE_URL` o una di `CORS_ORIGINS`;
 - l'intestazione `X-ERSAF-Request: 1` è obbligatoria, e una pagina estranea può inviarla solo superando il preflight CORS;
 - `Sec-Fetch-Site: cross-site` con un'origine non ammessa è rifiutato.
@@ -79,8 +79,9 @@ Il frontend aggiunge `X-ERSAF-Request` a ogni chiamata e invia i cookie con `cre
 
 ### Cache
 
-- Il middleware imposta `Cache-Control: no-store` in questi casi (`main.py:103-104`):
+- Il middleware imposta `Cache-Control: no-store` in questi casi (`main.py:104-105`):
   - le risposte sotto `/auth/` e `/profilo/`;
+  - le risposte sotto `/edunews24/`, anche 400, 409, 422 e 503;
   - i percorsi dei contatti;
   - ogni risposta 401, 403 o 429.
 - Lo stesso vale quando il server imposta o cancella il cookie (`browser.py:43`, `48`).
@@ -88,7 +89,7 @@ Il frontend aggiunge `X-ERSAF-Request` a ogni chiamata e invia i cookie con `cre
 
 ### CORS
 
-- Le origini ammesse vengono da `CORS_ORIGINS` e le credenziali sono ammesse (`main.py:86-93`).
+- Le origini ammesse vengono da `CORS_ORIGINS` e le credenziali sono ammesse (`main.py:87-94`).
 - `Retry-After` è esposta al browser.
 - Lo stato di questo punto è nella tabella dei rilievi, alla voce S7.
 
@@ -97,7 +98,7 @@ Il frontend aggiunge `X-ERSAF-Request` a ogni chiamata e invia i cookie con `cre
 ### Hash
 
 - Il codice usa bcrypt direttamente, senza librerie intermedie (`backend/src/security/password.py:1-7`).
-- Il costo viene da `BCRYPT_COST`, 12 con la configurazione predefinita (`config.py:101`). L'avvio rifiuta valori fuori dall'intervallo 4-16 (`config.py:223-224`).
+- Il costo viene da `BCRYPT_COST`, 12 con la configurazione predefinita (`config.py:101`). L'avvio rifiuta valori fuori dall'intervallo 4-16 (`config.py:240-241`).
 - La password viene normalizzata in NFKC sia prima dell'hash sia prima della verifica (`password.py:91-99`).
 - Una password oltre i 72 byte viene rifiutata, non troncata (`password.py:9-21`, `102-108`).
 - La verifica non solleva mai eccezioni: oltre il limite restituisce falso (`password.py:111-128`).
@@ -119,7 +120,7 @@ Il frontend aggiunge `X-ERSAF-Request` a ogni chiamata e invia i cookie con `cre
 ### Regole
 
 Le regole si applicano alla conferma del recupero password e alla creazione diretta di un utente (`auth/routers.py:163-179`; `backend/src/utenti/routers.py:68-79`):
-- lunghezza minima da `PASSWORD_MIN_LENGTH`, 8 con la configurazione predefinita; l'avvio rifiuta valori inferiori a 8 (`config.py:102`, `225-232`);
+- lunghezza minima da `PASSWORD_MIN_LENGTH`, 8 con la configurazione predefinita; l'avvio rifiuta valori inferiori a 8 (`config.py:102`, `242-249`);
 - al massimo 72 byte;
 - diversa dallo username e dall'email, anche dalla sola parte prima della chiocciola;
 - non troppo comune: il controllo usa un elenco esatto, un elenco di radici vietate e rifiuta le password fatte di un solo carattere (`password.py:43-88`, `164-200`). L'elenco esatto contiene solo voci lunghe, da 12 caratteri in su, e il confronto con le radici vietate guarda le sole lettere: vedi [Limiti noti](#limiti-noti).
@@ -299,7 +300,7 @@ Il codice cita questa decisione come "ADR 0009", ma il documento non è nel repo
   - verifica dell'utente obbligatoria;
   - nessuna attestazione.
 - In verifica il server usa la stessa challenge derivata, richiede la verifica dell'utente e aggiorna il contatore delle firme (`servizio_passkey.py:142-169`).
-- L'avvio controlla `WEBAUTHN_RP_ID` e `WEBAUTHN_ORIGINI`. Fuori da localhost serve HTTPS (`config.py:253-269`).
+- L'avvio controlla `WEBAUTHN_RP_ID` e `WEBAUTHN_ORIGINI`. Fuori da localhost serve HTTPS (`config.py:270-286`).
 
 ### Gestione dal profilo
 
@@ -335,6 +336,47 @@ Il flusso visto dall'utente è in [sottoscrittori-e-attuatori.md](../funzionale/
 - Dall'oggetto delle email si tolgono gli a capo.
 - Una verifica avviata dalla scheda cliente non vale mai come sfida di accesso (`otp/accesso.py:17-32`; `identita.py:29-36`).
 
+## Contenuti di EduNews24
+
+Il modulo `backend/src/edunews24/` porta nella piattaforma i contenuti di un portale esterno. Architettura, cache e protezioni sono in [architettura.md](architettura.md#edunews24); qui gli aspetti di sicurezza.
+
+### Il browser non chiama EduNews24
+
+- Titoli, sintesi e date arrivano solo dal backend, con la sessione: il router richiede `get_current_utente` (`backend/src/edunews24/routers.py:24-28`), quindi `test_rotte_protette.py` lo verifica da solo.
+- I testi si mostrano come testo: niente HTML esterno, niente `dangerouslySetInnerHTML`, niente iframe. Un test legge i sorgenti e lo sorveglia (`frontend/tests/edunews24Sorgenti.test.js`).
+- Il backend non segue i redirect, concatena il percorso della risorsa all'URL base e prende i parametri da elenchi chiusi o di forma fissa (`backend/src/edunews24/client.py:196-199`; `backend/src/edunews24/schemi.py:14-36`).
+- Il corpo si legge con un tetto di 1 MiB sui byte grezzi e decompressi, solo senza compressione o con un singolo `gzip`, e con una scadenza totale (`client.py:85-120`).
+- Si accettano solo i cursori emessi dal backend, legati a risorsa e filtri (`backend/src/edunews24/servizio.py:207-210`).
+- Un 429 di EduNews24 diventa un 503 con `Retry-After`: il browser non riceve mai un 429 da queste rotte (`client.py:245-247`; `servizio.py:81-89`).
+- Lo User-Agent porta `EDUNEWS24_CONTATTO`, in ASCII stampabile e senza parentesi (`backend/src/edunews24/costanti.py:44`; `backend/src/edunews24/verifica.py:17`, `33-40`).
+- I messaggi d'errore verso il browser sono testi fissi: URL, intestazioni e corpo delle risposte di EduNews24 non vengono inoltrati.
+
+### Collegamenti, immagini e video
+
+- Si scartano, senza correggerli, gli URL con schema diverso da https, credenziali, porta diversa da 443, `\`, parentesi quadre, spazi o caratteri di controllo, e quelli con un host che non è esattamente in elenco.
+- L'host dei collegamenti è quello di `EDUNEWS24_URL_BASE`; immagini e video devono stare sugli host di `EDUNEWS24_HOST_MEDIA`, che all'avvio accetta solo nomi pubblici: niente IP, nomi di una sola etichetta o suffissi di rete interna.
+- Una voce senza un collegamento valido si scarta: ogni voce mostrata deve rimandare alla sua pagina su EduNews24, per l'attribuzione.
+- L'immagine segnaposto di EduNews24 vale come immagine assente.
+- Il video richiede anche il tipo MP4 o WebM; senza, la voce resta con il solo distintivo "Video" e il collegamento all'articolo.
+- Gli URL non si riscrivono mai: un `http` si scarta, non diventa `https`.
+- Una voce con un campo malformato si scarta da sola, senza guastare la pagina; solo una forma sbagliata del corpo è un guasto.
+- Riscontri: `backend/src/edunews24/url.py:27-93`; `backend/src/edunews24/normalizza.py:183-224`, `278-309`.
+
+### Immagini e video nel browser
+
+- Il browser carica immagini e video direttamente dagli host di `EDUNEWS24_HOST_MEDIA`. L'elenco è vuoto per impostazione predefinita, e allora non si carica nulla da terzi.
+- Quegli host vedono l'indirizzo IP e lo User-Agent di chi guarda. Il Referer non parte (`frontend/index.html:20`, `frontend/nginx.conf:28`): un host che lo pretendesse rifiuterebbe i media, e il comportamento degli host reali non è verificato.
+- Prima del clic si scarica solo la copertina; il `<video>` si monta al clic, con `preload="none"` (`frontend/src/components/edunews24/VideoArticolo.jsx:104-107`).
+- Smontare il player (cambio di voce, di scheda o di filtro, navigazione) ferma anche lo scaricamento: tolte le sorgenti, `load()` chiude la connessione (`svuotaVideo` in `frontend/src/lib/videoEsclusivo.js`).
+- Niente attributo `crossorigin`, quindi a quegli host non si chiede CORS.
+- I collegamenti esterni hanno `target="_blank"` e `rel="noopener noreferrer"` e nascono tutti da un solo componente (`frontend/src/components/edunews24/LinkEsterno.jsx:13-29`).
+
+### Content Security Policy
+
+- Il repository non ne ha una: né `frontend/index.html`, né `frontend/nginx.conf`, né il backend, né `deploy/`.
+- Se il reverse proxy esterno ne aggiunge una, `img-src` deve ammettere `'self'`, `data:` (logo e icone incorporati dal bundle) e gli host dei media in https, e `media-src` gli host dei media; `connect-src` non cambia.
+- Vedi [deploy.md](deploy.md#edunews24).
+
 ## Log
 
 - La redazione toglie dal testo del log, nell'ordine (`backend/src/logging_config.py:42-86`):
@@ -346,8 +388,10 @@ Il flusso visto dall'utente è in [sottoscrittori-e-attuatori.md](../funzionale/
 - Filtro e formatter stanno sugli handler, quindi coprono anche i messaggi propagati e i traceback (`logging_config.py:89-117`).
 - I logger di uvicorn passano dal logger radice (`logging_config.py:146-151`). Così la redazione copre anche l'access log, che contiene la query string di `validate`.
 - `sqlalchemy.engine` e `sqlalchemy.pool` restano a livello WARNING (`logging_config.py:153-155`).
+- I logger `httpx` e `httpcore` stanno a WARNING (`logging_config.py:157-160`): a INFO `httpx` registrerebbe l'URL completo di ogni chiamata esterna, a EduNews24 come a Skebby.
+- Il modulo EduNews24 registra solo risorsa, esito della cache, stato HTTP, durata e secondi di pausa; mai URL, host, slug, cursori, corpi o contatto (`backend/src/edunews24/servizio.py:17-18`). L'access log di uvicorn registra comunque percorso e query delle rotte `/edunews24/...`, ed è voluto.
 - L'engine usa `hide_parameters=True` ed `echo=False` (`backend/src/database.py:23-39`).
-- Il logging si configura per primo all'avvio, così anche un errore di configurazione passa dalla redazione (`main.py:68-70`).
+- Il logging si configura per primo all'avvio, così anche un errore di configurazione passa dalla redazione (`main.py:69-71`).
 - La redazione è solo una rete di sicurezza. La regola resta: nei log vanno solo identificativi come `prr_id`, `prt_id`, `sess_id` e `utente_id`, mai token, impronte, password o email (`logging_config.py:27-29`; `servizio_reset.py:251-254`).
 - Il test di riferimento è `backend/tests/security/test_log_senza_segreti.py`.
 - Un'eccezione a questa regola è descritta in [Limiti noti](#limiti-noti).
@@ -375,25 +419,27 @@ I valori non stanno nel repository. L'elenco delle variabili è in [riferimenti/
 ### Verifica in due strati
 
 - `Impostazioni` non ha campi obbligatori né controlli propri sui valori: manca un segreto e la costruzione riesce comunque (`config.py:1-19`, `49-58`). Serve perché il motore del database si crea all'import.
-- Restano però i vincoli di tipo, elenchi chiusi e numeri (`config.py:61`, `91-102`, `120`, `127`): un valore malformato nel file di configurazione fa fallire la costruzione prima della verifica d'avvio.
-- `verifica_configurazione` è severa: raccoglie tutti i problemi, poi solleva un solo errore (`config.py:185-300`).
-- La verifica gira all'avvio: se fallisce, l'applicazione non parte (`main.py:56-81`).
-- Ogni segreto deve rispettare questi requisiti (`config.py:169-213`):
+- Restano però i vincoli di tipo, elenchi chiusi e numeri (`config.py:61`, `91-102`, `120`, `127`, `131`, `135-141`): un valore malformato nel file di configurazione fa fallire la costruzione prima della verifica d'avvio. Vale anche per le variabili di EduNews24 a funzione spenta: un `EDUNEWS24_BACKEND` fuori elenco o un numero non intero impedisce l'avvio.
+- `verifica_configurazione` è severa: raccoglie tutti i problemi, poi solleva un solo errore (`config.py:202-323`).
+- La verifica gira all'avvio: se fallisce, l'applicazione non parte (`main.py:57-82`).
+- Ogni segreto deve rispettare questi requisiti (`config.py:186-230`):
   - essere presente;
   - non avere il prefisso segnaposto dei file di esempio;
   - non avere spazi ai bordi;
   - essere lungo almeno 32 byte.
 - I due pepper devono essere diversi fra loro, e `TOTP_CHIAVE` deve essere diversa da entrambi.
-- La verifica controlla anche questi punti (`config.py:215-278`):
+- La verifica controlla anche questi punti (`config.py:232-295`):
   - `DATABASE_URL` è presente e non contiene la credenziale predefinita storica;
   - i valori numerici stanno negli intervalli ammessi;
   - `CORS_ORIGINS` non contiene `*`;
   - le origini WebAuthn sono coerenti;
-  - HTTP è ammesso solo su loopback.
+  - HTTP è ammesso solo su loopback;
+  - con `EDUNEWS24_BACKEND=http`: URL base https assoluto, senza credenziali, query, frammento o porta diversa da 443, con un host pubblico senza `www`; contatto in ASCII stampabile senza parentesi; host dei media pubblici; valori numerici negli intervalli (`backend/src/edunews24/verifica.py:20-64`, chiamata da `config.py:312-314`). Con la funzione spenta, o con `memoria`, questi controlli non girano.
 - In produzione servono anche:
-  - l'invio email via SMTP con un host (`config.py:280-291`);
+  - l'invio email via SMTP con un host (`config.py:297-308`);
   - un frontend in HTTPS;
-  - il fornitore SMS reale con le sue credenziali (`main.py:71-74`; `backend/src/notifiche/config_sms.py:16-19`).
+  - il fornitore SMS reale con le sue credenziali (`main.py:72-75`; `backend/src/notifiche/config_sms.py:16-19`);
+  - un backend EduNews24 diverso da `memoria` (`config.py:309-310`).
 - Le funzioni che usano pepper e chiave rifiutano da sole i valori assenti o corti, anche se la verifica all'avvio non è girata (`tokens.py:52-67`; `totp.py:86-91`).
 
 ## Visibilità
@@ -441,14 +487,14 @@ L'analisi di settembre 2026 elencava sette rilievi di sicurezza. Questa è la si
 | S2. Autenticazione falsificabile | Risolto. La sessione usa un token opaco e revocabile, in un cookie `HttpOnly`, con il CSRF. `Authorization` non vale come trasporto. L'autenticazione è dichiarata sul router. Un test percorre l'elenco delle rotte e chiama senza sessione ogni rotta non dichiarata pubblica: si aspetta 401. L'elenco delle rotte pubbliche ammesse sta nel test stesso. L'impersonificazione richiede sessione e ruolo amministrativo. | `browser.py:25-27`; `backend/tests/security/test_rotte_protette.py:20-70`; `auth/routers.py:248-270` |
 | S2-bis. Autorizzazione per ruolo | Parziale. Il ruolo si controlla in sei casi: impersonificazione, modifica di un altro utente, cambio del padre di un'azienda, gestione del secondo fattore, modifica della tabella dei ruoli e assegnazione di ruolo e azienda. Esiste inoltre un filtro di visibilità su anagrafiche, pratiche e aziende, con tre regole distinte (vedi [Visibilità](#visibilità)). Il resto richiede solo la sessione: il dettaglio è in [Limiti noti](#limiti-noti). | `autorizzazioni.py:25-95`; `utenti/routers.py:172-178`; `backend/src/aziende_xcod/router.py:53`; `gestione.py:55-57`; `backend/src/auth/visibilita.py`; `clienti/servizio.py:72-140`; `ruolo/routers.py:56`, `91` |
 | S3. Stato dell'account | Risolto. Un utente disattivato riceve lo stesso 401 di una password errata. Le sessioni, l'impersonificazione e le sfide lo escludono. | `servizio_login.py:92-94`; `sessioni.py:95`; `auth/routers.py:280-281`; `otp/accesso.py:29` |
-| S4. Errore 500 come oracolo | Risolto, con un'eccezione. Chi non ha un'anagrafica, o ha un ruolo senza accesso, riceve il 401 generico. L'anagrafica si sceglie con un ordine esplicito. La verifica della password non solleva eccezioni e il recupero non risponde mai 500. Gli errori del database hanno messaggi generici. Eccezione: le rotte dei prodotti formativi restituiscono il testo dell'errore del database. | `auth/accesso.py:28-37`; `servizio_login.py:128-150`; `password.py:111-128`; `auth/routers.py:98-110`; `main.py:124-177`; `backend/src/listini_testa/routers.py:94-100` |
+| S4. Errore 500 come oracolo | Risolto, con un'eccezione. Chi non ha un'anagrafica, o ha un ruolo senza accesso, riceve il 401 generico. L'anagrafica si sceglie con un ordine esplicito. La verifica della password non solleva eccezioni e il recupero non risponde mai 500. Gli errori del database hanno messaggi generici. Eccezione: le rotte dei prodotti formativi restituiscono il testo dell'errore del database. | `auth/accesso.py:28-37`; `servizio_login.py:128-150`; `password.py:111-128`; `auth/routers.py:98-110`; `main.py:126-179`; `backend/src/listini_testa/routers.py:94-100` |
 | S5. Credenziali SMTP nel database | Il codice non legge credenziali di posta dal database: le prende dalla configurazione. Il contenuto delle tabelle legacy non si verifica dal codice. | `config.py:119-128`; `backend/src/notifiche/backend_invio.py:36-62` |
-| S6. Credenziali predefinite | Risolto. Il codice non ha un ripiego con credenziali. Senza `DATABASE_URL` l'import usa un database in memoria inerte e l'avvio fallisce. L'avvio rifiuta la credenziale storica. Il motore però usa `TEST_DATABASE_URL` quando è impostata, prima di `DATABASE_URL`, mentre la verifica d'avvio guarda solo `DATABASE_URL`: una variabile d'ambiente rimasta impostata dirotta l'applicazione senza che la verifica se ne accorga. | `database.py:10-21`, `17-21`; `config.py:63-66`, `215-221` |
-| S7. CORS | Parzialmente aperto. Le origini vengono dalla configurazione e `*` è rifiutato in ogni ambiente. Restano ammessi le credenziali e i metodi e le intestazioni `*`. Il rischio è contenuto da tre difese: `X-ERSAF-Request`, il controllo di `Origin` e il CSRF. | `main.py:86-93`; `config.py:250-251`, `290-291`; `browser.py:56-80` |
+| S6. Credenziali predefinite | Risolto. Il codice non ha un ripiego con credenziali. Senza `DATABASE_URL` l'import usa un database in memoria inerte e l'avvio fallisce. L'avvio rifiuta la credenziale storica. Il motore però usa `TEST_DATABASE_URL` quando è impostata, prima di `DATABASE_URL`, mentre la verifica d'avvio guarda solo `DATABASE_URL`: una variabile d'ambiente rimasta impostata dirotta l'applicazione senza che la verifica se ne accorga. | `database.py:10-21`, `17-21`; `config.py:63-66`, `232-238` |
+| S7. CORS | Parzialmente aperto. Le origini vengono dalla configurazione e `*` è rifiutato in ogni ambiente. Restano ammessi le credenziali e i metodi e le intestazioni `*`. Il rischio è contenuto da tre difese: `X-ERSAF-Request`, il controllo di `Origin` e il CSRF. | `main.py:87-94`; `config.py:267-268`, `307-308`; `browser.py:56-80` |
 
 ## Limiti noti
 
-Questa sezione elenca i difetti noti di autorizzazione, visibilità e coerenza, e i contrasti fra interfaccia e server. Ogni voce indica il difetto e il punto del codice, senza istruzioni per riprodurlo. I documenti funzionali rimandano qui con una riga.
+Questa sezione elenca i difetti noti di autorizzazione, visibilità e coerenza, i contrasti fra interfaccia e server e i limiti della rete del collaudo. Ogni voce indica il difetto e il punto del codice, senza istruzioni per riprodurlo. I documenti funzionali rimandano qui con una riga.
 
 ### Sessione, ruoli e secondo fattore
 
@@ -466,7 +512,7 @@ Questa sezione elenca i difetti noti di autorizzazione, visibilità e coerenza, 
 - **Pagine riservate per ruolo solo nel menu.**
   - Attuatori è nel menu di Nazionale, Regionale e Provinciale; Pratiche anche in quello dell'Aderente; Prodotti formativi solo in quello del Nazionale; Aziende è nascosta all’Aderente.
   - Le pagine però si aprono dall'indirizzo con qualunque sessione valida.
-  - `frontend/src/config/routes/rotte.js:20-47`; `frontend/src/App.jsx:35-71`.
+  - `frontend/src/config/routes/rotte.js:21-50`; `frontend/src/App.jsx:36-73`.
 - **Anagrafiche senza controllo di ruolo.**
   - Creazione, lettura e modifica di sottoscrittori, attuatori e curriculum richiedono solo la sessione: nessuna di queste rotte guarda il ruolo.
   - Sulle anagrafiche la portata è ora limitata a quelle visibili, ma sul curriculum e sugli utenti non è cambiato nulla.
@@ -485,7 +531,7 @@ Questa sezione elenca i difetti noti di autorizzazione, visibilità e coerenza, 
   - Il pannello nella pagina Pratiche apre le righe solo con l'abilitazione generale e quella dell'ateneo; i numeri li mostra comunque, con la visibilità per azienda.
   - Elenco, conteggi, dettaglio, creazione e modifica applicano ora la visibilità per azienda, ma nessuna rotta guarda le abilitazioni né il ruolo: chi ha le righe spente crea e modifica lo stesso, purché nella propria azienda.
   - La pagina Pratiche è nel menu di Nazionale, Regionale, Provinciale e Aderente, e si apre anche dall’indirizzo.
-  - `frontend/src/lib/pannelloPratiche.js:106`; `frontend/src/components/PannelloPratiche.jsx:83`, `125`; `backend/src/pratiche/routers.py:16-20`, `66-96`, `145-167`; `rotte.js:20-41`; `App.jsx:56`.
+  - `frontend/src/lib/pannelloPratiche.js:106`; `frontend/src/components/PannelloPratiche.jsx:83`, `125`; `backend/src/pratiche/routers.py:16-20`, `66-96`, `145-167`; `rotte.js:21-42`; `App.jsx:57`.
 - **Prodotti formativi e tipi di corso.**
   - La voce di menu è solo per il Nazionale.
   - Creazione e modifica sono aperte a ogni utente autenticato.
@@ -569,7 +615,7 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
 - **Riga "Prevalutazione".**
   - Porta a una pagina che non esiste, quindi a "Pagina non trovata".
   - I suoi numeri sono sempre zero: la piattaforma non conta le prevalutazioni, che non hanno né rotte né una regola di visibilità.
-  - `pannelloPratiche.js:31-33`, `80-82`; `frontend/src/lib/configPratiche.js:18-22`, `101-105`; `App.jsx:73`.
+  - `pannelloPratiche.js:31-33`, `80-82`; `frontend/src/lib/configPratiche.js:18-22`, `101-105`; `App.jsx:75`.
 - **Tendina "Tipologia corso".**
   - Nessuna riga della pagina Pratiche attiva l'opzione che la mostra.
   - Quindi, dalla pagina Pratiche, la tendina non compare mai.
@@ -585,7 +631,7 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
 - **Scheda Esami.**
   - Mostra solo "Nessun esame registrato.": gli esami non sono ancora gestiti.
   - Le schede ammesse nell'indirizzo comprendono anche "prevalutazioni", che non ha una scheda.
-  - `NuovoSottoscrittore.jsx:340-342`, `470-481`; `frontend/src/config/routes/query.js:39-51`.
+  - `NuovoSottoscrittore.jsx:340-342`, `470-481`; `frontend/src/config/routes/query.js:40-52`.
 - **Campi svuotati nella scheda azienda.**
   - L'interfaccia non invia i campi vuoti, e il server aggiorna solo i campi ricevuti.
   - Svuotare un campo facoltativo non lo cancella: il valore precedente resta salvato e ricompare al ricaricamento.
@@ -622,10 +668,6 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - Una persona senza ruolo attuatore, o con l'indirizzo condiviso con un altro attuatore attivo, vede lo stesso messaggio degli altri ma non riceve la mail.
   - È una scelta voluta contro l'enumerazione degli account.
   - `servizio_reset.py:125-160`; `auth/schemas.py:29`.
-- **Pagina dopo l'accesso.**
-  - Dopo il login, e dopo un'impersonificazione, si arriva a Sottoscrittori e non alla Dashboard.
-  - Il Nazionale raggiunge le Pratiche dalla voce dedicata del menu.
-  - `frontend/src/config/routes/percorsi.js:14`; `SchedaUtente.jsx:165`.
 - **Durata del link di recupero.**
   - I testi dicono "60 minuti", un valore fisso.
   - Nel server la durata è configurabile.
@@ -634,7 +676,7 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - Nel frontend è fissa a 8.
   - Nel server è configurabile, con minimo 8.
   - Il test di allineamento confronta il frontend con la configurazione attiva.
-  - `frontend/src/lib/passwordPolicy.js:12`; `config.py:102`, `225`; `test_policy_allineata.py:54-57`.
+  - `frontend/src/lib/passwordPolicy.js:12`; `config.py:102`, `242`; `test_policy_allineata.py:54-57`.
 - **Indirizzo di creazione dei prodotti.**
   - L'interfaccia invia la creazione a un indirizzo senza barra finale.
   - La rotta del server ha la barra finale.
@@ -720,10 +762,14 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - Il cambio di codice di un prodotto si registra con `print`, non con il logging.
   - Quindi la traccia non passa dalla redazione e non arriva ai file di log.
   - `listini_testa/routers.py:203`.
+- **Regioni di EduNews24.**
+  - L'elenco chiuso delle aree sta sia nel backend sia nel frontend, come la policy delle password: ogni modifica va replicata.
+  - Un test confronta le due copie.
+  - `backend/src/edunews24/costanti.py:73-94`; `frontend/src/config/edunews24.js:18-39`; `backend/tests/unit/test_regioni_allineate.py`.
 - **Commenti e messaggi superati.**
   - `autorizzazioni.py:29-31` dice che il Nazionale oggi non può accedere, ma il secondo fattore esiste.
   - `password.py:20`, `46` e `passwordPolicy.js:25` parlano di un minimo di 12 caratteri.
-  - Il messaggio d'errore all'avvio parla di "due pepper", ma i segreti sono tre (`config.py:297-299`).
+  - Il messaggio d'errore all'avvio parla di "due pepper", ma i segreti sono tre (`config.py:320-322`).
   - `NuovoSottoscrittore.jsx:209-210` dice che il codice cliente deriva dall'identificativo, ma è casuale.
 
 ### Avvisi anagrafici e visibilità
@@ -742,3 +788,48 @@ per processo API e con timeout di 60 secondi. Le cache native non restano
 nell'API tra documenti diversi. Interruzioni e timeout restituiscono l'errore
 generico di composizione e cancellano i file temporanei della richiesta;
 stdout/stderr del processo non vengono riportati nei log applicativi.
+
+### Risorse di EduNews24
+
+Il budget delle chiamate verso EduNews24 e la cache delle risposte sono
+condivisi da tutti gli utenti, senza limiti per utente o per sessione. Un
+utente collegato, di qualunque ruolo, che scorre molte combinazioni di filtri
+e pagine può esaurire il budget e far uscire dalla cache le voci meno lette:
+finché dura, gli altri ricevono copie non aggiornate oppure il messaggio
+d'errore. Riguarda solo la disponibilità della sezione, non i dati
+(`backend/src/edunews24/servizio.py:311-315`; `backend/src/edunews24/costanti.py:27`).
+
+La scadenza totale di una chiamata si controlla solo all'arrivo delle
+intestazioni e durante la lettura del corpo. Un server a monte lento, o un
+apparato in mezzo, che manda le intestazioni a pezzi o una serie di risposte
+1xx, ciascuna entro il timeout di lettura, tiene aperta la chiamata oltre la
+scadenza, anche senza fine. Finché non finisce la pausa non scatta, e ogni
+chiamata così occupa uno dei 4 posti del semaforo: la sezione serve copie
+oppure 503, mentre il resto dell'API non ne risente
+(`backend/src/edunews24/client.py:191-201`; `backend/src/edunews24/costanti.py:13`).
+
+### Rete e deploy
+
+- **Rete delle notifiche collegata senza regole.**
+  - Con `NOTIFICHE_REALI=si` solo il deploy installa le regole del bridge delle notifiche. `start`, `rollback`, `restore-db`, `refresh-clone`, `publish-domain` e `unpublish-domain`, eseguiti prima del primo deploy, collegano l'API a quella rete con l'uscita libera.
+  - La configurazione della rete si copia in `shared/` prima di avviare le regole: se l'avvio fallisce la copia resta, e le azioni successive collegano la rete senza regole. Se la release non contiene la configurazione, il deploy si ferma.
+  - `deploy/remote/26-notifiche.sh:9-10`, `45-47`; `deploy/remote/00-lib.sh:114-121`; `deploy/remote/80-status.sh:42-48`.
+- **Regole delle notifiche incomplete.**
+  - Bloccano solo gli intervalli privati RFC 1918, il link-local e il loopback: sulle porte ammesse restano raggiungibili la rete "questo host", lo spazio condiviso dei provider, i blocchi riservati all'IETF e ai test di prestazioni, il multicast e gli indirizzi riservati per uso futuro.
+  - Nessuna eccezione per il DNS: con Docker precedente alla 28 le query dei container verso i nameserver non di loopback attraversano il bridge e vengono rifiutate, quindi email, SMS e, con le notifiche attive, anche EduNews24 potrebbero non risolvere i nomi. Da Docker 28 le query partono dall'host. La versione sul server non è verificata e il difetto non è corretto.
+  - Solo IPv4, e la rete non dichiara `enable_ipv6`: vale l'impostazione predefinita del demone Docker, non verificata.
+  - La catena si svuota e poi si riempie: per un istante è vuota e il traffico passa. Se lo script si interrompe a metà, la catena resta incompleta.
+  - La catena `DOCKER-USER` non viene creata se manca, e nessun controllo verifica che Docker la attraversi.
+  - `deploy/remote/26-notifiche.sh:15-27`; `deploy/compose.notifiche.yml`.
+- **Due reti con uscita.** Con `NOTIFICHE_REALI=si` la rete EduNews24 non si collega: l'API avrebbe due gateway, Docker ne sceglierebbe uno e l'SMTP potrebbe finire sulla rete che lo rifiuta. Le chiamate a EduNews24 escono allora dalla rete delle notifiche e ne ereditano il limite sul DNS (`compose_rel` in `deploy/remote/00-lib.sh:122-147`).
+- **Uscita verso EduNews24.** Le regole del bridge dedicato ammettono solo HTTPS verso indirizzi pubblici e il DNS verso i nameserver IPv4 dell'host (`prepara_edunews24` in `deploy/remote/27-edunews24.sh`). Limiti:
+  - la porta HTTPS è aperta verso qualunque indirizzo pubblico e vale per tutta l'API, non solo per EduNews24. Il client EduNews24 chiama solo l'indirizzo configurato e non segue i reindirizzamenti, ma anche il fornitore SMS è un servizio HTTPS (`backend/src/notifiche/sms.py:8`). Per questo, con `SMS_BACKEND=skebby` in `shared/api.env` e senza `NOTIFICHE_REALI=si`, gli script di deploy non collegano la rete e il deploy toglie la copia della sua configurazione in `shared/` (`deploy/remote/00-lib.sh:66-84`, `122-147`; `deploy/remote/27-edunews24.sh:93-106`): l'API resta senza uscita e gli SMS reali non partono finché non si attivano le notifiche reali. Le email via SMTP restano bloccate. Il controllo però:
+    - sta negli script di deploy, non nell'API: un comando `docker compose` lanciato a mano sul server lo aggira, e un altro client HTTPS aggiunto all'API uscirebbe comunque dalla rete;
+    - legge solo l'ultima riga con la chiave `SMS_BACKEND`, riconosciuta nelle forme che accetta Docker Compose (prefisso `export`, rientro, spazi o due punti al posto dell'uguale) e con maiuscole qualunque, come la legge l'API; dal valore toglie apici, spazi, fine riga di Windows e commento in coda. Se la chiave compare più volte con maiuscole diverse, Docker Compose passa all'API tutte le varianti, mentre il controllo guarda solo l'ultima riga;
+    - considera un `shared/api.env` illeggibile come privo di SMS reali; gli script però girano da amministratore;
+  - le eccezioni per il DNS ammettono qualunque query verso i nameserver dell'host;
+  - i nameserver si leggono all'avvio delle regole: se il DNS dell'host cambia, restano quelli vecchi fino al riavvio successivo dell'unità, e la risoluzione fallisce senza aprire l'uscita;
+  - un nameserver che sia un indirizzo del server stesso ricade nel blocco dei servizi dell'host: con Docker precedente alla 28 la risoluzione fallisce;
+  - nameserver propri nella configurazione del demone Docker, o Docker precedente alla 28 con soli nameserver IPv6 o senza nameserver, non sono coperti dalle eccezioni. I nameserver di loopback Docker li interroga dall'host, e non servono eccezioni: con solo quelli l'avviso del deploy sui nameserver è innocuo;
+  - se Docker non fa passare il traffico da `DOCKER-USER`, per esempio con il suo backend nftables, l'unità del firewall fallisce: durante un deploy la rete non si collega; se fallisce dopo, per esempio a un riavvio del server, la rete resta collegata con l'uscita libera (anche il cancello sta in `DOCKER-USER`, che il traffico non attraversa) finché un deploy non toglie la copia in `shared/`.
+- **Riavvio del server.** Le unità del firewall partono dopo Docker, che nel frattempo può aver già riavviato i container: per un breve intervallo l'API può avere l'uscita dei bridge dedicati senza regole, e la porta web pubblicata sul dominio può essere raggiungibile da tutta la rete locale. Vale per le notifiche, per EduNews24 e per la pubblicazione sul dominio (`deploy/remote/25-esposizione.sh:53-72`, `deploy/remote/26-notifiche.sh:30-47`, `deploy/remote/27-edunews24.sh`).

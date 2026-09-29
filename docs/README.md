@@ -13,8 +13,9 @@ Per chi usa la piattaforma: committente, operatori, collaudatori. Nessun termine
 | [Accesso e sicurezza](funzionale/accesso-e-sicurezza.md) | accesso, secondo fattore, sessione, recupero password, profilo |
 | [Sottoscrittori e attuatori](funzionale/sottoscrittori-e-attuatori.md) | elenchi, creazione, scheda, verifica dei contatti |
 | [Aziende](funzionale/aziende.md) | elenco, scheda, gerarchia e percentuali |
-| [Pratiche](funzionale/pratiche.md) | dashboard, elenco, scheda e documento PDF |
+| [Pratiche](funzionale/pratiche.md) | numeri per ateneo, elenco, scheda e documento PDF |
 | [Prodotti formativi](funzionale/prodotti-formativi.md) | listini e righe di prezzo |
+| [EduNews24](funzionale/edunews24.md) | notizie, interpelli e selezione del personale del portale EduNews24, nella Dashboard e nella pagina dedicata |
 | [Glossario](funzionale/glossario.md) | i termini usati nella piattaforma |
 
 ## Documentazione tecnica

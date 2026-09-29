@@ -24,6 +24,7 @@ rimanda ai documenti specifici:
 | Sicurezza | bcrypt, `webauthn` per le passkey, `segno` per il codice QR, `cryptography` |
 | Documenti PDF | Typst (pacchetto `typst`), Pillow per la firma |
 | SMS | servizio Skebby, chiamato con `httpx` |
+| Contenuti esterni | API pubblica di EduNews24, chiamata dal backend con `httpx` e tenuta in una cache in memoria |
 | Frontend | React 19, Vite, Tailwind CSS 4, React Router (pacchetto `react-router`), React Compiler, icone Lucide |
 | Esecuzione | container Docker: API, frontend servito da nginx, MariaDB |
 
@@ -33,7 +34,9 @@ Le versioni esatte stanno in `backend/requirements.txt` e in
 Le rotte dell'API sono funzioni sincrone, eseguite da FastAPI in un pool di
 thread condiviso, con una sola eccezione asincrona. Anche il React Compiler è
 attivo nella build del frontend. Le due regole sono in
-[convenzioni.md](convenzioni.md).
+[convenzioni.md](convenzioni.md). Una chiamata lenta a un servizio esterno
+occupa uno di quei thread: il modulo EduNews24 ne limita il numero (vedi
+[EduNews24](#edunews24)).
 
 ## Struttura del backend
 
@@ -53,6 +56,7 @@ alcuni hanno solo i modelli.
 | `mfa/` | Secondo fattore (authenticator, passkey, scelta del metodo), al login e dal profilo |
 | `otp/` | Codici via email o SMS, limiti di invio, verifica dei contatti di un cliente, attivazione dell'account |
 | `notifiche/` | Composizione e invio delle email, invio degli SMS, configurazione SMS |
+| `edunews24/` | Proxy di sola lettura verso l'API di EduNews24: client HTTP, cache in memoria, protezioni, cursori, normalizzazione e validazione di collegamenti, immagini e video, rotte `/edunews24/...` |
 | `documenti/` | PDF delle pratiche con Typst e rotte di download; `ecampus/` contiene posizioni e regole dei campi di quei moduli |
 | `clienti/` | Sottoscrittori e attuatori: elenco, scheda, creazione con utente, permessi sulle pratiche |
 | `utenti/` | Account di accesso |
@@ -145,6 +149,10 @@ ancora aperti: [Limiti noti](sicurezza.md#limiti-noti).
 
 Le altre eccezioni non gestite diventano un 500 del framework.
 
+Le rotte EduNews24 usano 409 anche per un cursore non valido e 503 con
+`Retry-After` per un servizio esterno che non risponde: vedi
+[EduNews24](#edunews24).
+
 ## Notifiche
 
 ### Email
@@ -194,6 +202,142 @@ automatico.
 
 In produzione solo `skebby` è accettato, sia all'avvio sia al momento
 dell'invio.
+
+## EduNews24
+
+Il modulo `backend/src/edunews24/` porta nella piattaforma notizie, interpelli
+e annunci di selezione del personale del portale EduNews24, in sola lettura e
+senza chiave. È la seconda integrazione HTTP esterna, dopo gli SMS, e segue il
+modello di `notifiche/sms.py`: client `httpx` sincrono, trasporto iniettabile
+nei test, timeout brevi, nessun redirect seguito, un'eccezione propria
+sollevata con `from None`. Il funzionamento visto da chi usa la piattaforma è
+in [EduNews24](../funzionale/edunews24.md).
+
+**Percorso.** Il browser chiama solo il backend, con `apiFetch`. Le rotte
+`GET /edunews24/notizie`, `/edunews24/interpelli`,
+`/edunews24/selezione-personale` e `/edunews24/categorie` stanno su un router
+con la sessione e senza controlli di ruolo, perché i contenuti sono uguali per
+tutti. Parametri e risposte sono in [riferimenti/api.md](riferimenti/api.md).
+Ogni risposta ha la forma `{attiva, elementi, meta}`: `meta` porta il cursore
+della pagina successiva, l'istante dell'ultimo aggiornamento e `stantio`.
+
+`EDUNEWS24_BACKEND` sceglie la fonte (`edunews24/servizio.py`):
+
+| Valore | Effetto |
+|---|---|
+| `disabilitato` | Predefinito: ogni rotta risponde 200 con `attiva: false`, `elementi` vuoti e `meta` nullo, senza chiamare nessuno |
+| `http` | Chiamate all'indirizzo di `EDUNEWS24_URL_BASE`; l'avvio controlla URL base, contatto, host dei media e valori numerici (`edunews24/verifica.py`) |
+| `memoria` | Dati inventati su host `.invalid`, per sviluppo e test: passano da cache, normalizzazione e cursori, non dalle protezioni. Rifiutato in produzione |
+
+**Cache** (`edunews24/cache.py`). Il processo uvicorn è uno solo, quindi la
+copia è unica per tutti gli utenti: è una cache condivisa nel senso della
+RFC 9111.
+
+- La chiave è la risorsa con i parametri in forma canonica; si salva solo la
+  risposta già normalizzata.
+- Una risposta resta fresca per `s-maxage` (o `max-age`) meno `Age`, al più
+  un'ora. `EDUNEWS24_TTL_RIPIEGO_SECONDI` vale solo se mancano entrambi.
+- `stale-while-revalidate` e `stale-if-error` sono estensioni che l'origine
+  dichiara (RFC 5861): una copia scaduta si riusa mentre una sola richiesta la
+  rinnova, oppure, se il rinnovo fallisce, entro `stale-if-error` e mai oltre
+  `EDUNEWS24_STANTIO_MASSIMO_SECONDI`. `no-cache`, `must-revalidate` e
+  `proxy-revalidate` le annullano. Se la risposta arriva già scaduta (`Age`
+  oltre la freschezza), le due finestre si accorciano di altrettanto. Una copia
+  servita oltre la finestra di rinnovo arriva con `stantio: true`.
+- Il rinnovo manda `If-None-Match` con l'`ETag` salvato; un 304 senza
+  `Cache-Control` conserva le direttive salvate (RFC 9111, sezione 4.3.4). Una
+  copia di riserva che EduNews24 marca come stantia resta fresca per poco (il
+  suo `s-maxage`, altrimenti 60 secondi), arriva con `stantio: true` e non
+  accorcia la finestra già acquisita.
+- Non si salvano le risposte `no-store` o `private`, né gli errori.
+- LRU di 96 voci, al più 192 KiB ciascuna e 6 MiB in tutto, misurati come
+  JSON: in memoria restano sotto i 32 MB anche nel caso peggiore.
+
+**Protezione del pool di thread** (`edunews24/protezioni.py`,
+`edunews24/servizio.py`). Una chiamata lenta occupa un thread per tutta la sua
+durata, quindi:
+
+- un semaforo non bloccante lascia al più 4 thread a chiamare o ad aspettare
+  EduNews24; oltre, si risponde subito con la copia oppure con 503 e
+  `Retry-After` di 5 secondi;
+- una sola chiamata in volo per chiave: le altre richieste ricevono la copia
+  ancora valida oppure aspettano al più 1,5 secondi, poi copia o 503. Lo stato
+  del volo si toglie a fine chiamata, quindi non cresce. Senza copia, se la
+  chiamata dura di più, chi aspetta riceve 503 con `Retry-After` di 5 secondi
+  mentre la chiamata riesce: in produzione succede solo con richieste
+  contemporanee sulla stessa chiave, in sviluppo anche al primo caricamento
+  (vedi [Sviluppo locale](sviluppo-locale.md));
+- un budget di 30 chiamate al minuto per tutta l'applicazione, configurabile
+  fino a 40 (`EDUNEWS24_RICHIESTE_AL_MINUTO`): il limite di EduNews24 è per
+  indirizzo IP e conta anche i 304. A budget esaurito, copia oppure 503 con
+  l'attesa fino al posto successivo, al più un minuto;
+- dopo un guasto (rifiuto con 429 o 503, timeout, rete, altri 5xx, 404,
+  risposta non valida o troppo grande) le chiamate si sospendono. Il primo
+  `Retry-After` valido si rispetta alla lettera; senza, vale
+  `EDUNEWS24_PAUSA_RIPIEGO_SECONDI`. Ai guasti consecutivi la pausa di ripiego
+  raddoppia, senza scendere sotto il `Retry-After` ricevuto, fino a un'ora; la
+  prima risposta riuscita azzera il conteggio. Durante la pausa si serve la
+  copia oppure 503 con i secondi che restano;
+- un altro 400 di EduNews24 è una deriva del contratto, non un guasto: copia
+  oppure 503, senza pausa;
+- nessun thread in background e nessun nuovo tentativo in ciclo: il rinnovo lo
+  fa la richiesta che trova la copia scaduta;
+- la scadenza totale (`EDUNEWS24_TIMEOUT_TOTALE_SECONDI`) si controlla
+  all'arrivo delle intestazioni e durante la lettura del corpo. Prima valgono
+  solo il timeout di connessione e quello di lettura, che conta ogni singola
+  attesa: intestazioni mandate a pezzi o una serie di risposte 1xx non hanno
+  una scadenza complessiva, e la risoluzione dei nomi non ha un timeout di
+  `httpx`. Il limite garantito è il semaforo.
+
+Il filtro per categoria si controlla sull'elenco delle categorie, caricato con
+le stesse protezioni: una categoria sconosciuta riceve 400, e senza elenco la
+risposta è 503. A cache fredda la richiesta parallela di
+`/edunews24/categorie` aspetta questa chiamata e può ricevere 503: dopo un
+errore la pagina la ripete una volta sola all'arrivo delle notizie e a ogni
+cambio di filtro o di scheda, mai in ciclo
+(`frontend/src/hooks/useCategorieEduNews24.js`). Negli interpelli l'area `nazionale` riceve 400 senza chiamare
+EduNews24, che per gli interpelli non ha un filtro nazionale
+(`edunews24/servizio.py`): [riferimenti/api.md](riferimenti/api.md) la elenca
+comunque, perché interpelli e selezione condividono l'elenco delle aree
+(`Area` in `edunews24/schemi.py`).
+
+**Cursori** (`edunews24/cursori.py`). Il backend accetta solo i cursori che ha
+estratto da `links.next`, legati alla risorsa e ai filtri con cui sono nati, in
+una LRU di 2048 voci; `links.next` non si segue mai. Un cursore sconosciuto o
+fuori forma riceve 409 senza chiamare EduNews24; uno rifiutato a monte si
+dimentica e riceve 409, e la pagina che l'aveva emesso perde la freschezza,
+così la ripartenza la rilegge. Il frontend riparte dalla prima pagina una volta sola,
+poi mostra l'errore. Nel resto dell'API il 409 è un vincolo del database: il
+frontend lo interpreta in base alla rotta.
+
+**Normalizzazione e log** (`edunews24/normalizza.py`, `edunews24/url.py`). Si
+inoltrano solo i campi che l'interfaccia usa, con i testi ripuliti e troncati.
+Collegamenti, immagini e video si validano e non si riscrivono: vedi
+[sicurezza.md](sicurezza.md#contenuti-di-edunews24). Una voce che non passa i
+controlli si scarta da sola; solo una forma sbagliata del corpo è un guasto. Il
+logger `ersaf.edunews24` registra solo risorsa, esito, stato HTTP, durata e
+secondi di pausa; `httpx` e `httpcore` stanno a WARNING.
+
+**Rete.** In locale il backend esce direttamente verso Internet. In collaudo
+serve la rete dedicata: vedi [deploy.md](deploy.md#edunews24).
+
+**Frontend.**
+
+- `lib/edunews24.js`: date nel fuso Europe/Rome, stato delle scadenze, gruppi
+  per giorno, aree, filtri, impaginazione e lettura delle risposte;
+- `lib/edunews24Api.js` e `lib/edunews24Paginazione.js`: chiamate con testi
+  d'errore propri, `Retry-After` letto con `secondiAttesa` di
+  `lib/erroriApi.js`, 409 come cursore non più valido con una sola ripartenza
+  dalla prima pagina;
+- `lib/videoEsclusivo.js`: un solo video in riproduzione alla volta, e un
+  player smontato che smette di scaricare il file;
+- un hook per il riquadro della Dashboard (`useModuloEduNews24`) e uno a
+  cursore per la pagina (`usePaginaEduNews24`), più quelli di supporto per
+  categorie, esito della funzione, attesa prima di riprovare, scheletri e
+  fascia scorrevole;
+- i componenti in `components/edunews24/`. L'identità visiva
+  (`config/tokens/edunews24.css`, `config/styles/edunews24.*`) vale solo dentro
+  `.edunews24`.
 
 ## PDF delle pratiche
 
@@ -325,18 +469,24 @@ nascosto.
   - `shared/`: elementi comuni di elenchi e schede, dialoghi, stati di
     caricamento, avvisi;
   - `pratiche/`: sezioni della scheda pratica e pulsante del PDF;
-  - `contatti/`: campo contatto e dialogo di verifica.
+  - `contatti/`: campo contatto e dialogo di verifica;
+  - `dashboard/`: scorciatoie della Dashboard;
+  - `edunews24/`: riquadro della Dashboard e pagina EduNews24.
 - `config/`:
   - `routes/`: percorsi, voci di menu, parametri di query;
   - `testi/`: testi dell'interfaccia;
   - `styles/`: classi Tailwind e fogli CSS;
   - `tokens/` e `theme/`: palette, misure, movimento, colori, tipografia,
     importati da `index.css`;
-  - `icone.js`: unico punto di import di Lucide; ESLint lo impone.
+  - `edunews24.js`: dati di EduNews24 (sezioni, regioni, costanti), compresi
+    gli indirizzi dei profili social;
+  - `icone.js`: unico punto di import di Lucide; ESLint lo impone. Le icone dei
+    marchi social, che Lucide non ha, sono SVG in `assets/edunews24/` usati
+    come maschera CSS: vedi [convenzioni.md](convenzioni.md#icone).
 - `lib/`: logica senza React (chiamate API, sessione, errori, dati dei moduli,
   righe degli elenchi).
 - `hooks/`: hook che collegano `lib/` ai componenti.
-- `assets/`: immagini.
+- `assets/`: immagini, il logo di EduNews24 e le icone dei marchi social.
 
 ### Sessione e chiamate
 
@@ -349,9 +499,14 @@ nascosto.
 - `apiFetch` (`lib/api.js`) usa `VITE_API_BASE_URL` come base e
   `credentials: "include"`. Manda sempre `X-ERSAF-Request: 1` e, sulle
   scritture, `X-CSRF-Token`.
-- Su un 401 pulisce la sessione, salva la pagina corrente e torna al login.
+- Su un 401 pulisce la sessione, salva la pagina corrente e torna al login:
+  dopo l'accesso si torna lì, altrimenti alla pagina d'arrivo `ROTTA_INIZIALE`,
+  la Dashboard (`lib/ritornoAccesso.js`).
 - `lib/erroriApi.js` traduce le risposte in messaggi. Per ogni 5xx mostra un
   messaggio generico; per il 429 usa `Retry-After`.
+- Le chiamate a EduNews24 hanno testi d'errore propri, leggono `Retry-After`
+  con `secondiAttesa` e trattano il 409 come cursore non più valido; il 401
+  resta ad `apiFetch`.
 
 ### Pagine, menu e versione
 
@@ -389,6 +544,11 @@ Schema, migrazioni e debito tecnico: [database-e-migrazioni.md](database-e-migra
   all'API togliendo il prefisso.
 - **Database.** MariaDB in un container.
 - **Composizione.** I servizi sono descritti in `deploy/compose.yml`.
+- **Uscite di rete.** L'API sta su reti interne; un'uscita verso Internet
+  esiste solo con le notifiche reali o con l'uscita EduNews24, ciascuna su un
+  bridge dedicato con regole di firewall installate dal deploy. Per EduNews24
+  sono ammessi solo HTTPS verso indirizzi pubblici e il DNS verso i nameserver
+  dell'host ([deploy.md](deploy.md#edunews24)).
 
 La pubblicazione parte da Windows con `scripts/deploy.ps1` e usa gli script in
 `deploy/remote/`. Le migrazioni si applicano prima dell'attivazione. Se
