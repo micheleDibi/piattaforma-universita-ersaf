@@ -34,7 +34,8 @@ Su Windows `scripts\verify-local.ps1 -Gate Unit|Backend|Frontend|All|Docs` raggr
 - Le migrazioni in `db/migrations/` già pubblicate **non si modificano**. Le nuove sono idempotenti, hanno un rollback in `db/rollback/` e seguono [db/README.md](db/README.md).
 - Le rotte del backend sono **sincrone** (`def`), salvo l'eccezione documentata in [architettura](docs/tecnica/architettura.md).
 - La configurazione ha due strati: `Impostazioni` non solleva mai, `verifica_configurazione` rifiuta l'avvio. Non aggiungere validator che sollevano all'import.
-- Frontend: testi in `src/config/testi/`, stili in `src/config/styles/` e nei token; icone **solo** da `src/config/icone.js`. ESLint vieta glifi e durate scritte a mano.
+- Frontend: testi in `src/config/testi/`, stili in `src/config/styles/` e nei token; icone **solo** da `src/config/icone.js`, tranne i marchi social di EduNews24 (SVG in `src/assets/edunews24/` usati come maschera CSS, vedi [convenzioni](docs/tecnica/convenzioni.md#icone)). ESLint vieta glifi e durate scritte a mano.
+- Le 20 regioni di EduNews24 sono duplicate in `backend/src/edunews24/costanti.py` e `frontend/src/config/edunews24.js`: ogni modifica va replicata; le confronta `backend/tests/unit/test_regioni_allineate.py`.
 - Convenzione booleana legacy: vero = -1, falso = 0, con gli helper esistenti.
 - Mai aprire, citare o modificare `dump.sql`, i file `.env` reali e `backend/ersaf.db`. Mai collegarsi a database di produzione.
 - Mai scrivere segreti, token, password o indirizzi email nei log.
