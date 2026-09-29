@@ -44,6 +44,7 @@ cmd_deploy() {
     ACTIVE_ID="$id"
     cmd_release "$archivio" "$id" "$sha" "$dirty" "$@"
     prepara_notifiche
+    prepara_edunews24
     db_up
     if [ "$primo_clone" = 1 ]; then
         if clone_present; then log "clone gia' presente: la clonazione non viene ripetuta"; else do_clone 0; fi

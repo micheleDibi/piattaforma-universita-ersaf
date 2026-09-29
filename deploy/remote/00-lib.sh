@@ -63,6 +63,26 @@ require_installed() {
 
 compose_env_get() { sed -n "s/^$1=//p" "$SHARED/compose.env" | tail -n 1; }
 
+# Vero se shared/api.env esiste e la sua ultima riga con SMS_BACKEND vale skebby.
+# Riga cercata come la legge Docker Compose (rientro, export, spazi, = o :) e con
+# maiuscole qualunque, come l'API; dal valore si tolgono apici, spazi, CR e
+# commento in coda. Legge solo quella chiave e non ne stampa il valore.
+sms_reali_in_api_env() {
+    local valore
+    [ -f "$SHARED/api.env" ] || return 1
+    valore="$(sed -nE 's/^[[:space:]]*(export[[:space:]]+)?[Ss][Mm][Ss]_[Bb][Aa][Cc][Kk][Ee][Nn][Dd][[:space:]]*[=:]//p' \
+        "$SHARED/api.env" 2>/dev/null | tail -n 1 | sed 's/[[:space:]]#.*$//' | tr -d "\r\t\"' " || true)"
+    [ "$valore" = skebby ]
+}
+
+# Avviso della rete EduNews24 lasciata scollegata per gli SMS reali: una volta
+# per shell, anche se lo chiedono sia compose_rel sia prepara_edunews24.
+avviso_sms_edunews24() {
+    [ -z "${_avviso_sms_edunews24:-}" ] || return 0
+    _avviso_sms_edunews24=1
+    warn "USCITA_EDUNEWS24=si ma shared/api.env ha SMS_BACKEND=skebby senza NOTIFICHE_REALI=si: l'API resta senza rete EduNews24, perche' dalla sua porta HTTPS partirebbero gli SMS reali. Per collegarla: SMS_BACKEND diverso da skebby, poi -Action deploy"
+}
+
 compose_env_set() {
     local chiave="$1" valore="$2" tmp
     tmp="$(mktemp)"
@@ -98,6 +118,32 @@ compose_rel() {
         [ -f "$notifiche" ] || notifiche="$SHARED/compose.notifiche.yml"
         [ -f "$notifiche" ] || die "configurazione rete notifiche assente"
         file+=(-f "$notifiche")
+    fi
+    # Uscita verso EduNews24 (27-edunews24.sh), solo se valgono tutte e quattro:
+    # - USCITA_EDUNEWS24=si;
+    # - notifiche reali spente: con due reti non interne l'API avrebbe un solo
+    #   gateway, scelto da Docker, e l'SMTP potrebbe finire sul bridge EduNews24,
+    #   che ammette solo la 443 (quello delle notifiche la ammette gia');
+    # - SMS reali non configurati (sms_reali_in_api_env): la 443 del bridge vale
+    #   per tutta l'API e farebbe partire gli SMS senza NOTIFICHE_REALI=si;
+    # - copia in shared/ presente: la crea solo il deploy, dopo aver installato
+    #   le regole, quindi nessuna azione collega la rete senza firewall.
+    # Senza copia o con gli SMS reali si avvisa su stderr, una volta per shell
+    # (verify, che chiama compose da sottoshell, puo' ripeterlo): lo stdout di
+    # compose_active e' letto da altre funzioni, e die bloccherebbe anche status
+    # e rollback.
+    if [ -f "$SHARED/compose.env" ] && [ "$(compose_env_get USCITA_EDUNEWS24)" = "si" ] \
+        && [ "$(compose_env_get NOTIFICHE_REALI)" != "si" ]; then
+        if sms_reali_in_api_env; then
+            avviso_sms_edunews24
+        elif [ -f "$SHARED/compose.edunews24.yml" ]; then
+            local edunews24="$RELEASES/$id/deploy/compose.edunews24.yml"
+            [ -f "$edunews24" ] || edunews24="$SHARED/compose.edunews24.yml"
+            file+=(-f "$edunews24")
+        elif [ -z "${_avviso_edunews24:-}" ]; then
+            _avviso_edunews24=1
+            warn "USCITA_EDUNEWS24=si ma le regole non sono installate: l'API resta senza rete EduNews24 finche' un deploy non le installa"
+        fi
     fi
     RELEASE_TAG="$id" RELEASE_DIR="$RELEASES/$id" docker compose \
         -p "$PROJECT" --project-directory "$BASE" --env-file "$SHARED/compose.env" \

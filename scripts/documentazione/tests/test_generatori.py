@@ -199,7 +199,7 @@ def test_variabili_trovate_nel_repository():
     testo = configurazione.componi(RADICE, dati)
     for nome in ("DATABASE_URL", "TOTP_CHIAVE", "SMS_BACKEND", "SKEBBY_USER_KEY", "TEST_DATABASE_URL",
                  "RELEASE_TAG", "WEB_LAN_IP", "NOTIFICHE_REALI", "ERSAF_DEPLOY_BASE", "VERSIONE_NUMERO",
-                 "VITE_API_BASE_URL", "VITE_VERSIONE", "VITE_AGGIORNATA_IL", "ERSAF_API_PROXY"):
+                 "VITE_API_BASE_URL", "VITE_VERSIONE", "VITE_AGGIORNATA_IL", "ERSAF_API_PROXY", "USCITA_EDUNEWS24"):
         assert f"`{nome}`" in testo, nome
     obbligo = {v["variabile"]: v["obbligatoria"] for v in dati["impostazioni"] + dati["sms"]}
     assert obbligo["DATABASE_URL"] == obbligo["SESSION_TOKEN_PEPPER"] == obbligo["TOTP_CHIAVE"] == "sì"

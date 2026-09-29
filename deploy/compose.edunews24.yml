@@ -1,0 +1,19 @@
+# Incluso solo con USCITA_EDUNEWS24=si in shared/compose.env, senza
+# NOTIFICHE_REALI=si, senza SMS_BACKEND=skebby in shared/api.env e dopo che un
+# deploy ha installato le regole di firewall (condizioni in compose_rel,
+# deploy/remote/00-lib.sh).
+# Aggiunge all'API una rete con uscita verso Internet per le chiamate a
+# EduNews24; non pubblica porte. Il DB resta sulla sola rete interna data.
+# Il firewall installato dal deploy (deploy/remote/27-edunews24.sh) limita
+# questo bridge a HTTPS verso indirizzi pubblici e al DNS verso i nameserver
+# dell'host, e blocca LAN e servizi dell'host. Solo IPv4.
+services:
+  api:
+    networks: [app, data, edunews24]
+networks:
+  edunews24:
+    driver: bridge
+    internal: false
+    enable_ipv6: false
+    driver_opts:
+      com.docker.network.bridge.name: br-uni-edu24
