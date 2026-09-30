@@ -206,6 +206,15 @@ migrazione applicata.
    Fino ad allora l'unicità dei codici *nuovi* resta comunque garantita dal
    contatore atomico di `pratiche_contatori` (vedi `backend/src/pratiche/codice.py`):
    questa UNIQUE è una rete di sicurezza in più, non la garanzia principale.
+6. `022` allarga `pratiche_contatori.prefisso` per i progressivi
+   `ARTICOLO_PRATICA_` e `PARTITARIO_PRATICA_`, ma non li inizializza: articoli
+   e partitari stanno nello schema dei pagamenti, il cui nome la migrazione non
+   conosce. Il backend riallinea quei due contatori al massimo esistente a ogni
+   pratica SSML o A4U creata. Prima di attivarlo verificare
+   `SCHEMA_GESTIONE_PAGAMENTI` e che l'utente dell'applicazione possa scrivere
+   in quello schema. Il riallineamento copre anche un gestionale precedente
+   che continui a numerare con `MAX + 1`, ma non una sua creazione nello stesso
+   istante: la convivenza sullo stesso database va coordinata.
 
 ## Il debito che resta aperto
 

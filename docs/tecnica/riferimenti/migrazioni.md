@@ -27,6 +27,7 @@ Le regole per applicarle, annullarle e correggere gli errori sono in [db/README.
 | 019 | `019_realtime_consegne_connessioni.sql` | Quorum ACK fra connessioni e worker. Solo metadati, nessuna modifica allo storico | assente |
 | 020 | `020_contatori_codice_pratica.sql` | Contatori per il codice pratica (numerazione automatica) | `020_contatori_codice_pratica_down.sql` |
 | 021 | `021_capienza_notifiche.sql` | Il ciphertext realtime puo' superare il VARCHAR(255) legacy | `021_capienza_notifiche_down.sql` |
+| 022 | `022_contatori_articolo_partitario.sql` | Contatori per articolo e partitario della pratica | `022_contatori_articolo_partitario_down.sql` |
 
 ## Anomalie
 

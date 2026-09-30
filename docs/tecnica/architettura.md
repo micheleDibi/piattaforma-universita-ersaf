@@ -113,6 +113,13 @@ Quello che serve sapere qui:
   indirizzi ordinari: gli override `TEST_DATABASE_URL_GESTIONE_PAGAMENTI` e
   `TEST_DATABASE_URL_SYS_ADMIN` devono puntare al solo database usa-e-getta
   descritto in [Test](test.md). Non c'è ancora nessuna funzionalità che li usa.
+- `SCHEMA_GESTIONE_PAGAMENTI` è invece il solo **nome** dello schema dei
+  pagamenti. Alla creazione di una pratica SSML o A4U vi si scrivono articolo
+  e partitario con la connessione principale, qualificando le tabelle con lo
+  schema: tutto resta nella transazione della pratica, cosa che una sessione
+  di `get_db_gestione_pagamenti()` non permetterebbe. L'utente di
+  `DATABASE_URL` deve quindi poter scrivere anche lì. Nei test vale
+  `ersaf_test`. Vedi `pratiche/dopo_salvataggio.py`.
 
 L'elenco delle variabili è in
 [riferimenti/configurazione.md](riferimenti/configurazione.md).

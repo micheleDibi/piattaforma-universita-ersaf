@@ -47,3 +47,13 @@ class CodicePraticaError(ValueError):
     Tipicamente un tipo di corso senza prefisso associato, o un contatore che
     ha esaurito le 999999 cifre disponibili per un prefisso.
     """
+
+
+class ContabilitaPraticaError(ValueError):
+    """Impossibile creare articolo e partitario di una pratica nuova (vedi
+    pratiche/dopo_salvataggio.py).
+
+    Tipicamente un dato di riferimento mancante: tipo di corso senza gruppo
+    articolo, tipo articolo 'PRATICA' assente, utente della pratica senza un
+    cliente da usare come fornitore.
+    """

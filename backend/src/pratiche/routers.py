@@ -6,9 +6,10 @@ from typing import Annotated, List
 from src.auth.dipendenze import get_current_utente
 from src.auth.visibilita import Visibilita, riga_di_me, visibilita_corrente
 from src.database import get_db
-from src.errori import CodicePraticaError
+from src.errori import CodicePraticaError, ContabilitaPraticaError
 from src.notifiche.backend_invio import Mailer, get_mailer
 from src.pratiche.codice import genera_codici_pratica
+from src.pratiche.dopo_salvataggio import dopo_creazione
 from src.pratiche.filtri import FiltriPratiche, query_filtrata
 from src.pratiche.notifiche import invia_mail_nuova_pratica_ersaf, invia_mail_pratica_bozza
 from src.pratiche.opzioni import router as opzioni_router
@@ -117,10 +118,11 @@ def crea_pratica(
     db.flush()
     db.refresh(nuova_pratica)
 
+    codice_universita = getattr(nuova_pratica.universita, "nome_universita_codice", None)
     try:
         codici = genera_codici_pratica(
             db,
-            nome_universita_codice=getattr(nuova_pratica.universita, "nome_universita_codice", None),
+            nome_universita_codice=codice_universita,
             listino_tipo_corso_id=nuova_pratica.listino_tipo_corso_id,
         )
     except CodicePraticaError as errore:
@@ -142,6 +144,14 @@ def crea_pratica(
             pratiche_listini_createdBy=utente.utente_id,
             pratiche_listini_updatedBy=utente.utente_id,
         ))
+
+    # Codice A4U e articolo/partitario nel database dei pagamenti, nella
+    # stessa transazione: se manca un dato di riferimento non si salva nulla.
+    # Vedi src/pratiche/dopo_salvataggio.py.
+    try:
+        dopo_creazione(db, nuova_pratica, utente.utente_id, nome_universita_codice=codice_universita)
+    except ContabilitaPraticaError as errore:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(errore)) from errore
 
     # Storico stati: una pratica nuova e' sempre "prima volta" nel suo stato
     # (sempre Bozza, vedi sopra), non serve stato_gia_raggiunto (non puo'

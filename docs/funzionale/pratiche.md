@@ -287,6 +287,17 @@ istante. Per SSML lo stesso codice viene copiato anche nel Codice ASG interno
 della pratica. Se il tipo di corso del percorso non ha un prefisso previsto,
 il salvataggio è bloccato con un errore.
 
+Quando si crea una pratica SSML o A4U, il salvataggio prepara anche la sua
+parte contabile nella gestione pagamenti: un articolo (es.
+ARTICOLO_PRATICA_3498) e un partitario (es. PARTITARIO_PRATICA_3529), con il
+prezzo della pratica, lo studente come cliente e, come fornitore, chi ha
+creato la pratica. La numerazione continua quella dei documenti già
+esistenti. Per A4U il codice pratica viene anche registrato come codice
+definitivo. Se manca uno dei dati che servono, per esempio perché chi crea la
+pratica non ha una scheda cliente, il salvataggio è bloccato con un errore e
+non viene salvato nulla. Articolo e partitario si creano una volta sola, alla
+creazione: modificare la pratica, anche nel prezzo, non li cambia.
+
 Nota: le regole di sola lettura di codice, prezzo e data di creazione sono
 applicate solo dall'interfaccia; per lo stato, invece, il server ignora in
 silenzio la modifica se chi chiama non è Nazionale (la richiesta risponde

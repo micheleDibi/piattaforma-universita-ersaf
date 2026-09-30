@@ -109,6 +109,30 @@ def prossimo_numero(db: Session, prefisso: str) -> int:
     return int(db.execute(text("SELECT LAST_INSERT_ID()")).scalar_one())
 
 
+# Come _SQL_INCREMENTA, ma il risultato non scende mai sotto minimo + 1. Serve
+# ai progressivi che anche il gestionale precedente continua a scrivere con
+# MAX(...) + 1: ogni uso riallinea il contatore, invece di un seed una tantum.
+_SQL_INCREMENTA_OLTRE = text(
+    """
+    INSERT INTO pratiche_contatori (prefisso, ultimo_numero)
+    VALUES (:prefisso, LAST_INSERT_ID(:minimo + 1))
+    ON DUPLICATE KEY UPDATE
+        ultimo_numero = LAST_INSERT_ID(GREATEST(ultimo_numero, :minimo) + 1)
+    """
+)
+
+
+def prossimo_numero_oltre(db: Session, prefisso: str, minimo: int) -> int:
+    """Prossimo numero per `prefisso`, comunque maggiore di `minimo`.
+
+    `minimo` puo' venire da una lettura non bloccante e quindi essere vecchio:
+    fra due chiamate di questo backend decide comunque il contatore, letto
+    sempre aggiornato sotto il blocco della sua riga.
+    """
+    db.execute(_SQL_INCREMENTA_OLTRE, {"prefisso": prefisso, "minimo": minimo})
+    return int(db.execute(text("SELECT LAST_INSERT_ID()")).scalar_one())
+
+
 def genera_codici_pratica(
     db: Session,
     *,
