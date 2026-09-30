@@ -7,7 +7,7 @@ incoerente su questi campi."""
 import pytest
 from pydantic import ValidationError
 
-from src.pratiche.models import PraticaUpdate
+from src.pratiche.schemi import PraticaUpdate
 
 CAMPI = ("pratica_rinnPrimoAnno", "pratica_rinnSecondoAnno", "pratica_rinnTerzoAnno")
 
