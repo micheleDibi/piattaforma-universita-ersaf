@@ -11,6 +11,34 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 14 — 30/09/2026 16:23
+
+<!-- timbro: versione=14 sha=796e4e7e7ad0ccf01c4b761caed283a6b52a95c3 -->
+
+### Novità e correzioni
+
+**Modificato**
+
+- L'avviso prima di azzerare delle percentuali (nella scheda dell'azienda e nel cambio di padre) ora indica quali atenei verrebbero coinvolti, invece del generico "Alcune percentuali verranno azzerate", con una nota più piccola che ricorda che una percentuale non può superare quella dell'azienda padre.
+- Nella scheda dell'azienda il pulsante "Salva percentuali" non c'è più: "Salva modifiche" salva anche le percentuali delle convenzioni universitarie. Se il salvataggio azzererebbe delle percentuali a cascata sulle aziende figlie, compare comunque la richiesta di conferma, e finché non si conferma non si salva niente (né le percentuali né il resto della scheda).
+- Nella scheda di un sottoscrittore o attuatore il pulsante "Salva utente" non c'è più: "Salva modifiche" salva anche username, stato dell'account, utente padre e ruolo della scheda Utente, qualunque sia la scheda aperta al momento.
+- La tendina "Ruolo attuatore" (Dati principali) parte già su Aderente, senza la voce segnaposto "Aderente (default)".
+
+### Dettagli tecnici
+
+**Aggiunto**
+
+- `messaggioAzzeramento` in `frontend/src/lib/schedaAzienda.js`, che compone il testo dell'avviso a partire dal campo `reset` già restituito dal server con il 409 (prima ignorato); usato sia da `DettaglioConvenzioniUniversitarie.jsx` sia da `GerarchiaAzienda.jsx`. Nessuna modifica al backend.
+- `AlertMessage` accetta ora `message.nota`, una riga più piccola sotto il testo principale ma dentro lo stesso riquadro colorato (nuovo `notaFeedback` in `frontend/src/config/styles/feedback.js`).
+- `caricaDettaglioConvenzioni`/`salvaDettaglioConvenzioni` in `frontend/src/lib/schedaAzienda.js`.
+
+**Modificato**
+
+- `DettaglioConvenzioniUniversitarie.jsx` non ha più stato o effetti propri: lettura, scrittura e conferma dell'azzeramento a cascata vivono nel nuovo hook `useDettaglioConvenzioni` (`frontend/src/hooks/useDettaglioConvenzioni.js`), usato sia da `SchedaAzienda.jsx` (in scrittura) sia da `SchedaAziendaAttuatori.jsx` (in sola lettura).
+- `SchedaAzienda.jsx` salva prima le percentuali (l'unica parte che può chiedere conferma) e solo dopo l'anagrafica; nessuna modifica al backend, restano due `PUT` distinte in sequenza.
+- `SchedaUtente.jsx` non ha più un pulsante di salvataggio proprio: espone `salva()` tramite `useImperativeHandle` (ref come prop, React 19), chiamata da `NuovoSottoscrittore.jsx` in `handleSubmit` prima del resto del salvataggio. Il componente resta sempre montato (nascosto con `hidden` quando non è la scheda attiva, non smontato): altrimenti cambiare scheda prima di salvare avrebbe perso le sue modifiche non ancora salvate.
+- La tendina "Ruolo attuatore" di `NuovoSottoscrittore.jsx` parte su Aderente già in creazione, letto da `GET /ruoli/`, invece di una voce segnaposto vuota.
+
 ## Versione 13 — 30/09/2026 10:41
 
 <!-- timbro: versione=13 sha=7f7bd2b66581e30032064787ece50cb26ec181e6 -->
