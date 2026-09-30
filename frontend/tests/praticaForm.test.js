@@ -6,9 +6,8 @@ import { creaPayloadProdotto, aggiungiDettaglio } from "../src/lib/prodottoPaylo
 import { campiPercorsoVisibili, eContestoCorsiSingoli } from "../src/config/pratica.js";
 
 const dati = { ...praticaVuota(), pratica_numero: " TEST-42 ", pratica_prezzo: "120.50", pratica_stato_id: "2" };
-const statoIniziale = { id: 6, label: "Bozza" };
 const scelta = { nuova: true, studente: { id: 17 }, percorso: { id: 42 },
-  prodotto: { listTesta_id: 42, nome_universita_id: 8, listino_tipoCorso_id: 9 }, statoIniziale };
+  prodotto: { listTesta_id: 42, nome_universita_id: 8, listino_tipoCorso_id: 9 } };
 test("somma dei corsi esatta anche con centesimi e otto decimali", () => {
   assert.equal(sommaPrezzi(["0.1", "0.2"]), "0.3");
   assert.equal(sommaPrezzi(["999999999998.99999999", "0.00000001"]), "999999999999");
@@ -18,8 +17,9 @@ test("somma dei corsi esatta anche con centesimi e otto decimali", () => {
     assert.equal(sommaPrezzi(["100", prezzo]), "");
   }
 });
-test("creazione pratica collega cliente e prodotto, con lo stato iniziale, senza l'emittente deprecato e senza il codice (lo genera il server al salvataggio)", () => {
+test("creazione pratica collega cliente e prodotto; stato, emittente e codice sono stabiliti dal server", () => {
   const p = payloadPratica(dati, scelta);
+  assert.equal(p.pratica_stato_id, undefined);
   assert.equal(p.cliente_id, 17);
   assert.equal(p.cliente_emittente_aderente_id, undefined);
   assert.equal(p.listTesta_id, 42);
@@ -27,18 +27,20 @@ test("creazione pratica collega cliente e prodotto, con lo stato iniziale, senza
   assert.equal(p.listino_tipo_corso_id, 9);
   assert.equal(p.pratica_numero, undefined);
   assert.equal(p.pratica_prezzo, "120.50");
-  assert.equal(p.pratica_stato_id, 6);
   assert.equal(p.utente_id, undefined);
 });
-test("senza uno stato iniziale disponibile la creazione non invia pratica_stato_id: decide il database", () => {
-  const p = payloadPratica(dati, { ...scelta, statoIniziale: undefined });
-  assert.equal(p.pratica_stato_id, undefined);
+test("in creazione nessuno stato del form sostituisce la Bozza assegnata dal server", () => {
+  for (const stato of ["", "1", "6", null]) {
+    assert.equal(payloadPratica({ ...dati, pratica_stato_id: stato }, scelta).pratica_stato_id, undefined);
+  }
 });
-test("la modifica invia soltanto i campi supportati e permette di svuotare le note; codice, prezzo e stato restano di sola lettura", () => {
+test("la modifica invia soltanto i campi supportati e permette di svuotare le note; codice e prezzo restano di sola lettura, lo stato no (ma solo il Nazionale lo scrive davvero, vedi backend)", () => {
   const p = payloadPratica({ ...dati, cliente_id: 999, listTesta_id: 999, nome_universita_id: 999,
     pratica_created_by: 1, pratica_missFlag_firma: -1, pratica_note: "" }, { nuova: false });
-  assert.deepEqual(Object.keys(p).sort(), ["pratica_annoAccademico", "pratica_note", "pratica_sedeErogazione"].sort());
+  assert.deepEqual(Object.keys(p).sort(),
+    ["pratica_annoAccademico", "pratica_note", "pratica_sedeErogazione", "pratica_stato_id"].sort());
   assert.equal(p.pratica_note, null);
+  assert.equal(p.pratica_stato_id, 2);
 });
 test("non si salva con selezioni mancanti o risposta del percorso precedente", () => {
   for (const variante of [{ studente: null }, { percorso: null },

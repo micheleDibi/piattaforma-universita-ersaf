@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 from typing import Annotated, List
@@ -7,12 +7,15 @@ from src.auth.dipendenze import get_current_utente
 from src.auth.visibilita import Visibilita, riga_di_me, visibilita_corrente
 from src.database import get_db
 from src.errori import CodicePraticaError
+from src.notifiche.backend_invio import Mailer, get_mailer
 from src.pratiche.codice import genera_codici_pratica
 from src.pratiche.filtri import FiltriPratiche, query_filtrata
+from src.pratiche.notifiche import invia_mail_nuova_pratica_ersaf, invia_mail_pratica_bozza
 from src.pratiche.opzioni import router as opzioni_router
 from src.pratiche.firma_rotte import router as firma_router
 from src.chat_pratiche.rotte import router as chat_router
 from src.pratiche.accesso import pratica_visibile
+from src.pratiche.storico_stati import STATO_BOZZA_ID, STATO_CARICATA_ID, registra_stato, stato_gia_raggiunto
 from src.documenti.rotte import router as documento_router
 from src.pratiche.models import ConteggioPratiche, Pratica, PraticaCreate, PraticaResponse, PraticaUpdate
 from src.pratiche_listini.models import PraticaListino
@@ -60,9 +63,11 @@ def _pratica_o_404(db: Session, pratica_id: int, vis: Visibilita) -> Pratica:
 @router.post("/", response_model=PraticaResponse, status_code=status.HTTP_201_CREATED)
 def crea_pratica(
     pratica_in: PraticaCreate,
+    attivita: BackgroundTasks,
     db: Session = Depends(get_db),
     vis: Visibilita = Depends(visibilita_corrente),
     utente: Utente = Depends(get_current_utente),
+    mailer: Mailer = Depends(get_mailer),
 ):
     # exclude_unset=True e' OBBLIGATORIO qui, a differenza di crea_azienda:
     # molti campi di PraticaCreate (listTesta_id, cliente_id, pratica_stato_id,
@@ -76,6 +81,11 @@ def crea_pratica(
     # Non e' una colonna di Pratica: si userebbe per costruire le righe di
     # pratiche_listini piu' sotto, Pratica(**dati) non lo accetterebbe.
     corsi_singoli = dati.pop("corsi_singoli", None) or []
+
+    # Una pratica nasce sempre in Bozza: il valore eventualmente inviato non
+    # conta, nemmeno per il Nazionale. Cambiare stato e' un'azione separata,
+    # solo in modifica (vedi sotto).
+    dati["pratica_stato_id"] = STATO_BOZZA_ID
 
     # Chi non e' Nazionale crea pratiche solo per la propria azienda: il valore
     # inviato non conta. 403 e non 422: il corpo e' valido, e' l'utente a non
@@ -131,9 +141,23 @@ def crea_pratica(
             pratiche_listini_updatedBy=utente.utente_id,
         ))
 
+    # Storico stati: una pratica nuova e' sempre "prima volta" nel suo stato
+    # (sempre Bozza, vedi sopra), non serve stato_gia_raggiunto (non puo'
+    # avere storico prima di esistere). Vedi src/pratiche/storico_stati.py.
+    registra_stato(db, nuova_pratica, utente.utente_id)
+
     db.commit()
     db.refresh(nuova_pratica)
-    return _pratica_o_404(db, nuova_pratica.pratica_id, vis)
+    pratica_salvata = _pratica_o_404(db, nuova_pratica.pratica_id, vis)
+
+    # La mail parte solo DOPO il commit: un invio prima sopravviverebbe a un
+    # rollback (vedi src/pratiche/notifiche.py). Solo Bozza: una pratica
+    # nuova non puo' nascere Caricata (vedi sopra).
+    email_cliente = (getattr(pratica_salvata.cliente, "cliente_email", None) or "").strip()
+    if email_cliente:
+        attivita.add_task(invia_mail_pratica_bozza, mailer, email_cliente)
+
+    return pratica_salvata
 
 
 # GET ALL
@@ -186,22 +210,52 @@ def dettaglio_pratica(
 def aggiorna_pratica(
     pratica_id: int,
     pratica_in: PraticaUpdate,
+    attivita: BackgroundTasks,
     db: Session = Depends(get_db),
     vis: Visibilita = Depends(visibilita_corrente),
+    utente: Utente = Depends(get_current_utente),
+    mailer: Mailer = Depends(get_mailer),
 ):
-    pratica = _pratica_o_404(db, pratica_id, vis)
+    # Lettura corrente e visibilita' sotto lo stesso blocco, senza joinedload.
+    # Un SELECT normale dopo il lock puo' rileggere lo snapshot precedente
+    # con REPEATABLE READ, perdendo un cambio di stato o di azienda concorrente.
+    pratica = pratica_visibile(db, pratica_id, vis, blocca=True)
+    stato_precedente = pratica.pratica_stato_id
 
     # exclude_unset=True: stesso motivo di aggiorna_azienda, un campo non
     # inviato non deve essere riscritto con un default dello schema.
     modifiche = pratica_in.model_dump(exclude_unset=True)
-    # L'azienda di una pratica la cambia solo il Nazionale: per gli altri
-    # spostarla significherebbe perderla di vista, o darla a un'altra azienda.
+    # L'azienda e lo stato di una pratica li cambia solo il Nazionale: per
+    # l'azienda, spostarla significherebbe perderla di vista o darla a
+    # un'altra; per lo stato, e' una decisione che spetta solo a lui.
     if not vis.nazionale:
         modifiche.pop("azienda_id", None)
+        modifiche.pop("pratica_stato_id", None)
 
     for chiave, valore in modifiche.items():
         setattr(pratica, chiave, valore)
 
+    # Storico stati + email di "prima volta": il controllo di stato_gia_raggiunto
+    # va fatto PRIMA di registrare la riga di adesso, altrimenti la troverebbe
+    # sempre. Vedi src/pratiche/storico_stati.py.
+    stato_cambiato = pratica.pratica_stato_id != stato_precedente
+    manda_bozza = manda_caricata = False
+    if stato_cambiato:
+        if pratica.pratica_stato_id == STATO_BOZZA_ID:
+            manda_bozza = not stato_gia_raggiunto(db, pratica.pratica_id, STATO_BOZZA_ID)
+        if pratica.pratica_stato_id == STATO_CARICATA_ID:
+            manda_caricata = not stato_gia_raggiunto(db, pratica.pratica_id, STATO_CARICATA_ID)
+        registra_stato(db, pratica, utente.utente_id)
+
     db.commit()
     db.refresh(pratica)
-    return _pratica_o_404(db, pratica_id, vis)
+    pratica_salvata = _pratica_o_404(db, pratica_id, vis)
+
+    if manda_bozza:
+        email_cliente = (getattr(pratica_salvata.cliente, "cliente_email", None) or "").strip()
+        if email_cliente:
+            attivita.add_task(invia_mail_pratica_bozza, mailer, email_cliente)
+    if manda_caricata:
+        attivita.add_task(invia_mail_nuova_pratica_ersaf, mailer)
+
+    return pratica_salvata

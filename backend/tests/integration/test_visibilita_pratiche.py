@@ -7,6 +7,7 @@ import pytest
 from src.clienti.models import Cliente
 from src.pratiche.models import Pratica
 from tests.support import factories as f
+from tests.support.pratiche import pulisci_pratiche
 from tests.support.scenari import accedi, accedi_nazionale, riferimenti_pratiche
 
 pytestmark = pytest.mark.mariadb
@@ -52,7 +53,7 @@ def mondo(client, db, tabella_pratiche):
         "studente_di_b": studente_di_b, "emittente": emittente,
         "percorsi": percorsi, "ids": ids,
     }
-    db.query(Pratica).delete()
+    pulisci_pratiche(db)
     for percorso in percorsi:
         db.delete(percorso)
     db.commit()

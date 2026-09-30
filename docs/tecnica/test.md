@@ -361,3 +361,21 @@ nel messaggio d'errore.
 implicito, verifica dell'host, rifiuto del downgrade prima dell'invio delle
 credenziali, URL senza override di trasporto e pool limitato. Le prove non
 richiedono connessioni a server esterni né certificati reali.
+
+## Storico e notifiche delle pratiche
+
+`test_storico_stati_pratica.py` verifica la creazione in Bozza, il cambio di
+stato riservato al Nazionale e la singola notifica al primo ingresso in Bozza
+o Caricata. Sessioni MariaDB indipendenti riproducono uno snapshot precedente
+al salvataggio concorrente, anche con ritorno allo stato iniziale, e uno
+spostamento di azienda che revoca la visibilita della pratica.
+
+`tests/support/pratiche.py` prepara solo lookup e template email sintetici;
+la pulizia elimina lo storico prima delle pratiche, rispettando le chiavi
+esterne. Le email sono catturate dal backend in memoria: nessun invio reale.
+
+I test del deploy EduNews24 separano overlay e notifiche
+(`scripts/documentazione/tests/test_deploy_edunews24.py`) da DNS e firewall
+(`test_deploy_edunews24_firewall.py`). Le fixture condivise eseguono solo
+comandi Docker e iptables finti; su Windows scelgono Git Bash e normalizzano
+i percorsi, senza avviare WSL o modificare il firewall della macchina.

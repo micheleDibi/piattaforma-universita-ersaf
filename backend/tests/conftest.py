@@ -210,6 +210,8 @@ def db_pulito(schema):
     """
     with engine.begin() as connessione:
         connessione.execute(sa.text("SET FOREIGN_KEY_CHECKS = 0"))
+        if sa.inspect(connessione).has_table("pratiche_stati_storico"):
+            connessione.execute(sa.text("TRUNCATE TABLE pratiche_stati_storico"))
         for tabella in TABELLE_DA_SVUOTARE:
             connessione.execute(sa.text(f"TRUNCATE TABLE `{tabella}`"))
         connessione.execute(sa.text("SET FOREIGN_KEY_CHECKS = 1"))
@@ -272,14 +274,15 @@ def tabella_pratiche(db_pulito):
     """
     import src.main  # noqa: F401  registra tutti i mapper
     from src.database import Base
-    from src.pratiche.models import Pratica
+    from tests.support.pratiche import prepara_lookup, pulisci_pratiche
 
     Base.metadata.create_all(engine)
     with engine.begin() as connessione:
-        connessione.execute(sa.delete(Pratica.__table__))
+        pulisci_pratiche(connessione)
+        prepara_lookup(connessione)
     yield
     with engine.begin() as connessione:
-        connessione.execute(sa.delete(Pratica.__table__))
+        pulisci_pratiche(connessione)
 
 
 # =============================================================================

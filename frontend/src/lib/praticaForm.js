@@ -1,10 +1,13 @@
 import { idValido } from "../config/routes/percorsi.js";
 
 // Whitelist PraticaUpdate: gli altri campi del modello non sono aggiornabili.
-// pratica_numero, pratica_prezzo, pratica_stato_id e pratica_dataCreazione
-// non ci sono: sono sempre di sola lettura (vedi payloadPratica e
-// DatiPratica.jsx).
-const MODIFICABILI = ["pratica_annoAccademico", "pratica_sedeErogazione", "pratica_note"];
+// pratica_numero, pratica_prezzo e pratica_dataCreazione non ci sono: sono
+// sempre di sola lettura (vedi payloadPratica e DatiPratica.jsx).
+// pratica_stato_id invece c'e': lo manda sempre chi compila il form, ma il
+// server lo scrive solo se chi chiama e' Nazionale (vedi aggiorna_pratica in
+// backend/src/pratiche/routers.py) - per tutti gli altri e' un valore
+// invariato, non un tentativo di modifica.
+const MODIFICABILI = ["pratica_annoAccademico", "pratica_sedeErogazione", "pratica_note", "pratica_stato_id"];
 
 /** Decimal(20,8) puo arrivare come "0E-8": espansione testuale senza arrotondare. */
 export function prezzoPerInput(valore) {
@@ -63,8 +66,10 @@ export function prezzoAttuale(dettagli, oggi = oggiLocale()) {
   return dettaglioAttuale(dettagli, oggi)?.listDettaglio_prezzo ?? null;
 }
 
-export function payloadPratica(dati, { nuova, studente, percorso, prodotto, statoIniziale, corsiSingoli, corsiSelezionati }) {
+export function payloadPratica(dati, { nuova, studente, percorso, prodotto, corsiSingoli, corsiSelezionati }) {
   const payload = Object.fromEntries(MODIFICABILI.map(nome => [nome, dati[nome] === "" ? null : dati[nome]]));
+  // Dal <select> arriva una stringa: il server si aspetta un numero.
+  if (payload.pratica_stato_id != null) payload.pratica_stato_id = Number(payload.pratica_stato_id);
 
   if (nuova) {
     // Il prezzo non si digita: arriva dal percorso formativo, o dalla somma
@@ -86,7 +91,8 @@ export function payloadPratica(dati, { nuova, studente, percorso, prodotto, stat
     // Non si inviano: cliente_emittente_aderente_id (il server lo collega
     // all'utente corrente per le ACL chat) e pratica_numero (lo genera
     // il server al salvataggio, vedi backend/src/pratiche/codice.py).
-    if (statoIniziale) payload.pratica_stato_id = statoIniziale.id;
+    // In creazione lo stato e' sempre Bozza, stabilito dal server.
+    delete payload.pratica_stato_id;
     // Corsi Singoli: ogni corso scelto (compreso il primo, gia' in
     // listTesta_id sopra) diventa una riga in pratiche_listini lato server
     // (vedi crea_pratica in backend/src/pratiche/routers.py).

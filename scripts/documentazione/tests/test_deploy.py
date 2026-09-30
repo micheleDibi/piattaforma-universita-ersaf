@@ -7,18 +7,18 @@ Gli script remoti vengono concatenati ed eseguiti come fa deploy.ps1
 from __future__ import annotations
 
 import re
-import shutil
 import subprocess
 
 import pytest
 
 from comune import RADICE
+from supporto_shell import trova_bash
 
 REMOTI = sorted((RADICE / "deploy" / "remote").glob("*.sh"))
 ID = "20260917-184000-abcdef1"
 SHA = "abcdef1" + "0" * 33
 
-bash = shutil.which("bash")
+bash = trova_bash()
 richiede_bash = pytest.mark.skipif(bash is None, reason="bash non disponibile")
 
 

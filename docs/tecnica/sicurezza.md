@@ -711,12 +711,13 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - Le rotte dei prodotti restituiscono in generale il testo degli errori del database.
   - `ProdottoFormInfo.jsx:74-86`; `frontend/src/lib/prodottoPayload.js:37-40`; `listini_testa/models.py:23`, `56`, `73`; `listini_testa/routers.py:85-100`, `230-235`.
 - **Pratiche.**
-  - Nessuna regola limita i passaggi di stato.
-  - Lo storico degli stati esiste solo come modello e nessuno lo scrive.
+  - Una pratica nasce sempre in Bozza; da lì solo il Nazionale può cambiarne lo stato (`PUT` scarta silenziosamente `pratica_stato_id` per chiunque altro), senza un percorso obbligato fra stati.
+  - Ogni cambio di stato, incluso quello iniziale, si registra in `pratiche_stati_storico`; la prima volta che una pratica raggiunge Bozza o Caricata si accoda un'email (al cliente, o all'ufficio pratiche). Pratica, visibilita e storico si rileggono sotto blocco con letture correnti, anche quando la transazione MariaDB ha gia uno snapshot precedente: salvataggi concorrenti non duplicano le notifiche e non conservano accessi revocati da uno spostamento di azienda.
+  - Le email partono dopo il commit tramite `BackgroundTasks`, con una sessione propria. Gli errori di invio sono registrati senza annullare il salvataggio; non esiste una coda persistente con ritentativo automatico, quindi un arresto del processo dopo il commit puo perdere la notifica.
   - L'autore della pratica non viene mai registrato.
   - Il prezzo è obbligatorio solo nell'interfaccia.
-  - In modifica lo schema accetta ogni campo che dichiara, azienda, consulente e tipo di corso compresi, mentre la scheda ne cambia solo una parte. Il router applica quanto arriva, senza confrontarlo con quello che la scheda mostra.
-  - `pratiche/routers.py:66-96`, `145-167`; `backend/src/pratiche_stati_storico/models.py:16-19`; `backend/src/pratiche/models.py:80-82`, `109-110`, `240`, `280-303`; `frontend/src/lib/praticaForm.js:26-32`.
+  - In modifica lo schema accetta ogni campo che dichiara, consulente e tipo di corso compresi, mentre la scheda ne cambia solo una parte. Il router applica quanto arriva, senza confrontarlo con quello che la scheda mostra: fanno eccezione azienda e stato, ristretti al Nazionale.
+  - `pratiche/routers.py:73-162`, `211-268`; `pratiche/storico_stati.py`; `pratiche/notifiche.py`; `backend/src/pratiche_stati_storico/models.py`; `backend/src/pratiche/models.py:280-303`; `frontend/src/lib/praticaForm.js`; `frontend/src/components/pratiche/DatiPratica.jsx`.
 - **Abilitazione ai corsi speciali.**
   - In creazione, se la richiesta non invia i cinque campi, gli altri quattro nascono accesi per gli attuatori e i corsi speciali spenti; il valore predefinito del database è invece -1. È un valore predefinito, non una forzatura: una richiesta che invia il valore lo mantiene.
   - Dall'interfaccia il caso non si presenta in creazione, perché i cinque campi non vengono inviati.

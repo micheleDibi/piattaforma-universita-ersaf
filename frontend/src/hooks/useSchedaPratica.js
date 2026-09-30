@@ -91,8 +91,7 @@ export default function useSchedaPratica(id, { corsiSingoli = false } = {}) {
     setSalvataggio(true);
     setMessaggio(null);
     try {
-      const statoIniziale = catalogo.stati?.find(stato => stato.label === "Bozza");
-      const payload = payloadPratica(dati, { nuova: !id, studente, percorso, prodotto, statoIniziale, corsiSingoli, corsiSelezionati });
+      const payload = payloadPratica(dati, { nuova: !id, studente, percorso, prodotto, corsiSingoli, corsiSelezionati });
       const pratica = await salvaPratica(id, payload);
       setMessaggio({ type: "success", text: "Pratica salvata." });
       return pratica;

@@ -138,6 +138,10 @@ class Impostazioni(BaseSettings):
     smtp_from: str = "ERSAF <noreply@ersaf.it>"
     smtp_tls: Literal["starttls", "ssl", "nessuno"] = "starttls"
     smtp_timeout_seconds: int = 10
+    # Destinatario della notifica "nuova pratica caricata" (vedi
+    # src/pratiche/notifiche.py). Configurabile per poterlo cambiare in
+    # collaudo/sviluppo senza scrivere un indirizzo reale nel codice.
+    email_notifiche_pratiche: str = "info@ersaf.it"
 
     # --- EduNews24 (descrizioni in .env.example) ------------------------------
     edunews24_backend: Literal["http", "memoria", "disabilitato"] = "http"
