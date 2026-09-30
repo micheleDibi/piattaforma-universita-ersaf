@@ -11,6 +11,20 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 15 — 30/09/2026 16:41
+
+<!-- timbro: versione=15 sha=e805d86accaa0adfddcddcfe4d8750ecdd7cdce5 -->
+
+### Dettagli tecnici
+
+**Aggiunto**
+
+- Il compilatore PDF scrive su stderr solo una categoria dell'errore, che `documenti/esecuzione.py` registra nel log con il codice d'uscita; anche l'interruzione per tempo scaduto finisce nel log.
+
+**Corretto**
+
+- La cache dei modelli PDF sotto la cartella temporanea si confronta con il modello a ogni composizione, file per file con la dimensione, e si rifà se ne manca qualcuno: prima una cartella rimasta senza `modulo.typ` o senza immagini, per esempio dopo la pulizia automatica dei temporanei di Windows, restava in uso e ogni PDF di quel modello falliva.
+
 ## Versione 14 — 30/09/2026 16:23
 
 <!-- timbro: versione=14 sha=796e4e7e7ad0ccf01c4b761caed283a6b52a95c3 -->
