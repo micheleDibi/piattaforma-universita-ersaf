@@ -1,4 +1,5 @@
 import { idValido } from "../config/routes/percorsi.js";
+import { CAMPI_RINNOVO } from "../config/pratica.js";
 
 // Whitelist PraticaUpdate: gli altri campi del modello non sono aggiornabili.
 // pratica_numero, pratica_prezzo e pratica_dataCreazione non ci sono: sono
@@ -7,7 +8,11 @@ import { idValido } from "../config/routes/percorsi.js";
 // server lo scrive solo se chi chiama e' Nazionale (vedi aggiorna_pratica in
 // backend/src/pratiche/routers.py) - per tutti gli altri e' un valore
 // invariato, non un tentativo di modifica.
-const MODIFICABILI = ["pratica_annoAccademico", "pratica_sedeErogazione", "pratica_note", "pratica_stato_id"];
+// I tre campi di rinnovo si mandano sempre insieme (mai solo quello toccato):
+// e' cosi' che il server puo' verificare che sia selezionato al piu' un anno
+// (vedi impostaRinnovo in hooks/useSchedaPratica.js).
+const MODIFICABILI = ["pratica_annoAccademico", "pratica_sedeErogazione", "pratica_note", "pratica_stato_id",
+  ...CAMPI_RINNOVO.map(({ nome }) => nome)];
 
 /** Decimal(20,8) puo arrivare come "0E-8": espansione testuale senza arrotondare. */
 export function prezzoPerInput(valore) {
@@ -28,7 +33,16 @@ function oggiLocale(oggi = new Date()) {
 
 export function praticaVuota(oggi = new Date()) {
   return { pratica_dataCreazione: oggiLocale(oggi), pratica_numero: "", pratica_annoAccademico: "",
-    pratica_sedeErogazione: "", pratica_prezzo: "", pratica_stato_id: "", pratica_note: "" };
+    pratica_sedeErogazione: "", pratica_prezzo: "", pratica_stato_id: "", pratica_note: "",
+    ...valoriRinnovo(null) };
+}
+
+/** I tre campi di rinnovo, mutuamente esclusivi: campoSelezionato va a -1, gli
+ * altri due a 0; null (nessun anno scelto, o casella deselezionata) li
+ * azzera tutti. Estratta da useSchedaPratica.js perche' sia testabile senza
+ * un hook (stesso motivo di paginaPercorsi in lib/opzioniPratica.js). */
+export function valoriRinnovo(campoSelezionato) {
+  return Object.fromEntries(CAMPI_RINNOVO.map(({ nome }) => [nome, nome === campoSelezionato ? -1 : 0]));
 }
 
 /** Il dettaglio del percorso formativo valido oggi (prezzo, ma anche durata,

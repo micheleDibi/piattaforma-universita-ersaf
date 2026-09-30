@@ -1509,6 +1509,9 @@ Aggiorna Utente.
 | `pratica_pathFile` | `string \| null` | no |
 | `pratica_pathFile_rateizzazione` | `string \| null` | no |
 | `pratica_prezzo` | `number \| string \| null` | no |
+| `pratica_rinnPrimoAnno` | `integer \| null` | no |
+| `pratica_rinnSecondoAnno` | `integer \| null` | no |
+| `pratica_rinnTerzoAnno` | `integer \| null` | no |
 | `pratica_sedeErogazione` | `string \| null` | no |
 | `pratica_stato_id` | `integer \| null` | no |
 | `utente_consulente_id` | `integer \| null` | no |

@@ -1,13 +1,18 @@
-import { CAMPI_PRATICA } from "../../config/pratica.js";
-import { campo, etichetta } from "../../config/styles/campo.js";
+import { CAMPI_PRATICA, CAMPI_RINNOVO, eGruppoLauree } from "../../config/pratica.js";
+import { campo, etichetta, sceltaInLinea, spunta } from "../../config/styles/campo.js";
 import { STILI_PRATICA as stili } from "../../config/styles/pratica.js";
 import { leggiRuolo } from "../../lib/sessione.js";
+import { eVero } from "../../lib/flagLegacy.js";
 
-export default function DatiPratica({ form, nuova }) {
+export default function DatiPratica({ form, nuova, prodotto }) {
   // Lo stato lo cambia solo il Nazionale, e solo in modifica: una pratica
   // nasce sempre in Bozza, il server lo impone comunque (vedi crea_pratica
   // in backend/src/pratiche/routers.py).
   const eNazionale = leggiRuolo() === "nazionale";
+  // Il rinnovo si mostra solo per le Lauree (vedi la card Trello "Pratica -
+  // visibilita' campi per percorso formativo"): gli altri tipi di corso non
+  // hanno questo concetto.
+  const mostraRinnovo = eGruppoLauree(prodotto?.listino_tipoCorso_id);
   return <section className={stili.sezione} aria-labelledby="dati-pratica">
     <h2 id="dati-pratica" className={stili.titolo}>Dati della pratica</h2>
     <div className={stili.colonne}>
@@ -48,6 +53,24 @@ export default function DatiPratica({ form, nuova }) {
           onChange={form.aggiorna} readOnly required className={campo("comodo")} />
       </div>
     </div>
+    {/* Solo per le Lauree: un solo anno alla volta, o nessuno (vedi
+        impostaRinnovo in hooks/useSchedaPratica.js e il validatore gemello
+        lato server, CAMPI_RINNOVO in backend/src/pratiche/models.py). */}
+    {mostraRinnovo && (
+      <fieldset>
+        <legend className={etichetta()}>Rinnovo</legend>
+        <div className="flex flex-col gap-2">
+          {CAMPI_RINNOVO.map(({ nome, label }) => (
+            <label key={nome} className={sceltaInLinea()}>
+              <input type="checkbox" name={nome} className={spunta()}
+                checked={eVero(form.dati[nome])}
+                onChange={evento => form.impostaRinnovo(evento.target.checked ? nome : null)} />
+              {label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    )}
     <div><label htmlFor="pratica_note" className={etichetta()}>Note</label>
       <textarea id="pratica_note" name="pratica_note" rows={4} value={form.dati.pratica_note} onChange={form.aggiorna} className={campo("comodo")} />
     </div>

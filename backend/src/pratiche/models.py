@@ -5,9 +5,10 @@ from typing import List, Optional
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, text
 from sqlalchemy.dialects.mysql import LONGBLOB, LONGTEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from src.database import Base
+from src.comune.flag_legacy import a_flag_legacy
 from src.clienti.models import Cliente
 # ATTENZIONE percorsi da confermare: dedotti per analogia con src.clienti.models
 # (clienti); src.listino_tipoCorso.models e src.nome_universita.models sono
@@ -214,6 +215,18 @@ import src.pratiche_registri_mise.models  # noqa: E402,F401
 # campi NOT NULL senza default (ne' Python ne' server_default) restano
 # obbligatori; Optional solo per le colonne davvero nullable o con default.
 
+# I tre "Rinnovo primo/secondo/terzo anno" sono booleani in stile legacy (vedi
+# src/comune/flag_legacy.py) ma rappresentano un'unica scelta fra quattro
+# possibilita' (nessuno, primo, secondo, terzo anno), non tre flag
+# indipendenti: la scheda pratica li mostra come caselle mutuamente
+# esclusive, quindi lo schema rifiuta un payload con piu' di un campo vero.
+CAMPI_RINNOVO = ("pratica_rinnPrimoAnno", "pratica_rinnSecondoAnno", "pratica_rinnTerzoAnno")
+
+
+def _rinnovo_selezionati(modello) -> int:
+    return sum(1 for campo in CAMPI_RINNOVO if getattr(modello, campo, None))
+
+
 class PraticaBase(BaseModel):
     pratica_dataCreazione: Optional[date] = None  # ha server_default, ok Optional
     pratica_annoAccademico: Optional[str] = Field(default=None, max_length=45)
@@ -267,6 +280,15 @@ class PraticaBase(BaseModel):
     pratica_note: Optional[str] = None
     pratica_pathFile_rateizzazione: Optional[str] = Field(default=None, max_length=255)
 
+    # Solo normalizzazione (sicura anche in lettura): il controllo "un solo
+    # anno alla volta" sta invece su PraticaCreate/PraticaUpdate, non qui, per
+    # non rischiare di bloccare la GET di una pratica che avesse gia' un dato
+    # storico incoerente su questi campi.
+    @field_validator(*CAMPI_RINNOVO, mode="before")
+    @classmethod
+    def _normalizza_flag_rinnovo(cls, v):
+        return a_flag_legacy(v)
+
 
 class CorsoSingoloSelezionato(BaseModel):
     """Un corso scelto per una pratica di tipo Corsi Singoli (vedi crea_pratica
@@ -292,6 +314,12 @@ class PraticaCreate(PraticaBase):
     # creazione l'elenco dei corsi non si modifica piu' da qui.
     corsi_singoli: Optional[List[CorsoSingoloSelezionato]] = None
 
+    @model_validator(mode="after")
+    def _valida_rinnovo_singolo(self):
+        if _rinnovo_selezionati(self) > 1:
+            raise ValueError("Solo un anno di rinnovo puo' essere selezionato alla volta.")
+        return self
+
 
 class PraticaUpdate(BaseModel):
     """Tutti opzionali: PATCH parziale."""
@@ -315,6 +343,20 @@ class PraticaUpdate(BaseModel):
     listino_tipo_corso_id: Optional[int] = None
     pratica_note: Optional[str] = None
     pratica_pathFile_rateizzazione: Optional[str] = Field(default=None, max_length=255)
+    pratica_rinnPrimoAnno: Optional[int] = None
+    pratica_rinnSecondoAnno: Optional[int] = None
+    pratica_rinnTerzoAnno: Optional[int] = None
+
+    @field_validator(*CAMPI_RINNOVO, mode="before")
+    @classmethod
+    def _normalizza_flag_rinnovo(cls, v):
+        return a_flag_legacy(v)
+
+    @model_validator(mode="after")
+    def _valida_rinnovo_singolo(self):
+        if _rinnovo_selezionati(self) > 1:
+            raise ValueError("Solo un anno di rinnovo puo' essere selezionato alla volta.")
+        return self
 
 
 class EmittenteBreve(BaseModel):
