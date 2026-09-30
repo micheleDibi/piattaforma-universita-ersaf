@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { apiFetch, messaggioErrore } from "../lib/api";
+import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
 import { leggiRuolo } from "../lib/sessione";
-import { nomeAzienda } from "../lib/schedaAzienda.js";
+import { messaggioAzzeramento, nomeAzienda } from "../lib/schedaAzienda.js";
 import { pulsante } from "../config/styles/pulsante";
 import { notaCampo } from "../config/styles/campo";
 import { STILI_AZIENDA as stili } from "../config/styles/azienda.js";
@@ -37,6 +37,10 @@ export default function GerarchiaAzienda({
   // undefined = nessuna conferma in sospeso. Puo' contenere null (valore
   // valido: "rendi radice") o un oggetto azienda selezionata dal modale.
   const [azionePendente, setAzionePendente] = useState(undefined);
+  // I campi che verrebbero azzerati, per il messaggio di conferma (vedi
+  // messaggioAzzeramento in lib/schedaAzienda.js): valido solo insieme ad
+  // azionePendente, non da solo.
+  const [resetPendente, setResetPendente] = useState(null);
 
   const eNazionale = leggiRuolo() === "nazionale";
 
@@ -62,11 +66,13 @@ export default function GerarchiaAzienda({
 
       if (risposta.status === 409) {
         setAzionePendente(aziendaSelezionata ?? null);
+        setResetPendente((await leggiJson(risposta))?.reset ?? []);
         return;
       }
 
       if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
       setAzionePendente(undefined);
+      setResetPendente(null);
       onRicarica();
     } catch (err) {
       setMessaggioSalvataggio(err.message);
@@ -116,7 +122,8 @@ export default function GerarchiaAzienda({
             <AlertMessage
               message={{
                 type: "warning",
-                text: TESTI_AZIENDA.azzeramento.messaggio,
+                text: messaggioAzzeramento(resetPendente ?? []),
+                nota: TESTI_AZIENDA.azzeramento.nota,
               }}
               separato={false}
             />
@@ -132,7 +139,7 @@ export default function GerarchiaAzienda({
             </button>
             <button
               type="button"
-              onClick={() => setAzionePendente(undefined)}
+              onClick={() => { setAzionePendente(undefined); setResetPendente(null); }}
               className={pulsante("testuale", "piccolo")}
             >
               {TESTI_AZIENDA.azzeramento.annulla}

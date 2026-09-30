@@ -35,10 +35,9 @@ export const STILI_AZIENDA = {
   messaggioConferma: "min-w-0 flex-[1_1_16rem]",
   pulsantiConferma: "flex shrink-0 gap-3",
 
-  // Convenzioni: tabella, poi "Salva percentuali" a destra, 16px sotto.
+  // Convenzioni: tabella, poi l'eventuale avviso di azzeramento a cascata.
   convenzioni: "flex flex-col gap-4",
   titoloConvenzioni: "text-titolo-sezione text-testo",
-  azioniConvenzioni: "flex justify-end",
   ateneo: "text-sm font-semibold text-testo",
   cellaPercentuale: "relative flex items-center",
   // Combinazione non prevista: il trattino. Posizionata perche' il testo per

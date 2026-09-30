@@ -244,8 +244,8 @@ combinazioni che non esistono mostrano una lineetta, «—». Un'azienda senza
 percentuali salvate le ha tutte a zero.
 
 Si modificano solo dalla scheda dell'azienda: nella scheda dell'attuatore la
-sezione è in sola lettura. «Salva percentuali», sotto la tabella a destra, le
-salva subito, indipendentemente dal resto della scheda dell'azienda.
+sezione è in sola lettura. Non hanno un pulsante proprio: si salvano insieme
+al resto della scheda, con «Salva modifiche».
 
 Il server permette di modificarle a chiunque veda l'azienda, compresa la
 propria. Poiché oggi il server non riconosce l'azienda di chi lavora (vedi
@@ -270,35 +270,39 @@ percentuali.
 ### Richiesta di conferma
 
 Se il salvataggio, o il cambio del padre, azzererebbe qualche percentuale, il
-server non scrive nulla e chiede conferma. L'interfaccia mostra «Alcune
-percentuali verranno azzerate. Continuare?» con due pulsanti:
+server non scrive nulla e chiede conferma. L'interfaccia elenca gli atenei
+coinvolti, per esempio «Le percentuali di eCampus e SSML verranno azzerate.
+Continuare?», seguito da una nota più piccola che ricorda la regola: «Una
+percentuale non può superare quella dell'azienda padre.», con due pulsanti:
 
-- «Conferma» salva e applica gli azzeramenti;
-- «Annulla» lascia tutto com'era.
+- «Conferma» salva e applica gli azzeramenti, poi salva anche il resto della
+  scheda (con le percentuali non c'è una richiesta di conferma separata: finché
+  non si conferma non si salva nulla, né le percentuali né il resto);
+- «Annulla» lascia tutto com'era, percentuali comprese.
 
-Per le percentuali la richiesta compare fra la tabella e «Salva percentuali»;
-per il cambio del padre, nel riquadro «Azienda padre», sotto il nome.
+Per le percentuali la richiesta compare sotto la tabella; per il cambio del
+padre, nel riquadro «Azienda padre», sotto il nome.
 
-Il server indica quali aziende e quali percentuali verrebbero azzerate, ma
-l'interfaccia mostra solo il messaggio generico.
+Il server indica anche quali aziende sarebbero coinvolte, non solo l'azienda
+che si sta modificando (la cascata può azzerare percentuali di una
+discendente), e quale tipologia (Lauree, Master o Perfezionamenti) per
+ciascun ateneo. L'interfaccia elenca solo l'ateneo, deduplicato su tutte le
+aziende e tipologie coinvolte.
 
-Nota: l'interfaccia non mostra il dettaglio degli azzeramenti; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Nota: l'interfaccia non indica su quale azienda, né su quale tipologia, ricade ogni azzeramento; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 ### Valori ammessi
 
-I campi propongono valori da 0 a 100, ma «Salva percentuali» non passa dal
-controllo dei campi della pagina: né l'interfaccia né il server bloccano un
-numero fuori da questo intervallo. Un campo svuotato vale zero.
+I campi propongono valori da 0 a 100, interi. Un campo svuotato vale zero. Un
+valore fuori da questo intervallo, o non intero, blocca «Salva modifiche» per
+l'intera scheda: essendo campi della stessa pagina, il controllo del
+browser non lascia partire il salvataggio finché non sono a posto.
 
-Due effetti si incontrano comunque:
+Il server, dal canto suo, non impone comunque il limite da 0 a 100: accetta
+qualunque numero intero. Il controllo da 0 a 100 è solo quello
+dell'interfaccia.
 
-- con la scheda dell'azienda aperta, i campi delle percentuali fanno parte
-  della pagina dell'azienda. Un valore fuori da 0 a 100, o non intero, blocca
-  il «Salva modifiche» in fondo alla pagina, che non riguarda le percentuali;
-- il server accetta solo numeri interi. Un valore con i decimali, salvato con
-  «Salva percentuali», viene rifiutato con un messaggio tecnico.
-
-Nota: l'intervallo da 0 a 100 è solo indicativo; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Nota: l'intervallo da 0 a 100 non è imposto dal server; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 ## Azienda di un attuatore
 

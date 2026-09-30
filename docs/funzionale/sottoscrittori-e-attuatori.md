@@ -128,9 +128,9 @@ sinistra e campi a destra:
 
 - **Informazioni personali**: nome, cognome, codice fiscale, genere (Uomo o
   Donna), data di nascita, luogo e provincia di nascita, cittadinanza.
-- **Ruolo**, solo per gli attuatori: tendina «Ruolo attuatore» con la voce
-  iniziale «Aderente (default)», seguita da Aderente, Regionale, Provinciale e
-  Nazionale, nell'ordine in cui i ruoli sono registrati.
+- **Ruolo**, solo per gli attuatori: tendina «Ruolo attuatore», che parte già
+  su Aderente (il ruolo assegnato se non lo si cambia), seguita da Regionale,
+  Provinciale e Nazionale, nell'ordine in cui i ruoli sono registrati.
 - **Contatti**: email e cellulare, in due riquadri in evidenza; sotto, in
   «Altri recapiti», PEC e telefono, in campi più piccoli.
 - **Documento**: tipo (carta d'identità, passaporto, patente), numero, comune
@@ -233,8 +233,8 @@ Un clic sull'elenco apre la scheda, con il titolo «Modifica sottoscrittore» o
 all'elenco, «Sottoscrittori» o «Attuatori». Sotto il titolo, sulla stessa
 riga, compaiono nome e cognome, il codice fiscale e lo stato dell'account:
 «Attivo» in verde o «Disattivo» in rosso. Sono i valori letti all'apertura
-della scheda: non cambiano mentre si scrive nei campi, né dopo un salvataggio
-della scheda Utente. Se l'anagrafica non ha un utente, lo stato non compare.
+della scheda: non cambiano mentre si scrive nei campi. Se l'anagrafica non ha
+un utente, lo stato non compare.
 Un indirizzo che non corrisponde a un'anagrafica mostra «Pagina non trovata».
 
 Se l'anagrafica ha delle anomalie, sotto il titolo compare il riquadro giallo
@@ -245,8 +245,13 @@ Le schede sono una fila di titoli in alto; quella aperta è sottolineata.
 In fondo c'è una barra con «Annulla» e «Salva modifiche», che resta visibile
 mentre si scorre, in tutte le schede. «Annulla» torna all'elenco senza
 salvare. «Salva modifiche» salva Dati principali, Curriculum formativo,
-l'azienda collegata e le Abilitazioni. Poi torna all'elenco, senza mostrare
-alcun messaggio di conferma.
+Utente (ruolo, username, stato dell'account e utente padre), l'azienda
+collegata e le Abilitazioni. Poi torna all'elenco, senza mostrare alcun
+messaggio di conferma.
+
+Utente si salva per primo: se ha un errore (per esempio nessun ruolo
+selezionato), il salvataggio si ferma lì, la scheda mostra quell'errore e non
+prosegue con il resto, anche se non era la scheda aperta in quel momento.
 
 ### Dati principali
 
@@ -333,28 +338,28 @@ La scheda ha due sezioni. «Account e ruolo» contiene:
   Consulente, Nazionale, Operatore;
 - l'utente padre, in un riquadro con il nome e il pulsante «Cambia padre».
 
-In fondo alla sezione, a destra, c'è il pulsante «Salva utente», proprio di
-questa scheda. Accanto compare «Accedi con questo utente» per un utente
-attivo con un ruolo da attuatore. Questo pulsante, come si salva il ruolo,
-chi può salvare gli altri campi e cosa cambia per la persona dopo un cambio
-di ruolo sono descritti in [Ruoli e permessi](ruoli-e-permessi.md).
+Accanto al riquadro dell'utente padre compare «Accedi con questo utente» per
+un utente attivo con un ruolo da attuatore. Come si salva il ruolo, chi può
+salvare gli altri campi e cosa cambia per la persona dopo un cambio di ruolo
+sono descritti in [Ruoli e permessi](ruoli-e-permessi.md).
 
 «Cronologia» mostra, in sola lettura, «Creato il», «Ultimo aggiornamento» e
 «Aggiornato da». Le date sono nel formato gg/mm/aaaa, hh:mm:ss; una data
 mancante è un trattino.
 
-Quando il salvataggio di questa scheda riesce, la pagina resta aperta e mostra
-«Modifiche salvate con successo!».
+Non ha un pulsante proprio: si salva con «Salva modifiche», in fondo alla
+pagina, insieme al resto della scheda (vedi sopra). Se manca il ruolo, «Salva
+modifiche» si ferma con l'errore «Seleziona un ruolo prima di salvare.» e
+apre questa scheda per farlo vedere, anche se non era quella aperta.
 
-Restano quattro comportamenti propri di questa pagina:
+Restano quattro comportamenti propri di questa scheda:
 
 - se chi salva non può modificare nome utente, stato e utente padre, il ruolo
   viene comunque salvato per primo: dopo il messaggio di errore il ruolo
   risulta cambiato e il resto no;
-- il «Salva modifiche» in fondo alla pagina è visibile anche da qui, ma non
-  salva nome utente, stato e utente padre. Per un attuatore rimanda invece il
-  ruolo scelto nei Dati principali: se il ruolo è stato cambiato da questa
-  scheda, quel salvataggio riporta il valore di partenza;
+- per un attuatore, «Salva modifiche» scrive il ruolo due volte: prima quello
+  di questa scheda, poi quello scelto nei Dati principali. Se sono diversi,
+  vince quello dei Dati principali;
 - il nome utente si può cambiare anche in uno già usato da un altro utente. In
   quel caso nessuno dei due riesce più ad accedere;
 - il salvataggio di questa scheda invia sempre lo stato. Su un account ancora
@@ -523,7 +528,7 @@ controlli del server.
   nome, cognome o azienda e filtrare per ruolo. Scorrendo in fondo si
   caricano altri risultati.
 - «Seleziona» cambia solo ciò che si vede. Il cambio si salva con «Salva
-  utente», nella scheda Utente.
+  modifiche», in fondo alla pagina.
 - Se l'attuatore scelto non ha un utente compare «L'attuatore selezionato non
   ha un utente associato.»
 - Il server accetta solo un utente esistente e rifiuta l'utente stesso con
@@ -535,7 +540,7 @@ Nota: la finestra mostra l'azienda a tutti e il server non impedisce i giri; ved
 ## Attivazione e disattivazione
 
 - Lo stato si cambia con un clic sull'etichetta «Attivo» o «Disattivo» della
-  scheda Utente e si salva con «Salva utente».
+  scheda Utente e si salva con «Salva modifiche».
 - Un utente disattivato non può accedere. I suoi accessi già aperti smettono
   di funzionare alla richiesta successiva.
 - Attivare a mano un account in attesa non spedisce credenziali: la password

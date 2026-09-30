@@ -1,7 +1,15 @@
-import { apiFetch, messaggioErrore } from "./api.js";
+import { apiFetch, leggiJson, messaggioErrore } from "./api.js";
 import { anomaliePerCampo, noteVisibili } from "./anomalieCampi.js";
 import { TESTI_ANOMALIE } from "../config/testi/anomalie.js";
 import { TESTI_AZIENDA } from "../config/testi/azienda.js";
+import { CAMPI_PERCENTUALI, CONVENZIONI } from "../config/campiPercentuali.js";
+
+const ORDINE_PERCENTUALE = Object.fromEntries(CAMPI_PERCENTUALI.map(([chiave], indice) => [chiave, indice]));
+// L'ateneo di ogni campo percentuale (senza la tipologia: "eCampus", non
+// "eCampus - Lauree"), per il messaggio di conferma dell'azzeramento.
+const ATENEO_PER_CAMPO = Object.fromEntries(
+  CONVENZIONI.flatMap(([ateneo, ...campi]) => campi.filter(Boolean).map((campo) => [campo, ateneo])),
+);
 
 /*
  * Logica della scheda azienda: sottotitolo, controllo della partita IVA e
@@ -77,4 +85,63 @@ export async function caricaPadreAzienda(aziendaId, signal) {
   return rispostaPadre.ok
     ? await rispostaPadre.json()
     : { azienda_id: arco.azienda_padre_id, azienda_ragione_sociale: null };
+}
+
+/**
+ * Percentuali delle convenzioni universitarie di un'azienda (GET
+ * /aziende/{id}/dettagli). Usata sia in sola lettura (scheda dell'attuatore)
+ * sia in scrittura (scheda dell'azienda, vedi useDettaglioConvenzioni).
+ * @param {string|number} aziendaId
+ * @param {AbortSignal} [signal]
+ */
+export async function caricaDettaglioConvenzioni(aziendaId, signal) {
+  const risposta = await apiFetch(`/aziende/${aziendaId}/dettagli`, { signal });
+  if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
+  return risposta.json();
+}
+
+/**
+ * Salva le percentuali delle convenzioni universitarie (PUT
+ * /aziende/{id}/dettagli). Se cambiarle azzererebbe delle convenzioni a
+ * cascata sulle aziende figlie, il server risponde 409 finche' non si
+ * ripete la richiesta con `conferma: true`; `reset` e' l'elenco (per
+ * azienda coinvolta) dei campi che verrebbero azzerati, vedi
+ * messaggioAzzeramento per come diventa il testo dell'avviso.
+ * @param {string|number} aziendaId
+ * @param {Record<string, number>} valori
+ * @param {{ conferma?: boolean }} [opzioni]
+ * @returns {Promise<
+ *   { esito: "ok", dettaglio: object } |
+ *   { esito: "richiedeConferma", reset: Array<{ azienda_id: number, azienda_ragione_sociale: string|null, campi: string[] }> }
+ * >}
+ */
+export async function salvaDettaglioConvenzioni(aziendaId, valori, { conferma = false } = {}) {
+  const query = conferma ? "?conferma_reset=true" : "";
+  const risposta = await apiFetch(`/aziende/${aziendaId}/dettagli${query}`, {
+    method: "PUT",
+    body: JSON.stringify(valori),
+  });
+  if (risposta.status === 409) return { esito: "richiedeConferma", reset: (await leggiJson(risposta))?.reset ?? [] };
+  if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
+  return { esito: "ok", dettaglio: await leggiJson(risposta) };
+}
+
+/**
+ * Il testo dell'avviso di conferma prima di un azzeramento a cascata: elenca
+ * gli atenei coinvolti invece del generico "Alcune percentuali verranno
+ * azzerate" (deduplicati sull'ateneo, senza la tipologia - Lauree/Master/
+ * Perfezionamenti - e senza indicare su quale azienda: `reset` può
+ * coinvolgere sia l'azienda che si sta modificando sia le sue discendenti,
+ * ma la richiesta di conferma è una sola). Usata sia dal salvataggio delle
+ * percentuali sia dal cambio di padre (vedi GerarchiaAzienda.jsx): entrambi
+ * gli endpoint rispondono con lo stesso formato (descrivi_cascata lato
+ * server).
+ * @param {Array<{ campi: string[] }>} reset
+ */
+export function messaggioAzzeramento(reset) {
+  const chiavi = [...new Set(reset.flatMap((voce) => voce.campi))]
+    .sort((a, b) => ORDINE_PERCENTUALE[a] - ORDINE_PERCENTUALE[b]);
+  const atenei = [...new Set(chiavi.map((chiave) => ATENEO_PER_CAMPO[chiave] ?? chiave))];
+  const elenco = new Intl.ListFormat("it", { style: "long", type: "conjunction" }).format(atenei);
+  return `Le percentuali di ${elenco} verranno azzerate. Continuare?`;
 }

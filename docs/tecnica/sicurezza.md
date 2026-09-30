@@ -591,21 +591,20 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
 - **Pulsante "Accedi con questo utente".**
   - Compare a qualunque utente collegato, senza guardare il suo ruolo, e anche quando il bersaglio è Nazionale. Il filtro dell'interfaccia riguarda solo il bersaglio: attivo e con un ruolo da attuatore.
   - Il server lo consente solo a Regionale e Nazionale e rifiuta sempre il bersaglio Nazionale.
-  - `SchedaUtente.jsx:213-218`, `347-355`; `auth/routers.py:267-270`, `290-302`.
+  - `SchedaUtente.jsx:155-175`, `202-205`, `278-288`; `auth/routers.py:267-270`, `290-302`.
 - **Salvataggio a metà nella scheda Utente.**
-  - La scheda salva prima il ruolo, poi username, stato e padre.
+  - "Salva modifiche" salva prima il ruolo, poi username, stato e padre (due `PUT` distinte).
   - Per chi non è Regionale o Nazionale, e modifica un altro utente, il ruolo viene salvato e il resto rifiutato con 403.
-  - `SchedaUtente.jsx:111-138`; `utenti/routers.py:154-160`.
+  - `SchedaUtente.jsx:106-151`; `utenti/routers.py:154-160`.
 - **Attivazione annullata dal salvataggio della scheda Utente.**
   - La scheda invia sempre lo stato dell'account.
   - Il server allora cancella l'attivazione in attesa, e la verifica dei contatti non attiva più l'account.
   - Il comportamento è dedotto dalla lettura del codice, non da un'esecuzione.
-  - `SchedaUtente.jsx:126-133`; `utenti/routers.py:172-174`; `otp/attivazione.py:11-16`.
-- **Due pulsanti di salvataggio nella scheda Utente ("Salva utente" e "Salva modifiche").**
-  - Il pulsante del modulo salva l'anagrafica, ma non username, stato e padre.
-  - Per gli attuatori rimanda il ruolo letto all'apertura della pagina. Così sovrascrive un ruolo cambiato nel frattempo dalla scheda Utente.
-  - Il commento del codice dice che il ruolo parte solo se cambiato.
-  - `SchedaUtente.jsx:337-345`; `NuovoSottoscrittore.jsx:93-95`, `224-233`, `484-495`.
+  - `SchedaUtente.jsx:106-151`; `utenti/routers.py:172-174`; `otp/attivazione.py:11-16`.
+- **Due tendine "Ruolo" scollegate per gli attuatori.**
+  - La scheda Utente e la sezione Ruolo di Dati principali hanno ciascuna una propria tendina, entrambe scrivono `cliente_ruolo`.
+  - "Salva modifiche" scrive prima quella della scheda Utente, poi quella di Dati principali: se sono state cambiate entrambe con valori diversi, vince quella di Dati principali.
+  - `SchedaUtente.jsx:106-151`; `NuovoSottoscrittore.jsx:248-255`, `279-286`.
 - **Contatti mostrati come verificati.**
   - Un account attivo senza alcuna verifica registrata vede email e cellulare come verificati ("Verificata", "Verificato"), senza il pulsante "Verifica".
   - Elenchi e scheda applicano la stessa funzione `otp/stato_contatti.py`: la regola legacy vale solo in assenza di storico. Se esiste una verifica di un valore precedente, il contatto corrente resta da verificare anche per un account attivo.
@@ -637,9 +636,9 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - Svuotare un campo facoltativo non lo cancella: il valore precedente resta salvato e ricompare al ricaricamento.
   - `SchedaAzienda.jsx:73`; `aziende/routers.py:238-242`.
 - **Dettaglio degli azzeramenti a cascata.**
-  - Quando un cambio di percentuali ne azzererebbe altre, il server non scrive e risponde con l'elenco delle aziende e dei campi interessati.
-  - L'interfaccia ignora l'elenco e mostra solo un avviso generico.
-  - `aziende/routers.py:285-288`; `aziende_xcod/servizi.py:197-208`; `frontend/src/components/SchedaAziendaAttuatori.jsx:376-381`.
+  - Quando un cambio di percentuali ne azzererebbe altre, il server non scrive e risponde con l'elenco delle aziende, dei campi e delle tipologie interessate.
+  - L'interfaccia mostra solo l'ateneo (deduplicato su tutte le aziende e tipologie coinvolte): non distingue un azzeramento sull'azienda che si sta modificando da uno su una discendente, né Lauree da Master o Perfezionamenti.
+  - `aziende/routers.py:285-288`; `aziende_xcod/servizi.py:197-208`; `frontend/src/lib/schedaAzienda.js:124`, `141`.
 - **Campi obbligatori dell'anagrafica.**
   - I campi obbligatori sono marcati solo con l'attributo del browser, e le schede si rendono una per volta: salvando da una scheda diversa da Dati principali quei campi non sono nel documento e il controllo non scatta.
   - Lo schema di modifica ha tutti i campi opzionali, per non bloccare le anagrafiche storiche: in modifica l'obbligo è quindi solo dell'interfaccia.

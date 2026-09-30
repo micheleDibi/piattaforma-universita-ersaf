@@ -12,6 +12,7 @@ import AlertMessage from "./AlertMessage.jsx";
 import CampiAzienda from "./CampiAzienda.jsx";
 import { VUOTO_AZIENDA } from "../config/campiAzienda.js";
 import DettaglioConvenzioniUniversitarie from "./DettaglioConvenzioniUniversitarie.jsx";
+import useDettaglioConvenzioni from "../hooks/useDettaglioConvenzioni.js";
 
 const TESTI = TESTI_AZIENDA.attuatore;
 
@@ -49,6 +50,7 @@ export default function SchedaAziendaAttuatori({
   const [azienda, setAzienda] = useState(null);
   const [caricamento, setCaricamento] = useState(Boolean(aziendaId));
   const [errore, setErrore] = useState("");
+  const convenzioni = useDettaglioConvenzioni(aziendaId);
 
   const [modalitaRicerca, setModalitaRicerca] = useState(!aziendaId);
   const [piva, setPiva] = useState("");
@@ -301,7 +303,12 @@ export default function SchedaAziendaAttuatori({
 
           <hr className={stili.separatore} />
 
-          <DettaglioConvenzioniUniversitarie aziendaId={aziendaId} soloLettura />
+          <DettaglioConvenzioniUniversitarie
+            soloLettura
+            dettaglio={convenzioni.dettaglio}
+            caricamento={convenzioni.caricamento}
+            errore={convenzioni.errore}
+          />
         </>
       )}
 
