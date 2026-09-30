@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import shutil
 import subprocess
 import tempfile
@@ -9,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from src.documenti import motore
+from src.documenti import compilatore, esecuzione, motore
 from tests.support.immagini import png_pieno
 
 MODELLO_PROVA = Path(__file__).parents[1] / "support" / "modelli" / "prova"
@@ -20,6 +21,21 @@ def modelli(tmp_path):
     cartella = tmp_path / "modelli"
     shutil.copytree(MODELLO_PROVA, cartella / "prova")
     return cartella
+
+
+@pytest.fixture
+def cache(tmp_path, monkeypatch):
+    """Cache dei modelli in una cartella del test: quella di sistema resta fuori."""
+    temporanea = tmp_path / "temporanea"
+    temporanea.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(temporanea))
+    return temporanea / "documenti-pratiche"
+
+
+def _unica_radice(cache: Path) -> Path:
+    radici = list(cache.iterdir())
+    assert len(radici) == 1, [p.name for p in radici]  # nessuna copia a meta' o messa da parte
+    return radici[0]
 
 
 def test_pdf_archiviabile_da_un_modello_con_sfondo(modelli):
@@ -41,9 +57,8 @@ def test_un_binario_che_non_e_un_immagine_non_rompe_il_documento(modelli):
     assert illeggibile == senza
 
 
-def test_la_cartella_di_lavoro_non_resta_e_la_cache_segue_il_modello(modelli):
+def test_la_cartella_di_lavoro_non_resta_e_la_cache_segue_il_modello(modelli, cache):
     motore.componi_pdf("prova", {"nome": "Maria"}, {"firma": png_pieno()}, cartella_modelli=modelli)
-    cache = Path(tempfile.gettempdir()) / "documenti-pratiche"
     radici = [p for p in cache.glob("prova-*") if p.is_dir()]
     assert radici and not any(p.name.startswith("richiesta-") for r in radici for p in r.iterdir())
 
@@ -65,6 +80,48 @@ def test_i_file_comuni_si_importano_e_la_cache_li_segue(modelli):
     (comune / "saluto.typ").write_text('#let saluto = "Buonasera a tutte e a tutti"', encoding="utf-8")
     dopo = motore.componi_png("prova", {"nome": "Maria"}, cartella_modelli=modelli, ppi=40)
     assert dopo[0] == prima[0] and dopo[1] != prima[1]
+
+
+@pytest.mark.parametrize("tolto", [motore.FILE_MODULO, "sfondo.svg"])
+def test_la_cache_svuotata_dalla_pulizia_dei_temporanei_si_rifa(modelli, cache, tolto):
+    motore.componi_pdf("prova", {"nome": "Maria"}, cartella_modelli=modelli)
+    radice = _unica_radice(cache)
+    (radice / tolto).unlink()
+    assert motore.componi_pdf("prova", {"nome": "Maria"}, cartella_modelli=modelli).startswith(b"%PDF-")
+    assert _unica_radice(cache) == radice and (radice / tolto).is_file()
+
+
+def test_una_cartella_di_cache_rimasta_vuota_si_rifa(modelli, cache):
+    motore.componi_pdf("prova", {"nome": "Maria"}, cartella_modelli=modelli)
+    radice = _unica_radice(cache)
+    shutil.rmtree(radice)
+    radice.mkdir()  # la pulizia automatica di Windows toglie i file e lascia le cartelle
+    assert motore.componi_pdf("prova", {"nome": "Maria"}, cartella_modelli=modelli).startswith(b"%PDF-")
+    assert _unica_radice(cache) == radice and (radice / motore.FILE_MODULO).is_file()
+
+
+def test_un_file_comune_tolto_dalla_cache_si_ricopia(modelli, cache):
+    comune = modelli / motore.CARTELLA_COMUNE
+    comune.mkdir()
+    (comune / "saluto.typ").write_text('#let saluto = "Buongiorno"', encoding="utf-8")
+    modulo = modelli / "prova" / "modulo.typ"
+    righe = ['#import "/_comune/saluto.typ": saluto', modulo.read_text(encoding="utf-8"), "#saluto"]
+    modulo.write_text("\n".join(righe), encoding="utf-8")
+    motore.componi_pdf("prova", {"nome": "Maria"}, cartella_modelli=modelli)
+    copia = _unica_radice(cache) / motore.CARTELLA_COMUNE / "saluto.typ"
+    copia.unlink()
+    assert motore.componi_pdf("prova", {"nome": "Maria"}, cartella_modelli=modelli).startswith(b"%PDF-")
+    assert copia.is_file()
+
+
+def test_una_cache_gia_rifatta_da_un_altro_processo_resta_la_sua(modelli, cache):
+    motore.componi_pdf("prova", {"nome": "Maria"}, cartella_modelli=modelli)
+    radice = _unica_radice(cache)
+    (radice / "altro-processo").write_text("presente", encoding="utf-8")
+    # Questa richiesta l'aveva trovata incompleta; quando sta per sostituirla, e' gia' a posto.
+    motore._prepara_cache(radice, modelli / "prova", None)
+    assert (radice / "altro-processo").is_file()
+    assert _unica_radice(cache) == radice
 
 
 def test_un_modello_non_si_chiama_come_la_cartella_comune(modelli):
@@ -98,6 +155,45 @@ def test_compilatore_interrotto_non_espone_dati_e_rimuove_gli_allegati(modelli, 
         motore.componi_pdf("prova", {"nome": "dato privato"}, {"firma": png_pieno()}, cartella_modelli=modelli)
     assert "dato privato" not in str(esito.value)
     assert not list(motore._radice("prova", modelli).glob("richiesta-*"))
+
+
+def test_il_log_riporta_la_causa_del_compilatore_senza_dati(modelli, cache, caplog):
+    (modelli / "prova" / "modulo.typ").write_text('#image("manca.png")', encoding="utf-8")
+    with caplog.at_level(logging.WARNING, logger="ersaf.documenti"), pytest.raises(motore.ComposizioneFallita):
+        motore.componi_pdf("prova", {"nome": "dato privato"}, cartella_modelli=modelli)
+    messaggi = [r.getMessage() for r in caplog.records]
+    assert any("file mancante nella cache del modello" in m for m in messaggi), messaggi
+    assert not any("dato privato" in m or "manca.png" in m for m in messaggi)
+
+
+def test_il_log_segnala_il_compilatore_fermato(monkeypatch, caplog):
+    def lento(*_, **__):
+        raise subprocess.TimeoutExpired("compilatore", esecuzione.DURATA_MASSIMA_SECONDI, output=b"dato privato")
+
+    monkeypatch.setattr(esecuzione.subprocess, "run", lento)
+    with caplog.at_level(logging.WARNING, logger="ersaf.documenti"), pytest.raises(subprocess.TimeoutExpired):
+        esecuzione.compila_pdf({})
+    messaggi = [r.getMessage() for r in caplog.records]
+    assert any("fermato dopo" in m for m in messaggi) and not any("dato privato" in m for m in messaggi)
+
+
+@pytest.mark.parametrize(("stderr", "attesa"), [
+    (b"dato privato\nComposizione PDF non riuscita: TypstError\n", "TypstError"),
+    (b"Traceback: dato privato\n", "causa non riconosciuta"),
+    (b"Composizione PDF non riuscita: dato privato, via Roma 1\n", "causa non riconosciuta"),
+    (None, "causa non riconosciuta"),
+])
+def test_dal_compilatore_arriva_nel_log_solo_la_categoria(stderr, attesa):
+    assert esecuzione.causa_dal_compilatore(stderr) == attesa
+
+
+@pytest.mark.parametrize(("errore", "attesa"), [
+    (RuntimeError("Failed to canonicalize path: Impossibile trovare il file specificato. (os error 2)"),
+     "file mancante nella cache del modello"),
+    (ValueError("dato privato"), "ValueError"),
+])
+def test_il_compilatore_riduce_l_errore_a_una_categoria(errore, attesa):
+    assert compilatore.causa(errore) == attesa
 
 
 @pytest.mark.parametrize(("contenuto", "atteso"), [

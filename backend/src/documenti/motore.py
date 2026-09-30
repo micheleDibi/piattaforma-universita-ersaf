@@ -9,7 +9,9 @@ copia accanto al modulo, che li importa con `#import "/_comune/..."`.
 Typst legge solo file sotto la radice indicata e il container dell'API e' in
 sola lettura tranne /tmp: gli asset del modello si copiano una volta in una
 cache sotto la cartella temporanea, e ogni composizione scrive i propri allegati
-in una sottocartella che cancella alla fine. I font vengono solo da `font/`,
+in una sottocartella che cancella alla fine. A ogni composizione la cache si
+confronta con il modello: se la pulizia dei temporanei ne ha tolto dei file, si
+rifa' da capo. I font vengono solo da `font/`,
 mai dal sistema: lo stesso PDF su Windows e nel container.
 """
 
@@ -76,6 +78,57 @@ def _impronta(*cartelle: Path) -> str:
     return impronta.hexdigest()[:16]
 
 
+def _cache_completa(radice: Path, sorgente: Path, comune: Path | None) -> bool:
+    """Vera se la cache ha ogni file del modello e dei comuni, con la stessa dimensione.
+
+    La pulizia dei file temporanei (per esempio quella automatica di Windows)
+    puo' togliere i file e lasciare le cartelle: con una cache cosi' Typst non
+    trova il modulo o le immagini, quindi va rifatta, non usata.
+    """
+    coppie = [(sorgente, radice)] + ([(comune, radice / CARTELLA_COMUNE)] if comune else [])
+    for origine, copia in coppie:
+        for file in origine.rglob("*"):
+            if not file.is_file():
+                continue
+            try:
+                if (copia / file.relative_to(origine)).stat().st_size != file.stat().st_size:
+                    return False
+            except OSError:
+                return False
+    return True
+
+
+def _prepara_cache(radice: Path, sorgente: Path, comune: Path | None) -> None:
+    """Copia il modello sotto un nome univoco e lo mette al posto di `radice`.
+
+    Il rinomino finale fa si' che nessuna richiesta veda una cache a meta'. Una
+    `radice` incompleta si sposta prima da parte; se nel frattempo un altro
+    processo l'ha gia' rifatta, resta la sua.
+    """
+    parziale = radice.with_name(f"{radice.name}.{uuid.uuid4().hex}")
+    shutil.copytree(sorgente, parziale)
+    if comune:
+        shutil.copytree(comune, parziale / CARTELLA_COMUNE)
+    if radice.exists():
+        if _cache_completa(radice, sorgente, comune):
+            shutil.rmtree(parziale, ignore_errors=True)
+            return
+        guasta = radice.with_name(f"{radice.name}.guasta-{uuid.uuid4().hex}")
+        try:
+            radice.rename(guasta)
+        except OSError:
+            pass  # gia' spostata da un altro processo, oppure in uso: decide il rinomino sotto
+        else:
+            shutil.rmtree(guasta, ignore_errors=True)
+    try:
+        parziale.rename(radice)
+    except OSError:
+        # Un altro processo l'ha appena rifatta, oppure quella incompleta e' ancora
+        # in uso (Windows non rinomina una cartella con file aperti): la prossima
+        # richiesta la ritrova incompleta e ritenta.
+        shutil.rmtree(parziale, ignore_errors=True)
+
+
 def _radice(modello: str, cartella_modelli: Path | None) -> Path:
     if not _NOME_VALIDO.match(modello):
         raise ModelloAssente(modello)
@@ -84,18 +137,13 @@ def _radice(modello: str, cartella_modelli: Path | None) -> Path:
     sorgente, comune = base / modello, base / CARTELLA_COMUNE
     if not (sorgente / FILE_MODULO).is_file():
         raise ModelloAssente(modello)
-    cartelle = (sorgente, comune) if comune.is_dir() else (sorgente,)
+    if not comune.is_dir():
+        comune = None
+    cartelle = (sorgente, comune) if comune else (sorgente,)
     radice = Path(tempfile.gettempdir()) / "documenti-pratiche" / f"{modello}-{_impronta(*cartelle)}"
     with _blocco_cache:
-        if not (radice / FILE_MODULO).is_file():
-            parziale = radice.with_name(f"{radice.name}.{uuid.uuid4().hex}")
-            shutil.copytree(sorgente, parziale)
-            if comune.is_dir():
-                shutil.copytree(comune, parziale / CARTELLA_COMUNE)
-            try:
-                parziale.rename(radice)
-            except OSError:  # un altro processo l'ha creata nel frattempo
-                shutil.rmtree(parziale, ignore_errors=True)
+        if not _cache_completa(radice, sorgente, comune):
+            _prepara_cache(radice, sorgente, comune)
     return radice
 
 

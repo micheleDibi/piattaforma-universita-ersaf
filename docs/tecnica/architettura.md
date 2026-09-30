@@ -449,6 +449,10 @@ Le verifiche sono in `tests/unit/test_documenti_moduli.py`,
   immagini delle pagine; il nome è in minuscolo con trattini;
 - la cartella viene copiata una volta in una cache sotto la cartella
   temporanea, perché il container dell'API è in sola lettura tranne `/tmp`;
+  a ogni composizione la cache si confronta con il modello, file per file con
+  la dimensione, e se la pulizia dei temporanei ne ha tolto qualcuno si rifà
+  in una copia nuova che prende il suo posto (quella incompleta va da parte;
+  se un altro processo l'ha già rifatta, resta la sua);
 - i dati arrivano a Typst come JSON; la firma arriva come file in una
   sottocartella cancellata alla fine;
 - per i PDF, `esecuzione.py` avvia `compilatore.py` in un processo breve:
@@ -461,7 +465,10 @@ Le verifiche sono in `tests/unit/test_documenti_moduli.py`,
   occhio la posizione dei campi.
 
 **Errori.** Se la composizione fallisce la risposta è 500. Il log riporta solo
-la pratica e il modulo, nessun dato personale.
+la pratica e il modulo, nessun dato personale. Per i PDF registra anche la
+causa del compilatore ridotta a una categoria, per esempio «file mancante nella
+cache del modello» o il tipo dell'errore, mai il testo dell'errore, che può
+citare il modulo e i dati.
 
 **Risposta.** Il PDF arriva come allegato, con nome `pratica-<numero>.pdf` e
 `Cache-Control: no-store`.
