@@ -1,0 +1,9 @@
+# Certificati del solo clone, predisposti in shared/db-tls e mai in Git.
+services:
+  db:
+    volumes:
+      - ./shared/db-tls:/run/secrets/db:ro
+      - ./shared/db-tls/server.cnf:/etc/mysql/conf.d/99-ersaf-tls.cnf:ro
+  api:
+    volumes:
+      - ./shared/db-tls/ca.crt:/run/secrets/db-ca.crt:ro

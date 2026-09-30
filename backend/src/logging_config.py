@@ -153,3 +153,8 @@ def configura_logging(imp) -> None:
     # Punto 4: a INFO stamperebbe ogni statement con i parametri.
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.pool").setLevel(logging.WARNING)
+
+    # httpx scrive a INFO l'URL completo di ogni chiamata esterna (EduNews24,
+    # Skebby); httpcore a DEBUG host e porta delle connessioni.
+    for nome in ("httpx", "httpcore"):
+        logging.getLogger(nome).setLevel(logging.WARNING)

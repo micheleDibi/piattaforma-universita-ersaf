@@ -474,6 +474,10 @@ Nota: l'interfaccia mostra come verificato un contatto che il server non ha veri
   contatti come verificati: nella scheda senza data e senza pulsante
   «Verifica», nella colonna Verifiche dell'elenco con l'etichetta verde come
   qualunque altro contatto verificato.
+- Anche cambiando il contatto di un account attivo, il nuovo valore può
+  apparire verificato: la modifica cancella lo storico e fa scattare la stessa
+  regola. Questo indicatore non sostituisce la verifica richiesta all'accesso;
+  vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 - Le verifiche fatte con il sistema precedente si possono recuperare con
   un'operazione tecnica. Per ogni anagrafica si prende l'ultima verifica
   riuscita dell'email e quella del cellulare. Ciascuna viene riportata solo se

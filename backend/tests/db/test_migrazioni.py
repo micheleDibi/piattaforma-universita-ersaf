@@ -104,6 +104,27 @@ def test_migrazioni_su_database_pulito(database_vergine):
     }
 
 
+def test_notifica_legacy_ampliata_senza_perdere_testo(database_vergine):
+    url = database_vergine
+    esegui_sql(url, "CREATE TABLE notifiche (notifica_body VARCHAR(255) NOT NULL); "
+                    "INSERT INTO notifiche VALUES ('Testo storico sintetico');")
+    try:
+        percorso = RADICE / "db/migrations/021_capienza_notifiche.sql"
+        esegui_file_sql(url, percorso)
+        esegui_file_sql(url, percorso)
+        esegui_sql(url, "INSERT INTO notifiche VALUES (REPEAT('x', 1403));")
+        esegui_file_sql(url, RADICE / "db/rollback/021_capienza_notifiche_down.sql")
+        motore = sa.create_engine(url)
+        try:
+            with motore.connect() as connessione:
+                testi = connessione.execute(sa.text("SELECT notifica_body FROM notifiche")).scalars().all()
+            assert testi == ["Testo storico sintetico", "x" * 1403]
+        finally:
+            motore.dispose()
+    finally:
+        esegui_sql(url, "DROP TABLE notifiche;")
+
+
 def test_indici_della_visibilita(database_vergine):
     """La 016 aggiunge i due indici su cui poggia la CTE di visibilita':
     senza, ogni passo della ricorsione scansiona tutta `utenti`."""
@@ -144,7 +165,7 @@ def test_migrazioni_idempotenti(database_vergine):
     assert _istantanea(database_vergine) == prima
 
 
-def test_rollback_riporta_allo_stato_iniziale(database_vergine):
+def test_rollback_riporta_allo_stato_iniziale_preservando_chat_condivisa(database_vergine):
     esegui_file_sql(database_vergine, SCHEMA_BASE)
     prima = _istantanea(database_vergine)
 
@@ -154,7 +175,20 @@ def test_rollback_riporta_allo_stato_iniziale(database_vergine):
 
     for annullamento in ROLLBACK:
         esegui_file_sql(database_vergine, annullamento)
-    assert _istantanea(database_vergine) == prima
+    # Le 017/018/019 includono archivi condivisi con Universo, eventualmente preesistenti:
+    # non ha rollback distruttivo. Tutti gli altri oggetti devono tornare identici.
+    preservate = {"chat_pratica_comando", "chat_pratica_limite", "realtime_delivery",
+                  "realtime_message_time", "realtime_message_key_grant", "realtime_message_state",
+                  "realtime_auth_session", "realtime_auth_refresh_history",
+                  "realtime_person_contact_acl", "realtime_person_conversation",
+                  "realtime_message_command", "realtime_notification_command",
+                  "realtime_notification_bridge", "realtime_notification_bridge_state",
+                  "realtime_notification_seen", "realtime_notification_seen_snapshot",
+                  "realtime_message_seen_snapshot", "realtime_presenza", "realtime_evento",
+                  "realtime_flusso_utente", "realtime_limite", "realtime_delivery_connessione"}
+    dopo = _istantanea(database_vergine)
+    assert {r[0] for r in dopo - prima} == preservate
+    assert {r for r in dopo if r[0] not in preservate} == prima
 
 
 def test_enum_esiti_allineato_al_codice(database_vergine):

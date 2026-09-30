@@ -9,7 +9,7 @@ differenze volute:
 - il numero viene da pratiche_contatori con incremento atomico (vedi
   prossimo_numero), non da un MAX ricalcolato ogni volta: due salvataggi
   concorrenti con lo stesso prefisso non possono piu' generare lo stesso
-  codice (vedi db/migrations/017_contatori_codice_pratica.sql);
+  codice (vedi db/migrations/020_contatori_codice_pratica.sql);
 - il prefisso si sceglie da listino_tipo_corso_id, un id stabile gia' usato
   per le caratteristiche del percorso (vedi campiPercorsoVisibili in
   frontend/src/config/pratica.js), invece che da un confronto testuale sulla

@@ -5,7 +5,7 @@
 
 Elenco delle operazioni esposte dal backend, raggruppate per categoria. Per ognuna:
 
-- **Accesso**: `pubblica`; `sfida di accesso` quando serve la sfida ottenuta con la password, prima che esista una sessione; `sessione` quando serve il cookie di sessione.
+- **Accesso**: `pubblica`; `sfida di accesso` quando serve la sfida ottenuta con la password, prima che esista una sessione; `sessione` quando serve il cookie di sessione; `token realtime` per il servizio condiviso; `token del produttore interno` per l'ingresso notifiche.
 - Le richieste che modificano dati passano anche dai controlli del browser e dal token CSRF descritti in [sicurezza](../sicurezza.md).
 - I controlli sul ruolo avvengono dentro le operazioni e qui non compaiono: vedi [ruoli e permessi](../../funzionale/ruoli-e-permessi.md) e i [limiti noti](../sicurezza.md#limiti-noti).
 - La risposta `422` per i dati non validi vale per tutte le operazioni con parametri o corpo e non viene ripetuta.
@@ -186,6 +186,44 @@ Aggiorna Cliente.
 - **Parametri**: `cliente_id` (path, obbligatorio): `integer`
 - **Corpo**: `ClienteUpdate` (application/json) obbligatorio
 - **Risposta**: `200` `ClienteDettaglioResponse`
+
+## EduNews24
+
+### `GET /edunews24/categorie`
+
+Categorie delle notizie di EduNews24.
+
+- **Accesso**: sessione
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` `ElencoCategorie`
+
+### `GET /edunews24/interpelli`
+
+Interpelli di EduNews24.
+
+- **Accesso**: sessione
+- **Parametri**: `area` (query): `"tutte" | "nazionale" | "abruzzo" | "basilicata" | "calabria" | "campania" | "emilia-romagna" | "friuli-venezia-giulia" | "lazio" | "liguria" | "lombardia" | "marche" | "molise" | "piemonte" | "puglia" | "sardegna" | "sicilia" | "toscana" | "trentino-alto-adige" | "umbria" | "valle-d-aosta" | "veneto"`; `cursore` (query): `string | null`
+- **Corpo**: —
+- **Risposta**: `200` `ElencoOpportunita`
+
+### `GET /edunews24/notizie`
+
+Notizie di EduNews24.
+
+- **Accesso**: sessione
+- **Parametri**: `categoria` (query): `string | null`; `cursore` (query): `string | null`; `solo_video` (query): `"no" | "si"`
+- **Corpo**: —
+- **Risposta**: `200` `ElencoNotizie`
+
+### `GET /edunews24/selezione-personale`
+
+Selezione del personale di EduNews24.
+
+- **Accesso**: sessione
+- **Parametri**: `area` (query): `"tutte" | "nazionale" | "abruzzo" | "basilicata" | "calabria" | "campania" | "emilia-romagna" | "friuli-venezia-giulia" | "lazio" | "liguria" | "lombardia" | "marche" | "molise" | "piemonte" | "puglia" | "sardegna" | "sicilia" | "toscana" | "trentino-alto-adige" | "umbria" | "valle-d-aosta" | "veneto"`; `cursore` (query): `string | null`
+- **Corpo**: —
+- **Risposta**: `200` `ElencoOpportunita`
 
 ## Gerarchia aziende
 
@@ -467,6 +505,42 @@ Documento Disponibile.
 - **Corpo**: —
 - **Risposta**: `200` `dict`
 
+### `GET /pratiche/{pratica_id}/firma`
+
+Leggi Firma.
+
+- **Accesso**: sessione
+- **Parametri**: `pratica_id` (path, obbligatorio): `integer`
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `PUT /pratiche/{pratica_id}/firma`
+
+Salva Firma.
+
+- **Accesso**: sessione
+- **Parametri**: `pratica_id` (path, obbligatorio): `integer`
+- **Corpo**: `FirmaIn` (application/json) obbligatorio
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /pratiche/{pratica_id}/messaggi`
+
+Messaggi.
+
+- **Accesso**: sessione
+- **Parametri**: `pratica_id` (path, obbligatorio): `integer`; `cursor` (query): `string | null`
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /pratiche/{pratica_id}/messaggi/prepara`
+
+Prepara Messaggio.
+
+- **Accesso**: sessione
+- **Parametri**: `pratica_id` (path, obbligatorio): `integer`
+- **Corpo**: `MessaggioIn` (application/json) obbligatorio
+- **Risposta**: `200` schema non dichiarato
+
 ## Profilo personale
 
 ### `GET /profilo/me`
@@ -477,6 +551,170 @@ Mio Profilo.
 - **Parametri**: —
 - **Corpo**: —
 - **Risposta**: `200` `ProfiloPersonale`
+
+## Realtime
+
+### `GET /realtime/api/v1/conversations`
+
+Conversazioni.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/messages`
+
+Messaggi.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/messages/attention`
+
+Stato Messaggi.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/api/v1/messages/attention`
+
+Visti Messaggi.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/messages/read`
+
+Messaggi Letti.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/api/v1/messages/read`
+
+Leggi Messaggio.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/notifications`
+
+Notifiche.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/api/v1/notifications`
+
+Leggi Notifica.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/api/v1/notifications/attention`
+
+Stato Notifiche.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/api/v1/notifications/attention`
+
+Viste Notifiche.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/auth/login`
+
+Entra.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/auth/logout`
+
+Esci.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `204` nessun contenuto
+
+### `POST /realtime/auth/recover`
+
+Recupera.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/auth/refresh`
+
+Rinnova.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/crypto/key`
+
+Chiave.
+
+- **Accesso**: token realtime (Bearer)
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/health`
+
+Health.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `POST /realtime/internal/notifications`
+
+Notifica.
+
+- **Accesso**: token del produttore interno
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
+
+### `GET /realtime/ready`
+
+Ready.
+
+- **Accesso**: pubblica
+- **Parametri**: —
+- **Corpo**: —
+- **Risposta**: `200` schema non dichiarato
 
 ## Ruoli
 
@@ -725,6 +963,14 @@ Aggiorna Utente.
 | `universita_link_lauree` | `integer` | no |
 | `universita_link_master` | `integer` | no |
 
+### AggiornamentoEduNews24
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `aggiornato_il` | `string(date-time) \| null` | sì |
+| `cursore_successivo` | `string \| null` | sì |
+| `stantio` | `boolean` | sì |
+
 ### AziendaCreate
 
 | Campo | Tipo | Obbligatorio |
@@ -812,6 +1058,13 @@ Aggiorna Utente.
 |---|---|---|
 | `metodo` | `"email" \| "totp" \| "passkey"` | sì |
 | `sfida` | `string` | sì |
+
+### CategoriaNotizie
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `nome` | `string` | sì |
+| `slug` | `string` | sì |
 
 ### ClienteConUtenteCreate
 
@@ -1228,6 +1481,30 @@ Aggiorna Utente.
 | `listTesta_id` | `integer` | sì |
 | `prezzo` | `number \| string \| null` | no |
 
+### ElencoCategorie
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `attiva` | `boolean` | sì |
+| `elementi` | `list[CategoriaNotizie]` | sì |
+| `meta` | `AggiornamentoEduNews24 \| null` | sì |
+
+### ElencoNotizie
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `attiva` | `boolean` | sì |
+| `elementi` | `list[Notizia]` | sì |
+| `meta` | `AggiornamentoEduNews24 \| null` | sì |
+
+### ElencoOpportunita
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `attiva` | `boolean` | sì |
+| `elementi` | `list[Opportunita]` | sì |
+| `meta` | `AggiornamentoEduNews24 \| null` | sì |
+
 ### EmittenteBreve
 
 | Campo | Tipo | Obbligatorio |
@@ -1236,6 +1513,13 @@ Aggiorna Utente.
 | `cliente_cognome` | `string \| null` | no |
 | `cliente_id` | `integer` | sì |
 | `cliente_nome` | `string \| null` | no |
+
+### FirmaIn
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `immagine` | `string` | sì |
+| `versione` | `string` | sì |
 
 ### IndirizzoProfilo
 
@@ -1360,6 +1644,49 @@ Aggiorna Utente.
 |---|---|---|
 | `utente_password` | `string` | sì |
 | `utente_username` | `string` | sì |
+
+### MessaggioIn
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `clientMessageId` | `string` | sì |
+| `testo` | `string` | sì |
+
+### Notizia
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `categoria` | `CategoriaNotizie` | sì |
+| `ha_video` | `boolean` | sì |
+| `id` | `integer` | sì |
+| `immagine` | `string \| null` | sì |
+| `pubblicato_il` | `string` | sì |
+| `sintesi` | `string \| null` | sì |
+| `tipo` | `"notizia"` | no |
+| `titolo` | `string` | sì |
+| `titolo_breve` | `string \| null` | sì |
+| `url` | `string` | sì |
+| `video` | `VideoNotizia \| null` | sì |
+
+### Opportunita
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `classe_concorso` | `string \| null` | sì |
+| `ente` | `string \| null` | sì |
+| `figura` | `string \| null` | sì |
+| `id` | `integer` | sì |
+| `nazionale` | `boolean` | sì |
+| `posti` | `integer \| null` | sì |
+| `pubblicato_il` | `string` | sì |
+| `regioni` | `list[RegioneOpportunita]` | sì |
+| `scadenza` | `string \| null` | sì |
+| `sede` | `string \| null` | sì |
+| `sintesi` | `string \| null` | sì |
+| `stato` | `"aperto" \| "chiuso" \| "altro" \| null` | sì |
+| `tipo` | `"interpello" \| "selezione-personale"` | sì |
+| `titolo` | `string` | sì |
+| `url` | `string` | sì |
 
 ### Opzione
 
@@ -1534,6 +1861,13 @@ Aggiorna Utente.
 | `ruolo` | `string \| null` | sì |
 | `telefono` | `string \| null` | sì |
 | `username` | `string` | sì |
+
+### RegioneOpportunita
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `nome` | `string` | sì |
+| `slug` | `string` | sì |
 
 ### RichiestaResetRequest
 
@@ -1869,3 +2203,12 @@ Valori: "sottoscrittore" | "attuatore".
 | `utente_attivoSN` | `integer \| null` | no |
 | `utente_padre` | `integer \| null` | no |
 | `utente_username` | `string \| null` | no |
+
+### VideoNotizia
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `copertina` | `string \| null` | sì |
+| `durata_secondi` | `integer \| null` | sì |
+| `tipo_mime` | `"video/mp4" \| "video/webm"` | sì |
+| `url` | `string` | sì |

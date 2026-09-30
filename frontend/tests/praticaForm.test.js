@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { praticaVuota, payloadPratica, dettaglioAttuale, prezzoAttuale, prezzoPerInput, valoriRinnovo } from "../src/lib/praticaForm.js";
+import { praticaVuota, payloadPratica, dettaglioAttuale, prezzoAttuale, prezzoPerInput, sommaPrezzi, valoriRinnovo } from "../src/lib/praticaForm.js";
 import { opzioneStudente, paginaStudenti, opzionePercorsoConDettaglio, paginaPercorsi } from "../src/lib/opzioniPratica.js";
 import { creaPayloadProdotto, aggiungiDettaglio } from "../src/lib/prodottoPayload.js";
 import { campiPercorsoVisibili, eContestoCorsiSingoli, eGruppoLauree, CAMPI_RINNOVO } from "../src/config/pratica.js";
@@ -8,8 +8,18 @@ import { campiPercorsoVisibili, eContestoCorsiSingoli, eGruppoLauree, CAMPI_RINN
 const dati = { ...praticaVuota(), pratica_numero: " TEST-42 ", pratica_prezzo: "120.50", pratica_stato_id: "2" };
 const scelta = { nuova: true, studente: { id: 17 }, percorso: { id: 42 },
   prodotto: { listTesta_id: 42, nome_universita_id: 8, listino_tipoCorso_id: 9 } };
-test("creazione pratica collega cliente e prodotto, senza l'emittente deprecato e senza il codice (lo genera il server)", () => {
+test("somma dei corsi esatta anche con centesimi e otto decimali", () => {
+  assert.equal(sommaPrezzi(["0.1", "0.2"]), "0.3");
+  assert.equal(sommaPrezzi(["999999999998.99999999", "0.00000001"]), "999999999999");
+  assert.equal(sommaPrezzi(["1E-8", "0E-8"]), "0.00000001");
+  assert.equal(payloadPratica({ ...dati, pratica_prezzo: sommaPrezzi(["0.1", "0.2"]) }, scelta).pratica_prezzo, "0.3");
+  for (const prezzo of [null, "", "NaN", "1.123456789"]) {
+    assert.equal(sommaPrezzi(["100", prezzo]), "");
+  }
+});
+test("creazione pratica collega cliente e prodotto; stato, emittente e codice sono stabiliti dal server", () => {
   const p = payloadPratica(dati, scelta);
+  assert.equal(p.pratica_stato_id, undefined);
   assert.equal(p.cliente_id, 17);
   assert.equal(p.cliente_emittente_aderente_id, undefined);
   assert.equal(p.listTesta_id, 42);
@@ -19,13 +29,14 @@ test("creazione pratica collega cliente e prodotto, senza l'emittente deprecato 
   assert.equal(p.pratica_prezzo, "120.50");
   assert.equal(p.utente_id, undefined);
 });
-test("il campo stato viaggia sempre nel payload (anche in creazione), ma il server lo ignora li' e forza sempre Bozza", () => {
-  const p = payloadPratica(dati, scelta);
-  assert.equal(p.pratica_stato_id, 2); // valore di dati.pratica_stato_id, ininfluente lato server
+test("in creazione nessuno stato del form sostituisce la Bozza assegnata dal server", () => {
+  for (const stato of ["", "1", "6", null]) {
+    assert.equal(payloadPratica({ ...dati, pratica_stato_id: stato }, scelta).pratica_stato_id, undefined);
+  }
 });
 test("la modifica invia soltanto i campi supportati e permette di svuotare le note; codice e prezzo restano di sola lettura, lo stato no (ma solo il Nazionale lo scrive davvero, vedi backend)", () => {
   const p = payloadPratica({ ...dati, cliente_id: 999, listTesta_id: 999, nome_universita_id: 999,
-    pratica_created_by: 1, pratica_missFlag_firma: -1, pratica_note: "" }, { nuova: false });
+    pratica_created_by: 1, pratica_missFlag_firma: -1, pratica_note: "" }, { nuova: false, prodotto: { listino_tipoCorso_id: 8 } });
   assert.deepEqual(Object.keys(p).sort(),
     ["pratica_annoAccademico", "pratica_note", "pratica_rinnPrimoAnno", "pratica_rinnSecondoAnno",
       "pratica_rinnTerzoAnno", "pratica_sedeErogazione", "pratica_stato_id"].sort());
@@ -118,6 +129,15 @@ test("selezionare un anno di rinnovo azzera gli altri due; nessuna selezione li 
     { pratica_rinnPrimoAnno: 0, pratica_rinnSecondoAnno: -1, pratica_rinnTerzoAnno: 0 });
   assert.deepEqual(valoriRinnovo(null),
     { pratica_rinnPrimoAnno: 0, pratica_rinnSecondoAnno: 0, pratica_rinnTerzoAnno: 0 });
+});
+test("un rinnovo scelto non si invia passando a un percorso diverso da Lauree", () => {
+  const form = { ...dati, ...valoriRinnovo("pratica_rinnPrimoAnno") };
+  for (const opzioni of [scelta, { nuova: false }, { nuova: false, prodotto: { listino_tipoCorso_id: 1 } }]) {
+    const payload = payloadPratica(form, opzioni);
+    assert.ok(CAMPI_RINNOVO.every(({ nome }) => !Object.hasOwn(payload, nome)));
+  }
+  const laurea = payloadPratica(form, { ...scelta, prodotto: { ...scelta.prodotto, listino_tipoCorso_id: 8 } });
+  assert.equal(laurea.pratica_rinnPrimoAnno, -1);
 });
 test("lookup nuovi usano clienti e prodotti completi, mai ID utente", () => {
   assert.deepEqual(opzioneStudente({ cliente_id: 17, utente_id: 999, cliente_nome: "Elena", cliente_cognome: "Bianchi" }), { id: 17, label: "Elena Bianchi", dettaglio: "" });

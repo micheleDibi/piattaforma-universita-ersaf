@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 from typing import Annotated, List
 
 from src.auth.dipendenze import get_current_utente
-from src.auth.visibilita import Visibilita, condizione_azienda, visibilita_corrente
+from src.auth.visibilita import Visibilita, riga_di_me, visibilita_corrente
 from src.database import get_db
 from src.errori import CodicePraticaError
 from src.notifiche.backend_invio import Mailer, get_mailer
@@ -12,9 +12,14 @@ from src.pratiche.codice import genera_codici_pratica
 from src.pratiche.filtri import FiltriPratiche, query_filtrata
 from src.pratiche.notifiche import invia_mail_nuova_pratica_ersaf, invia_mail_pratica_bozza
 from src.pratiche.opzioni import router as opzioni_router
+from src.pratiche.firma_rotte import router as firma_router
+from src.chat_pratiche.rotte import router as chat_router
+from src.pratiche.accesso import pratica_visibile
 from src.pratiche.storico_stati import STATO_BOZZA_ID, STATO_CARICATA_ID, registra_stato, stato_gia_raggiunto
 from src.documenti.rotte import router as documento_router
-from src.pratiche.models import ConteggioPratiche, Pratica, PraticaCreate, PraticaResponse, PraticaUpdate
+from src.pratiche.models import Pratica
+from src.pratiche.schemi import ConteggioPratiche, PraticaCreate, PraticaResponse, PraticaUpdate
+from src.pratiche.rinnovi import verifica_modifica_rinnovo
 from src.pratiche_listini.models import PraticaListino
 from src.utenti.models import Utente
 
@@ -29,6 +34,8 @@ router = APIRouter(
 router.include_router(opzioni_router)
 # PDF della pratica: stesso prefisso e stessa autenticazione del dettaglio.
 router.include_router(documento_router)
+router.include_router(firma_router)
+router.include_router(chat_router)
 
 # joinedload sulle relazioni che PraticaResponse.estrai_relazioni legge per
 # popolare cliente_nome_completo / pratica_stato_descrizione / listTesta_descrizione.
@@ -51,22 +58,7 @@ AZIENDA_MANCANTE = "Per creare pratiche l'utente deve avere un'azienda associata
 
 
 def _pratica_o_404(db: Session, pratica_id: int, vis: Visibilita) -> Pratica:
-    """Una pratica non visibile risponde come una inesistente."""
-    query = (
-        db.query(Pratica)
-        .options(*_RELAZIONI_ELENCO)
-        .filter(Pratica.pratica_id == pratica_id)
-    )
-    condizione = condizione_azienda(vis, Pratica.azienda_id)
-    if condizione is not None:
-        query = query.filter(condizione)
-    pratica = query.first()
-    if not pratica:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Pratica non trovata.",
-        )
-    return pratica
+    return pratica_visibile(db, pratica_id, vis, opzioni=_RELAZIONI_ELENCO)
 
 
 # POST
@@ -107,6 +99,14 @@ def crea_pratica(
             )
         dati["azienda_id"] = vis.azienda_id
 
+    # Il form non sceglie piu' l'emittente, ma le ACL chat usano ancora
+    # questi riferimenti. Mai affidarsi al cliente 1 convenzionale del DB.
+    if not dati.get("cliente_emittente_aderente_id"):
+        emittente = riga_di_me(db, utente.utente_id)
+        if emittente is None:
+            raise HTTPException(status_code=403, detail="Il profilo non ha un cliente associato.")
+        dati["cliente_emittente_aderente_id"] = emittente.cliente_id
+    dati.setdefault("utente_id", utente.utente_id)
     nuova_pratica = Pratica(**dati)
     db.add(nuova_pratica)
     # flush+refresh, non commit: serve pratica_id e, soprattutto, i campi con
@@ -120,7 +120,7 @@ def crea_pratica(
     try:
         codici = genera_codici_pratica(
             db,
-            nome_universita_codice=nuova_pratica.universita.nome_universita_codice,
+            nome_universita_codice=getattr(nuova_pratica.universita, "nome_universita_codice", None),
             listino_tipo_corso_id=nuova_pratica.listino_tipo_corso_id,
         )
     except CodicePraticaError as errore:
@@ -155,7 +155,7 @@ def crea_pratica(
     # La mail parte solo DOPO il commit: un invio prima sopravviverebbe a un
     # rollback (vedi src/pratiche/notifiche.py). Solo Bozza: una pratica
     # nuova non puo' nascere Caricata (vedi sopra).
-    email_cliente = (pratica_salvata.cliente.cliente_email or "").strip()
+    email_cliente = (getattr(pratica_salvata.cliente, "cliente_email", None) or "").strip()
     if email_cliente:
         attivita.add_task(invia_mail_pratica_bozza, mailer, email_cliente)
 
@@ -218,15 +218,10 @@ def aggiorna_pratica(
     utente: Utente = Depends(get_current_utente),
     mailer: Mailer = Depends(get_mailer),
 ):
-    pratica = _pratica_o_404(db, pratica_id, vis)
-
-    # Blocca la sola riga di pratiche (non le tabelle collegate via
-    # joinedload di _pratica_o_404): due salvataggi concorrenti della stessa
-    # pratica non devono generare due righe di storico o due email. Poi si
-    # rilegge lo stato: la copia in `pratica` puo' essere gia' superata da
-    # quando _pratica_o_404 l'ha letta, prima del blocco.
-    db.query(Pratica.pratica_id).filter(Pratica.pratica_id == pratica_id).with_for_update().first()
-    db.refresh(pratica)
+    # Lettura corrente e visibilita' sotto lo stesso blocco, senza joinedload.
+    # Un SELECT normale dopo il lock puo' rileggere lo snapshot precedente
+    # con REPEATABLE READ, perdendo un cambio di stato o di azienda concorrente.
+    pratica = pratica_visibile(db, pratica_id, vis, blocca=True)
     stato_precedente = pratica.pratica_stato_id
 
     # exclude_unset=True: stesso motivo di aggiorna_azienda, un campo non
@@ -238,6 +233,11 @@ def aggiorna_pratica(
     if not vis.nazionale:
         modifiche.pop("azienda_id", None)
         modifiche.pop("pratica_stato_id", None)
+
+    try:
+        verifica_modifica_rinnovo(pratica, modifiche)
+    except ValueError as errore:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(errore)) from None
 
     for chiave, valore in modifiche.items():
         setattr(pratica, chiave, valore)
@@ -259,7 +259,7 @@ def aggiorna_pratica(
     pratica_salvata = _pratica_o_404(db, pratica_id, vis)
 
     if manda_bozza:
-        email_cliente = (pratica_salvata.cliente.cliente_email or "").strip()
+        email_cliente = (getattr(pratica_salvata.cliente, "cliente_email", None) or "").strip()
         if email_cliente:
             attivita.add_task(invia_mail_pratica_bozza, mailer, email_cliente)
     if manda_caricata:

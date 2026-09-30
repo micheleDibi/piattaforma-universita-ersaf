@@ -80,8 +80,8 @@ Se il server venisse reinstallato, la chiave host scritta nello script (variabil
   - chiede conferma prima di clonare.
 - `configure-source` registra le credenziali di lettura del database sorgente. Servono solo al dump, che è in sola lettura: meglio un utente senza privilegi di scrittura, ma lo script non lo verifica e si limita a consigliarlo (`scripts/deploy.ps1:379`; la regola del dump in sola lettura è in `deploy/remote/40-db.sh:4-11`).
 - `rollback`:
-  - non annulla le migrazioni già applicate (`deploy/remote/70-deploy.sh:86`);
-  - scambia la release attiva con la precedente, quindi un secondo `rollback` torna alla release di partenza (`deploy/remote/70-deploy.sh:84`).
+  - non annulla le migrazioni già applicate (`deploy/remote/70-deploy.sh:87`);
+  - scambia la release attiva con la precedente, quindi un secondo `rollback` torna alla release di partenza (`deploy/remote/70-deploy.sh:85`).
 - `restore-db`:
   - non salva prima il clone attuale (`deploy/remote/40-db.sh:105-119`). Se serve una copia, eseguire prima `backup-db`;
   - dopo l'import applica le migrazioni della release attiva (`deploy/remote/40-db.sh:116`, `deploy/remote/50-migrate.sh:45`). Per tornare indietro con uno snapshot pre-migrazione occorre quindi che sia attiva una release che non contiene quelle migrazioni: prima `rollback`, poi `restore-db`.
@@ -115,7 +115,7 @@ Se il server venisse reinstallato, la chiave host scritta nello script (variabil
 
 ### Sul server
 
-La sequenza è in `cmd_deploy` (`deploy/remote/70-deploy.sh:32-68`). I percorsi sono relativi alla cartella base del deploy (`ERSAF_DEPLOY_BASE`).
+La sequenza è in `cmd_deploy` (`deploy/remote/70-deploy.sh:32-69`). I percorsi sono relativi alla cartella base del deploy (`ERSAF_DEPLOY_BASE`).
 
 1. **Preparazione.**
    - L'ambiente deve essere già installato.
@@ -130,7 +130,11 @@ La sequenza è in `cmd_deploy` (`deploy/remote/70-deploy.sh:32-68`). I percorsi 
    4. scrive `RELEASE_INFO`;
    5. valida `deploy/compose.yml`;
    6. costruisce le immagini `api` e `web`.
-5. **Notifiche.** Solo se le notifiche reali sono attive: copia la configurazione della rete dedicata e installa le sue regole di firewall (`deploy/remote/26-notifiche.sh`). È l'unico punto che installa quelle regole: nessun'altra azione le crea (`deploy/remote/70-deploy.sh:46`).
+5. **Reti di uscita.** Solo se attivate in `shared/compose.env`, ciascuna con il proprio script:
+   - **notifiche reali:** copia la configurazione della rete dedicata e installa le sue regole di firewall (`deploy/remote/26-notifiche.sh`);
+   - **EduNews24:** valida la configurazione della rete contenuta nella release, installa le regole del suo bridge e, solo se partono senza errori, copia la configurazione in `shared/`; con gli SMS reali configurati senza le notifiche reali, o con una configurazione della release che non usa il bridge delle regole, non installa nulla e toglie la copia (`deploy/remote/27-edunews24.sh`, vedi [EduNews24](#edunews24)).
+
+   È l'unico punto che installa quelle regole: nessun'altra azione le crea (`deploy/remote/70-deploy.sh:46-47`).
 6. **Database.**
    - Avvia il database del clone e aspetta che sia pronto.
    - Con `install`, se il clone non c'è ancora, lo crea dalla sorgente.
@@ -171,7 +175,7 @@ Le migrazioni già applicate restano. Per annullarle si ripristina uno snapshot 
   - la cartella della release fallita, con il suo `RELEASE_INFO`, cancellata poi dalla pulizia di un deploy riuscito;
   - le migrazioni eventualmente già applicate.
 
-**Contatore delle versioni.** Se il deploy fallisce prima che la verifica riesca, il contatore non avanza. Un errore successivo alla verifica, per esempio durante la pulizia finale, arriva invece con il numero già registrato (`deploy/remote/70-deploy.sh:61-65`): vedi i casi limite del timbro.
+**Contatore delle versioni.** Se il deploy fallisce prima che la verifica riesca, il contatore non avanza. Un errore successivo alla verifica, per esempio durante la pulizia finale, arriva invece con il numero già registrato (`deploy/remote/70-deploy.sh:62-66`): vedi i casi limite del timbro.
 
 **Sul PC:**
 
@@ -184,7 +188,7 @@ Le migrazioni già applicate restano. Per annullarle si ripristina uno snapshot 
 ### Il database è una copia
 
 - Il clone nasce da un dump in sola lettura del database sorgente: uno snapshot consistente, senza lock e senza scritture (`deploy/remote/40-db.sh:4-28`).
-- L'API sta su reti interne e non può raggiungere il database sorgente (`deploy/compose.yml:7-11`). Quello che si prova in collaudo non arriva in produzione.
+- L'API sta su reti interne e non può raggiungere il database sorgente (`deploy/compose.yml:7-11`). Quello che si prova in collaudo non arriva in produzione. Le sole uscite verso Internet sono le reti facoltative descritte sotto: notifiche reali ed EduNews24.
 - Il clone contiene dati personali: i dump restano sul server (`deploy/remote/40-db.sh:10-11`).
 
 ### Email e SMS
@@ -197,13 +201,83 @@ Le migrazioni già applicate restano. Per annullarle si ripristina uno snapshot 
 
 **Notifiche reali.** Per attivarle servono due modifiche manuali sul server, che nessuna azione dello script esegue, e poi una pubblicazione:
 
-1. **In `shared/compose.env`:** `NOTIFICHE_REALI=si`. Con questa chiave ogni comando `compose` aggiunge all'API una rete dedicata con uscita verso l'esterno (`deploy/compose.notifiche.yml`, `deploy/remote/00-lib.sh:94-101`).
-2. **In `shared/api.env`:** i canali di invio reali, cioè `EMAIL_BACKEND=smtp` con i parametri SMTP e `SMS_BACKEND=skebby` con le credenziali del fornitore SMS. Senza quelle credenziali l'API non parte (`backend/src/notifiche/config_sms.py:16-19`, `backend/src/main.py:71-72`).
-3. **Poi `-Action deploy`.** È il deploy a installare le regole di firewall di quella rete: uscita consentita solo verso le porte HTTPS e SMTP di indirizzi pubblici, rete locale e servizi del server bloccati (`deploy/remote/26-notifiche.sh:5-48`). Le regole restano installate e vengono riapplicate al riavvio del server.
+1. **In `shared/compose.env`:** `NOTIFICHE_REALI=si`. Con questa chiave ogni comando `compose` aggiunge all'API una rete dedicata con uscita verso l'esterno (`deploy/compose.notifiche.yml`, `deploy/remote/00-lib.sh:124-131`).
+2. **In `shared/api.env`:** i canali di invio reali, cioè `EMAIL_BACKEND=smtp` con i parametri SMTP e `SMS_BACKEND=skebby` con le credenziali del fornitore SMS. Senza quelle credenziali l'API non parte (`backend/src/notifiche/config_sms.py:16-19`, `backend/src/main.py:74-75`).
+3. **Poi `-Action deploy`.** È il deploy a installare le regole di firewall di quella rete: uscita consentita solo verso le porte HTTPS e SMTP, rete locale e servizi del server bloccati (`deploy/remote/26-notifiche.sh:5-48`), con i limiti descritti in [Limiti noti](sicurezza.md#rete-e-deploy). Le regole restano installate e vengono riapplicate al riavvio del server.
 
-**Attenzione.** Le altre azioni che riavviano l'API (`start`, `rollback`, `restore-db`, `refresh-clone`, `publish-domain`, `unpublish-domain`) collegano l'API a quella rete ma non installano le regole. Eseguirne una dopo aver messo `NOTIFICHE_REALI=si` e prima del primo `deploy` lascia l'API con un'uscita verso l'esterno senza restrizioni, fino al deploy successivo (`deploy/remote/80-status.sh:42-48`, `deploy/remote/70-deploy.sh:46`). Vedi [Limiti noti](sicurezza.md#limiti-noti).
+**Attenzione.** Le altre azioni che riavviano l'API (`start`, `rollback`, `restore-db`, `refresh-clone`, `publish-domain`, `unpublish-domain`) collegano l'API a quella rete ma non installano le regole. Eseguirne una dopo aver messo `NOTIFICHE_REALI=si` e prima del primo `deploy` lascia l'API con un'uscita verso l'esterno senza restrizioni, fino al deploy successivo (`deploy/remote/80-status.sh:42-48`, `deploy/remote/70-deploy.sh:46`). Vedi [Limiti noti](sicurezza.md#rete-e-deploy).
 
-Da quel momento i messaggi del collaudo partono davvero verso i destinatari presenti nel clone. La verifica del deploy non prova un invio reale: il collaudo gira con l'ambiente di sviluppo (`ERSAF_ENV=sviluppo`, `deploy/remote/20-install.sh:44`), quindi i controlli che in produzione pretendono l'invio via SMTP con un host configurato non si applicano (`backend/src/config.py:280-291`) e una configurazione SMTP incompleta non ferma l'avvio.
+Da quel momento i messaggi del collaudo partono davvero verso i destinatari presenti nel clone. La verifica del deploy non prova un invio reale: il collaudo gira con l'ambiente di sviluppo (`ERSAF_ENV=sviluppo`, `deploy/remote/20-install.sh:44`), quindi i controlli che in produzione pretendono l'invio via SMTP con un host configurato non si applicano (`backend/src/config.py:309-320`) e una configurazione SMTP incompleta non ferma l'avvio.
+
+**Con l'uscita EduNews24.** La porta HTTPS della rete EduNews24 (vedi sotto) vale per tutta l'API, e il fornitore SMS è un servizio HTTPS. Per questo, con `SMS_BACKEND=skebby` in `shared/api.env` e `NOTIFICHE_REALI` diverso da `si`, gli script non collegano la rete EduNews24 e lo segnalano con un avviso, una volta per azione; il deploy toglie anche la copia della sua configurazione in `shared/` e non aggiorna le regole. L'uscita è attiva per impostazione predefinita, quindi l'avviso si ripete a ogni azione finché non si attivano le notifiche reali o non si spegne l'uscita con `USCITA_EDUNEWS24=no` in `shared/compose.env`. Per gli SMS reali servono quindi le due modifiche descritte sopra in "Notifiche reali"; le email via SMTP sulla rete EduNews24 resterebbero comunque bloccate.
+
+- Il controllo sta negli script di deploy, non nell'API, e legge l'ultima riga di `shared/api.env` con la chiave `SMS_BACKEND`, nelle forme che accetta Docker Compose: con `export` davanti, rientrata, con spazi o due punti al posto dell'uguale, con maiuscole e minuscole qualunque, come la legge l'API.
+- Un comando `docker compose` lanciato a mano, fuori dagli script, non fa il controllo. Vedi [Limiti noti](sicurezza.md#rete-e-deploy).
+
+### EduNews24
+
+La sezione EduNews24 è attiva per impostazione predefinita, e con la configurazione creata da `install` non serve nessuna modifica manuale sul server: `shared/api.env` non contiene variabili `EDUNEWS24_*`, quindi valgono i predefiniti del codice, e in `shared/compose.env` manca la chiave `USCITA_EDUNEWS24`, che assente vale `si`. Basta una pubblicazione con `-Action deploy`, che installa le regole della rete dedicata e la collega. Vale anche per un collaudo installato prima di questa funzione: il primo deploy con questi script installa da solo le regole e collega la rete, a meno che `shared/compose.env` non abbia già `USCITA_EDUNEWS24=no` (vedi "Spegnere", più sotto). Nel dettaglio:
+
+1. **In `shared/api.env`:** niente da scrivere. I predefiniti sono `EDUNEWS24_BACKEND=http`, l'indirizzo base dell'API di EduNews24 in `EDUNEWS24_URL_BASE`, l'host dei media di EduNews24 in `EDUNEWS24_HOST_MEDIA` e l'indirizzo generico dell'ente in `EDUNEWS24_CONTATTO`; i valori stanno in `backend/src/config.py` e in `backend/.env.example`. Una riga serve solo per cambiarne uno, per esempio un altro contatto da mettere nello User-Agent (ASCII stampabile, senza parentesi; vuoto per non indicarne nessuno). Gli altri valori `EDUNEWS24_*` sono facoltativi: vedi [Configurazione](riferimenti/configurazione.md).
+   - Una riga presente prevale sul predefinito anche se è vuota: `EDUNEWS24_HOST_MEDIA=` lascia la sezione senza immagini né video, `EDUNEWS24_BACKEND=disabilitato` la spegne, e `EDUNEWS24_URL_BASE=` vuota con il backend `http` impedisce all'API di partire. Le righe `EDUNEWS24_*` copiate da una versione precedente del file d'esempio, che spegneva la sezione e lasciava vuoti indirizzo e host dei media, vanno tolte o aggiornate.
+   - L'host di `EDUNEWS24_URL_BASE` deve essere esattamente quello dei link canonici degli articoli, senza `www`: con un host diverso ogni voce viene scartata e il log dell'API lo segnala.
+   - Un valore di `EDUNEWS24_BACKEND` diverso da `http`, `memoria` e `disabilitato`, o un valore non intero in una variabile numerica, impedisce all'API di partire anche a funzione spenta: la verifica del deploy fallisce e parte il rollback automatico. Il collaudo gira con l'ambiente di sviluppo, quindi `memoria` (dati inventati) vi è ammesso.
+2. **In `shared/compose.env`:** niente da scrivere. `USCITA_EDUNEWS24` assente, vuota o `si` lascia l'uscita attiva; qualunque altro valore la spegne, per esempio `no`, ma anche `SI`, `"si"` fra apici o `si` seguito da spazi. Con più righe vale l'ultima. Da sola la chiave non collega nulla: ogni comando `compose` aggiunge all'API la rete dedicata (`deploy/compose.edunews24.yml`) solo se valgono tutte e quattro queste condizioni (`compose_rel` in `deploy/remote/00-lib.sh:132-157`):
+   - la chiave è assente, vuota o vale `si` (`uscita_edunews24_attiva` in `deploy/remote/00-lib.sh:165-173`);
+   - `NOTIFICHE_REALI` non vale `si` (vedi "Con le notifiche reali", più sotto);
+   - `shared/api.env` non ha `SMS_BACKEND=skebby` (vedi [Email e SMS](#email-e-sms); controllo e avviso in `deploy/remote/00-lib.sh:66-84`);
+   - esiste la copia della configurazione in `shared/`, che crea soltanto il deploy, dopo aver installato le regole.
+
+   Finché la copia manca, ogni azione avvisa, una volta per azione (`verify` può ripeterlo), e lascia l'API senza la rete; l'avviso compare anche durante il primo deploy, prima che le regole siano installate. Poiché l'uscita è attiva per difetto, su un collaudo che non ha ancora le regole l'avviso compare a ogni azione, anche `status` o `start`, finché un deploy non le installa oppure finché non si scrive `USCITA_EDUNEWS24=no`. Con gli SMS reali l'avviso riguarda gli SMS, al posto di quello sulle regole mancanti.
+3. **Con `-Action deploy`.** Con l'uscita spenta il deploy non installa nulla e non tocca regole né copia. Altrimenti il deploy (`prepara_edunews24` in `deploy/remote/27-edunews24.sh`, chiamata da `cmd_deploy` in `deploy/remote/70-deploy.sh:47`):
+   - se `shared/api.env` ha `SMS_BACKEND=skebby` e `NOTIFICHE_REALI` non vale `si`, si ferma qui: non valida e non installa nulla, toglie la copia in `shared/`, avvisa e lascia proseguire il deploy; le regole già installate restano come sono (`deploy/remote/27-edunews24.sh:93-106`). La rete si ricollega solo con un deploy successivo, dopo aver cambiato `SMS_BACKEND`: fino a quel deploy le altre azioni avvisano che le regole non sono installate, e il rimedio è appunto il deploy;
+   - altrimenti valida la configurazione della rete contenuta nella release: se non è valida si ferma prima dell'attivazione, come per un `compose.yml` non valido;
+   - se quella configurazione non crea il bridge filtrato dalle regole degli script in uso (una release di un'altra versione, per esempio pubblicata con `-Ref`), non installa nulla, toglie la copia in `shared/`, avvisa e prosegue: l'API resta senza la rete e le regole già installate restano come sono (`edunews24_overlay_sul_bridge` in `deploy/remote/27-edunews24.sh`);
+   - installa le regole di firewall del bridge dedicato con un'unità systemd, che le riapplica a ogni riavvio del server;
+   - solo se l'unità parte senza errori copia la configurazione della rete in `shared/`. Se l'unità non parte, toglie la copia, avvisa e prosegue: l'API resta senza la rete e la sezione mostra il suo messaggio d'errore;
+   - se la release non contiene la configurazione della rete, per esempio perché il riferimento pubblicato è precedente a questa funzione, avvisa e lascia regole e copia come sono.
+
+Da quel momento anche `start`, `rollback`, `restore-db`, `refresh-clone`, `publish-domain` e `unpublish-domain` collegano l'API alla rete, con le regole installate dal deploy (eccezioni in [Limiti noti](sicurezza.md#rete-e-deploy)). Un rollback a una release senza la configurazione della rete usa la copia in `shared/`.
+
+**Se Docker non crea la rete.** Al primo deploy con l'uscita attiva Docker può non riuscire a creare la rete EduNews24, per esempio perché gli indirizzi dei suoi pool predefiniti sono esauriti o perché il nome del bridge è già in uso. Il deploy ha già creato la copia in `shared/`, quindi il ripristino automatico prova a creare la stessa rete per la release precedente: falliscono entrambi e il comando remoto esce con il codice 4, con la release nuova già attivata. Di norma i container precedenti restano accesi, perché Docker si ferma prima di toccarli (scenario dedotto dagli script, non provato su un server). Rimedio: `USCITA_EDUNEWS24=no` in `shared/compose.env`, poi `start`, che avvia la release attiva senza la rete e ripete la verifica. Per riprovare, liberare gli indirizzi o il nome, rimettere la chiave a `si` (o toglierla) e ripetere il deploy.
+
+**Regole del bridge.** Dal bridge dedicato si esce solo verso la porta HTTPS di indirizzi pubblici, più il DNS verso i nameserver dell'host. Sono bloccati gli intervalli privati RFC 1918, il loopback, il link-local, la rete "questo host", lo spazio condiviso dei provider, i blocchi riservati all'IETF e ai test di prestazioni, il multicast e gli indirizzi riservati per uso futuro, oltre alle connessioni verso i servizi del server. Solo IPv4: la rete ha IPv6 disattivato. Mentre le regole si ricostruiscono l'uscita resta chiusa, e se la ricostruzione si interrompe resta chiusa, purché il traffico passi da `DOCKER-USER` (vedi [Limiti noti](sicurezza.md#rete-e-deploy)). La porta HTTPS vale per tutta l'API, non solo per EduNews24: per questo gli script non collegano la rete con `SMS_BACKEND=skebby` in `shared/api.env` senza `NOTIFICHE_REALI=si` (vedi [Email e SMS](#email-e-sms)); le email via SMTP restano bloccate.
+
+**DNS.** Da Docker 28 i nameserver dell'host si interrogano dall'host stesso e le query non attraversano il bridge. Prima della 28 le query verso i nameserver non di loopback partono dal container e attraversano il bridge filtrato; quelle verso i nameserver di loopback Docker le fa dall'host. Per questo le regole ammettono la porta 53, UDP e TCP, verso i nameserver IPv4 dell'host, letti come li legge Docker (il file dei resolver dell'host, oppure quello di systemd-resolved quando l'host usa solo lo stub locale). I nameserver si rileggono a ogni avvio delle regole. Due casi non sono coperti: nameserver propri nella configurazione del demone Docker; Docker precedente alla 28 con soli nameserver IPv6 o senza nameserver. Nel secondo il container ricade su resolver che non raggiunge (pubblici, bloccati dalle regole, oppure IPv6, che la rete non ha). Il deploy avvisa quando l'host non ha nameserver IPv4 fuori dal loopback: con i soli nameserver di loopback l'avviso compare lo stesso, ma è innocuo. La versione di Docker del server la mostra `-Action preflight`.
+
+**Con le notifiche reali.** Con `NOTIFICHE_REALI=si` la rete EduNews24 non si collega: l'API esce già dal bridge delle notifiche, che ammette la porta HTTPS. Con due reti non interne il container avrebbe un solo gateway predefinito, scelto da Docker: se fosse quello del bridge EduNews24, le email verso le porte SMTP verrebbero rifiutate. Il deploy installa comunque le regole EduNews24 e copia la configurazione, così, spente le notifiche e con `SMS_BACKEND` diverso da `skebby`, la rete si collega già protetta al primo `start` o deploy. Il bridge delle notifiche però non ha eccezioni per il DNS: con Docker precedente alla 28 anche EduNews24 potrebbe non risolvere i nomi (vedi [Limiti noti](sicurezza.md#rete-e-deploy)).
+
+**Media nel browser.** Immagini e video degli articoli il browser li carica direttamente dagli host di `EDUNEWS24_HOST_MEDIA`. Nel repository non c'è una Content Security Policy; se il reverse proxy esterno ne aggiunge una, `img-src` deve ammettere `'self'`, `data:` e gli host dei media in https, e `media-src` gli host dei media; `connect-src` non cambia. Le richieste dei media partono senza Referer: un host che lo pretendesse li rifiuterebbe. Vedi [Sicurezza](sicurezza.md#contenuti-di-edunews24).
+
+**Verifica.** Dopo il deploy, sul server, questo comando prova dall'interno del container `api` la risoluzione del nome e poi la connessione alla porta HTTPS, e stampa solo `DNS OK` o `DNS KO` e `HTTPS OK` o `HTTPS KO`, mai l'host. L'indirizzo lo legge dalla configurazione dell'API, quindi vale anche il predefinito del codice quando `shared/api.env` non ha `EDUNEWS24_URL_BASE`. `NOME_PROGETTO` è il valore di `PROJECT` in `deploy/remote/00-lib.sh`:
+
+```bash
+docker exec "$(docker ps -q --filter label=com.docker.compose.project=NOME_PROGETTO --filter label=com.docker.compose.service=api)" python -c 'import socket, urllib.parse
+from src.config import get_impostazioni
+host = urllib.parse.urlsplit(get_impostazioni().edunews24_url_base).hostname
+try:
+    dns = bool(host) and bool(socket.getaddrinfo(host, 443, proto=socket.IPPROTO_TCP))
+except (OSError, ValueError):
+    dns = False
+print("DNS OK" if dns else "DNS KO")
+https = False
+if dns:
+    try:
+        socket.create_connection((host, 443), timeout=5).close()
+        https = True
+    except (OSError, ValueError):
+        pass
+print("HTTPS OK" if https else "HTTPS KO")'
+```
+
+- Serve `HTTPS OK`. Da Docker 28 il DNS parte dall'host, quindi `DNS OK` da solo non dimostra che l'uscita funzioni.
+- Con un `KO`, con qualunque versione di Docker, cercare prima nell'uscita dell'ultima azione l'avviso che l'API resta senza rete EduNews24: senza quella rete il container sta solo su reti interne, e da Docker 26 i suoi nomi esterni non si risolvono.
+- Con `DNS KO` e Docker precedente alla 28, controllare poi che l'unità del firewall installata da `deploy/remote/27-edunews24.sh` sia attiva, che il log del deploy non contenga l'avviso sui nameserver e che i nameserver dell'host non siano indirizzi del server stesso.
+- `docker network inspect -f '{{.EnableIPv6}}' NOME_PROGETTO_edunews24` deve stampare `false`: le regole valgono solo per IPv4.
+
+**Spegnere.** `EDUNEWS24_BACKEND=disabilitato` in `shared/api.env`, poi `start`: le chiamate si fermano e la pagina dice che la sezione non è attiva. Per scollegare anche la rete: `USCITA_EDUNEWS24=no` in `shared/compose.env` (togliere la chiave non basta, perché assente vale `si`), poi `start` o `-Action deploy`; un riavvio del server da solo non la scollega. Le regole restano installate e riguardano solo il bridge dedicato. Scritta prima del primo deploy con questi script, `USCITA_EDUNEWS24=no` evita anche l'installazione delle regole. Per riaccendere: togliere le due righe, o rimettere i valori predefiniti, poi `-Action deploy`.
+
+**Rimozione completa**, manuale e da amministratore, in quest'ordine: `USCITA_EDUNEWS24=no` e `start`, che ricrea l'API senza la rete; poi la cancellazione di `shared/compose.edunews24.yml`; solo dopo, la disattivazione dell'unità del firewall, la rimozione dello script e del file dell'unità installati da `deploy/remote/27-edunews24.sh`, e la rimozione della catena, del salto da `DOCKER-USER` e della regola su `INPUT`; infine la rete Docker `NOME_PROGETTO_edunews24` (`docker network rm`), che `start` non toglie ma a cui non resta collegato nessun container. Le regole non si tolgono finché esiste la copia in `shared/`.
 
 ### Accesso
 
@@ -240,7 +314,7 @@ Da quel momento i messaggi del collaudo partono davvero verso i destinatari pres
 
 ### Quando il numero si consuma
 
-Il contatore avanza solo dopo una verifica riuscita (`deploy/remote/70-deploy.sh:61-62`).
+Il contatore avanza solo dopo una verifica riuscita (`deploy/remote/70-deploy.sh:62-63`).
 
 | Caso | Contatore |
 |---|---|
@@ -376,6 +450,85 @@ python scripts/documentazione/timbra_changelog.py --ref=origin/main --versione=N
   - `deploy/remote/90-main.sh` è il dispatcher e deve restare l'ultimo in ordine alfabetico (`deploy/remote/90-main.sh:2-4`).
 - **Che cosa è verificato.** I controlli automatici coprono solo una parte di queste regole.
   - Caratteri ASCII, assenza di BOM e sintassi bash del bundle degli script remoti: `scripts/documentazione/tests/test_deploy.py`.
+  - Scelta dei file `compose` per l'uscita EduNews24 (copia in `shared/`, notifiche reali, SMS reali in `shared/api.env` in più forme della riga, esposizione, chiave diversa da `si`, avviso, stdout senza righe estranee), `prepara_edunews24` con gli SMS reali (copia tolta, un solo avviso, nessun valore di `shared/api.env` nell'output) e con una configurazione della release su un altro bridge (copia tolta, un solo avviso), confronto fra il bridge della configurazione e quello delle regole, lettura dei nameserver, ordine delle regole dello script del firewall e copia in `shared/` solo dopo il riavvio dell'unità (letto nel testo dello script): `scripts/documentazione/tests/test_deploy_edunews24.py`, con `docker` e `iptables` finti e compatibile con la bash 3.2. Nessun test esegue `systemctl` o Docker, né la parte di `prepara_edunews24` che installa le regole.
   - Analisi sintattica degli script PowerShell, che però non gira con la 5.1 e quindi non ne garantisce la compatibilità. Solo per le funzioni del timbro un test cerca alcune sintassi che la 5.1 non conosce.
   - Fine riga e struttura degli script remoti non sono verificate.
 - **Documento collegato.** Una pull request che tocca questi file deve aggiornare anche questo documento, oppure usare l'etichetta di esenzione. Controlli ed etichette sono descritti in [Documentazione](documentazione.md).
+
+
+## Chat nativa e client Universo
+
+Le migrazioni 017, 018 e 019 aggiungono i metadati compatibili con l'archivio condiviso.
+Il deploy monta `shared/chat-secrets` in sola lettura solo con `CHAT_NATIVA=si`
+in `shared/compose.env`, usando l'overlay `compose.chat.yml`. Le impostazioni
+`CHAT_*` e `REALTIME_*` sono in `shared/api.env`. Il backend aggiornato richiede
+sempre archivio e chiavi realtime configurati: API e socket partono normalmente,
+senza un flag applicativo. Il montaggio dei file segreti deve quindi essere
+presente prima dell'avvio. Avviare FastAPI non cambia database, non copia chiavi
+e non distribuisce il client Flutter o il Java. Non serve aprire
+una connessione API–Java: FastAPI legge l'archivio e verifica la sessione locale.
+
+L'avvio locale o sul clone isolato non richiede il passaggio di Universo.
+Per collegare entrambe le applicazioni allo stesso storico serve invece un
+dataset comune, con utenti, clienti, pratiche, storico, grant e sessioni coerenti.
+Il clone del collaudo resta isolato fino a una scelta esplicita. Pubblicare
+il client aggiornato sul solo namespace `/api/realtime` e coordinare il
+passaggio di tutti i writer e dei produttori di notifiche. Questo intervento
+non esegue tale passaggio. I vecchi delta limitati alle pratiche sono superati;
+dettagli e rollback in [servizio realtime](realtime.md#configurazione-e-passaggio-successivo).
+Le 017/018/019 non prevedono DROP delle tabelle condivise. La firma è indipendente.
+
+### Trasporto DB e WebSocket
+
+In produzione il trasporto DB predefinito è `DATABASE_TRASPORTO=verify-full`:
+impostare `DATABASE_CA_FILE` con un certificato CA montato in sola lettura.
+La CA deve verificare la catena del server e il certificato deve corrispondere
+all'host dell'URL. Non c'è un fallback al trust store di Windows/Linux né a
+una connessione non cifrata. L'assenza del supporto TLS lato server ferma il
+driver prima dell'invio delle credenziali.
+
+Per un MariaDB legacy privo di TLS esiste la scelta esplicita
+`DATABASE_TRASPORTO=rete-privata`: tutti gli URL usati devono indicare un IPv4
+letterale RFC1918 (10/8, 172.16/12 o 192.168/16), e `DATABASE_CA_FILE` deve
+essere vuoto. La scelta accetta intenzionalmente traffico non cifrato su quella
+rete; un nome DNS o un indirizzo pubblico viene rifiutato. Vale per DB primario
+e secondari. Il backend non modifica automaticamente la configurazione privata
+esistente: predisporla prima di pubblicare questa versione.
+
+L'immagine fissa Uvicorn e il trasporto WebSocket verificato: frame massimi
+16 KiB, coda ingresso 16, ping 30 s, attesa pong 100 s, compressione disattiva.
+La coda d'uscita applicativa e l'esecutore sono limitati separatamente.
+Il reverse proxy deve conservare l'upgrade e un timeout compatibile con il
+watchdog. Contratti e prove in [parità realtime](realtime-parita.md).
+
+### Preparazione del clone per il realtime completo
+
+Il clone principale esistente viene conservato. Per le conversazioni personali
+e i ticket serve anche il clone di `admin_gestionale_ticket` sullo stesso MariaDB,
+con schema `universita_ticket_collaudo` e permessi applicativi SELECT/INSERT/UPDATE/DELETE.
+L'export dalla sorgente resta in sola lettura; dump e backup delle chiavi rimangono
+in cartelle riservate del server. Non importare questi dati nelle fixture di test.
+Il clone non riceve automaticamente gli aggiornamenti del servizio originale.
+
+Il keyring storico si copia in `shared/chat-secrets`, leggibile dall'UID 10001;
+non va rigenerato se deve decifrare lo storico. Configurare anche chiave JWT,
+issuer/audience e `REALTIME_SCHEMA_TICKET`. Il token del produttore di collaudo
+è distinto da quello live. Nessun client o produttore live viene riconfigurato.
+
+Con `shared/db-tls/server.cnf` presente, il deploy aggiunge `compose.tls.yml`
+alle release che lo contengono. Il file MariaDB indica CA, certificato e chiave
+sotto `/run/secrets/db`; il certificato include il SAN DNS `db`. L'API monta
+soltanto la CA in `/run/secrets/db-ca.crt` e usa `ERSAF_ENV=produzione`,
+`DATABASE_TRASPORTO=verify-full` e `DATABASE_CA_FILE` con quel percorso.
+La chiave privata della CA resta fuori dai container. Il controllo dopo il
+rilascio deve confermare un cipher TLS nella sessione SQL dell'applicazione.
+Il server conserva l'accesso legacy sulla rete Docker interna per consentire
+il rollback alle immagini precedenti; il nuovo driver non ammette downgrade.
+
+Applicare anche la 020 dei contatori e la 021 per `notifiche.notifica_body`:
+il preflight realtime rifiuta la colonna legacy da 255 caratteri. La 021 mantiene
+il testo esistente ed è idempotente; il rollback conserva la capienza ampliata.
+Prima di interventi salvare il clone principale e lo schema ticket. L'azione
+`backup-db` e lo snapshot automatico delle migrazioni coprono il database
+principale; lo schema ticket richiede un export separato, nello stesso istante
+con tutti i writer fermi se serve un ripristino coerente dei due archivi.

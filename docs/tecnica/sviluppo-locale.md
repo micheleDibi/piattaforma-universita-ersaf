@@ -115,6 +115,45 @@ codice, tranne dove indicato.
 
 Le cartelle `backend/var/` e `logs/` sono escluse da git.
 
+**EduNews24.** La sezione è attiva per impostazione predefinita. Con il file
+d'esempio, uguale ai predefiniti del codice, il backend usa `http` e chiama
+l'API vera di EduNews24, uscendo direttamente verso Internet, e il browser
+carica immagini e video dall'host dei media di EduNews24. Il contatto nello
+User-Agent è per difetto l'indirizzo generico dell'ente.
+
+- Per lavorare senza rete: `EDUNEWS24_BACKEND=memoria` con
+  `EDUNEWS24_URL_BASE=https://edunews24.invalid/api/v1` e, per vedere il
+  percorso dei media, `EDUNEWS24_HOST_MEDIA=media.edunews24.invalid`. Le voci
+  sono inventate; le immagini non si caricano perché quegli host non esistono,
+  e compare la copertina di ripiego. L'URL base inventato serve: con il
+  predefinito i collegamenti delle voci inventate punterebbero al sito vero.
+- Per spegnerla: `EDUNEWS24_BACKEND=disabilitato`. La voce di menu c'è, la
+  pagina dice che la sezione non è attiva e la Dashboard mostra solo benvenuto
+  e scorciatoie.
+- Un `backend/.env` copiato da una versione precedente del file d'esempio ha
+  ancora `EDUNEWS24_BACKEND=disabilitato` e indirizzo e host dei media vuoti:
+  una riga presente, anche vuota, prevale sul predefinito, quindi quelle righe
+  vanno tolte o allineate a `backend/.env.example`.
+- Con `http` l'host dell'URL base deve essere esattamente quello dei link degli
+  articoli, senza `www`, altrimenti ogni voce viene scartata.
+- Sempre con `http`, al primo caricamento dopo l'avvio del backend il riquadro
+  della Dashboard, o la pagina EduNews24, può mostrare l'errore anche se
+  EduNews24 risponde. In sviluppo lo StrictMode di React
+  (`frontend/src/main.jsx`) esegue due volte l'effetto che carica la sezione:
+  il browser annulla la prima richiesta, ma il backend la porta
+  avanti, e la seconda aspetta quella chiamata al più 1,5 secondi, meno di
+  quanto può durare una chiamata a freddo. Passati i 5 secondi indicati,
+  "Riprova" trova la copia. Non è un guasto: vedi la chiamata unica per chiave
+  in [Architettura](architettura.md#edunews24).
+- Le variabili si passano sulla riga di comando di uvicorn, senza modificare
+  `backend/.env`. Da `backend/`:
+
+```bash
+EDUNEWS24_BACKEND=memoria EDUNEWS24_URL_BASE=https://edunews24.invalid/api/v1 \
+EDUNEWS24_HOST_MEDIA=media.edunews24.invalid \
+.venv/bin/python -m uvicorn src.main:app --reload
+```
+
 **Attenzione.** Se `TEST_DATABASE_URL` è impostata, nella shell oppure in
 `backend/.env`, backend e script usano quella al posto di `DATABASE_URL`.
 
@@ -276,3 +315,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\verify-local.ps1 -Ga
 
 Il flusso di lavoro con git e le pull request è in
 [convenzioni.md](convenzioni.md).
+
+## Connessioni DB e realtime
+
+In sviluppo e test il MariaDB locale può restare senza TLS. Il modulo comune
+`database_trasporto` limita pool e attese anche in questi ambienti; non aprire
+connessioni parallele illimitate. Con `ERSAF_ENV=produzione` occorre invece
+configurare il trasporto verificato o l'eccezione di rete privata descritta in
+[deploy](deploy.md#trasporto-db-e-websocket).
+
+Il realtime parte insieme al backend, con gli archivi e le chiavi sintetiche
+preparati per lo sviluppo. Non richiede l'avvio di Java né modifiche al client
+Universo. Le prove automatiche usano soltanto `ersaf_test`; i requisiti per il
+dataset locale e i contratti sono in [realtime](realtime.md).

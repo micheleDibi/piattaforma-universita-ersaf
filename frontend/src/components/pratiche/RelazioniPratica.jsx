@@ -30,9 +30,8 @@ export default function RelazioniPratica({ form, nuova, universitaId, tipoCorsoI
           <p className={stili.valore}>{form.studente?.label || "Non indicato"}</p>
         )}
       </div>
-      {/* Aderente emittente non compare piu', ne' in creazione ne' in
-          modifica: e' un dato tecnico superato (colonna deprecata), e il
-          database applica da solo il suo valore convenzionale. */}
+      {/* L'emittente non si sceglie: il server collega l'utente corrente,
+          mantenendo coerenti i riferimenti usati dai permessi della chat. */}
       {/* Percorso formativo: un modale con tabella (Codice, Denominazione,
           Prezzo, CFU), filtrato per università e tipo di corso di provenienza
           (vedi leggiContestoUrl in lib/schedaPratica.js). A scelta multipla

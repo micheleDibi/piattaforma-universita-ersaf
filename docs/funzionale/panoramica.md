@@ -12,6 +12,8 @@ Raccoglie in un solo posto:
 - **le pratiche universitarie**: ciascuna collega uno studente, un aderente emittente e un percorso formativo;
 - **i prodotti formativi**: il listino dei percorsi, con prezzi e date di validità.
 
+Mostra anche, a tutti, i contenuti del portale di notizie EduNews24: vedi [EduNews24](edunews24.md).
+
 Le parole usate qui sono spiegate nel [Glossario](glossario.md).
 
 ## A chi serve
@@ -28,7 +30,7 @@ I sottoscrittori non entrano nella piattaforma: le loro schede le compilano gli 
 
 Si entra dalla pagina di accesso, con nome utente e password. Il Nazionale conferma anche con un secondo fattore. I dettagli sono in [Accesso e sicurezza](accesso-e-sicurezza.md).
 
-Dopo l'accesso si arriva all'elenco dei **Sottoscrittori**. Se si rientra dopo una sessione scaduta, si torna invece alla pagina che era aperta.
+Dopo l'accesso si arriva alla **Dashboard**. Se si rientra dopo una sessione scaduta, o se si era aperto l'indirizzo di una pagina senza essere collegati, si torna invece a quella pagina.
 
 ### Il menu laterale
 
@@ -41,14 +43,15 @@ Le voci sono:
 - **Attuatori**, per Nazionale, Regionale e Provinciale;
 - **Aziende**, per Nazionale, Regionale e Provinciale;
 - **Pratiche**, per Nazionale, Regionale, Provinciale e Aderente;
-- **Prodotti formativi**, solo per il Nazionale.
+- **Prodotti formativi**, solo per il Nazionale;
+- **EduNews24**, per tutti.
 
 Le voci nascoste non impediscono di aprire un indirizzo: la visibilità dei dati
 è controllata dal server. Vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 Aprendo **Pratiche** si vedono i numeri delle pratiche per ateneo, tipo di corso
 e stato, e da lì si apre l'elenco di un tipo di corso.
-La Dashboard conserva il messaggio di benvenuto.
+La **Dashboard** è la prima pagina dopo l'accesso: un benvenuto e le scorciatoie alle voci del menu. **EduNews24** apre notizie, interpelli e selezione del personale del portale EduNews24.
 
 In fondo al menu ci sono:
 
@@ -72,11 +75,12 @@ Le novità delle versioni pubblicate ufficialmente sono raccolte nel [registro d
 ## Le pagine principali
 
 - **Accesso, Password dimenticata, Reimposta password**: entrare e recuperare la password. Vedi [Accesso e sicurezza](accesso-e-sicurezza.md).
-- **Dashboard**: messaggio di benvenuto. Il pannello delle pratiche, diviso per ateneo, sta nella pagina Pratiche. Vedi [Pratiche](pratiche.md).
+- **Dashboard**: la prima pagina dopo l'accesso, per tutti. Contiene un benvenuto, con il nome della persona collegata quando è disponibile, e una scorciatoia per ogni altra voce del menu del proprio ruolo, ciascuna con una breve descrizione. Quando la sezione EduNews24 è attiva compare anche, sotto le scorciatoie, il suo riquadro con notizie, interpelli e selezione del personale. Vedi [EduNews24](edunews24.md).
 - **Sottoscrittori**: elenco e schede delle persone che si iscrivono. Vedi [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
 - **Attuatori**: elenco e schede di chi opera nella rete. Vedi [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md).
 - **Aziende**: elenco, schede e gerarchia delle aziende. Vedi [Aziende](aziende.md).
 - **Pratiche**: numero di pratiche per ateneo, tipo di corso e stato, elenco con filtri e scheda della pratica; per alcuni tipi di pratica si scarica anche il modulo in PDF. Vedi [Pratiche](pratiche.md).
 - **Prodotti formativi**: listino dei percorsi, con prezzi e validità. Vedi [Prodotti formativi](prodotti-formativi.md).
+- **EduNews24**: notizie, interpelli e annunci di selezione del personale del portale EduNews24, con filtri e caricamento a blocchi. Vedi [EduNews24](edunews24.md).
 - **Il mio profilo**: i propri dati, in sola lettura; per il Nazionale anche i metodi del secondo fattore. Vedi [Accesso e sicurezza](accesso-e-sicurezza.md).
-- **Pagina non trovata**: compare quando l'indirizzo non corrisponde a nessuna pagina. Il pulsante "Torna all'applicazione" riporta ai Sottoscrittori.
+- **Pagina non trovata**: compare quando l'indirizzo non corrisponde a nessuna pagina. Il pulsante "Torna all'applicazione" riporta alla Dashboard.

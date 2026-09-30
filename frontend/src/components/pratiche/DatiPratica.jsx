@@ -55,11 +55,11 @@ export default function DatiPratica({ form, nuova, prodotto }) {
     </div>
     {/* Solo per le Lauree: un solo anno alla volta, o nessuno (vedi
         impostaRinnovo in hooks/useSchedaPratica.js e il validatore gemello
-        lato server, CAMPI_RINNOVO in backend/src/pratiche/models.py). */}
+        lato server, CAMPI_RINNOVO in backend/src/pratiche/rinnovi.py). */}
     {mostraRinnovo && (
       <fieldset>
         <legend className={etichetta()}>Rinnovo</legend>
-        <div className="flex flex-col gap-2">
+        <div className={stili.scelteRinnovo}>
           {CAMPI_RINNOVO.map(({ nome, label }) => (
             <label key={nome} className={sceltaInLinea()}>
               <input type="checkbox" name={nome} className={spunta()}

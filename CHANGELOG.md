@@ -11,6 +11,132 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 13 — 30/09/2026 10:41
+
+<!-- timbro: versione=13 sha=7f7bd2b66581e30032064787ece50cb26ec181e6 -->
+
+### Novità e correzioni
+
+**Aggiunto**
+
+- Nel menu, dopo le altre voci, c'è la voce EduNews24, per tutti i ruoli che accedono: apre una pagina con notizie, interpelli e annunci di selezione del personale del portale EduNews24, con i filtri per categoria, video e area e il pulsante «Carica altri elementi».
+- Quando EduNews24 è attivo, la Dashboard mostra un riquadro con l'articolo in evidenza, con immagine o video, e una fascia di notizie da scorrere a mano da cui si sceglie quale mettere in evidenza; per interpelli e selezione mostra la voce più recente e un breve elenco delle successive.
+- Le voci di EduNews24 riportano «Fonte: EduNews24» e il loro titolo apre l'articolo originale in una nuova scheda; i video partono solo premendo il pulsante di riproduzione, uno alla volta.
+- La testata di EduNews24 ha i collegamenti ai profili Facebook e Instagram del portale.
+- Se EduNews24 non risponde si vedono gli ultimi contenuti ricevuti, segnalati come non aggiornati dopo qualche minuto, oppure un avviso con «Riprova».
+- La sezione EduNews24 è attiva subito, anche sul collaudo, senza bisogno di configurarla; se viene spenta, la pagina EduNews24 lo spiega e la Dashboard non mostra il riquadro.
+- Nelle pratiche Lauree si può scegliere il rinnovo del primo, secondo o terzo anno; la selezione di un anno esclude gli altri.
+- Lo studente riceve una conferma al primo ingresso della pratica in Bozza; l'ufficio pratiche riceve una notifica al primo passaggio in Caricata.
+
+**Modificato**
+
+- Dopo l'accesso, e dopo «Accedi con questo utente», si arriva alla Dashboard per tutti i ruoli; chi era stato mandato all'accesso da un indirizzo diretto o da una sessione scaduta torna ancora alla pagina richiesta.
+- La Dashboard accoglie con un benvenuto e con le scorciatoie alle voci del menu del proprio ruolo, ciascuna con una breve descrizione.
+- Nella pagina non trovata, «Torna all'applicazione» porta alla Dashboard.
+- Le nuove pratiche nascono in Bozza; solo il Nazionale può cambiarne lo stato.
+
+**Corretto**
+
+- Gli aggiornamenti parziali non possono lasciare due anni di rinnovo selezionati contemporaneamente. I valori storici restano consultabili.
+- Salvataggi contemporanei della stessa pratica non duplicano le notifiche di cambio stato.
+
+### Dettagli tecnici
+
+**Aggiunto**
+
+- Modulo `backend/src/edunews24/`: proxy di sola lettura verso l'API di EduNews24, con le rotte `GET /edunews24/notizie`, `GET /edunews24/interpelli`, `GET /edunews24/selezione-personale` e `GET /edunews24/categorie` protette dalla sessione e sempre `Cache-Control: no-store`; cache in memoria condivisa che segue `Cache-Control` (`s-maxage`, `stale-while-revalidate`, `stale-if-error`) ed `ETag`, un solo rinnovo per chiave, semaforo non bloccante, budget in uscita e pause che rispettano `Retry-After`.
+- Risposte delle rotte EduNews24: `{attiva, elementi, meta}`, con 200 e `meta.stantio: true` per una copia servita oltre la finestra di `stale-while-revalidate` o marcata stantia a monte; 200 con `attiva: false` a funzione spenta; 503 con `Retry-After` senza copia, anche per un 429 di EduNews24; 409 per un cursore non emesso dal backend o rifiutato a monte; 400 per l'area nazionale sugli interpelli o per una categoria sconosciuta; 422 per un parametro fuori elenco. Le notizie portano anche `titolo_breve`; interpelli e selezione `sintesi`, `classe_concorso` (solo interpelli), `figura` e `posti` (solo selezione).
+- Variabili nuove, facoltative, con la sezione attiva per impostazione predefinita: `EDUNEWS24_BACKEND` (`http`, `memoria`, `disabilitato`; predefinito `http`, `disabilitato` la spegne); `EDUNEWS24_URL_BASE` ed `EDUNEWS24_HOST_MEDIA`, che per difetto valgono l'API pubblica e l'host dei media di EduNews24 (valori solo in `backend/src/config.py` e `backend/.env.example`); `EDUNEWS24_CONTATTO`, che per difetto vale l'indirizzo generico dell'ente e, se svuotato, lascia lo User-Agent a `PiattaformaUniversita/1.0`; sette valori numerici (`EDUNEWS24_TIMEOUT_*`, `EDUNEWS24_TTL_RIPIEGO_SECONDI`, `EDUNEWS24_STANTIO_MASSIMO_SECONDI`, `EDUNEWS24_PAUSA_RIPIEGO_SECONDI`, `EDUNEWS24_RICHIESTE_AL_MINUTO`). Con `http` l'avvio controlla URL base, contatto se presente, host dei media e numeri, e in produzione rifiuta `memoria`. Una riga `EDUNEWS24_*` vuota in `shared/api.env` o in `backend/.env` prevale sul predefinito.
+- Frontend: componenti in `components/edunews24/` e `components/dashboard/`, logica in `lib/edunews24.js`, `lib/edunews24Api.js`, `lib/edunews24Paginazione.js`, `lib/videoEsclusivo.js` e `lib/dashboard.js`; identità EduNews24 in `config/tokens/edunews24.css` e `config/styles/edunews24.css`, applicata solo dentro `.edunews24`. Le scorciatoie della Dashboard derivano da `vociMenuPerRuolo`: una voce di menu nuova richiede la sua descrizione in `config/testi/dashboard.js`, e `tests/dashboard.test.js` lo controlla.
+- Le 20 regioni di EduNews24 stanno sia in `backend/src/edunews24/costanti.py` sia in `frontend/src/config/edunews24.js`; `backend/tests/unit/test_regioni_allineate.py` le confronta.
+- Deploy: overlay `deploy/compose.edunews24.yml` con una rete di uscita solo HTTPS (e DNS verso i nameserver dell'host), attiva per impostazione predefinita: `USCITA_EDUNEWS24` assente, vuota o `si` in `shared/compose.env` la lascia attiva, qualunque altro valore (per esempio `no`) la spegne (`uscita_edunews24_attiva` in `deploy/remote/00-lib.sh`; `compose.env.example` riporta `USCITA_EDUNEWS24=si`). `deploy/remote/27-edunews24.sh` installa il firewall durante il solo `deploy` e poi copia l'overlay in `shared/`, ma non installa nulla e toglie la copia se l'overlay della release non usa il bridge filtrato dalle regole. `compose_rel` collega la rete solo se valgono quattro condizioni: la chiave assente, vuota o a `si`, `NOTIFICHE_REALI` diverso da `si`, niente `SMS_BACKEND=skebby` in `shared/api.env` e la copia in `shared/`; altrimenti avvisa senza fermarsi. Su un collaudo senza la chiave il primo deploy installa da solo il firewall e collega la rete.
+- Test di `compose_rel`, di `prepara_edunews24` con gli SMS reali (più forme della chiave `SMS_BACKEND`, un solo avviso, copia tolta) e con `USCITA_EDUNEWS24` assente, vuota, a `si` o con un altro valore, e dello script del firewall con `docker` e `iptables` finti in `scripts/documentazione/tests/test_deploy_edunews24.py`; in `backend/tests/unit/test_config.py` i predefiniti di EduNews24 superano la verifica anche in produzione e `backend/.env.example` li riporta uguali; `test_env_example_contiene_ogni_impostazione` riconosce ora i nomi con cifre (`^([A-Z][A-Z0-9_]*)=`).
+- Test sui flag legacy, sulla modifica parziale del rinnovo e sulla conservazione dei campi non visibili; nessuna nuova migrazione.
+- Storico degli stati nella transazione della pratica, template email esistenti e destinazione dell'ufficio configurabile tramite `EMAIL_NOTIFICHE_PRATICHE`; nessuna nuova migrazione.
+
+**Modificato**
+
+- I logger `httpx` e `httpcore` stanno a WARNING in `configura_logging`: a INFO registravano l'URL completo di ogni chiamata esterna, comprese quelle degli SMS.
+- `ROTTA_INIZIALE` vale `ROTTE.dashboard`; nuova rotta `/edunews24` con la voce in fondo a `VOCI_MENU`, senza flag, e `QUERY_EDUNEWS24` in `config/routes/query.js`.
+- Le icone dei marchi social sono SVG in `frontend/src/assets/edunews24/` usati come maschera CSS con `currentColor`: è un'eccezione scritta alla regola delle sole icone Lucide, e la regola ESLint non cambia.
+- Contratti HTTP della pratica separati dalla mappatura ORM; regola di rinnovo centralizzata e verificata sotto il blocco della pratica.
+- Invio email dopo il commit tramite `BackgroundTasks`, con errori registrati e senza ritentativi persistenti.
+
+**Corretto**
+
+- Il frontend invia i flag di rinnovo solo quando sono visibili per il percorso Lauree, conservando quelli storici degli altri percorsi.
+- Test degli script di deploy eseguibili su Windows con Git Bash e percorsi normalizzati; fixture di overlay e firewall separate e condivise.
+
+**Sicurezza**
+
+- Collegamenti, immagini e video di ogni voce si validano nel backend (solo https sulla porta 443, host esattamente in elenco, niente credenziali né caratteri ambigui); le voci senza un collegamento valido si scartano, il player accetta solo MP4 e WebM, il corpo delle risposte ha un tetto sui byte decompressi e il browser carica i media solo dagli host di `EDUNEWS24_HOST_MEDIA`, che per impostazione predefinita contiene solo l'host dei media di EduNews24.
+- Nel repository non c'è una Content Security Policy; se il reverse proxy esterno ne aggiunge una, `img-src` deve ammettere `'self'`, `data:` e gli host di `EDUNEWS24_HOST_MEDIA` in https, e `media-src` gli stessi host (dettagli in `docs/tecnica/deploy.md`).
+- La porta HTTPS della rete EduNews24 vale per tutta l'API, quindi anche per il fornitore SMS: con `SMS_BACKEND=skebby` in `shared/api.env` e senza `NOTIFICHE_REALI=si` gli script di deploy non collegano la rete e avvisano, e il deploy toglie la copia dell'overlay in `shared/`, che solo un deploy successivo ricrea. Il controllo sta negli script, non nell'API, e riconosce la chiave `SMS_BACKEND` nelle forme che accetta Docker Compose (limiti in `docs/tecnica/sicurezza.md`).
+- Letture correnti sotto blocco per stato, storico e visibilità della pratica, senza riutilizzare snapshot precedenti a una modifica concorrente.
+
+## Versione 12 — 29/09/2026 09:32
+
+<!-- timbro: versione=12 sha=a536652fc4463a38f886fd14c7fcd2d7747ee579 -->
+
+### Novità e correzioni
+
+**Aggiunto**
+
+- Nella scheda della pratica si può consultare e utilizzare la conversazione condivisa con Universo, quando il collegamento è configurato.
+- La firma della pratica si può disegnare con mouse, dito o penna e usare nei documenti generati successivamente.
+- Codice automatico per le nuove pratiche SSML e A4U, con progressivi distinti per tipo di corso.
+
+**Modificato**
+
+- Le chat delle pratiche sono gestite dal backend della piattaforma, mantenendo lo storico condiviso con Universo.
+- La creazione pratica propone studenti verificati e percorsi validi, con scelta multipla per i corsi singoli e relativo totale.
+
+**Corretto**
+
+- I tentativi ripetuti dopo un'interruzione della connessione non duplicano messaggi e notifiche.
+- Negli elenchi Sottoscrittori e Attuatori gli indicatori di verifica dei contatti seguono la stessa regola della scheda, anche per gli account attivi precedenti al sistema OTP.
+- Le finestre di selezione usano la gestione condivisa di focus ed Escape e si adattano all'altezza disponibile.
+- Il totale dei corsi mantiene i decimali esatti; la nuova pratica collega il creatore anche ai permessi della conversazione.
+
+**Sicurezza**
+
+- Il salvataggio avvisa se la firma è stata modificata nel frattempo da un'altra finestra.
+
+### Dettagli tecnici
+
+**Aggiunto**
+
+- Ponte FastAPI verso le API e il WebSocket Java esistenti, con sessione interna breve e controllo dei partecipanti alla pratica.
+- Configurazione facoltativa CHAT_JAVA_URL, CHAT_JAVA_ORIGINE, CHAT_JAVA_SECRET_FILE e CHAT_DATASET; attivazione subordinata alla pubblicazione del delta Java e alla configurazione della rete privata.
+- API dedicate per firma PNG con CSRF e versione ottimistica; riutilizzato il campo pratica_firma senza nuove migrazioni.
+- **Incompatibile.** Migrazione additiva 017, grant storici, coda durevole, limite per utente e verifiche di revoca.
+- **Incompatibile.** Blocco configurabile del vecchio writer Java per un passaggio senza due percorsi di inserimento attivi.
+- DATABASE_URL_GESTIONE_PAGAMENTI e DATABASE_URL_SYS_ADMIN predispongono due connessioni facoltative, inizializzate solo al primo utilizzo e ancora prive di funzionalità collegate.
+- **Incompatibile.** Servizio realtime FastAPI completo per sessioni, chat personali, pratiche, ticket pubblici e privati, notifiche, presenza, letture e recupero delle consegne.
+- **Incompatibile.** Migrazione `018_realtime_completo.sql`, additiva e senza rollback distruttivo degli archivi condivisi; applicarla dopo la 017 e prima del backend aggiornato.
+- **Incompatibile.** Configurazione `REALTIME_SCHEMA_TICKET`, `REALTIME_ACCESSO_SECONDI`, `REALTIME_REFRESH_GIORNI`, `REALTIME_PRODUCER_TOKEN_FILE` e `REALTIME_MANUTENZIONE_SECONDI`. API, WebSocket, invio e lavori periodici partono con il backend senza flag applicativi; schema e chiavi sono richiesti all'avvio, indipendentemente dall'integrazione di Universo.
+- **Incompatibile.** Migrazione `019_realtime_consegne_connessioni.sql`, da applicare dopo la 018, per le conferme di consegna di ogni connessione. Una conferma non interrompe il recapito agli altri dispositivi attivi; chiusure e nuovi collegamenti aggiornano il quorum.
+- **Incompatibile.** Migrazione `021_capienza_notifiche.sql` per il ciphertext nel corpo delle notifiche legacy; il rollback conserva la capienza per non perdere dati.
+
+**Modificato**
+
+- Nginx e proxy di sviluppo inoltrano l'upgrade WebSocket; il container API limita dimensione e coda dei frame.
+- Indici della documentazione e specifiche storiche riordinati; chiarito il riuso del ramo personale e il ciclo di vita dei checkout temporanei.
+- **Incompatibile.** Dominio FastAPI comune a sessione cookie e token Universo esistente; rimossi sessioni delegate e trasporto verso Java.
+- **Incompatibile.** Attivazione coordinata tramite configurazione e delta Flutter; nessuna migrazione automatica tra dataset e nessun deploy implicito.
+- Lo stato dei contatti mostrato nell'anagrafica è calcolato da una funzione condivisa; restano distinte le verifiche richieste per l'accesso e il secondo fattore.
+- **Incompatibile.** Il namespace `/realtime` sostituisce `/chat-universo`; la scrittura delle pratiche con cookie riusa il medesimo dominio. L'integrazione del client e il passaggio dal servizio precedente richiedono un rilascio coordinato.
+- **Incompatibile.** Integrato il commit `41665a5` di Login con chat, firma e realtime completo; la migrazione dei contatori diventa `020_contatori_codice_pratica.sql` per conservare la 017 della chat.
+- **Incompatibile.** Lo staging del realtime richiede anche l'archivio ticket clonato sullo stesso MariaDB, il keyring storico e una configurazione privata completa. Il client Universo e il servizio Java restano indipendenti dal rilascio.
+
+**Sicurezza**
+
+- Le connessioni facoltative ignorano la configurazione ordinaria durante i test e accettano solo il database locale usa-e-getta. Gli errori di configurazione non espongono indirizzi o credenziali.
+- **Incompatibile.** Sessioni revocabili, rotazione del refresh con rilevamento del riuso, ACL condivise, limiti persistenti e snapshot di lettura immutabili; cookie applicativi e token realtime restano distinti.
+- **Incompatibile.** Ripresi limiti per tipo di comando, ammissione dei collegamenti, code limitate, invii serializzati, watchdog, rotazioni limitate e conservazione degli archivi. Validazione UTF-8/JSON e snapshot rigorosa; compatibilità crittografica e dei dati verificata con vettori Java sintetici.
+- **Incompatibile.** Policy DB comune con pool e timeout limitati. In produzione `DATABASE_TRASPORTO=verify-full` richiede `DATABASE_CA_FILE`; l'eccezione `rete-privata` richiede IPv4 RFC1918 letterali. Predisporre la configurazione privata prima del rilascio: nessun fallback TLS silenzioso.
+- **Incompatibile.** Overlay `compose.tls.yml` per la CA e i certificati del clone; `verify-full` verifica la connessione dell'API al database.
+
 ## Versione 11 — 25/09/2026 11:35
 
 <!-- timbro: versione=11 sha=26d6d2d48fee707501c192cd589f7560a20e3bcf -->

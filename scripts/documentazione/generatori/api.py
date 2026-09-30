@@ -19,6 +19,8 @@ ACCESSI = {
     "pubblica": "pubblica",
     "sfida": "sfida di accesso (dopo la password, prima della sessione)",
     "sessione": "sessione",
+    "realtime": "token realtime (Bearer)",
+    "produttore": "token del produttore interno",
 }
 ESCLUSI = frozenset({"HTTPValidationError", "ValidationError"})
 
@@ -155,7 +157,8 @@ def componi(dati: dict) -> str:
         "Elenco delle operazioni esposte dal backend, raggruppate per categoria. Per ognuna:",
         "",
         "- **Accesso**: `pubblica`; `sfida di accesso` quando serve la sfida ottenuta con la password, "
-        "prima che esista una sessione; `sessione` quando serve il cookie di sessione.",
+        "prima che esista una sessione; `sessione` quando serve il cookie di sessione; "
+        "`token realtime` per il servizio condiviso; `token del produttore interno` per l'ingresso notifiche.",
         "- Le richieste che modificano dati passano anche dai controlli del browser e dal token CSRF "
         "descritti in [sicurezza](../sicurezza.md).",
         "- I controlli sul ruolo avvengono dentro le operazioni e qui non compaiono: vedi "

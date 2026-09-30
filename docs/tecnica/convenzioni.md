@@ -6,11 +6,16 @@ Queste sono le regole di lavoro per chi modifica il codice. Le regole della docu
 
 Questa è l'unica descrizione del flusso: gli altri documenti rimandano qui.
 
-1. **Ramo personale.** Si lavora su un ramo proprio, mai direttamente su `main`.
+1. **Ramo personale esistente.** Si lavora sul ramo concordato, mai direttamente su `main`. Un nuovo ramo si crea solo quando espressamente autorizzato.
 
    ```
-   git switch -c <ramo>
+   git switch <ramo-esistente>
    ```
+
+   Ogni checkout ha un solo autore di modifiche alla volta. Per lavoro parallelo
+   si usa un worktree isolato e temporaneo: alla fine si integra il lavoro
+   verificato sul ramo concordato, si rimuove il worktree e si elimina
+   l'eventuale ramo temporaneo autorizzato.
 
 2. **Commit frequenti.** I messaggi dicono che cosa cambia (vedi "Stile dei commit").
 3. **Push del ramo** su GitHub.
@@ -96,8 +101,15 @@ Quando usarle e come far ripartire i controlli: [Documentazione](documentazione.
 Un'impostazione nuova richiede:
 
 1. un campo con valore predefinito in `Impostazioni` (`backend/src/config.py`);
-2. se serve, un controllo in `verifica_configurazione()`;
-3. un commento in `backend/.env.example`.
+2. se serve, un controllo in `verifica_configurazione()`. Per una funzione facoltativa il controllo va solo a funzione attiva: il generatore dei documenti esegue la verifica con valori finti, e un controllo sempre attivo renderebbe obbligatoria la variabile;
+3. una riga `NOME=valore` non commentata in `backend/.env.example`, preceduta da un commento che la descrive.
+
+Da sapere:
+
+- un valore di un `Literal` fuori elenco, o un intero non valido, nell'ambiente o in `backend/.env` blocca l'avvio anche a funzione spenta, perché la costruzione di `Impostazioni` fallisce prima della verifica;
+- le liste si scrivono come testo separato da virgole, con una proprietà che le divide (per esempio `lista_edunews24_host_media`);
+- un nome che contiene i segmenti `USER`, `KEY`, `TOKEN`, `CHIAVE`, `PASSWORD` o `PEPPER` è trattato come segreto nelle pagine generate;
+- negli esempi e nei commenti nuovi si usano solo host `example.org` o `.invalid`, e i segnaposto vanno fra parentesi quadre; i commenti meno recenti con valori reali non vanno imitati (vedi "Valori reali nel codice", più sotto).
 
 I due strati della configurazione sono descritti in [Architettura](architettura.md). L'elenco completo delle variabili è in [Configurazione](riferimenti/configurazione.md).
 
@@ -137,11 +149,19 @@ Nei log vanno solo gli identificativi: mai token, impronte, hash, password o ind
   - La palette (`frontend/src/config/tokens/palette.css`) ha due blocchi: i campioni del logo e i campioni dell'interfaccia, cioè i valori esatti del design (famiglie `ardesia`, `indaco`, `cobalto`, `ambra`, `muschio`, `mattone`).
   - I ruoli di `frontend/src/config/theme/colori.css` richiamano quei campioni. Un colore nuovo del design diventa prima un campione e poi un ruolo; le pagine usano solo il ruolo.
   - Durate e curve delle animazioni vengono dai token di movimento (`frontend/src/config/tokens/movimento.css`).
+- **Identità EduNews24:** il blu del marchio e la sua scala stanno in `frontend/src/config/tokens/edunews24.css`, non in `palette.css`, e si usano solo nel riquadro della Dashboard e nella pagina EduNews24, cioè dentro `.edunews24`; le ricette stanno in `frontend/src/config/styles/edunews24.js` e `frontend/src/config/styles/edunews24.css`.
+- **Valori reali nel codice:** nel codice nuovo, nei suoi commenti, nei test e negli esempi non si scrivono domini, host, IP o contatti reali. Le eccezioni ammesse sono due, e test e documenti non ne ripetono i valori:
+  - gli indirizzi dei profili social di EduNews24 in `frontend/src/config/edunews24.js`, sorvegliati da `frontend/tests/edunews24Sorgenti.test.js`;
+  - i valori predefiniti dell'indirizzo base dell'API, dell'host dei media di EduNews24 e del contatto per lo User-Agent (l'indirizzo generico dell'ente) in `backend/src/config.py`, ripetuti solo nelle righe corrispondenti di `backend/.env.example`: `backend/tests/unit/test_config.py` controlla che il file d'esempio riporti i predefiniti del codice senza scriverli, e le pagine generate li redigono.
+
+  Nei documenti si controlla a mano: i valori non si scrivono, si descrivono. Alcuni commenti e test meno recenti contengono ancora valori reali, per esempio `backend/src/config.py:119`, `frontend/src/config/identita.js:4` e `backend/tests/unit/test_config.py:29`: si sostituiscono con valori inventati quando si modificano quelle righe.
 - **Codice meno recente.** Diversi componenti contengono ancora testi e colori scritti in linea, per esempio i moduli dell'anagrafica.
 
 ### Icone
 
 Si usano solo le icone Lucide, importate esclusivamente da `frontend/src/config/icone.js`. Un'icona nuova si aggiunge lì.
+
+Unica eccezione, i marchi: Lucide non ha le icone dei social, che sono SVG in `frontend/src/assets/edunews24/` mostrati come maschera CSS con `currentColor` (`frontend/src/config/styles/edunews24.css`) su un elemento con `aria-hidden`; il nome accessibile sta sul collegamento. Non si importano da `icone.js`, `rotte.js` o `percorsi.js`. La regola ESLint non cambia.
 
 ### Regole ESLint del progetto
 
@@ -168,10 +188,16 @@ Sono in `frontend/eslint.config.js` e si lanciano con `npm run lint` dentro `fro
 - **Due copie.** La politica delle password esiste in due file: `backend/src/security/password.py` e `frontend/src/lib/passwordPolicy.js`. Ogni modifica va replicata nell'altro file.
 - Perché la duplicazione è voluta e quale test sorveglia l'allineamento: [Sicurezza](sicurezza.md).
 
+### Regioni di EduNews24 duplicate
+
+Le 20 regioni di EduNews24 stanno in `backend/src/edunews24/costanti.py` e in `frontend/src/config/edunews24.js`; ogni modifica va replicata nell'altro file. Le sorveglia `backend/tests/unit/test_regioni_allineate.py`, che confronta slug, nomi e ordine.
+
 ### Pagine e menu
 
 - L'elenco delle pagine è in [Rotte del frontend](riferimenti/rotte-frontend.md).
 - Nascondere una voce dal menu non protegge la pagina.
+- La pagina d'arrivo dopo l'accesso è `ROTTA_INIZIALE` (`frontend/src/config/routes/percorsi.js`), oggi la Dashboard: si cambia solo lì. Il ritorno alla pagina richiesta non dipende da questa costante (`frontend/src/lib/ritornoAccesso.js`).
+- Le scorciatoie della Dashboard derivano da `vociMenuPerRuolo` (`frontend/src/lib/dashboard.js`): una voce nuova del menu richiede la sua descrizione in `frontend/src/config/testi/dashboard.js`, e `frontend/tests/dashboard.test.js` lo controlla.
 
 ## Documentazione
 

@@ -57,6 +57,13 @@
   --breakpoint-pratiche-tabella: 45rem;
   --breakpoint-pratiche-striscia: 51.25rem;
 
+  /* Soglie del contenitore della Dashboard (styles/dashboard.css): scorciatoie
+   * su due colonne e su tre, rientro comodo dei moduli, griglia dei moduli. */
+  --breakpoint-dashboard-scorciatoie-due: 22rem;
+  --breakpoint-dashboard-comodo: 30rem;
+  --breakpoint-dashboard-scorciatoie-tre: 40rem;
+  --breakpoint-dashboard-moduli: 60rem;
+
   /* Larghezza massima del contenuto, esclusi i margini (box-content).
    * Utilita': max-w-pagina per gli elenchi (1120), max-w-modulo per le pagine
    * di dettaglio con un modulo (1080). */

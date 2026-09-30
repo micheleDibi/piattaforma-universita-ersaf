@@ -24,10 +24,12 @@ STATO_CARICATA_ID = 1
 def stato_gia_raggiunto(db: Session, pratica_id: int, pratica_stato_id: int) -> bool:
     """Vero se la pratica e' gia' passata per questo stato in precedenza:
     l'email di 'prima volta' va mandata una volta sola."""
+    # La pratica e' gia' bloccata dal chiamante. Anche lo storico richiede una
+    # lettura corrente: lo snapshot della sessione puo' precedere quel blocco.
     return db.query(PraticaStatoStorico.pratica_stato_storico_id).filter(
         PraticaStatoStorico.pratica_id == pratica_id,
         PraticaStatoStorico.pratica_stato_id == pratica_stato_id,
-    ).first() is not None
+    ).with_for_update().first() is not None
 
 
 def registra_stato(db: Session, pratica: Pratica, utente_id: int) -> None:

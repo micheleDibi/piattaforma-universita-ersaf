@@ -32,9 +32,6 @@ all'utente.
 
 ## Pannello degli atenei
 
-Il pannello è stato spostato dalla Dashboard alla pagina Pratiche. La Dashboard
-mostra soltanto il titolo e il messaggio di benvenuto.
-
 Sotto il titolo "Pratiche" la frase "Numero di pratiche per ateneo, tipologia
 di corso e stato." introduce i numeri delle pratiche.
 
@@ -211,9 +208,9 @@ diploma) dell'elenco Sottoscrittori, con lo stesso comportamento e gli
 stessi colori. Uno studente con almeno una delle tre non superata compare
 nell'elenco ma non si può scegliere.
 
-L'aderente emittente non compare più nella scheda: è un dato tecnico
-superato, e per una pratica nuova il sistema gli assegna da solo un valore
-convenzionale.
+L'emittente non si sceglie nella scheda: per una pratica nuova il sistema
+collega l'utente che la crea, conservando i riferimenti necessari ai permessi
+della conversazione. I riferimenti delle pratiche esistenti restano invariati.
 
 #### Finestra di selezione del percorso formativo
 
@@ -301,11 +298,16 @@ altri tipi di corso la scheda non lo mostra. Le tre caselle sono mutuamente
 esclusive: spuntarne una toglie automaticamente la spunta dalle altre due, e
 non è obbligatorio sceglierne una (nessuna spuntata è una condizione valida).
 Il server rifiuta un salvataggio che ne avesse più di una selezionata
-insieme. Questi tre campi finiscono anche nel documento PDF eCampus.
+insieme, anche se la richiesta modifica solo uno dei tre campi e gli altri
+sono già registrati. Le pratiche storiche con più anni selezionati restano
+consultabili: una modifica alle sole note non ne cambia il rinnovo.
+Quando il rinnovo non è visibile, la scheda non invia questi campi e conserva
+gli eventuali valori storici. Questi tre campi finiscono anche nel documento
+PDF eCampus.
 
 Una pratica può contenere anche dati che la scheda non mostra e non modifica:
-per esempio la firma, gli allegati, l'azienda e il consulente. Alcuni di
-questi dati finiscono nel documento PDF.
+per esempio gli allegati, l'azienda e il consulente. Alcuni di questi dati
+finiscono nel documento PDF.
 
 Nota: in modifica la scheda cambia solo i campi elencati sopra, ma il sistema ne accetta anche altri, fra cui l'azienda, il consulente e il tipo di corso che decide i filtri della pagina Pratiche; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
@@ -446,10 +448,10 @@ contratto ha anche una seconda firma, per l'approvazione delle clausole.
 - Gli esami non si inseriscono dalla piattaforma: non sono ancora gestiti
   nella scheda del sottoscrittore, e la sezione "Esami" mostra sempre "Nessun
   esame registrato.". Nel documento compaiono solo gli esami già registrati.
-- La scheda della pratica non permette di indicare firma, azienda e rinnovo.
-  Una pratica creata dalla piattaforma produce quindi un documento senza firma
-  e senza luogo, e risulta sempre come immatricolazione. Firma, luogo e
-  rinnovo compaiono solo nelle pratiche che li contengono già.
+- La firma si acquisisce nella sezione Firma della pratica e compare nei PDF
+  generati dopo il salvataggio. Il rinnovo si sceglie nella scheda delle
+  pratiche Lauree e compare nei PDF dopo il salvataggio. L'azienda non si
+  imposta dal modulo: il luogo dipende dai dati già registrati.
 
 ### Corsi singoli e dati che non entrano nel modulo
 
@@ -467,8 +469,7 @@ per intero come testo nella stessa riga, riducendone la dimensione.
 Il vecchio modulo Link per i corsi singoli viene compilato con l'anno
 accademico della pratica al posto di quello prestampato. Le altre condizioni,
 informative e indicazioni di pagamento restano quelle degli originali forniti.
-Nuovi allegati, acquisizione della firma nell'applicazione e salvataggio remoto
-del documento non fanno parte di questa generazione.
+Nuovi allegati e salvataggio remoto del documento non fanno parte di questa generazione.
 
 ### Accordo di rateizzazione eCampus
 
@@ -543,3 +544,31 @@ il pulsante "Nuova" e il documento PDF restano disponibili anche a chi non ne
 ha.
 
 Nota: le abilitazioni sono applicate solo dall'interfaccia; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+
+
+## Messaggi della pratica
+
+La sezione Messaggi contiene la stessa conversazione e lo stesso storico di
+Universo, quando il collegamento è attivo. Si possono leggere i messaggi
+precedenti e inviare un testo nuovo. Dopo un'interruzione della connessione
+la pagina si ricollega e recupera ciò che manca. Un messaggio resta in attesa
+finché il servizio non ne conferma il salvataggio; Riprova evita un doppio invio.
+
+L'accesso è riservato ai partecipanti già autorizzati in Universo. Vedere una
+pratica, anche con ruolo Nazionale, non aggiunge automaticamente alla sua chat.
+Le conversazioni personali e i ticket non compaiono in questa pagina.
+Se il collegamento non è configurato o è indisponibile, viene mostrato un errore.
+
+Passare da Messaggi a Dati o Firma conserva la bozza. Ricaricare o abbandonare
+la pagina la perde: se un invio era in attesa, controllare prima lo storico.
+
+## Acquisire la firma
+
+Nella sezione Firma, Acquisisci firma apre l'area in cui disegnare con mouse,
+dito o penna. Cancella il disegno pulisce la bozza; Annulla chiude senza salvare.
+Salva firma registra il disegno nella pratica. La tela vuota non è accettata.
+
+Se esiste una firma, Sostituisci firma permette di disegnarne una nuova.
+La sostituzione avviene soltanto al salvataggio e riguarda i documenti generati
+successivamente. Se la firma cambia in un'altra finestra, il salvataggio viene
+fermato: usare Riprova per ricaricare la versione corrente prima di proseguire.

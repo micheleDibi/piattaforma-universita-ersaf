@@ -19,6 +19,7 @@ import PaginaNonTrovata from "./components/PaginaNonTrovata.jsx";
 import PaginaEntita from "./components/shell/PaginaEntita.jsx";
 import SchedaAzienda from "./components/SchedaAzienda";
 import InserimentoProdotto from "./components/InserimentoProdotto";
+import PaginaEduNews24 from "./components/edunews24/PaginaEduNews24.jsx";
 import { PERCORSI, ROTTE } from "./config/routes/percorsi.js";
 
 function App() {
@@ -58,6 +59,7 @@ function App() {
             path={ROTTE.prodotti}
             element={<ElencoProdottiFormativi soloAttuatori={true} />}
           />
+          <Route path={ROTTE.edunews24} element={<PaginaEduNews24 />} />
 
           {[
             [PERCORSI.sottoscrittori, <NuovoSottoscrittore tipoUtente="sottoscrittore" />],

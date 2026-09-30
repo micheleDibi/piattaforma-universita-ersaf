@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
+import Dialogo from "../shared/Dialogo.jsx";
 import { X } from "../../config/icone.js";
 import { pulsante, pulsanteIcona } from "../../config/styles/pulsante.js";
 import { STILI_MODALE_TABELLA as stili } from "../../config/styles/pratica.js";
@@ -28,9 +28,9 @@ export default function ModaleSelezioneStudente({ onScegli, onChiudi }) {
     `/clienti/?solo_utenti=true&solo_attivi=true&limit=${LIMITE}&search=${encodeURIComponent(ricerca)}`,
     estrai,
   );
-  return createPortal(
-    <div className={stili.velo}>
-      <div className={stili.finestra} role="dialog" aria-modal="true" aria-labelledby="modale-studente-titolo">
+  return (
+    <Dialogo aperto onChiudi={onChiudi} etichetta={testi.titolo} variante="selezione">
+      <div className={stili.contenuto}>
         <div className="flex items-center justify-between gap-3">
           <h3 id="modale-studente-titolo" className={stili.titolo}>{testi.titolo}</h3>
           <button type="button" onClick={onChiudi} className={pulsanteIcona("neutro", "grande")}
@@ -93,7 +93,6 @@ export default function ModaleSelezioneStudente({ onScegli, onChiudi }) {
           )}
         </div>
       </div>
-    </div>,
-    document.body,
+    </Dialogo>
   );
 }

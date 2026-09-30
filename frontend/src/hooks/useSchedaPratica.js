@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { caricaProdottoPratica, caricaSchedaPratica, salvaPratica } from "../lib/schedaPratica.js";
-import { payloadPratica, praticaVuota, prezzoAttuale, prezzoPerInput, valoriRinnovo } from "../lib/praticaForm.js";
+import { payloadPratica, praticaVuota, prezzoAttuale, prezzoPerInput, sommaPrezzi, valoriRinnovo } from "../lib/praticaForm.js";
 
 const NESSUN_PREZZO_ATTIVO = "Il percorso formativo scelto non ha un prezzo attivo.";
 
@@ -80,9 +80,9 @@ export default function useSchedaPratica(id, { corsiSingoli = false } = {}) {
   const [chiaveCorsiVista, setChiaveCorsiVista] = useState(chiaveCorsi);
   if (corsiSingoli && !id && chiaveCorsi !== chiaveCorsiVista) {
     setChiaveCorsiVista(chiaveCorsi);
-    const somma = corsiSelezionati.reduce((totale, corso) => totale + Number(corso.prezzo ?? 0), 0);
+    const somma = sommaPrezzi(corsiSelezionati.map(corso => corso.prezzo));
     setDati(attuali => ({ ...attuali,
-      pratica_prezzo: corsiSelezionati.length ? prezzoPerInput(String(somma)) : "" }));
+      pratica_prezzo: corsiSelezionati.length ? somma : "" }));
   }
   const aggiorna = evento => setDati(attuali => ({ ...attuali, [evento.target.name]: evento.target.value }));
   // I tre campi di rinnovo si escludono a vicenda (vedi valoriRinnovo in

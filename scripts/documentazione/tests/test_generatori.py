@@ -125,11 +125,16 @@ def test_accessi_dell_applicazione_coincidono_con_le_rotte_pubbliche_attese():
                       and any(getattr(t, "id", None) == "PUBBLICHE" for t in n.targets)]
     attese = {(m.lower(), p) for m, p in ast.literal_eval(assegnazione.value)}
     accessi = python_backend("_openapi.py", RADICE)["accessi"]
-    senza_sessione = {tuple(chiave.split(" ", 1)) for chiave, valore in accessi.items() if valore != "sessione"}
+    senza_sessione = {tuple(chiave.split(" ", 1)) for chiave, valore in accessi.items()
+                      if valore in {"pubblica", "sfida"}}
     assert senza_sessione == attese
     sfide = {chiave for chiave, valore in accessi.items() if valore == "sfida"}
     assert sfide == {"post /auth/verifica-otp", "post /auth/rigenera-otp", "post /auth/mfa/verifica-totp",
                      "post /auth/mfa/verifica-passkey", "post /auth/mfa/metodo"}
+    assert accessi["post /realtime/internal/notifications"] == "produttore"
+    assert accessi["post /realtime/auth/logout"] == "realtime"
+    assert accessi["post /realtime/crypto/key"] == "realtime"
+    assert accessi["get /realtime/api/v1/messages"] == "realtime"
 
 
 # --- migrazioni --------------------------------------------------------------
@@ -199,7 +204,7 @@ def test_variabili_trovate_nel_repository():
     testo = configurazione.componi(RADICE, dati)
     for nome in ("DATABASE_URL", "TOTP_CHIAVE", "SMS_BACKEND", "SKEBBY_USER_KEY", "TEST_DATABASE_URL",
                  "RELEASE_TAG", "WEB_LAN_IP", "NOTIFICHE_REALI", "ERSAF_DEPLOY_BASE", "VERSIONE_NUMERO",
-                 "VITE_API_BASE_URL", "VITE_VERSIONE", "VITE_AGGIORNATA_IL", "ERSAF_API_PROXY"):
+                 "VITE_API_BASE_URL", "VITE_VERSIONE", "VITE_AGGIORNATA_IL", "ERSAF_API_PROXY", "USCITA_EDUNEWS24"):
         assert f"`{nome}`" in testo, nome
     obbligo = {v["variabile"]: v["obbligatoria"] for v in dati["impostazioni"] + dati["sms"]}
     assert obbligo["DATABASE_URL"] == obbligo["SESSION_TOKEN_PEPPER"] == obbligo["TOTP_CHIAVE"] == "sì"

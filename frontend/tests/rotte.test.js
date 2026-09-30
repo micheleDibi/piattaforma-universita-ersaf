@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { matchRoutes } from "react-router";
-import { PERCORSI, ROTTE, idValido } from "../src/config/routes/percorsi.js";
+import { PERCORSI, ROTTA_INIZIALE, ROTTE, idValido } from "../src/config/routes/percorsi.js";
+import { ROTTA_INIZIALE as ROTTA_INIZIALE_MENU } from "../src/config/routes/rotte.js";
 import { leggiQuery, aggiornaQuery } from "../src/lib/queryPagina.js";
 import { QUERY_ANAGRAFICA, QUERY_PRATICHE, QUERY_PRODOTTI } from "../src/config/routes/query.js";
 import { queryClienti, queryProdotti } from "../src/lib/queryElenchi.js";
@@ -17,6 +18,11 @@ test("ogni sezione ha elenco, creazione e dettaglio con un identificativo esplic
   }
   assert.equal(PERCORSI.attuatori.dettaglio(42), "/attuatori/42");
   assert.equal(PERCORSI.sottoscrittori.dettaglio(42), "/sottoscrittori/42");
+});
+test("dopo l'accesso si arriva alla Dashboard, con la stessa costante anche da rotte.js", () => {
+  assert.equal(ROTTA_INIZIALE, ROTTE.dashboard);
+  assert.equal(ROTTA_INIZIALE, "/dashboard");
+  assert.equal(ROTTA_INIZIALE_MENU, ROTTA_INIZIALE);
 });
 test("non esistono alias delle vecchie rotte o route utente con ID cliente", () => {
   for (const path of ["/nuovo", "/modifica/42", "/utente/42", "/nuova-azienda", "/modifica-azienda/42",

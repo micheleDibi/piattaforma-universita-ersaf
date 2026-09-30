@@ -64,6 +64,10 @@ class Impostazioni(BaseSettings):
     # .env l'app tentava di connettersi con credenziali di default. Ora manca
     # e basta, e verifica_configurazione() lo dice chiaramente.
     database_url: str = ""
+    # Produzione: CA esplicita e verifica hostname, oppure eccezione legacy
+    # soltanto per un IPv4 RFC1918 letterale. Non abilita/disabilita servizi.
+    database_trasporto: str = "verify-full"
+    database_ca_file: str = ""
 
     # Due database amministrativi separati (stesso server, stesso utente e
     # password di database_url, nome diverso). A differenza di database_url
@@ -139,6 +143,19 @@ class Impostazioni(BaseSettings):
     # collaudo/sviluppo senza scrivere un indirizzo reale nel codice.
     email_notifiche_pratiche: str = "info@ersaf.it"
 
+    # --- EduNews24 (descrizioni in .env.example) ------------------------------
+    edunews24_backend: Literal["http", "memoria", "disabilitato"] = "http"
+    edunews24_url_base: str = "https://edunews24.it/api/v1"
+    edunews24_contatto: str = "info@ersaf.it"
+    edunews24_host_media: str = "audios234567.s3.eu-north-1.amazonaws.com"
+    edunews24_timeout_connessione_secondi: int = 3
+    edunews24_timeout_lettura_secondi: int = 5
+    edunews24_timeout_totale_secondi: int = 8
+    edunews24_ttl_ripiego_secondi: int = 300
+    edunews24_stantio_massimo_secondi: int = 86400
+    edunews24_pausa_ripiego_secondi: int = 30
+    edunews24_richieste_al_minuto: int = 30
+
     @field_validator("frontend_base_url")
     @classmethod
     def _senza_slash_finale(cls, v: str) -> str:
@@ -153,6 +170,10 @@ class Impostazioni(BaseSettings):
     @property
     def lista_webauthn_origini(self) -> list[str]:
         return [o.strip().rstrip("/") for o in self.webauthn_origini.split(",") if o.strip()]
+
+    @property
+    def lista_edunews24_host_media(self) -> list[str]:
+        return list(dict.fromkeys(h.strip().lower() for h in self.edunews24_host_media.split(",") if h.strip()))
 
     def _percorso(self, valore: str) -> Path:
         p = Path(valore)
@@ -301,6 +322,12 @@ def verifica_configurazione(imp: Impostazioni | None = None) -> None:
             problemi.append("in produzione FRONTEND_BASE_URL deve essere https")
         if "*" in imp.cors_origins:
             problemi.append("in produzione CORS_ORIGINS non puo' contenere '*'")
+        if imp.edunews24_backend == "memoria":
+            problemi.append("in produzione EDUNEWS24_BACKEND non puo' essere 'memoria'")
+
+    # Import locale: config non dipende dal modulo EduNews24 all'import.
+    from src.edunews24.verifica import problemi_configurazione
+    problemi += problemi_configurazione(imp)
 
     if problemi:
         raise ErroreConfigurazione(

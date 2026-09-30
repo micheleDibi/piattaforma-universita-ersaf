@@ -137,7 +137,8 @@ def test_env_example_contiene_ogni_impostazione():
     """Una variabile aggiunta al codice e dimenticata in .env.example e' una
     variabile che nessuno impostera'."""
     testo = (DIR_BACKEND / ".env.example").read_text(encoding="utf-8")
-    presenti = set(re.findall(r"^([A-Z_]+)=", testo, re.MULTILINE))
+    # Stessa forma del generatore dei documenti: i nomi possono contenere cifre.
+    presenti = set(re.findall(r"^([A-Z][A-Z0-9_]*)=", testo, re.MULTILINE))
     attese = {c.upper() for c in Impostazioni.model_fields}
     mancanti = attese - presenti
     assert not mancanti, f"assenti da .env.example: {sorted(mancanti)}"
@@ -146,3 +147,150 @@ def test_env_example_contiene_ogni_impostazione():
 def test_env_example_non_e_committato_come_env():
     assert not (DIR_BACKEND / ".env").exists() or True  # .env resta fuori da git
     assert (DIR_BACKEND / ".env.example").exists()
+
+
+# --- EduNews24 ----------------------------------------------------------------
+# Il conftest assegna EDUNEWS24_BACKEND=memoria: i casi che contano lo passano
+# sempre in modo esplicito.
+EDUNEWS24_HTTP = dict(
+    edunews24_backend="http",
+    edunews24_url_base="https://edunews24.invalid/api/v1",
+    edunews24_contatto="https://example.org/contatti",
+    edunews24_host_media="media.edunews24.invalid, altro.example.org",
+)
+PRODUZIONE = dict(ersaf_env="produzione", email_backend="smtp", smtp_host="smtp.example.org",
+                  frontend_base_url="https://app.example.org")
+
+
+def _problemi_edunews24(**modifiche) -> str:
+    with pytest.raises(ErroreConfigurazione) as errore:
+        _verifica(**{**EDUNEWS24_HTTP, **modifiche})
+    return str(errore.value)
+
+
+def test_edunews24_spenta_o_in_memoria_non_controlla_nulla():
+    for backend in ("disabilitato", "memoria"):
+        _verifica(edunews24_backend=backend, edunews24_url_base="non un indirizzo",
+                  edunews24_contatto="(contatto)", edunews24_host_media="*",
+                  edunews24_richieste_al_minuto=999, edunews24_timeout_totale_secondi=0)
+
+
+def test_edunews24_http_completa_passa():
+    _verifica(**EDUNEWS24_HTTP)
+    _verifica(**{**EDUNEWS24_HTTP, "edunews24_host_media": "",
+                 "edunews24_url_base": "https://edunews24.invalid:443/api/v1/"})
+
+
+def test_edunews24_http_richiede_l_url_ma_non_il_contatto():
+    testo = _problemi_edunews24(edunews24_url_base="", edunews24_contatto="")
+    assert "EDUNEWS24_URL_BASE non e' impostata ma EDUNEWS24_BACKEND=http" in testo
+    assert "EDUNEWS24_CONTATTO" not in testo
+    _verifica(**{**EDUNEWS24_HTTP, "edunews24_contatto": ""})
+    _verifica(**PRODUZIONE, **{**EDUNEWS24_HTTP, "edunews24_contatto": ""})
+    assert "EDUNEWS24_CONTATTO deve essere" in _problemi_edunews24(edunews24_contatto="   ")
+
+
+def test_edunews24_predefiniti_attivano_la_sezione(monkeypatch):
+    """Senza variabili la sezione e' attiva sull'API pubblica, con il contatto
+    predefinito dell'ente, anche in produzione. I valori reali restano solo nel
+    codice."""
+    for campo in Impostazioni.model_fields:
+        if campo.startswith("edunews24_"):
+            monkeypatch.delenv(campo.upper(), raising=False)
+    imp = Impostazioni(_env_file=None)
+    assert imp.edunews24_backend == "http"
+    assert imp.edunews24_url_base and imp.lista_edunews24_host_media
+    assert imp.edunews24_contatto and "(" not in imp.edunews24_contatto
+    verifica_configurazione(Impostazioni(_env_file=None, **VALIDA))
+    verifica_configurazione(Impostazioni(_env_file=None, **VALIDA, **PRODUZIONE))
+
+
+def test_edunews24_env_example_riporta_i_predefiniti():
+    testo = (DIR_BACKEND / ".env.example").read_text(encoding="utf-8")
+    valori = dict(re.findall(r"^(EDUNEWS24_[A-Z0-9_]+)=(.*)$", testo, re.MULTILINE))
+    for campo, info in Impostazioni.model_fields.items():
+        if campo.startswith("edunews24_"):
+            assert valori[campo.upper()] == str(info.default), campo
+
+
+@pytest.mark.parametrize("url", [
+    "http://edunews24.invalid/api/v1",
+    "https://utente:segreto@edunews24.invalid/api/v1",
+    "https://edunews24.invalid/api/v1?chiave=1",
+    "https://edunews24.invalid/api/v1#frammento",
+    "https://edunews24.invalid:8443/api/v1",
+    "https://edunews24.invalid:99999/api/v1",
+    "https://www.edunews24.invalid/api/v1",
+    "https://192.0.2.10/api/v1",
+    "https://192.0.2.0xa/api/v1",
+    "https://[x/api/v1",
+    "https://edunews24.invalid/api v1",
+    "edunews24.invalid/api/v1",
+    "https://localhost/api/v1",
+])
+def test_edunews24_url_non_validi(url):
+    testo = _problemi_edunews24(edunews24_url_base=url)
+    assert "EDUNEWS24_URL_BASE deve essere un indirizzo https assoluto" in testo
+    assert url not in testo
+
+
+@pytest.mark.parametrize("contatto", [
+    "https://example.org/contattò", "contatti\nexample.org", "contatti)", "(contatti", "contatti ",
+    " contatti", "x" * 201,
+])
+def test_edunews24_contatti_non_validi(contatto):
+    testo = _problemi_edunews24(edunews24_contatto=contatto)
+    assert "EDUNEWS24_CONTATTO deve essere in ASCII stampabile" in testo
+    assert contatto.strip() not in testo
+
+
+@pytest.mark.parametrize("host", [
+    "https://media.example.org", "media.example.org:443", "*", "*.example.org", "media.example.org/x",
+    "192.0.2.10", "localhost", "media.lan", "127.0x1", "0xc0.0x0.0x2.0xa",
+])
+def test_edunews24_host_media_non_validi(host):
+    testo = _problemi_edunews24(edunews24_host_media=f"media.edunews24.invalid, {host}")
+    assert testo.count("EDUNEWS24_HOST_MEDIA contiene un host non valido") == 1
+    assert host not in testo.replace("EDUNEWS24_HOST_MEDIA", "")
+
+
+@pytest.mark.parametrize(("campo", "valore", "intervallo"), [
+    ("edunews24_timeout_connessione_secondi", 0, "1..10"),
+    ("edunews24_timeout_connessione_secondi", 11, "1..10"),
+    ("edunews24_timeout_lettura_secondi", 0, "1..30"),
+    ("edunews24_timeout_lettura_secondi", 31, "1..30"),
+    ("edunews24_timeout_totale_secondi", 4, "5..30"),     # minore della lettura (5)
+    ("edunews24_timeout_totale_secondi", 31, "5..30"),
+    ("edunews24_ttl_ripiego_secondi", 29, "30..3600"),
+    ("edunews24_ttl_ripiego_secondi", 3601, "30..3600"),
+    ("edunews24_stantio_massimo_secondi", -1, "0..86400"),
+    ("edunews24_stantio_massimo_secondi", 86401, "0..86400"),
+    ("edunews24_pausa_ripiego_secondi", 0, "1..3600"),
+    ("edunews24_pausa_ripiego_secondi", 3601, "1..3600"),
+    ("edunews24_richieste_al_minuto", 0, "1..40"),
+    ("edunews24_richieste_al_minuto", 41, "1..40"),
+])
+def test_edunews24_numeri_fuori_intervallo(campo, valore, intervallo):
+    testo = _problemi_edunews24(**{campo: valore})
+    assert f"{campo.upper()} fuori dall'intervallo {intervallo}" in testo
+
+
+def test_edunews24_timeout_totale_segue_connessione_e_lettura():
+    _verifica(**EDUNEWS24_HTTP, edunews24_timeout_connessione_secondi=9, edunews24_timeout_lettura_secondi=2,
+              edunews24_timeout_totale_secondi=9)
+    testo = _problemi_edunews24(edunews24_timeout_connessione_secondi=9, edunews24_timeout_lettura_secondi=2,
+                                edunews24_timeout_totale_secondi=8)
+    assert "EDUNEWS24_TIMEOUT_TOTALE_SECONDI fuori dall'intervallo 9..30" in testo
+
+
+def test_edunews24_in_produzione_memoria_e_rifiutata():
+    with pytest.raises(ErroreConfigurazione, match="EDUNEWS24_BACKEND non puo' essere 'memoria'"):
+        _verifica(**PRODUZIONE, edunews24_backend="memoria")
+    _verifica(**PRODUZIONE, edunews24_backend="disabilitato")
+    _verifica(**PRODUZIONE, **EDUNEWS24_HTTP)
+
+
+def test_lista_edunews24_host_media():
+    imp = Impostazioni(edunews24_host_media=" Media.Example.org ,media.example.org,, altro.example.org ")
+    assert imp.lista_edunews24_host_media == ["media.example.org", "altro.example.org"]
+    assert Impostazioni(edunews24_host_media="").lista_edunews24_host_media == []

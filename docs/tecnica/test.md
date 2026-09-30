@@ -10,8 +10,8 @@ I test del backend stanno in `backend/tests/`:
 
 | Cartella | Cosa contiene |
 |---|---|
-| `unit/` | Logica senza database: configurazione, password, token, authenticator, IP, SMS, layout delle email, dati dei clienti, PDF delle pratiche |
-| `integration/` | Flussi completi con l'API e MariaDB: login, sessioni, recupero password, codici OTP, secondo fattore, clienti, filtri, conteggi e documento delle pratiche |
+| `unit/` | Logica senza database: configurazione, password, token, authenticator, IP, SMS, layout delle email, dati dei clienti, PDF delle pratiche, EduNews24 (client, cache, pause, cursori, validazione di collegamenti e media, dati inventati, allineamento delle regioni) |
+| `integration/` | Flussi completi con l'API e MariaDB: login, sessioni, recupero password, codici OTP, secondo fattore, clienti, filtri, conteggi e documento delle pratiche, rotte EduNews24 per i quattro ruoli |
 | `security/` | Proprietà di sicurezza: rotte protette, cookie e CSRF, impersonificazione, risposte indistinguibili, log senza segreti, nessuna password in chiaro, profilo, autorizzazioni. Molti richiedono MariaDB, alcuni no |
 | `db/` | Migrazioni e rollback |
 | `support/` | Aiuti comuni (vedi sotto) |
@@ -31,6 +31,8 @@ In `support/`:
   istruzioni;
 - `autenticatore_virtuale.py`: passkey software per i test WebAuthn;
 - `immagini.py`: immagini minime;
+- `edunews24.py`: risposte finte di EduNews24, orologio finto e fonte finta
+  per i test del modulo, su host inventati;
 - `modelli/prova/`: modulo Typst di prova per il motore dei PDF.
 
 Altri test:
@@ -78,13 +80,19 @@ Il conftest imposta:
 - `BCRYPT_COST=4`, per non rallentare la suite;
 - `EMAIL_BACKEND=memoria`;
 - `SMS_BACKEND=memoria`, sempre, anche se la shell ha un altro valore;
+- tutte le variabili `EDUNEWS24_*`, **assegnate** e non solo proposte:
+  backend `memoria`, URL base e host dei media su host `.invalid`, contatto su
+  `example.org`, numeri ai predefiniti; così `backend/.env` non le porta nei
+  test e nessun test chiama l'API vera, che è il predefinito del codice. I test
+  dei valori predefiniti tolgono queste variabili dall'ambiente e costruiscono
+  `Impostazioni(_env_file=None)`;
 - frontend, CORS e WebAuthn su un dominio di esempio, un host SMTP che non
   risolve, un pavimento temporale ridotto, nessun file di log,
   `ERSAF_ENV=test`.
 
-Tranne `SMS_BACKEND` e `DATABASE_URL`, i valori sono predefiniti: se la shell
-ha già la variabile, vince la shell. Per questo i comandi più sotto le
-impostano in modo esplicito.
+Tranne `SMS_BACKEND`, `DATABASE_URL` e le variabili `EDUNEWS24_*`, i valori
+sono predefiniti: se la shell ha già la variabile, vince la shell. Per questo i
+comandi più sotto le impostano in modo esplicito.
 
 Anche durante i test `backend/.env` viene comunque letto
 (`backend/src/config.py`). Le variabili che il conftest non imposta, per
@@ -124,6 +132,7 @@ secondi.
 | `db` | Sessione di osservazione con isolamento `READ COMMITTED`, per vedere ciò che l'API ha scritto |
 | `client`, `client_da` | Client HTTP di prova con un IP valido (`client_da` lo sceglie), base https su un dominio di esempio, `X-ERSAF-Request: 1`. Un errore 500 resta una risposta, non un'eccezione |
 | `mailer`, `sms` | Automatiche: spie in memoria, svuotate a ogni test. Nessun test può spedire davvero |
+| `stato_edunews24` | Automatica: prima e dopo ogni test azzera il servizio EduNews24 (cache, pause, budget, cursori) |
 | `spia_sql` | Raccoglie gli statement SQL eseguiti mentre è attiva. Si registra dopo il listener della visibilità, quindi li vede già con il prefisso `SET STATEMENT`: è così che si verifica dove il prefisso compare |
 | `tabella_pratiche` | Crea `pratiche` dai modelli e la svuota prima e dopo. Non sta fra le tabelle troncate, e il `TRUNCATE` di `aziende` riusa gli id: una pratica rimasta finirebbe "nell'azienda 1" del test successivo |
 
@@ -208,7 +217,7 @@ I test unitari non usano il database e non richiedono Docker. Servono però:
 - **Un URL che rispetti il vincolo.** Vedi sopra.
 - **Il checkout completo del repository.** Alcuni test leggono file fuori da
   `backend/`: una migrazione, il logo del frontend, la regola delle password
-  del frontend.
+  del frontend, le regioni di EduNews24 del frontend.
 - **Node, facoltativo.** Un test esegue la regola delle password del frontend
   con `node`; se `node` manca, quel test viene saltato.
 
@@ -233,6 +242,19 @@ npm run lint    # ESLint
 npm run build   # build di produzione
 ```
 
+Le date di EduNews24 si calcolano nel fuso Europe/Rome;
+`tests/edunews24.test.js` ripete i casi dei cambi d'ora con altri fusi e si
+lancia anche con `TZ=UTC node --test tests/edunews24.test.js`.
+`tests/edunews24Sorgenti.test.js` legge come testo, senza importarli,
+componenti, hook, CSS e SVG di EduNews24, più Dashboard, testi e librerie
+collegati, per le regole che il lint non vede (niente iframe, `crossorigin`,
+`autoplay` o HTML esterno, un solo link esterno, classi mai composte a
+runtime, niente glifi, stili in linea o colori grezzi, indirizzi dei social
+solo in `src/config/edunews24.js`) e per alcune scelte di struttura e
+d'impaginazione che `node --test` non può misurare nel browser, come la
+colonna di due voci di solo testo in coppia e specchio o l'elenco compatto
+del riquadro subito sotto la voce principale.
+
 ## Test degli strumenti della documentazione
 
 Stanno in `scripts/documentazione/tests/`, con un proprio
@@ -240,6 +262,12 @@ Stanno in `scripts/documentazione/tests/`, con un proprio
 separati dai test del backend perché il conftest del backend impone MariaDB e
 le sue variabili. Si lanciano con lo stesso ambiente virtuale. Comandi e regole:
 [documentazione.md](documentazione.md).
+
+Fra questi c'è il test di `compose_rel`, del firewall EduNews24, del bridge
+dichiarato dalla sua rete e di `prepara_edunews24` con gli SMS reali o con un
+bridge diverso da quello delle regole, con la chiave `USCITA_EDUNEWS24`
+assente, vuota, a `si` o con un altro valore (`test_deploy_edunews24.py`), con `docker` e `iptables` finti: richiede `bash`,
+anche la 3.2 di macOS, e senza viene saltato.
 
 ## scripts/verify-local.ps1
 
@@ -278,3 +306,83 @@ Nessuna CI esegue i test dell'applicazione, né del backend né del frontend.
 L'unico workflow riguarda la documentazione ([documentazione.md](documentazione.md)).
 I test dell'applicazione si lanciano quindi in locale. Il flusso di lavoro è in
 [convenzioni.md](convenzioni.md).
+
+
+## Chat e firma
+
+Le suite coprono acquisizione e concorrenza della firma, riuso nei PDF e chat
+nativa sul database usa-e-getta. Sono provati invio, storico, idempotenza
+concorrente, limiti, rollback atomico anche delle notifiche, revoca e isolamento
+di cookie/token, grant, cursori e due trasporti WebSocket sul medesimo archivio.
+Il vettore crittografico sintetico è quello già verificato contro Java.
+Le suite `test_realtime_completo.py`, `test_realtime_isolamento.py` e
+`test_realtime_contratti.py` aggiungono chat personali/ticket, login e replay
+del refresh, snapshot immutabili, presenza, bridge legacy, idempotenza del
+produttore e recupero delle consegne via socket. Il conftest fissa lo schema
+ticket a `ersaf_test`; le fixture preparano archivi e segreti sintetici.
+Il gate non esegue test Flutter o la suite Java.
+Vedi [verifiche](realtime.md#verifiche-riproducibili).
+Le fixture HTTP preparano sempre schema e chiavi sintetiche realtime, senza
+flag di abilitazione. Nei test di dominio bridge e manutenzione sono pilotati
+esplicitamente; la prova del ciclo di vita usa invece i lavori reali e verifica
+readiness, autenticazione, connessione WebSocket e invio cifrato. L'avvio con
+keyring o chiave JWT mancanti deve fallire.
+Il test di rollback conserva i metadati condivisi delle 017/018/019: possono essere
+preesistenti e non devono subire DROP.
+
+Le suite `test_realtime_hardening.py` (unitaria e d'integrazione),
+`test_realtime_risorse.py` e `test_realtime_conservazione.py` provano limiti,
+ordine, cancellazioni, multi-connessione, scadenze, input avversi e retention.
+`test_realtime_parita_java.py` confronta 59 vettori sintetici prodotti con
+16 classi Java originali: HKDF, u2/u3, hash, JSON, cursore e date legacy.
+Il normale gate Python non richiede un JDK: usa la fixture congelata, con hash
+di provenienza. `test_realtime_trasporto.py` apre un server Uvicorn su una
+porta loopback temporanea e verifica dimensione dei frame, scadenza silenziosa
+del token e ping/pong, con dati sintetici e dipendenze DB isolate. Le eccezioni
+ai warning sono limitate al trasporto `websockets.legacy` fissato e verificato.
+Sono prove di comportamento e sicurezza, non benchmark. La matrice e gli
+adattamenti sono in [realtime-parita.md](realtime-parita.md).
+
+## Stato dei contatti e database facoltativi
+
+`test_stato_clienti.py` confronta elenchi e scheda per account attivi legacy,
+account disattivi, verifica OTP corrente e versioni storiche diverse dal contatto attuale.
+Le prove del numero di query per pagina restano applicate anche agli indicatori.
+
+`test_database_secondari.py` verifica che le connessioni amministrative siano
+inizializzate solo quando richieste, chiudano le sessioni anche su errore e non
+ereditino gli indirizzi ordinari durante i test. Gli override
+`TEST_DATABASE_URL_GESTIONE_PAGAMENTI` e `TEST_DATABASE_URL_SYS_ADMIN` accettano
+soltanto lo stesso MariaDB locale usa-e-getta della suite: nessun database
+aggiuntivo o remoto è necessario. Un indirizzo malformato non viene riportato
+nel messaggio d'errore.
+
+`test_database_trasporto.py` verifica la policy comune: TLS senza trust store
+implicito, verifica dell'host, rifiuto del downgrade prima dell'invio delle
+credenziali, URL senza override di trasporto e pool limitato. Le prove non
+richiedono connessioni a server esterni né certificati reali.
+
+## Storico e notifiche delle pratiche
+
+`test_storico_stati_pratica.py` verifica la creazione in Bozza, il cambio di
+stato riservato al Nazionale e la singola notifica al primo ingresso in Bozza
+o Caricata. Sessioni MariaDB indipendenti riproducono uno snapshot precedente
+al salvataggio concorrente, anche con ritorno allo stato iniziale, e uno
+spostamento di azienda che revoca la visibilita della pratica.
+
+La stessa suite copre il rinnovo con aggiornamenti parziali: un secondo anno
+non può sommarsi a quello già salvato, mentre una sostituzione esplicita è
+valida. `test_pratiche_rinnovi.py` verifica la normalizzazione dei flag legacy,
+l'esclusione fra anni e la lettura delle righe storiche incoerenti. I test
+frontend di `praticaForm.test.js` verificano la scelta esclusiva e l'omissione
+dei campi di rinnovo quando il percorso non è di tipo Lauree.
+
+`tests/support/pratiche.py` prepara solo lookup e template email sintetici;
+la pulizia elimina lo storico prima delle pratiche, rispettando le chiavi
+esterne. Le email sono catturate dal backend in memoria: nessun invio reale.
+
+I test del deploy EduNews24 separano overlay e notifiche
+(`scripts/documentazione/tests/test_deploy_edunews24.py`) da DNS e firewall
+(`test_deploy_edunews24_firewall.py`). Le fixture condivise eseguono solo
+comandi Docker e iptables finti; su Windows scelgono Git Bash e normalizzano
+i percorsi, senza avviare WSL o modificare il firewall della macchina.

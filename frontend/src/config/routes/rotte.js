@@ -8,6 +8,7 @@ import {
   FileText,
   GraduationCap,
   LayoutDashboard,
+  Newspaper,
   UserCog,
   Users,
 } from "../icone.js";
@@ -45,6 +46,7 @@ export const VOCI_MENU = [
     icona: GraduationCap,
     soloNazionale: true,
   },
+  { rotta: ROTTE.edunews24, etichetta: "EduNews24", icona: Newspaper },
 ];
 
 /** Riceve il ruolo gia normalizzato dalla sessione; condiviso da desktop e mobile. */

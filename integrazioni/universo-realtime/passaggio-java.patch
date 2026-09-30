@@ -1,0 +1,67 @@
+diff --git a/realtime-service/src/main/java/it/universo/realtime/delivery/PracticeMessageWriter.java b/realtime-service/src/main/java/it/universo/realtime/delivery/PracticeMessageWriter.java
+--- a/realtime-service/src/main/java/it/universo/realtime/delivery/PracticeMessageWriter.java
++++ b/realtime-service/src/main/java/it/universo/realtime/delivery/PracticeMessageWriter.java
+@@ -10,2 +10,15 @@
+ final class PracticeMessageWriter implements TransactionalMessageWriter {
++    private final boolean scritturaAbilitata;
++
++    PracticeMessageWriter() {
++        this(System.getenv("PRACTICE_CHAT_NATIVE"));
++    }
++
++    PracticeMessageWriter(String backendNativo) {
++        if (backendNativo != null && !backendNativo.equals("true") && !backendNativo.equals("false")) {
++            throw new IllegalArgumentException("PRACTICE_CHAT_NATIVE deve essere true o false");
++        }
++        scritturaAbilitata = !"true".equals(backendNativo);
++    }
++
+     static final String INSERT = """
+@@ -51,2 +64,6 @@
+             throws SQLException {
++        if (!scritturaAbilitata) {
++            throw new ReliableMessageException("practice_backend_changed",
++                    "Le chat delle pratiche richiedono la versione aggiornata dell'applicazione");
++        }
+         try (PreparedStatement statement = connection.prepareStatement(
+diff --git a/realtime-service/src/test/java/it/universo/realtime/delivery/PracticeMessageCutoverTest.java b/realtime-service/src/test/java/it/universo/realtime/delivery/PracticeMessageCutoverTest.java
+new file mode 100644
+--- /dev/null
++++ b/realtime-service/src/test/java/it/universo/realtime/delivery/PracticeMessageCutoverTest.java
+@@ -0,0 +1,22 @@
++package it.universo.realtime.delivery;
++
++import org.junit.jupiter.api.Test;
++
++import static org.junit.jupiter.api.Assertions.*;
++
++final class PracticeMessageCutoverTest {
++    @Test
++    void bloccaIlVecchioWriterPrimaDiQualsiasiAccessoAlDatabase() {
++        var writer = new PracticeMessageWriter("true");
++        var errore = assertThrows(ReliableMessageException.class,
++                () -> writer.insert(null, null));
++        assertEquals("practice_backend_changed", errore.code());
++    }
++
++    @Test
++    void configurazioneEsplicitaSenzaValoriAmbigui() {
++        assertDoesNotThrow(() -> new PracticeMessageWriter(null));
++        assertDoesNotThrow(() -> new PracticeMessageWriter("false"));
++        assertThrows(IllegalArgumentException.class, () -> new PracticeMessageWriter("yes"));
++    }
++}
+diff --git a/compose.yaml b/compose.yaml
+--- a/compose.yaml
++++ b/compose.yaml
+@@ -76,2 +76,3 @@
+       AUTH_SESSION_IDLE_TTL_SECONDS: "86400"
++      PRACTICE_CHAT_NATIVE: ${PRACTICE_CHAT_NATIVE:-false}
+       AUTH_SESSION_CLEANUP_INTERVAL_SECONDS: "60"
+diff --git a/production/compose.production.yaml b/production/compose.production.yaml
+--- a/production/compose.production.yaml
++++ b/production/compose.production.yaml
+@@ -29,2 +29,3 @@
+       AUTH_SESSION_IDLE_TTL_SECONDS: "86400"
++      PRACTICE_CHAT_NATIVE: ${PRACTICE_CHAT_NATIVE:-false}
+       AUTH_SESSION_CLEANUP_INTERVAL_SECONDS: "60"

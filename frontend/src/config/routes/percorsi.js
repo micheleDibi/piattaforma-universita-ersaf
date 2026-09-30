@@ -10,8 +10,9 @@ export const ROTTE = Object.freeze({
   aziende: "/aziende",
   pratiche: "/pratiche",
   prodotti: "/prodotti",
+  edunews24: "/edunews24",
 });
-export const ROTTA_INIZIALE = ROTTE.sottoscrittori;
+export const ROTTA_INIZIALE = ROTTE.dashboard;
 
 export function idValido(id) {
   return /^[1-9]\d*$/.test(String(id)) && Number.isSafeInteger(Number(id));

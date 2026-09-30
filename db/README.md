@@ -193,7 +193,7 @@ migrazione applicata.
    e la `UNIQUE` su `utenti.utente_username` (prima vanno bonificati i duplicati).
 4. `event_scheduler` deve essere `ON` perché gli eventi di retention girino:
    `SHOW VARIABLES LIKE 'event_scheduler';`
-5. `017` lascia a mano, per lo stesso motivo della `005`, la `UNIQUE` su
+5. `020` lascia a mano, per lo stesso motivo della `005`, la `UNIQUE` su
    `pratiche.pratica_numero`: verificato sul database reale, quella colonna
    ha già molti duplicati (codici legacy in formato libero ripetuti, oltre a
    segnaposto come una stringa di soli trattini o di prova usati più volte
@@ -216,3 +216,25 @@ Qui la parte operativa: l'avanzamento si segue con
 `db/diagnostica/010_stato_migrazione_password.sql`. Quando mostrerà pochi
 utenti rimasti si potrà decidere cosa fare della colonna, con i numeri davanti.
 In questa cartella non esiste nessuno script che la elimini.
+
+## Archivio chat condiviso (017)
+
+La 017 aggiunge sei tabelle compatibili con Universo: grant, orario UTC,
+stato lettura, consegne, ricevute idempotenti e limite degli invii. Conserva
+`messaggi` e notifiche legacy; le colonne cifrate devono avere capienza adeguata.
+Non ha rollback distruttivo: le tabelle possono essere preesistenti e condivise.
+Si annulla l'attivazione applicativa coordinando i client, conservando i dati.
+La suite prova migrazione ripetibile e permanenza degli archivi dopo i rollback
+precedenti. Non usare DROP per tornare a una release precedente.
+
+La **018** estende i metadati al servizio realtime completo: sessioni,
+contatti, ricevute, snapshot, bridge notifiche, presenza, eventi e quote.
+Applicarla dopo la 017, prima del backend aggiornato. Non importa gli archivi
+legacy e non ha rollback distruttivo; identità, chiavi e schemi messaggi/ticket
+devono appartenere allo stesso ambiente. Vedi [realtime](../docs/tecnica/realtime.md).
+
+La **019** aggiunge `realtime_delivery_connessione`: registra tentativi e ACK
+per ogni connessione che partecipa a una consegna. Una conferma dal primo
+dispositivo non deve interrompere il recapito agli altri. Applicarla dopo la
+018; è idempotente e non ha rollback distruttivo. La FK elimina questi soli
+metadati quando scade l'outbox, senza cancellare messaggi, chiavi o letture.

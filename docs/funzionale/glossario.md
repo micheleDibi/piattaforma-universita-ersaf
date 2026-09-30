@@ -36,7 +36,11 @@ Scheda della persona con il percorso di studi: titoli (istruzione secondaria o a
 
 ## Dashboard
 
-Pagina con il messaggio di benvenuto. Il pannello delle pratiche, diviso per ateneo, sta nella pagina Pratiche. Vedi [Pratiche](pratiche.md).
+Prima pagina dopo l'accesso, per tutti i ruoli che accedono: un benvenuto, le scorciatoie alle voci del menu del proprio ruolo e, quando la sezione è attiva, il riquadro di EduNews24. Vedi [Panoramica](panoramica.md).
+
+## EduNews24
+
+Portale di notizie esterno, di cui la piattaforma mostra tre sezioni: Notizie, Interpelli e Selezione personale. I contenuti li chiede il server della piattaforma, sono uguali per tutti e ogni voce rimanda alla sua pagina su EduNews24. Vedi [EduNews24](edunews24.md).
 
 ## Frammento di changelog
 
@@ -45,6 +49,10 @@ Per chi contribuisce: breve testo che accompagna ogni modifica e che, alla pubbl
 ## Gerarchia
 
 Relazione padre e figlia fra aziende. Decide quali aziende vede chi non è Nazionale: la propria e tutte quelle che le stanno sotto. Fra le persone esiste anche l'utente padre, che oggi è solo un'informazione. Vedi [Ruoli e permessi](ruoli-e-permessi.md).
+
+## Interpello
+
+Nella sezione EduNews24, avviso con cui una scuola cerca personale per una supplenza. Non ha una scadenza: conta la data di pubblicazione. Vedi [EduNews24](edunews24.md).
 
 ## Nazionale
 

@@ -12,13 +12,14 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session, joinedload
 
 from src.database import get_db
-from src.auth.visibilita import Visibilita, condizione_azienda, visibilita_corrente
+from src.auth.visibilita import Visibilita, visibilita_corrente
 from src.documenti import modelli as registro
 from src.documenti.dati import dati_pratica
 from src.documenti.motore import ComposizioneFallita, ModelloAssente, componi_pdf
 from src.aziende.models import Azienda
 from src.listini_testa.models import ListinoTestaDB
 from src.pratiche.models import Pratica
+from src.pratiche.accesso import pratica_visibile
 
 logger = logging.getLogger("ersaf.documenti")
 router = APIRouter()
@@ -29,27 +30,15 @@ COMPOSIZIONE_FALLITA = "Non è stato possibile comporre il documento. Riprova tr
 
 def _pratica(db: Session, pratica_id: int, vis: Visibilita) -> Pratica:
     listino = joinedload(Pratica.listino_testa)
-    query = (
-        db.query(Pratica)
-        .options(
-            joinedload(Pratica.cliente),
-            # Solo la citta' (il luogo delle firme): non il logo, che e' un binario.
-            joinedload(Pratica.azienda).load_only(Azienda.azienda_citta),
-            listino.joinedload(ListinoTestaDB.universita),
-            listino.joinedload(ListinoTestaDB.tipo_corso),
-            listino.joinedload(ListinoTestaDB.durata_laurea),
-            listino.joinedload(ListinoTestaDB.facolta),
-            listino.joinedload(ListinoTestaDB.corso_laurea),
-        )
-        .filter(Pratica.pratica_id == pratica_id)
-    )
-    condizione = condizione_azienda(vis, Pratica.azienda_id)
-    if condizione is not None:
-        query = query.filter(condizione)
-    pratica = query.first()
-    if pratica is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pratica non trovata.")
-    return pratica
+    return pratica_visibile(db, pratica_id, vis, opzioni=(
+        joinedload(Pratica.cliente),
+        joinedload(Pratica.azienda).load_only(Azienda.azienda_citta),
+        listino.joinedload(ListinoTestaDB.universita),
+        listino.joinedload(ListinoTestaDB.tipo_corso),
+        listino.joinedload(ListinoTestaDB.durata_laurea),
+        listino.joinedload(ListinoTestaDB.facolta),
+        listino.joinedload(ListinoTestaDB.corso_laurea),
+    ))
 
 
 @router.get("/{pratica_id}/documento/disponibile")

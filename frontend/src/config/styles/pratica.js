@@ -4,6 +4,7 @@ import { contenutoPagina, descrizionePagina, titoloPagina } from "./pagina.js";
 export const STILI_PRATICA = {
   modulo: `${scheda()} p-6 sm:p-8 space-y-8`,
   sezione: "min-w-0 space-y-5", colonne: "grid grid-cols-1 gap-6 md:grid-cols-2",
+  scelteRinnovo: "flex flex-col gap-2",
   titolo: titoloSezione(), separatore: "border-divisore",
   azioni: "flex flex-wrap justify-end gap-3 border-t border-bordo pt-6",
   valore: "text-sm text-testo-forte break-words", nota: "text-sm text-testo-tenue",
@@ -26,20 +27,9 @@ export const STILI_PANNELLO_PRATICHE = {
   descrizione: descrizionePagina(),
 };
 
-// Modale con tabella di selezione: stesso velo/finestra del modale di
-// creazione azienda (config/styles/azienda.js). Usato sia per lo studente
-// (selezione singola) sia per il percorso formativo (singola, o multipla
-// per Corsi Singoli: vedi ModaleSelezionePercorso.jsx), quindi ha anche gli
-// stili per la riga gia' scelta e il piede con il totale e il pulsante Conferma.
+// Selezioni nel Dialogo condiviso: dimensioni e focus centralizzati.
 export const STILI_MODALE_TABELLA = {
-  velo: "fixed inset-0 z-50 flex items-center justify-center bg-testo-forte/30 p-4 backdrop-blur-xs",
-  // Altezza fissa e non massima: senza, la finestra cambia dimensione a ogni
-  // ricerca, seguendo il numero di righe trovate.
-  finestra: `${scheda()} flex h-[600px] w-full max-w-3xl flex-col p-6 shadow-xl sm:p-8`,
-  // Il percorso formativo ha una colonna in piu' (Prezzo, CFU) e denominazioni
-  // spesso lunghe (es. "SCIENZE DELL'ECONOMIA - LM56 - CURRICULUM..."): piu'
-  // largo dello studente, stessa altezza fissa.
-  finestraLarga: `${scheda()} flex h-[600px] w-full max-w-5xl flex-col p-6 shadow-xl sm:p-8`,
+  contenuto: "dialogo__selezione",
   titolo: "text-lg font-semibold text-testo",
   corpo: "mt-4 min-h-0 flex-1 overflow-y-auto",
   intestazioneColonna: "px-3 py-2 text-left text-etichetta uppercase tracking-wider text-testo-tenue",

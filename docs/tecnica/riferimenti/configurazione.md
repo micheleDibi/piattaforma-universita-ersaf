@@ -1,19 +1,21 @@
 # Variabili di configurazione
 
-> Pagina generata da `python scripts/documentazione/genera.py` a partire da `backend/src/config.py`, `backend/src/notifiche/config_sms.py`, i file `.env.example` e gli script di `deploy/`.
+> Pagina generata da `python scripts/documentazione/genera.py` a partire da `backend/src/config.py`, `backend/src/notifiche/config_sms.py`, `backend/src/chat_pratiche/configurazione.py`, i file `.env.example` e gli script di `deploy/`.
 > Non modificarla a mano: rilancia il comando dopo aver cambiato le fonti.
 
 Nomi, valori predefiniti e obbligatorietà delle variabili. I valori reali non compaiono mai: i segreti sono indicati con "—". Come preparare l'ambiente: [sviluppo locale](../sviluppo-locale.md) e [deploy](../deploy.md).
 
 ## Backend (`backend/.env`)
 
-Letto da `backend/src/config.py`. "Obbligatoria" indica le variabili senza le quali la verifica di avvio rifiuta di partire, ricavate dal codice: "sì" in ogni ambiente, "in produzione" solo con `ERSAF_ENV=produzione`. La verifica controlla anche coerenza e formato di altri valori.
+Letto da `backend/src/config.py` e `backend/src/chat_pratiche/configurazione.py`. "Obbligatoria" indica le variabili senza le quali la verifica di avvio rifiuta di partire, ricavate dal codice: "sì" in ogni ambiente, "in produzione" solo con `ERSAF_ENV=produzione`. La verifica controlla anche coerenza e formato di altri valori.
 
 | Variabile | Tipo | Predefinito | Obbligatoria | Descrizione |
 |---|---|---|---|---|
 | `ERSAF_ENV` | sviluppo \| test \| produzione | `sviluppo` | no | sviluppo \| test \| produzione In "produzione" la verifica di avvio diventa piu' severa: pretende EMAIL_BACKEND=smtp, FRONTEND_BASE_URL in https e nessun '*' nei CORS. |
 | `DATABASE_URL` | testo | (vuoto) | sì | Nessun valore di default nel codice: prima c'era un fallback con credenziali di prova cablate che, in assenza di .env, faceva connettere l'app senza dirlo a nessuno. La verifica di avvio rifiuta ancora quel valore. |
-| `DATABASE_URL_GESTIONE_PAGAMENTI` | testo | (vuoto) | no | Due database amministrativi separati, sullo stesso server del DB principale (stesso indirizzo, stesso utente e password), ma con nome diverso. Facoltativi: a differenza di DATABASE_URL, se mancano l'app parte comunque — non li usa ancora nessuna funzionalita', e' solo la connessione preparata in anticipo. |
+| `DATABASE_TRASPORTO` | testo | `verify-full` | no | Trasporto MariaDB in produzione: CA esplicita, hostname e certificato verificati. L'eccezione rete-privata richiede un IPv4 RFC1918 letterale e CA vuota. In sviluppo/test e ammesso il database locale senza TLS. |
+| `DATABASE_CA_FILE` | testo | (vuoto) | no |  |
+| `DATABASE_URL_GESTIONE_PAGAMENTI` | testo | (vuoto) | no | Due database amministrativi separati, sullo stesso server del DB principale (stesso indirizzo, stesso utente e password), ma con nome diverso. Facoltativi e non ancora usati: engine e sessioni si creano solo alla prima richiesta esplicita. Se mancano o non sono validi, l'import resta possibile. Nei test questi indirizzi vengono ignorati: gli override TEST_DATABASE_URL_* sono ammessi solo su MariaDB loopback:3307/ersaf_test. |
 | `DATABASE_URL_SYS_ADMIN` | testo | (vuoto) | no |  |
 | `PASSWORD_RESET_TOKEN_PEPPER` | testo | (vuoto) | sì | Nel database non finisce mai un token in chiaro: solo SHA-256(token\|\|pepper). Il pepper sta qui e NON nel database, cosi' chi legge un backup non puo' derivare i token. PASSWORD_RESET_TOKEN_PEPPER, SESSION_TOKEN_PEPPER e TOTP_CHIAVE devono essere diversi fra loro e lunghi almeno 32 byte. |
 | `SESSION_TOKEN_PEPPER` | testo | (vuoto) | sì | Nel database non finisce mai un token in chiaro: solo SHA-256(token\|\|pepper). Il pepper sta qui e NON nel database, cosi' chi legge un backup non puo' derivare i token. PASSWORD_RESET_TOKEN_PEPPER, SESSION_TOKEN_PEPPER e TOTP_CHIAVE devono essere diversi fra loro e lunghi almeno 32 byte. |
@@ -46,6 +48,39 @@ Letto da `backend/src/config.py`. "Obbligatoria" indica le variabili senza le qu
 | `SMTP_TLS` | starttls \| ssl \| nessuno | `starttls` | no | Cifratura del canale: starttls \| ssl \| nessuno. |
 | `SMTP_TIMEOUT_SECONDS` | intero | `10` | no | Timeout della connessione SMTP, in secondi. |
 | `EMAIL_NOTIFICHE_PRATICHE` | testo | (valore nel codice) | no | Destinatario della notifica "nuova pratica caricata" (vedi src/pratiche/notifiche.py). Il dominio di esempio va sostituito con quello dell'ambiente. |
+| `EDUNEWS24_BACKEND` | http \| memoria \| disabilitato | `http` | no | Sorgente dei contenuti: http \| memoria \| disabilitato. http, il predefinito, chiama l'API pubblica di EduNews24; disabilitato spegne la sezione: la voce di menu resta, la pagina dice che non e' attiva e la Dashboard non mostra il riquadro; memoria usa dati inventati per sviluppo e test ed e' rifiutata in produzione. Per spegnere la sezione: EDUNEWS24_BACKEND=disabilitato. |
+| `EDUNEWS24_URL_BASE` | testo | `https://[dominio]/api/v1` | no | Indirizzo base dell'API: https, senza credenziali, query o frammento, porta assente o 443. L'host deve essere esattamente quello dei link degli articoli (senza www o altre varianti), altrimenti ogni voce viene scartata. Obbligatorio con EDUNEWS24_BACKEND=http: il predefinito e' l'API pubblica di EduNews24. |
+| `EDUNEWS24_CONTATTO` | testo | (valore nel codice) | no | Contatto (URL o email) messo nello User-Agent, come chiedono i termini dell'API: solo caratteri ASCII stampabili, senza parentesi ne' spazi ai bordi, al massimo 200. Il predefinito e' l'indirizzo generico dell'ente; vuoto: lo User-Agent resta senza contatto. |
+| `EDUNEWS24_HOST_MEDIA` | testo | `[dominio]` | no | Host da cui il browser carica immagini e video degli articoli, separati da virgole: nomi di host pubblici, senza schema, porta, percorso o caratteri jolly (niente IP, nomi di una sola etichetta o suffissi di rete interna). Il predefinito e' l'host dei media di EduNews24. Vuoto: nessuna immagine e nessun player. |
+| `EDUNEWS24_TIMEOUT_CONNESSIONE_SECONDI` | intero | `3` | no | Tempo massimo per aprire la connessione verso EduNews24, in secondi (1-10). |
+| `EDUNEWS24_TIMEOUT_LETTURA_SECONDI` | intero | `5` | no | Tempo massimo di attesa fra due blocchi della risposta, in secondi (1-30). |
+| `EDUNEWS24_TIMEOUT_TOTALE_SECONDI` | intero | `8` | no | Durata massima di una chiamata, in secondi: almeno quanto il maggiore dei due timeout precedenti, al massimo 30. Si controlla all'arrivo delle intestazioni e durante la lettura del corpo: prima valgono solo i timeout di connessione e di lettura, che contano ogni singola attesa. |
+| `EDUNEWS24_TTL_RIPIEGO_SECONDI` | intero | `300` | no | Durata in cache di una risposta che non dichiara s-maxage ne' max-age, in secondi (30-3600). |
+| `EDUNEWS24_STANTIO_MASSIMO_SECONDI` | intero | `86400` | no | Per quanto una copia scaduta puo' ancora coprire un guasto, in secondi (massimo 86400). |
+| `EDUNEWS24_PAUSA_RIPIEGO_SECONDI` | intero | `30` | no | Prima pausa dopo un guasto (timeout, rete, errore del server, risposta non valida) o dopo un rifiuto senza Retry-After valido, in secondi (1-3600): raddoppia a ogni guasto consecutivo fino a 3600 e si azzera al primo successo. |
+| `EDUNEWS24_RICHIESTE_AL_MINUTO` | intero | `30` | no | Chiamate massime verso EduNews24 in 60 secondi, per tutta l'applicazione (1-40). |
+| `CHAT_CHIAVI_FILE` | testo | (vuoto) | no | Chat e realtime sono parte del backend: applicare 017/018/019 prima dell'avvio. Keyring compatibile con Universo: elenco versione=percorso, separato da virgole. Ogni file contiene 32 byte casuali codificati Base64, mai una password utente. |
+| `CHAT_CHIAVE_VERSIONE` | intero | `1` | no | Versione corrente presente nel keyring; conservare le versioni storiche. |
+| `CHAT_UNIVERSO_JWT_FILE` | testo | (vuoto) | no | File della chiave JWT condivisa (Base64), obbligatorio all'avvio del backend. Il servizio realtime verifica ed emette token; il percorso cookie resta distinto. |
+| `CHAT_UNIVERSO_ISSUER` | testo | `universo-realtime` | no | Issuer e audience devono corrispondere alla sessione Universo dello stesso ambiente. |
+| `CHAT_UNIVERSO_AUDIENCE` | testo | `universo-realtime-ws` | no |  |
+| `CHAT_UNIVERSO_ORIGINI` | testo | (vuoto) | no | Origini HTTPS esplicite del client Universo, separate da virgole. |
+| `CHAT_UNIVERSO_INATTIVITA_SECONDI` | intero | `86400` | no | Scadenza di inattivita: deve coincidere con AUTH_SESSION_IDLE_TTL_SECONDS di Universo. |
+| `REALTIME_SCHEMA_TICKET` | testo | `admin_gestionale_ticket` | no | Schema dei messaggi personali e ticket, sullo stesso MariaDB di DATABASE_URL. |
+| `REALTIME_ACCESSO_SECONDI` | intero | `900` | no | Durata del token di accesso in secondi (60-3600). |
+| `REALTIME_REFRESH_GIORNI` | intero | `30` | no | Durata assoluta della sessione e del refresh token (1-90 giorni). |
+| `REALTIME_PRODUCER_TOKEN_FILE` | testo | (vuoto) | no | File del token separato per i produttori di notifiche, testo di 32-512 caratteri. Vuoto rende indisponibile soltanto POST /realtime/internal/notifications. |
+| `REALTIME_MANUTENZIONE_SECONDI` | intero | `60` | no | Intervallo in secondi di pulizia e audit delle notifiche legacy (10-3600). |
+| `REALTIME_MAX_CONNECTIONS` | intero | `2000` | no | Ammissione atomica: totale, per utente e per famiglia di autenticazione. |
+| `REALTIME_MAX_CONNECTIONS_PER_USER` | intero | `8` | no |  |
+| `REALTIME_MAX_CONNECTIONS_PER_AUTH_SESSION` | intero | `4` | no |  |
+| `REALTIME_COMMAND_WORKERS` | intero | `2` | no | Comandi ordinati per utente con code limitate. |
+| `REALTIME_COMMAND_QUEUE` | intero | `256` | no |  |
+| `REALTIME_COMMANDS_PER_USER` | intero | `8` | no |  |
+| `REALTIME_OUTBOUND_QUEUE_FRAMES` | intero | `64` | no | Memoria in uscita: frame, byte per socket e byte per processo. |
+| `REALTIME_OUTBOUND_QUEUE_BYTES` | intero | `131072` | no |  |
+| `REALTIME_OUTBOUND_GLOBAL_QUEUE_BYTES` | intero | `134217728` | no |  |
+| `REALTIME_SEND_TIMEOUT_MILLIS` | intero | `10000` | no | Timeout totale dell'invio, inclusa l'attesa dietro un invio bloccato. |
 
 ## SMS (`backend/.env`)
 
@@ -64,9 +99,9 @@ Letto da `backend/src/notifiche/config_sms.py`.
 
 | Variabile | Dove |
 |---|---|
-| `TEST_DATABASE_URL` | `backend/src/database.py` |
-| `TEST_DATABASE_URL_GESTIONE_PAGAMENTI` | `backend/src/database.py` |
-| `TEST_DATABASE_URL_SYS_ADMIN` | `backend/src/database.py` |
+| `TEST_DATABASE_URL` | `backend/src/database.py`, `backend/src/database_secondari.py` |
+| `TEST_DATABASE_URL_GESTIONE_PAGAMENTI` | `backend/src/database_secondari.py` |
+| `TEST_DATABASE_URL_SYS_ADMIN` | `backend/src/database_secondari.py` |
 
 ## Deploy (`compose.env` sul server)
 
@@ -74,11 +109,13 @@ Gestito dagli script di deploy; non contiene segreti. Le variabili senza descriz
 
 | Variabile | Dove | Descrizione |
 |---|---|---|
+| `CHAT_NATIVA` | `deploy/compose.env.example`, `deploy/remote/00-lib.sh` | Altre chiavi che gli script scrivono quando servono: ESPOSIZIONE e WEB_LAN_IP per la pubblicazione sulla LAN, NOTIFICHE_REALI per gli invii veri di email e SMS. VERSIONE_NUMERO e VERSIONE_AGGIORNATA arrivano dal deploy e non si scrivono qui. Mount delle chiavi chat, da abilitare solo al passaggio coordinato di Universo. |
 | `ESPOSIZIONE` | `deploy/remote/00-lib.sh`, `deploy/remote/25-esposizione.sh` |  |
-| `NOTIFICHE_REALI` | `deploy/remote/00-lib.sh`, `deploy/remote/26-notifiche.sh` |  |
+| `NOTIFICHE_REALI` | `deploy/remote/00-lib.sh`, `deploy/remote/26-notifiche.sh`, `deploy/remote/27-edunews24.sh` |  |
 | `RELEASE_DIR` | `deploy/compose.env.example`, `deploy/compose.yml`, `deploy/remote/70-deploy.sh` | Cartella della release attiva sul server, ricavata da RELEASE_TAG. |
 | `RELEASE_TAG` | `deploy/compose.env.example`, `deploy/compose.yml`, `deploy/remote/00-lib.sh`, `deploy/remote/30-release.sh`, `deploy/remote/70-deploy.sh`, `deploy/remote/80-status.sh` | Identificativo della release attiva, scritto dallo script all'attivazione. |
 | `TZ` | `deploy/compose.env.example`, `deploy/compose.yml` | Fuso orario dei container. |
+| `USCITA_EDUNEWS24` | `deploy/compose.env.example`, `deploy/remote/00-lib.sh` | Uscita HTTPS dell'API verso EduNews24 (deploy/compose.edunews24.yml), attiva per difetto: con si, o con la chiave assente o vuota, il deploy installa le regole di firewall del bridge dedicato e poi collega la rete. Per spegnerla: no (o un altro valore diverso da si), poi start o -Action deploy. Ignorata con NOTIFICHE_REALI=si: in quel caso l'API esce dal bridge delle notifiche. Ignorata, con un avviso, anche con SMS_BACKEND=skebby in api.env senza NOTIFICHE_REALI=si: la porta HTTPS vale per tutta l'API e ne farebbe partire gli SMS reali. Il deploy toglie allora la copia dell'overlay in shared/: per ricollegare la rete serve un nuovo deploy. |
 | `VERSIONE_AGGIORNATA` | `deploy/compose.yml` |  |
 | `VERSIONE_NUMERO` | `deploy/compose.yml` |  |
 | `WEB_LAN_IP` | `deploy/compose.esposizione.yml`, `deploy/remote/25-esposizione.sh` |  |

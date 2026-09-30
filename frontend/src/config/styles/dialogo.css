@@ -21,6 +21,12 @@
 .dialogo--finestra { @apply inset-0 m-auto w-[90%] max-w-[800px] max-h-[85dvh] rounded-superficie; }
 .dialogo--otp { @apply inset-0 m-auto w-[90%] max-w-md max-h-[85dvh] rounded-superficie; }
 .dialogo__contenuto { @apply flex max-h-[85dvh] flex-col p-6; }
+.dialogo--selezione, .dialogo--selezione-larga {
+  @apply inset-0 m-auto w-[90%] max-w-3xl max-h-[85dvh] rounded-superficie;
+}
+.dialogo--selezione-larga { @apply max-w-5xl; }
+/* Altezza stabile durante la ricerca, limitata allo spazio disponibile. */
+.dialogo__selezione { @apply flex h-[600px] max-h-[85dvh] flex-col p-6 sm:p-8; }
 
 @starting-style {
   .dialogo--menu[open] { opacity: 0; translate: -100% 0; }

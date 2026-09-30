@@ -101,7 +101,6 @@ regole:
       - "backend/src/documenti/**"
       - "frontend/src/components/*Pratic*.jsx"
       - "frontend/src/components/pratiche/**"
-      - "frontend/src/components/Dashboard.jsx"
       - "frontend/src/lib/pratiche.js"
       - "frontend/src/lib/configPratiche.js"
       - "frontend/src/lib/praticaForm.js"
@@ -125,9 +124,41 @@ regole:
     documenti:
       - docs/funzionale/prodotti-formativi.md
 
+  - nome: Dashboard
+    percorsi:
+      - "frontend/src/components/Dashboard.jsx"
+      - "frontend/src/components/dashboard/**"
+      - "frontend/src/config/testi/dashboard.js"
+      - "frontend/src/config/styles/dashboard.css"
+      - "frontend/src/lib/dashboard.js"
+    documenti:
+      - docs/funzionale/panoramica.md
+
+  - nome: EduNews24
+    percorsi:
+      - "backend/src/edunews24/**"
+      - "frontend/src/components/edunews24/**"
+      - "frontend/src/config/edunews24.js"
+      - "frontend/src/config/testi/edunews24.js"
+      - "frontend/src/config/tokens/edunews24.css"
+      - "frontend/src/config/styles/edunews24.*"
+      - "frontend/src/assets/edunews24/**"
+      - "frontend/src/lib/edunews24*.js"
+      - "frontend/src/lib/videoEsclusivo.js"
+      - "frontend/src/hooks/*EduNews24.js"
+      - "frontend/src/hooks/useFasciaScorrevole.js"
+      - "frontend/src/hooks/useAttesaRiprova.js"
+      - "frontend/src/hooks/useComparsaRitardata.js"
+    documenti:
+      - docs/funzionale/edunews24.md
+      - docs/tecnica/architettura.md
+      - docs/tecnica/sicurezza.md
+
   - nome: Architettura e ambiente
     percorsi:
       - "backend/src/database.py"
+      - "backend/src/database_secondari.py"
+      - "backend/src/database_trasporto.py"
       - "backend/src/config.py"
       - "backend/src/logging_config.py"
       - "backend/src/errori.py"
@@ -178,3 +209,24 @@ regole:
       - "changelog/MODELLO.md"
     documenti:
       - docs/tecnica/documentazione.md
+
+  - nome: Chat condivisa e firma delle pratiche
+    percorsi:
+      - "backend/src/chat_pratiche/**"
+      - "backend/src/pratiche/firma*.py"
+      - "frontend/src/lib/chatPratica.js"
+      - "frontend/src/lib/conversazionePratica.js"
+      - "frontend/src/lib/firmaPratica.js"
+      - "frontend/src/lib/trattoFirma.js"
+      - "frontend/src/hooks/useChatPratica.js"
+      - "frontend/src/hooks/useFirmaPratica.js"
+      - "integrazioni/universo-realtime/**"
+    documenti:
+      - docs/tecnica/chat-e-firma.md
+
+  - nome: Servizio realtime completo
+    percorsi:
+      - "backend/src/realtime/**"
+    documenti:
+      - docs/tecnica/realtime.md
+      - docs/tecnica/realtime-parita.md

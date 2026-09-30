@@ -43,6 +43,7 @@ os.environ.setdefault("BCRYPT_COST", "4")
 
 os.environ.setdefault("EMAIL_BACKEND", "memoria")
 os.environ["SMS_BACKEND"] = "memoria"
+os.environ["REALTIME_SCHEMA_TICKET"] = "ersaf_test"
 os.environ.setdefault("FRONTEND_BASE_URL", "https://test.example.org")
 os.environ.setdefault("CORS_ORIGINS", "https://test.example.org")
 os.environ.setdefault("WEBAUTHN_RP_ID", "test.example.org")
@@ -51,6 +52,22 @@ os.environ.setdefault("SMTP_HOST", "smtp.invalid")  # RFC 6761: non risolve mai
 os.environ.setdefault("PASSWORD_RESET_BUDGET_MS", "150")
 os.environ.setdefault("LOG_FILE", "")  # nessun file di log durante i test
 os.environ.setdefault("ERSAF_ENV", "test")
+
+# EduNews24: tutte ASSEGNATE, come SMS_BACKEND. Con setdefault i valori di un
+# backend/.env locale entrerebbero nei test (il backend http farebbe rete).
+# L'host del sito e quello dei media sono gli stessi dei dati di `memoria`,
+# altrimenti la validazione degli URL scarterebbe ogni voce.
+os.environ["EDUNEWS24_BACKEND"] = "memoria"
+os.environ["EDUNEWS24_URL_BASE"] = "https://edunews24.invalid/api/v1"
+os.environ["EDUNEWS24_CONTATTO"] = "https://example.org/contatti"
+os.environ["EDUNEWS24_HOST_MEDIA"] = "media.edunews24.invalid"
+os.environ["EDUNEWS24_TIMEOUT_CONNESSIONE_SECONDI"] = "3"
+os.environ["EDUNEWS24_TIMEOUT_LETTURA_SECONDI"] = "5"
+os.environ["EDUNEWS24_TIMEOUT_TOTALE_SECONDI"] = "8"
+os.environ["EDUNEWS24_TTL_RIPIEGO_SECONDI"] = "300"
+os.environ["EDUNEWS24_STANTIO_MASSIMO_SECONDI"] = "86400"
+os.environ["EDUNEWS24_PAUSA_RIPIEGO_SECONDI"] = "30"
+os.environ["EDUNEWS24_RICHIESTE_AL_MINUTO"] = "30"
 
 # --- da qui in poi si puo' importare src ------------------------------------
 import pytest  # noqa: E402
@@ -65,6 +82,7 @@ SCHEMA_BASE = RADICE / "db" / "test" / "schema_base.sql"
 
 # Ordine figlio -> padre. `ruoli` non compare: e' lookup, non stato.
 TABELLE_DA_SVUOTARE = [
+    "pratiche_contatori",
     "auth_passkey", "auth_totp", "auth_mfa_utente",
     "otp_sfide", "otp_contatti", "otp_attivazioni", "otp_limiti",
     "auth_login_limite",
@@ -146,6 +164,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
 # =============================================================================
 from src.database import SessionLocal, engine  # noqa: E402
 from tests.support.sqlrunner import esegui_file_sql  # noqa: E402
+from tests.support.realtime_avvio import realtime_configurato  # noqa: E402,F401
 
 
 @pytest.fixture(scope="session")
@@ -191,6 +210,8 @@ def db_pulito(schema):
     """
     with engine.begin() as connessione:
         connessione.execute(sa.text("SET FOREIGN_KEY_CHECKS = 0"))
+        if sa.inspect(connessione).has_table("pratiche_stati_storico"):
+            connessione.execute(sa.text("TRUNCATE TABLE pratiche_stati_storico"))
         for tabella in TABELLE_DA_SVUOTARE:
             connessione.execute(sa.text(f"TRUNCATE TABLE `{tabella}`"))
         connessione.execute(sa.text("SET FOREIGN_KEY_CHECKS = 1"))
@@ -253,21 +274,22 @@ def tabella_pratiche(db_pulito):
     """
     import src.main  # noqa: F401  registra tutti i mapper
     from src.database import Base
-    from src.pratiche.models import Pratica
+    from tests.support.pratiche import prepara_lookup, pulisci_pratiche
 
     Base.metadata.create_all(engine)
     with engine.begin() as connessione:
-        connessione.execute(sa.delete(Pratica.__table__))
+        pulisci_pratiche(connessione)
+        prepara_lookup(connessione)
     yield
     with engine.begin() as connessione:
-        connessione.execute(sa.delete(Pratica.__table__))
+        pulisci_pratiche(connessione)
 
 
 # =============================================================================
 # Client HTTP
 # =============================================================================
 @pytest.fixture
-def client(db_pulito):
+def client(db_pulito, realtime_configurato):
     """Client di prova con un indirizzo IP VALIDO.
 
     Senza il parametro `client`, TestClient mette in request.client.host la
@@ -292,7 +314,7 @@ def client(db_pulito):
 
 
 @pytest.fixture
-def client_da(db_pulito):
+def client_da(db_pulito, realtime_configurato):
     """Fabbrica di client con indirizzo IP arbitrario, per il rate limit."""
     from fastapi.testclient import TestClient
 
@@ -348,3 +370,12 @@ def sms():
     yield memoria_sms
     memoria_sms.inviati.clear()
     memoria_sms.errore = False
+
+
+@pytest.fixture(autouse=True)
+def stato_edunews24():
+    """Ogni test parte senza cache, cursori, pausa ne' budget di EduNews24."""
+    from src.edunews24.servizio import azzera_servizio
+    azzera_servizio()
+    yield
+    azzera_servizio()

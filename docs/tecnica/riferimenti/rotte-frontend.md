@@ -20,6 +20,7 @@ Pagine registrate nell'applicazione web, nell'ordine in cui sono dichiarate.
 | `/aziende` | `ElencoAziende` (soloAttuatori=true) | sessione | Aziende (Nazionale, Regionale, Provinciale) |
 | `/pratiche` | `ElencoPratiche` | sessione | Pratiche |
 | `/prodotti` | `ElencoProdottiFormativi` (soloAttuatori=true) | sessione | Prodotti formativi (solo Nazionale) |
+| `/edunews24` | `PaginaEduNews24` | sessione | EduNews24 |
 | `/sottoscrittori/nuovo` | `NuovoSottoscrittore` (tipoUtente=sottoscrittore) | sessione | — |
 | `/sottoscrittori/:clienteId` | `NuovoSottoscrittore` (tipoUtente=sottoscrittore) | sessione | — |
 | `/attuatori/nuovo` | `NuovoSottoscrittore` (tipoUtente=attuatore) | sessione | — |

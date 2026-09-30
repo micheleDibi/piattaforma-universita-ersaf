@@ -39,12 +39,15 @@ Anche un sottoscrittore riceve le credenziali quando il suo account si attiva. I
 | Aziende | sì | sì | no |
 | Pratiche | sì | sì | sì |
 | Prodotti formativi | sì | no | no |
+| EduNews24 | sì | sì | sì |
 | Profilo, schede "Dati principali" e "Utente" | sì | sì | sì |
 | Profilo, scheda "Sicurezza" | sì | no | no |
 
 Nota: le voci nascoste non proteggono le pagine. Attuatori e Prodotti formativi si aprono digitando l'indirizzo e il server non controlla il ruolo. Anche la pagina Aziende si apre, ma lì il server applica la regola di visibilità descritta più sotto, per cui l'elenco risulta vuoto. Vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
-La pagina **Pratiche** ospita il pannello degli atenei, che prima stava nella Dashboard, e mostra le pratiche secondo le regole di visibilità descritte sotto. Il pannello mostra il numero di pratiche per ateneo, tipologia e stato; le sue righe si aprono solo con l'abilitazione generale e quella dell'ateneo; le abilitazioni non sostituiscono i controlli del server. Vedi [Pratiche](pratiche.md).
+La **Dashboard** è la prima pagina dopo l'accesso per tutti i ruoli che accedono; le sue scorciatoie sono le voci del menu del proprio ruolo. **EduNews24** mostra a tutti gli stessi contenuti. Vedi [EduNews24](edunews24.md).
+
+La pagina **Pratiche** ospita il pannello degli atenei e mostra le pratiche secondo le regole di visibilità descritte sotto. Il pannello mostra il numero di pratiche per ateneo, tipologia e stato; le sue righe si aprono solo con l'abilitazione generale e quella dell'ateneo; le abilitazioni non sostituiscono i controlli del server. Vedi [Pratiche](pratiche.md).
 
 ### Dentro le pagine, solo per il Nazionale
 
@@ -78,7 +81,7 @@ Non si può mai entrare come un **Nazionale**: il messaggio è "Il ruolo Naziona
 Cosa succede quando riesce:
 
 - la propria sessione termina;
-- la piattaforma si ricarica sui Sottoscrittori con l'identità della persona scelta, e con il suo menu;
+- la piattaforma si ricarica sulla Dashboard con l'identità della persona scelta, e con il suo menu;
 - l'operazione resta nei registri del server, con chi l'ha fatta e su chi.
 
 Per tornare a sé stessi si usa "Esci" e si accede di nuovo con le proprie credenziali. Il Nazionale ripete anche il secondo fattore.

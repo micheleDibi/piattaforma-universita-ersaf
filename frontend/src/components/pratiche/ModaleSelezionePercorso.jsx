@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
+import Dialogo from "../shared/Dialogo.jsx";
 import { X } from "../../config/icone.js";
 import { pulsante, pulsanteIcona } from "../../config/styles/pulsante.js";
 import { STILI_MODALE_TABELLA as stili } from "../../config/styles/pratica.js";
 import { TESTI_MODALE_PERCORSO as testi } from "../../config/testi/pratiche.js";
 import { paginaPercorsi } from "../../lib/opzioniPratica.js";
+import { sommaPrezzi } from "../../lib/praticaForm.js";
 import usePagineRemote from "../../hooks/usePagineRemote.js";
 import CampoRicerca from "../shared/CampoRicerca.jsx";
 
@@ -42,10 +43,10 @@ export default function ModaleSelezionePercorso({ universitaId, tipoCorsoIds, mu
     setSelezionati((precedenti) =>
       gia(opzione.id) ? precedenti.filter((s) => s.id !== opzione.id) : [...precedenti, opzione]);
   };
-  const totale = selezionati.reduce((somma, corso) => somma + Number(corso.prezzo ?? 0), 0);
-  return createPortal(
-    <div className={stili.velo}>
-      <div className={stili.finestraLarga} role="dialog" aria-modal="true" aria-labelledby="modale-percorso-titolo">
+  const totale = sommaPrezzi(selezionati.map(corso => corso.prezzo));
+  return (
+    <Dialogo aperto onChiudi={onChiudi} etichetta={multipla ? testi.titoloMultiplo : testi.titolo} variante="selezione-larga">
+      <div className={stili.contenuto}>
         <div className="flex items-center justify-between gap-3">
           <h3 id="modale-percorso-titolo" className={stili.titolo}>{multipla ? testi.titoloMultiplo : testi.titolo}</h3>
           <button type="button" onClick={onChiudi} className={pulsanteIcona("neutro", "grande")}
@@ -115,7 +116,6 @@ export default function ModaleSelezionePercorso({ universitaId, tipoCorsoIds, mu
           </div>
         )}
       </div>
-    </div>,
-    document.body,
+    </Dialogo>
   );
 }

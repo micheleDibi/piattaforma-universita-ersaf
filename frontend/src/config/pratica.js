@@ -55,7 +55,7 @@ export function eGruppoLauree(listinoTipoCorsoId) {
 
 // I tre campi si escludono a vicenda: un solo anno di rinnovo alla volta, o
 // nessuno (vedi impostaRinnovo in hooks/useSchedaPratica.js e il validatore
-// gemello in backend/src/pratiche/models.py, CAMPI_RINNOVO).
+// gemello in backend/src/pratiche/rinnovi.py, CAMPI_RINNOVO).
 export const CAMPI_RINNOVO = [
   { nome: "pratica_rinnPrimoAnno", label: "Rinnovo primo anno" },
   { nome: "pratica_rinnSecondoAnno", label: "Rinnovo secondo anno" },

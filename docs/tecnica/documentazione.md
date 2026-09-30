@@ -11,10 +11,9 @@ Questa pagina spiega come è organizzata la documentazione, chi aggiorna cosa e 
 | `docs/funzionale/` | chi usa la piattaforma | pagine, ruoli, accesso e flussi, senza termini tecnici |
 | `docs/tecnica/` | chi sviluppa o pubblica | architettura, sviluppo, test, database, deploy, convenzioni, sicurezza |
 | `docs/tecnica/riferimenti/` | chi sviluppa | pagine **generate**: API, pagine del frontend, migrazioni, configurazione |
-| `docs/prompt/` | storico | prompt dati in passato agli agenti; sono istantanee datate |
+| `docs/storico/` | storico | specifiche iniziali, conservate come istantanee datate |
 | [CHANGELOG.md](../../CHANGELOG.md) | tutti | le versioni pubblicate |
 | `changelog/non-pubblicato/` | chi sviluppa | i frammenti delle modifiche non ancora pubblicate |
-| [CLAUDE.md](../../CLAUDE.md) | agenti AI | le regole da seguire nel repository |
 | [db/README.md](../../db/README.md) | chi sviluppa | regole operative delle migrazioni |
 
 Un'informazione ha una sola casa; gli altri documenti ci rimandano. Le case principali:
@@ -49,7 +48,7 @@ Le modifiche che arrivano su main senza pull request non passano dalla CI: il fr
 
 | Pagina | Fonte |
 |---|---|
-| `api.md` | OpenAPI dell'applicazione. L'app si importa in un sottoprocesso senza leggere `backend/.env` e senza database; l'accesso richiesto da ogni operazione si ricava dalle sue dipendenze. |
+| `api.md` | OpenAPI dell'applicazione. L'app si importa in un sottoprocesso senza leggere `backend/.env` e senza database; dalle dipendenze si distinguono accesso pubblico, sfida, cookie, token realtime e token del produttore. |
 | `rotte-frontend.md` | `frontend/src/config/routes/` importati con Node e `frontend/src/App.jsx` letto come albero sintattico con `@babel/core`. I ruoli che vedono ogni voce del menu si ricavano chiamando `vociMenuPerRuolo` per ciascun ruolo che accede. |
 | `migrazioni.md` | Intestazioni di `db/migrations/` e file di `db/rollback/`; le anomalie sono calcolate. |
 | `configurazione.md` | Campi di `backend/src/config.py` e `backend/src/notifiche/config_sms.py`, commenti dei file `.env.example`, variabili lette dagli script di deploy e dal frontend. L'obbligatorietà si ricava dalla verifica di avvio con valori finti. |
@@ -88,7 +87,7 @@ Il workflow [documentazione.yml](../../.github/workflows/documentazione.yml) gir
    - **frammenti**: ogni file in `changelog/non-pubblicato/` rispetta il formato;
    - **link**: i link relativi fra file Markdown puntano a file esistenti (maiuscole comprese) e a titoli esistenti, con le ancore calcolate come le calcola GitHub;
    - **mappa**: la mappa è valida, i documenti esistono e ogni pattern trova almeno un file;
-   - **contenuti**: in nessun file Markdown compaiono indirizzi email, indirizzi IP diversi dal loopback, nomi di rete interna, domini dell'ente, credenziali o percorsi del server, perché il repository è pubblico; l'unica eccezione dichiarata è l'URL del database di test usa-e-getta;
+   - **contenuti**: in nessun file Markdown compaiono indirizzi email, indirizzi IP diversi dal loopback, nomi di rete interna, domini dell'ente, credenziali o percorsi del server, perché il repository è pubblico; l'unica eccezione dichiarata è l'URL del database di test usa-e-getta. Il controllo non riconosce i domini pubblici, per esempio quello di un servizio esterno, e non legge codice e test: chi scrive e chi rivede li cercano a mano;
    - **frammento obbligatorio**: se la pull request tocca `backend/src/`, `frontend/src/`, `db/` o `deploy/` (esclusi i `.md`), deve aggiungere o modificare un frammento valido;
    - **documenti collegati**: se tocca un file coperto da una regola della mappa, deve modificare almeno uno dei documenti di quella regola; il messaggio dice quali;
    - **registro protetto**: la pull request non può modificare `CHANGELOG.md` né cancellare o rinominare frammenti; lo fa solo il timbro.
@@ -123,7 +122,7 @@ Limiti da conoscere:
 
 - il controllo verifica che un documento sia stato toccato, non che sia stato aggiornato bene: il merito resta alla revisione;
 - una modifica solo estetica a un file coperto richiede comunque l'etichetta `documentazione-invariata`;
-- alcuni file cambiano spesso senza effetti da documentare (registrazione dei router, icone, stati della query, stili, migrazioni) e sono stati lasciati fuori dalla mappa: le migrazioni sono coperte dal frammento e da `riferimenti/migrazioni.md`;
+- alcuni file cambiano spesso senza effetti da documentare (registrazione dei router, icone, stati della query, stili, token e immagini comuni, migrazioni) e sono stati lasciati fuori dalla mappa: le migrazioni sono coperte dal frammento e da `riferimenti/migrazioni.md`; stili, token e immagini di EduNews24 e della Dashboard hanno invece una regola propria;
 - quando si aggiunge un modulo o si rinomina un file, la mappa va aggiornata: il controllo segnala i pattern che non trovano più nulla, non i file nuovi rimasti scoperti.
 
 ## In locale
@@ -161,6 +160,6 @@ Dopo una pubblicazione riuscita di origin/main, `scripts/deploy.ps1` chiama `scr
 | `scripts/documentazione/frammenti.py`, `comune.py` | lettura dei frammenti, git, pattern, ancore, redazione; solo libreria standard |
 | `scripts/documentazione/mappa.py` | lettura della mappa (PyYAML) |
 | `scripts/documentazione/generatori/` | un modulo per pagina generata |
-| `scripts/documentazione/tests/` | test, lanciati con il loro `pytest.ini` |
+| `scripts/documentazione/tests/` | test, lanciati con il loro `pytest.ini`; comprendono i controlli degli script di deploy (`test_deploy.py`, `test_deploy_edunews24.py`), che eseguono il bundle con bash e, dove serve, con `docker` e `iptables` finti |
 
 Il timbro, i frammenti e le funzioni comuni usano solo la libreria standard e restano compatibili con Python 3.10.

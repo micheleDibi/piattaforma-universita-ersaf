@@ -1,5 +1,5 @@
 import { idValido } from "../config/routes/percorsi.js";
-import { CAMPI_RINNOVO } from "../config/pratica.js";
+import { CAMPI_RINNOVO, eGruppoLauree } from "../config/pratica.js";
 
 // Whitelist PraticaUpdate: gli altri campi del modello non sono aggiornabili.
 // pratica_numero, pratica_prezzo e pratica_dataCreazione non ci sono: sono
@@ -8,11 +8,8 @@ import { CAMPI_RINNOVO } from "../config/pratica.js";
 // server lo scrive solo se chi chiama e' Nazionale (vedi aggiorna_pratica in
 // backend/src/pratiche/routers.py) - per tutti gli altri e' un valore
 // invariato, non un tentativo di modifica.
-// I tre campi di rinnovo si mandano sempre insieme (mai solo quello toccato):
-// e' cosi' che il server puo' verificare che sia selezionato al piu' un anno
-// (vedi impostaRinnovo in hooks/useSchedaPratica.js).
-const MODIFICABILI = ["pratica_annoAccademico", "pratica_sedeErogazione", "pratica_note", "pratica_stato_id",
-  ...CAMPI_RINNOVO.map(({ nome }) => nome)];
+// Il rinnovo si invia insieme, solo se visibile per il percorso Lauree.
+const MODIFICABILI = ["pratica_annoAccademico", "pratica_sedeErogazione", "pratica_note", "pratica_stato_id"];
 
 /** Decimal(20,8) puo arrivare come "0E-8": espansione testuale senza arrotondare. */
 export function prezzoPerInput(valore) {
@@ -29,6 +26,19 @@ export function prezzoPerInput(valore) {
 
 function oggiLocale(oggi = new Date()) {
   return new Date(oggi.getTime() - oggi.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
+/** Somma Decimal(20,8) senza gli arrotondamenti binari di Number. */
+export function sommaPrezzi(prezzi) {
+  let totale = 0n;
+  for (const prezzo of prezzi) {
+    const testo = prezzoPerInput(prezzo);
+    if (!/^\d{1,12}(\.\d{1,8})?$/.test(testo)) return "";
+    const [interi, frazione = ""] = testo.split(".");
+    totale += BigInt(interi) * 100000000n + BigInt(frazione.padEnd(8, "0"));
+  }
+  const frazione = (totale % 100000000n).toString().padStart(8, "0").replace(/0+$/, "");
+  return `${totale / 100000000n}${frazione ? `.${frazione}` : ""}`;
 }
 
 export function praticaVuota(oggi = new Date()) {
@@ -69,6 +79,9 @@ export function prezzoAttuale(dettagli, oggi = oggiLocale()) {
 
 export function payloadPratica(dati, { nuova, studente, percorso, prodotto, corsiSingoli, corsiSelezionati }) {
   const payload = Object.fromEntries(MODIFICABILI.map(nome => [nome, dati[nome] === "" ? null : dati[nome]]));
+  if (eGruppoLauree(prodotto?.listino_tipoCorso_id)) {
+    Object.assign(payload, Object.fromEntries(CAMPI_RINNOVO.map(({ nome }) => [nome, dati[nome]])));
+  }
   // Dal <select> arriva una stringa: il server si aspetta un numero.
   if (payload.pratica_stato_id != null) payload.pratica_stato_id = Number(payload.pratica_stato_id);
 
@@ -89,11 +102,11 @@ export function payloadPratica(dati, { nuova, studente, percorso, prodotto, cors
       cliente_id: studente.id,
       listTesta_id: percorso.id, nome_universita_id: prodotto.nome_universita_id,
       listino_tipo_corso_id: prodotto.listino_tipoCorso_id ?? null });
-    // Non si inviano: cliente_emittente_aderente_id (colonna deprecata, il
-    // database applica da solo il suo default), pratica_numero (lo genera
-    // il server al salvataggio, vedi backend/src/pratiche/codice.py) e
-    // pratica_stato_id (una pratica nasce sempre in Bozza: il server lo
-    // forza comunque, vedi crea_pratica in backend/src/pratiche/routers.py).
+    // Non si inviano: cliente_emittente_aderente_id (il server lo collega
+    // all'utente corrente per le ACL chat) e pratica_numero (lo genera
+    // il server al salvataggio, vedi backend/src/pratiche/codice.py).
+    // In creazione lo stato e' sempre Bozza, stabilito dal server.
+    delete payload.pratica_stato_id;
     // Corsi Singoli: ogni corso scelto (compreso il primo, gia' in
     // listTesta_id sopra) diventa una riga in pratiche_listini lato server
     // (vedi crea_pratica in backend/src/pratiche/routers.py).

@@ -1,4 +1,5 @@
-import { useNavigate, useParams } from "react-router";
+import { useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { PERCORSI } from "../config/routes/percorsi.js";
 import { contenutoPagina } from "../config/styles/pagina.js";
 import { pulsante } from "../config/styles/pulsante.js";
@@ -16,6 +17,13 @@ import RelazioniPratica from "./pratiche/RelazioniPratica.jsx";
 import CaratteristichePercorso from "./pratiche/CaratteristichePercorso.jsx";
 import DatiPratica from "./pratiche/DatiPratica.jsx";
 import AzioneDocumento from "./pratiche/AzioneDocumento.jsx";
+
+import BarraSchede from "./shared/BarraSchede.jsx";
+import FirmaPratica from "./pratiche/FirmaPratica.jsx";
+import ChatPratica from "./pratiche/ChatPratica.jsx";
+import { TESTI_CHAT as testi } from "../config/testi/chatPratica.js";
+
+const SCHEDE = [{ id: "dati", label: testi.schedaDati }, { id: "messaggi", label: testi.titolo }, { id: "firma", label: testi.schedaFirma }];
 
 /** Le descrizioni (università, tipo/i di corso) del contesto di creazione
  * per il titolo della scheda: leggiContestoUrl da' solo gli id, qui si
@@ -39,6 +47,13 @@ function titoloCreazione({ nomeUniversita, nomeTipo }) {
 export default function SchedaPratica() {
   const { praticaId } = useParams();
   const navigate = useNavigate();
+  const [query, setQuery] = useSearchParams();
+  const attiva = praticaId && SCHEDE.some(s => s.id === query.get("scheda")) ? query.get("scheda") : "dati";
+  const [visitate, setVisitate] = useState(() => new Set([attiva]));
+  const cambiaScheda = id => {
+    setVisitate(v => new Set([...v, id]));
+    setQuery(q => { q.set("scheda", id); return q; }, { replace: true });
+  };
   const documento = useDocumentoPratica(praticaId);
   const { ritorno } = useNavigazioneElenco(PERCORSI.pratiche.elenco);
   // Serve prima di useSchedaPratica: il prezzo di una pratica Corsi Singoli
@@ -68,7 +83,10 @@ export default function SchedaPratica() {
     <AlertMessage message={documento.errore ? { type: "error", text: documento.errore } : null} />
     {form.loading ? <IndicatoreCaricamento messaggio="Caricamento della pratica…" centrato />
       : form.errore ? <><AlertMessage message={{ type: "error", text: form.errore }} /><button className={pulsante("secondario")} onClick={form.riprova}>Riprova</button></>
-      : <form className={stili.modulo} onSubmit={invia}>
+      : <>
+        {praticaId && <BarraSchede id="pratica" etichetta="Sezioni della pratica" schede={SCHEDE} attiva={attiva} onChange={cambiaScheda} />}
+        <div role={praticaId ? "tabpanel" : undefined} id="pratica-pannello-dati" aria-labelledby={praticaId ? "pratica-scheda-dati" : undefined} hidden={attiva !== "dati"}>
+        <form className={stili.modulo} onSubmit={invia}>
         <AlertMessage message={form.messaggio} />
         <fieldset disabled={form.salvataggio} className={stili.sezione}>
           <RelazioniPratica form={form} nuova={!praticaId} universitaId={contestoUrl.universitaId}
@@ -81,6 +99,15 @@ export default function SchedaPratica() {
             <button type="submit" className={pulsante("primario", "grande")}>{form.salvataggio ? "Salvataggio…" : "Salva pratica"}</button>
           </div>
         </fieldset>
-      </form>}
+      </form></div>
+      {praticaId && <>
+        <div role="tabpanel" id="pratica-pannello-messaggi" aria-labelledby="pratica-scheda-messaggi" hidden={attiva !== "messaggi"}>
+          {(attiva === "messaggi" || visitate.has("messaggi")) && <div className={stili.modulo}><ChatPratica key={praticaId} praticaId={praticaId} /></div>}
+        </div>
+        <div role="tabpanel" id="pratica-pannello-firma" aria-labelledby="pratica-scheda-firma" hidden={attiva !== "firma"}>
+          {(attiva === "firma" || visitate.has("firma")) && <div className={stili.modulo}><FirmaPratica key={praticaId} praticaId={praticaId} /></div>}
+        </div>
+      </>}
+      </>}
   </div>;
 }

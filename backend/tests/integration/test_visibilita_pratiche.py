@@ -7,6 +7,7 @@ import pytest
 from src.clienti.models import Cliente
 from src.pratiche.models import Pratica
 from tests.support import factories as f
+from tests.support.pratiche import pulisci_pratiche
 from tests.support.scenari import accedi, accedi_nazionale, riferimenti_pratiche
 
 pytestmark = pytest.mark.mariadb
@@ -52,7 +53,7 @@ def mondo(client, db, tabella_pratiche):
         "studente_di_b": studente_di_b, "emittente": emittente,
         "percorsi": percorsi, "ids": ids,
     }
-    db.query(Pratica).delete()
+    pulisci_pratiche(db)
     for percorso in percorsi:
         db.delete(percorso)
     db.commit()
@@ -137,6 +138,27 @@ def test_la_creazione_usa_sempre_la_propria_azienda(client, db, mondo):
     assert altrui.status_code == senza.status_code == 201, (altrui.text, senza.text)
     assert _azienda(db, altrui.json()["pratica_id"]) == mondo["a"]
     assert _azienda(db, senza.json()["pratica_id"]) == mondo["a"]
+
+
+def test_senza_emittente_il_form_collega_il_creatore_non_il_cliente_predefinito(client, db, mondo):
+    from src.chat_pratiche.partecipanti import autorizza
+
+    # Il cliente 1 esiste ma appartiene a un altro utente rispetto al creatore.
+    altro, sessione = accedi(client, db, azienda_id=mondo["a"])
+    assert altro.cliente_id != 1
+    corpo = _corpo(mondo)
+    corpo.pop("cliente_emittente_aderente_id")
+    risposta = client.post("/pratiche/", json=corpo, headers=sessione)
+    assert risposta.status_code == 201, risposta.text
+    pratica_id = risposta.json()["pratica_id"]
+    db.expire_all()
+    pratica = db.get(Pratica, pratica_id)
+    assert pratica.cliente_emittente_aderente_id == altro.cliente_id
+    assert pratica.utente_id == altro.utente_id
+    _, partecipanti = autorizza(db, altro.utente_id, pratica_id)
+    assert {p.utente_id for p in partecipanti} == {
+        altro.utente_id, mondo["studente_altrui"].utente_id,
+    }
 
 
 def test_la_modifica_ignora_l_azienda(client, db, mondo):
