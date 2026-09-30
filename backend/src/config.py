@@ -76,6 +76,12 @@ class Impostazioni(BaseSettings):
     # in anticipo.
     database_url_gestione_pagamenti: str = ""
     database_url_sys_admin: str = ""
+    # Nome dello schema dei pagamenti sullo stesso server di database_url.
+    # Articolo e partitario di una pratica nuova si scrivono li' con la
+    # connessione principale, nella stessa transazione della pratica: una
+    # sessione separata (database_url_gestione_pagamenti) avrebbe un commit
+    # proprio. Vedi pratiche/dopo_salvataggio.py.
+    schema_gestione_pagamenti: str = "admin_gestione_pagamenti"
 
     # --- segreti ------------------------------------------------------------
     # Default vuoto e NESSUN validator: Impostazioni() non solleva mai.

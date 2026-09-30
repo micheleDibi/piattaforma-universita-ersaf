@@ -44,6 +44,7 @@ os.environ.setdefault("BCRYPT_COST", "4")
 os.environ.setdefault("EMAIL_BACKEND", "memoria")
 os.environ["SMS_BACKEND"] = "memoria"
 os.environ["REALTIME_SCHEMA_TICKET"] = "ersaf_test"
+os.environ["SCHEMA_GESTIONE_PAGAMENTI"] = "ersaf_test"
 os.environ.setdefault("FRONTEND_BASE_URL", "https://test.example.org")
 os.environ.setdefault("CORS_ORIGINS", "https://test.example.org")
 os.environ.setdefault("WEBAUTHN_RP_ID", "test.example.org")
@@ -274,10 +275,12 @@ def tabella_pratiche(db_pulito):
     """
     import src.main  # noqa: F401  registra tutti i mapper
     from src.database import Base
+    from tests.support import contabilita
     from tests.support.pratiche import prepara_lookup, pulisci_pratiche
 
     Base.metadata.create_all(engine)
     with engine.begin() as connessione:
+        contabilita.prepara(connessione)
         pulisci_pratiche(connessione)
         prepara_lookup(connessione)
     yield

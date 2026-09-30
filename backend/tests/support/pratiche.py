@@ -4,9 +4,11 @@ from sqlalchemy import delete, text
 
 from src.pratiche.models import Pratica
 from src.pratiche_stati_storico.models import PraticaStatoStorico
+from tests.support import contabilita
 
 
 def pulisci_pratiche(connessione):
+    contabilita.svuota(connessione)
     connessione.execute(delete(PraticaStatoStorico))
     connessione.execute(delete(Pratica))
 
