@@ -717,7 +717,8 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
   - L'autore della pratica non viene mai registrato.
   - Il prezzo è obbligatorio solo nell'interfaccia.
   - In modifica lo schema accetta ogni campo che dichiara, consulente e tipo di corso compresi, mentre la scheda ne cambia solo una parte. Il router applica quanto arriva, senza confrontarlo con quello che la scheda mostra: fanno eccezione azienda e stato, ristretti al Nazionale.
-  - `pratiche/routers.py:73-162`, `211-268`; `pratiche/storico_stati.py`; `pratiche/notifiche.py`; `backend/src/pratiche_stati_storico/models.py`; `backend/src/pratiche/models.py:280-303`; `frontend/src/lib/praticaForm.js`; `frontend/src/components/pratiche/DatiPratica.jsx`.
+  - Il rinnovo ammette un solo anno selezionato. Gli aggiornamenti parziali sono verificati insieme ai valori persistiti sotto il blocco della pratica; le righe storiche incoerenti restano leggibili e modificabili negli altri campi.
+  - `pratiche/routers.py`; `pratiche/storico_stati.py`; `pratiche/notifiche.py`; `backend/src/pratiche_stati_storico/models.py`; `pratiche/schemi.py`; `pratiche/rinnovi.py`; `frontend/src/lib/praticaForm.js`; `frontend/src/components/pratiche/DatiPratica.jsx`.
 - **Abilitazione ai corsi speciali.**
   - In creazione, se la richiesta non invia i cinque campi, gli altri quattro nascono accesi per gli attuatori e i corsi speciali spenti; il valore predefinito del database è invece -1. È un valore predefinito, non una forzatura: una richiesta che invia il valore lo mantiene.
   - Dall'interfaccia il caso non si presenta in creazione, perché i cinque campi non vengono inviati.

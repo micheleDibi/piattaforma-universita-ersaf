@@ -17,7 +17,9 @@ from src.chat_pratiche.rotte import router as chat_router
 from src.pratiche.accesso import pratica_visibile
 from src.pratiche.storico_stati import STATO_BOZZA_ID, STATO_CARICATA_ID, registra_stato, stato_gia_raggiunto
 from src.documenti.rotte import router as documento_router
-from src.pratiche.models import ConteggioPratiche, Pratica, PraticaCreate, PraticaResponse, PraticaUpdate
+from src.pratiche.models import Pratica
+from src.pratiche.schemi import ConteggioPratiche, PraticaCreate, PraticaResponse, PraticaUpdate
+from src.pratiche.rinnovi import verifica_modifica_rinnovo
 from src.pratiche_listini.models import PraticaListino
 from src.utenti.models import Utente
 
@@ -231,6 +233,11 @@ def aggiorna_pratica(
     if not vis.nazionale:
         modifiche.pop("azienda_id", None)
         modifiche.pop("pratica_stato_id", None)
+
+    try:
+        verifica_modifica_rinnovo(pratica, modifiche)
+    except ValueError as errore:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(errore)) from None
 
     for chiave, valore in modifiche.items():
         setattr(pratica, chiave, valore)

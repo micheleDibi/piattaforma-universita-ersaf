@@ -93,7 +93,7 @@ export default function SchedaPratica() {
             tipoCorsoIds={contestoUrl.tipoCorsoIds} corsiSingoli={corsiSingoli} />
           <CaratteristichePercorso prodotto={form.prodotto} />
           <hr className={stili.separatore} />
-          <DatiPratica form={form} nuova={!praticaId} />
+          <DatiPratica form={form} nuova={!praticaId} prodotto={form.prodotto} />
           <div className={stili.azioni}>
             <button type="button" className={pulsante("secondario", "grande")} onClick={() => navigate(ritorno)}>Annulla</button>
             <button type="submit" className={pulsante("primario", "grande")}>{form.salvataggio ? "Salvataggio…" : "Salva pratica"}</button>

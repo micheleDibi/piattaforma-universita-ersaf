@@ -370,6 +370,13 @@ o Caricata. Sessioni MariaDB indipendenti riproducono uno snapshot precedente
 al salvataggio concorrente, anche con ritorno allo stato iniziale, e uno
 spostamento di azienda che revoca la visibilita della pratica.
 
+La stessa suite copre il rinnovo con aggiornamenti parziali: un secondo anno
+non può sommarsi a quello già salvato, mentre una sostituzione esplicita è
+valida. `test_pratiche_rinnovi.py` verifica la normalizzazione dei flag legacy,
+l'esclusione fra anni e la lettura delle righe storiche incoerenti. I test
+frontend di `praticaForm.test.js` verificano la scelta esclusiva e l'omissione
+dei campi di rinnovo quando il percorso non è di tipo Lauree.
+
 `tests/support/pratiche.py` prepara solo lookup e template email sintetici;
 la pulizia elimina lo storico prima delle pratiche, rispettando le chiavi
 esterne. Le email sono catturate dal backend in memoria: nessun invio reale.

@@ -255,10 +255,10 @@ usato per il prezzo (vedi [Dati della pratica](#dati-della-pratica)): se il
 percorso non ne ha uno, questi tre campi restano vuoti («-»). La Durata è in
 mesi.
 
-Nota: i tre campi "Rinnovo primo/secondo/terzo anno" non sono ancora
-mostrati: non esiste un dato che li descriva a livello di percorso
-formativo, solo tre campi sulla singola pratica che oggi nessuna schermata
-valorizza.
+Nota: i tre campi "Rinnovo primo/secondo/terzo anno" non compaiono in questa
+sezione, anche per un percorso di tipo Lauree: sono dati della pratica, non
+del percorso formativo, quindi si trovano invece in [Dati della
+pratica](#dati-della-pratica), dove sono anche modificabili.
 
 ### Dati della pratica
 
@@ -270,6 +270,7 @@ valorizza.
 | Prezzo (€) | Sempre di sola lettura: non si digita mai |
 | Stato | In creazione sempre "Bozza", di sola lettura. In una pratica già salvata, solo il Nazionale vede una tendina per cambiarlo; per tutti gli altri resta di sola lettura |
 | Data di creazione | Sempre di sola lettura: in creazione è sempre la data odierna |
+| Rinnovo (primo, secondo o terzo anno) | Solo per un percorso di tipo Lauree (vedi [Caratteristiche del percorso](#caratteristiche-del-percorso)): tre caselle mutuamente esclusive, al più una spuntata, oppure nessuna |
 | Note | Testo libero |
 
 Il prezzo arriva dal percorso formativo scelto: è il prezzo del dettaglio del
@@ -292,9 +293,21 @@ silenzio la modifica se chi chiama non è Nazionale (la richiesta risponde
 comunque 200, lo stato resta quello di prima). Vedi
 [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
+Il rinnovo compare solo quando il percorso scelto è di tipo Lauree; per gli
+altri tipi di corso la scheda non lo mostra. Le tre caselle sono mutuamente
+esclusive: spuntarne una toglie automaticamente la spunta dalle altre due, e
+non è obbligatorio sceglierne una (nessuna spuntata è una condizione valida).
+Il server rifiuta un salvataggio che ne avesse più di una selezionata
+insieme, anche se la richiesta modifica solo uno dei tre campi e gli altri
+sono già registrati. Le pratiche storiche con più anni selezionati restano
+consultabili: una modifica alle sole note non ne cambia il rinnovo.
+Quando il rinnovo non è visibile, la scheda non invia questi campi e conserva
+gli eventuali valori storici. Questi tre campi finiscono anche nel documento
+PDF eCampus.
+
 Una pratica può contenere anche dati che la scheda non mostra e non modifica:
-per esempio gli allegati, l'azienda, il consulente e l'indicazione
-di rinnovo. Alcuni di questi dati finiscono nel documento PDF.
+per esempio gli allegati, l'azienda e il consulente. Alcuni di questi dati
+finiscono nel documento PDF.
 
 Nota: in modifica la scheda cambia solo i campi elencati sopra, ma il sistema ne accetta anche altri, fra cui l'azienda, il consulente e il tipo di corso che decide i filtri della pagina Pratiche; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
@@ -436,8 +449,9 @@ contratto ha anche una seconda firma, per l'approvazione delle clausole.
   nella scheda del sottoscrittore, e la sezione "Esami" mostra sempre "Nessun
   esame registrato.". Nel documento compaiono solo gli esami già registrati.
 - La firma si acquisisce nella sezione Firma della pratica e compare nei PDF
-  generati dopo il salvataggio. Azienda e rinnovo non si impostano dal modulo:
-  il luogo e il rinnovo dipendono dai dati già registrati.
+  generati dopo il salvataggio. Il rinnovo si sceglie nella scheda delle
+  pratiche Lauree e compare nei PDF dopo il salvataggio. L'azienda non si
+  imposta dal modulo: il luogo dipende dai dati già registrati.
 
 ### Corsi singoli e dati che non entrano nel modulo
 

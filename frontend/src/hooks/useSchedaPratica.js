@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { caricaProdottoPratica, caricaSchedaPratica, salvaPratica } from "../lib/schedaPratica.js";
-import { payloadPratica, praticaVuota, prezzoAttuale, prezzoPerInput, sommaPrezzi } from "../lib/praticaForm.js";
+import { payloadPratica, praticaVuota, prezzoAttuale, prezzoPerInput, sommaPrezzi, valoriRinnovo } from "../lib/praticaForm.js";
 
 const NESSUN_PREZZO_ATTIVO = "Il percorso formativo scelto non ha un prezzo attivo.";
 
@@ -85,6 +85,11 @@ export default function useSchedaPratica(id, { corsiSingoli = false } = {}) {
       pratica_prezzo: corsiSelezionati.length ? somma : "" }));
   }
   const aggiorna = evento => setDati(attuali => ({ ...attuali, [evento.target.name]: evento.target.value }));
+  // I tre campi di rinnovo si escludono a vicenda (vedi valoriRinnovo in
+  // lib/praticaForm.js e il validatore gemello lato server): un solo
+  // aggiornamento di stato scrive tutte e tre le colonne, cosi' non c'e' una
+  // corsa fra tre setDati separati che si sovrascriverebbero a vicenda.
+  const impostaRinnovo = campoSelezionato => setDati(attuali => ({ ...attuali, ...valoriRinnovo(campoSelezionato) }));
   const salva = async () => {
     if (invio.current) return null;
     invio.current = true;
@@ -99,7 +104,7 @@ export default function useSchedaPratica(id, { corsiSingoli = false } = {}) {
     finally { invio.current = false; setSalvataggio(false); }
   };
   const universitaId = id ? dati.nome_universita_id : prodotto && prodotto.listTesta_id === percorsoId ? prodotto.nome_universita_id : null;
-  return { dati, aggiorna, ...catalogo, messaggio, salvataggio, salva, studente, setStudente,
+  return { dati, aggiorna, impostaRinnovo, ...catalogo, messaggio, salvataggio, salva, studente, setStudente,
     percorso, corsiSelezionati, setPercorsi, prodotto, erroreProdotto,
     universitaLabel: catalogo.universita.find(item => item.id === universitaId)?.descrizione,
     // Stato di una pratica nuova: fisso su "Bozza", non scelto dall'utente.

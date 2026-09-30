@@ -46,6 +46,22 @@ export function eContestoCorsiSingoli(tipoCorsoIds) {
   return tipoCorsoIds.some((id) => GRUPPO_PER_TIPO_CORSO[id] === "corsiSingoli");
 }
 
+/** Vero se il percorso scelto (prodotto.listino_tipoCorso_id) è di tipo
+ * Lauree: l'unico gruppo per cui la scheda mostra il rinnovo (vedi
+ * DatiPratica.jsx). */
+export function eGruppoLauree(listinoTipoCorsoId) {
+  return GRUPPO_PER_TIPO_CORSO[listinoTipoCorsoId] === "lauree";
+}
+
+// I tre campi si escludono a vicenda: un solo anno di rinnovo alla volta, o
+// nessuno (vedi impostaRinnovo in hooks/useSchedaPratica.js e il validatore
+// gemello in backend/src/pratiche/rinnovi.py, CAMPI_RINNOVO).
+export const CAMPI_RINNOVO = [
+  { nome: "pratica_rinnPrimoAnno", label: "Rinnovo primo anno" },
+  { nome: "pratica_rinnSecondoAnno", label: "Rinnovo secondo anno" },
+  { nome: "pratica_rinnTerzoAnno", label: "Rinnovo terzo anno" },
+];
+
 export const ETICHETTE_CAMPI_PERCORSO = {
   modalita: "Modalità di erogazione",
   facolta: "Facoltà",

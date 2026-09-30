@@ -76,6 +76,11 @@ alcuni hanno solo i modelli.
 `main.py` importa i modelli prima dei router. Serve a registrare i mapper di
 SQLAlchemy: togliere quegli import rompe le relazioni dichiarate per nome.
 
+In `pratiche/`, `models.py` contiene solo la mappatura ORM e `schemi.py` i
+contratti HTTP. `rinnovi.py` centralizza la scelta di un solo anno: gli schemi
+normalizzano i flag legacy e controllano il payload; il router di modifica
+controlla anche i valori già salvati, sotto lo stesso blocco della pratica.
+
 Lo script `backfill_contatti_storici.py` copia nelle nuove tabelle OTP le
 verifiche dei contatti registrate dal gestionale. Si lancia da `backend/` con
 `python -m src.comune.backfill_contatti_storici`. Senza opzioni non scrive

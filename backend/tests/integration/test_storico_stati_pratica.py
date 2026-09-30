@@ -9,8 +9,10 @@ from fastapi import BackgroundTasks, HTTPException
 
 from src.auth.visibilita import Visibilita
 from src.database import Base, engine
-from src.pratiche.models import Pratica, PraticaUpdate
+from src.pratiche.models import Pratica
+from src.pratiche.schemi import PraticaUpdate
 from src.pratiche.routers import aggiorna_pratica
+from src.pratiche.rinnovi import CAMPI_RINNOVO
 from src.pratiche_stati_storico.models import PraticaStatoStorico
 from src.utenti.models import Utente
 from src.listini_testa.models import ListinoTestaDB
@@ -72,6 +74,34 @@ def crea(client, studente, percorso, intestazioni, *, stato_id=None):
 
 def storico(db, pratica_id):
     return db.query(PraticaStatoStorico).filter(PraticaStatoStorico.pratica_id == pratica_id).all()
+
+
+def test_rinnovo_parziale_non_puo_aggiungere_un_secondo_anno(client, db, scenario):
+    studente, percorso, account, _ = scenario
+    pratica_id = crea(client, studente, percorso, account).json()["pratica_id"]
+    primo, secondo, terzo = CAMPI_RINNOVO
+    url = f"/pratiche/{pratica_id}"
+    assert client.put(url, json={primo: True}, headers=account).status_code == 200
+    risposta = client.put(url, json={secondo: True, "pratica_note": "Da non salvare"}, headers=account)
+    assert risposta.status_code == 422
+    db.rollback()
+    persistita = db.get(Pratica, pratica_id)
+    assert persistita.pratica_note != "Da non salvare"
+    assert getattr(persistita, primo) == -1 and not getattr(persistita, secondo)
+    risposta = client.put(url, json={primo: 0, secondo: -1, terzo: 0}, headers=account)
+    assert risposta.status_code == 200 and risposta.json()[secondo] == -1
+    assert client.put(url, json={secondo: None}, headers=account).json()[secondo] == 0
+
+
+def test_rinnovo_storico_incoerente_consente_lettura_e_modifica_note(client, db, scenario):
+    studente, percorso, account, _ = scenario
+    pratica_id = crea(client, studente, percorso, account).json()["pratica_id"]
+    prima = db.get(Pratica, pratica_id)
+    prima.pratica_rinnPrimoAnno = prima.pratica_rinnSecondoAnno = -1
+    db.commit()
+    assert client.get(f"/pratiche/{pratica_id}", headers=account).status_code == 200
+    risposta = client.put(f"/pratiche/{pratica_id}", json={"pratica_note": "Nota aggiornata"}, headers=account)
+    assert risposta.status_code == 200 and risposta.json()["pratica_note"] == "Nota aggiornata"
 
 
 @pytest.mark.parametrize("stati_intermedi", [(STATO_CARICATA,), (STATO_CARICATA, STATO_BOZZA)])
