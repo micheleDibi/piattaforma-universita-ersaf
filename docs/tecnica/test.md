@@ -134,7 +134,7 @@ secondi.
 | `mailer`, `sms` | Automatiche: spie in memoria, svuotate a ogni test. Nessun test può spedire davvero |
 | `stato_edunews24` | Automatica: prima e dopo ogni test azzera il servizio EduNews24 (cache, pause, budget, cursori) |
 | `spia_sql` | Raccoglie gli statement SQL eseguiti mentre è attiva. Si registra dopo il listener della visibilità, quindi li vede già con il prefisso `SET STATEMENT`: è così che si verifica dove il prefisso compare |
-| `tabella_pratiche` | Crea `pratiche` dai modelli e la svuota prima e dopo. Non sta fra le tabelle troncate, e il `TRUNCATE` di `aziende` riusa gli id: una pratica rimasta finirebbe "nell'azienda 1" del test successivo |
+| `tabella_pratiche` | Crea `pratiche` dai modelli e la svuota prima e dopo, e prepara le tabelle contabili sintetiche di `tests/support/contabilita.py`. Non sta fra le tabelle troncate, e il `TRUNCATE` di `aziende` riusa gli id: una pratica rimasta finirebbe "nell'azienda 1" del test successivo |
 
 Altri comportamenti da conoscere:
 
@@ -380,6 +380,15 @@ dei campi di rinnovo quando il percorso non è di tipo Lauree.
 `tests/support/pratiche.py` prepara solo lookup e template email sintetici;
 la pulizia elimina lo storico prima delle pratiche, rispettando le chiavi
 esterne. Le email sono catturate dal backend in memoria: nessun invio reale.
+
+Il conftest fissa `SCHEMA_GESTIONE_PAGAMENTI` a `ersaf_test`, quindi le
+tabelle contabili che la creazione di una pratica SSML o A4U scrive stanno nel
+database di test: `tests/support/contabilita.py` le crea (`articolo`,
+`articolo_pratica`, `documento`, `documento_articolo`, i loro tipi e gruppi e
+`pratica_codice`) con colonne e tipi del database reale, senza le chiavi
+esterne verso le tabelle legacy. `test_dopo_salvataggio_pratica.py` verifica
+righe e collegamenti, la numerazione che riparte dal massimo esistente, i
+contatori concorrenti e l'annullamento di tutto se manca un dato.
 
 I test del deploy EduNews24 separano overlay e notifiche
 (`scripts/documentazione/tests/test_deploy_edunews24.py`) da DNS e firewall
