@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
 import { suffissoCampo } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
 import {
@@ -9,93 +7,38 @@ import {
 } from "../config/styles/tabella";
 import { STILI_AZIENDA as stili } from "../config/styles/azienda.js";
 import { TESTI_AZIENDA } from "../config/testi/azienda.js";
-import {
-  CAMPI_PERCENTUALI,
-  CONVENZIONI,
-} from "../config/campiPercentuali.js";
+import { CONVENZIONI } from "../config/campiPercentuali.js";
+import { messaggioAzzeramento } from "../lib/schedaAzienda.js";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 import AlertMessage from "./AlertMessage.jsx";
 
 const TESTI = TESTI_AZIENDA.convenzioni;
 
+// Sola presentazione: lettura, scrittura, salvataggio e la conferma
+// dell'azzeramento a cascata vivono in useDettaglioConvenzioni.js, condiviso
+// da chi la mostra in sola lettura (scheda dell'attuatore) e da chi la
+// mostra in scrittura (scheda dell'azienda). Non ha piu' un pulsante di
+// salvataggio proprio: in scrittura lo aziona "Salva modifiche" della scheda
+// azienda, che deve fermarsi per la conferma prima di salvare anche
+// l'anagrafica (vedi SchedaAzienda.jsx).
+//
 // inSezione: dentro una SezioneModulo, che porta titolo e descrizione.
 // Altrimenti (scheda Azienda dell'attuatore) il blocco ha un titolo proprio.
 // soloLettura: la scheda dell'attuatore mostra le percentuali dell'azienda
 // associata solo in visione, perche' si modificano dalla scheda dell'azienda
-// (che le applica anche alle aziende figlie).
+// (che le applica anche alle aziende figlie): niente input, niente conferma.
 export default function DettaglioConvenzioniUniversitarie({
-  aziendaId,
+  dettaglio,
+  caricamento,
+  errore,
+  onChangePercentuale,
+  resetPendente,
+  onConferma,
+  onAnnulla,
+  salvataggio,
   soloLettura = false,
   inSezione = false,
 }) {
-  const [dettaglio, setDettaglio] = useState(null);
-  const [caricamento, setCaricamento] = useState(Boolean(aziendaId));
-  const [errore, setErrore] = useState("");
-  const [salvataggio, setSalvataggio] = useState(false);
-  const [confermaResetPendente, setConfermaResetPendente] = useState(false);
-
-  useEffect(() => {
-    if (!aziendaId) return;
-
-    let annullato = false;
-    apiFetch(`/aziende/${aziendaId}/dettagli`)
-      .then(async (risposta) => {
-        if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
-        return risposta.json();
-      })
-      .then((dati) => {
-        if (annullato) return;
-        setDettaglio(dati);
-      })
-      .catch((err) => {
-        if (annullato) return;
-        setErrore(err.message);
-      })
-      .finally(() => {
-        if (!annullato) setCaricamento(false);
-      });
-
-    return () => {
-      annullato = true;
-    };
-  }, [aziendaId]);
-
-  const aggiornaPercentuale = (evento) => {
-    const { name, value } = evento.target;
-    setDettaglio((prec) => ({
-      ...prec,
-      [name]: value === "" ? 0 : Number(value),
-    }));
-  };
-
-  const salvaDettaglio = async (conferma = false) => {
-    setErrore("");
-    setSalvataggio(true);
-    try {
-      const corpo = Object.fromEntries(
-        CAMPI_PERCENTUALI.map(([chiave]) => [chiave, dettaglio?.[chiave] ?? 0]),
-      );
-      const query = conferma ? "?conferma_reset=true" : "";
-      const risposta = await apiFetch(
-        `/aziende/${aziendaId}/dettagli${query}`,
-        { method: "PUT", body: JSON.stringify(corpo) },
-      );
-
-      if (risposta.status === 409) {
-        setConfermaResetPendente(true);
-        return;
-      }
-
-      if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
-      setConfermaResetPendente(false);
-      setDettaglio(await leggiJson(risposta));
-    } catch (err) {
-      setErrore(err.message);
-    } finally {
-      setSalvataggio(false);
-    }
-  };
-
   const titolo = !inSezione && (
     <h3 className={stili.titoloConvenzioni}>{TESTI.titoloAttuatore}</h3>
   );
@@ -142,7 +85,7 @@ export default function DettaglioConvenzioniUniversitarie({
           max="100"
           aria-label={TESTI.etichettaCampo(ateneo, TESTI.tipologie[indice])}
           value={dettaglio?.[nome] ?? 0}
-          onChange={aggiornaPercentuale}
+          onChange={onChangePercentuale}
           className={stili.percentuale}
         />
         {simbolo}
@@ -177,13 +120,14 @@ export default function DettaglioConvenzioniUniversitarie({
         ))}
       </div>
 
-      {!soloLettura && confermaResetPendente && (
+      {!soloLettura && resetPendente && (
         <div className={stili.conferma}>
           <div className={stili.messaggioConferma}>
             <AlertMessage
               message={{
                 type: "warning",
-                text: TESTI_AZIENDA.azzeramento.messaggio,
+                text: messaggioAzzeramento(resetPendente),
+                nota: TESTI_AZIENDA.azzeramento.nota,
               }}
               separato={false}
             />
@@ -191,7 +135,7 @@ export default function DettaglioConvenzioniUniversitarie({
           <div className={stili.pulsantiConferma}>
             <button
               type="button"
-              onClick={() => salvaDettaglio(true)}
+              onClick={onConferma}
               disabled={salvataggio}
               className={pulsante("primario", "piccolo")}
             >
@@ -199,27 +143,12 @@ export default function DettaglioConvenzioniUniversitarie({
             </button>
             <button
               type="button"
-              onClick={() => setConfermaResetPendente(false)}
+              onClick={onAnnulla}
               className={pulsante("testuale", "piccolo")}
             >
               {TESTI_AZIENDA.azzeramento.annulla}
             </button>
           </div>
-        </div>
-      )}
-
-      {!soloLettura && (
-        <div className={stili.azioniConvenzioni}>
-          {/* type="button": puo' vivere dentro il <form> di una scheda che
-              lo racchiude, non deve inviarne il submit. */}
-          <button
-            type="button"
-            onClick={() => salvaDettaglio()}
-            disabled={salvataggio}
-            className={pulsante("contornoPrimario", "normale")}
-          >
-            {salvataggio ? TESTI_AZIENDA.salvataggio : TESTI.salva}
-          </button>
         </div>
       )}
     </div>

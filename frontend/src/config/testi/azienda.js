@@ -86,12 +86,13 @@ export const TESTI_AZIENDA = {
     // Unita' di misura accanto ai valori.
     percento: "%",
     etichettaCampo: (ateneo, tipologia) => `${ateneo} - ${tipologia}`,
-    salva: "Salva percentuali",
   },
 
   // Conferma chiesta dal server (409) prima di azzerare delle percentuali.
+  // Il messaggio elenca i campi coinvolti: vedi messaggioAzzeramento in
+  // lib/schedaAzienda.js.
   azzeramento: {
-    messaggio: "Alcune percentuali verranno azzerate. Continuare?",
+    nota: "Una percentuale non può superare quella dell'azienda padre.",
     conferma: "Conferma",
     annulla: "Annulla",
   },

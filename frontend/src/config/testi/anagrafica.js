@@ -15,6 +15,7 @@ export const TESTI_ANAGRAFICA = {
   erroreCaricamento: "Impossibile caricare l’anagrafica.",
   sessioneScaduta: "Sessione scaduta. Rifai il login prima di salvare.",
   salvataggioRiuscito: "Modifiche salvate con successo!",
+  erroreSchedaUtente: "Correggi l'errore nella scheda Utente prima di salvare.",
   // Schede: le chiavi sono gli id della query ?scheda=.
   etichettaSchede: "Schede anagrafica",
   schede: {
@@ -32,12 +33,13 @@ export const TESTI_ANAGRAFICA = {
   annulla: "Annulla",
   salva: "Salva modifiche",
   crea: (tipoUtente) => `Crea ${nome(tipoUtente)}`,
-  // Sezione Ruolo, solo per gli attuatori.
+  // Sezione Ruolo, solo per gli attuatori. Aderente e' il default: non c'e'
+  // una voce segnaposto separata, la tendina parte gia' su Aderente (vedi
+  // NuovoSottoscrittore.jsx).
   ruolo: {
     titolo: "Ruolo",
     descrizione: "Livello dell'attuatore nella rete.",
     etichetta: "Ruolo attuatore",
-    predefinito: "Aderente (default)",
   },
 };
 
@@ -224,8 +226,6 @@ export const TESTI_UTENTE = {
   padre: "Utente padre",
   cambiaPadre: "Cambia padre",
   accedi: "Accedi con questo utente",
-  salva: "Salva utente",
-  salvataggio: "Salvataggio...",
   cronologia: "Cronologia",
   creato: "Creato il",
   aggiornato: "Ultimo aggiornamento",
@@ -239,7 +239,6 @@ export const TESTI_UTENTE = {
   errore: (messaggio) => `Errore: ${messaggio}`,
   padreSenzaUtente: "L'attuatore selezionato non ha un utente associato.",
   ruoloMancante: "Seleziona un ruolo prima di salvare.",
-  salvataggioRiuscito: "Modifiche salvate con successo!",
 };
 
 // Scheda Abilitazioni dell'attuatore: etichetta per colonna dei flag. L'elenco

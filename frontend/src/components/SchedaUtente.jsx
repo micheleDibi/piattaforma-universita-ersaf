@@ -1,6 +1,6 @@
 import { ROTTA_INIZIALE } from "../config/routes/percorsi.js";
 import { SEGNAPOSTI_SELEZIONE } from "../config/testi/selezioni.js";
-import { useEffect, useState } from "react";
+import { useEffect, useImperativeHandle, useState } from "react";
 import { useParams } from "react-router";
 import ModalCambiaPadre from "./ModalCambiaPadre";
 import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
@@ -15,7 +15,13 @@ import CampoModulo from "./shared/CampoModulo.jsx";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 import AlertMessage from "./AlertMessage.jsx";
 
-export default function SchedaUtente() {
+// ref: espone salva() a NuovoSottoscrittore.jsx, che la chiama da "Salva
+// modifiche" - non c'e' piu' un pulsante di salvataggio proprio. Il
+// componente resta montato anche quando questa non e' la scheda attiva
+// (nascosto da NuovoSottoscrittore con l'attributo hidden, non smontato):
+// altrimenti cambiare scheda prima di salvare perderebbe le modifiche non
+// ancora salvate insieme al resto del suo stato locale.
+export default function SchedaUtente({ ref }) {
   const { clienteId: id } = useParams();
 
   const [cliente, setCliente] = useState(null);
@@ -25,7 +31,6 @@ export default function SchedaUtente() {
   const [username, setUsername] = useState("");
   const [ruoloId, setRuoloId] = useState("");
   const [attivoSN, setAttivoSN] = useState(-1);
-  const [saving, setSaving] = useState(false);
   const [avviso, setAvviso] = useState(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -95,18 +100,20 @@ export default function SchedaUtente() {
     setIsModalOpen(false);
   };
 
-  const handleSave = async () => {
-    if (!id) return;
+  // true: salvato (o niente da salvare, in creazione). false: fallito -
+  // l'avviso e' gia' impostato qui, chi chiama (NuovoSottoscrittore.jsx) deve
+  // solo fermarsi, senza proseguire con il resto del salvataggio della pagina.
+  const salva = async () => {
+    if (!id) return true;
     setAvviso(null);
     // Number("") vale 0, cioe' il ruolo "Utente", che non accede: senza questa
     // guardia bastava salvare con la tendina non selezionata per chiudere
     // fuori l'utente.
     if (ruoloId === "" || ruoloId === null) {
       setAvviso({ type: "error", text: testi.ruoloMancante });
-      return;
+      return false;
     }
 
-    setSaving(true);
     try {
       // Si mandano SOLO i campi che questa scheda modifica. Prima partiva
       // l'intero oggetto cliente, relazioni annidate comprese.
@@ -136,13 +143,14 @@ export default function SchedaUtente() {
       }
 
       setCliente(clienteAggiornato);
-      setAvviso({ type: "success", text: testi.salvataggioRiuscito });
+      return true;
     } catch (err) {
       setAvviso({ type: "error", text: err.message });
-    } finally {
-      setSaving(false);
+      return false;
     }
   };
+
+  useImperativeHandle(ref, () => ({ salva }));
 
   const handleLoginAutomatico = async () => {
     const utenteId = cliente?.utente?.utente_id;
@@ -267,8 +275,8 @@ export default function SchedaUtente() {
           </div>
         </div>
 
-        <div className={stili.azioniUtente}>
-          {mostraLoginAutomatico && (
+        {mostraLoginAutomatico && (
+          <div className={stili.azioniUtente}>
             <button
               onClick={handleLoginAutomatico}
               type="button"
@@ -276,16 +284,8 @@ export default function SchedaUtente() {
             >
               {testi.accedi}
             </button>
-          )}
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className={pulsante("contorno")}
-          >
-            {saving ? testi.salvataggio : testi.salva}
-          </button>
-        </div>
+          </div>
+        )}
       </SezioneModulo>
 
       <SezioneModulo titolo={testi.cronologia} griglia={false}>

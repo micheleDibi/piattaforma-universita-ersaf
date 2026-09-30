@@ -59,6 +59,18 @@ export function elencoFeedback() {
   return "flex list-disc flex-col gap-0.5 pl-4.5";
 }
 
+/**
+ * Nota secondaria dentro il riquadro, sotto il messaggio principale: stesso
+ * colore ma piu' piccola e staccata (per esempio la regola dell'azzeramento
+ * sotto l'avviso di conferma, vedi AlertMessage.jsx). Non un messaggio a se':
+ * vive nello stesso riquadro colorato di `message`.
+ * @param {"error"|"success"|"warning"|"info"} tipo
+ */
+export function notaFeedback(tipo) {
+  const variante = VARIANTI[tipo] ?? VARIANTI.error;
+  return `mt-2 text-nota ${variante.testo}`;
+}
+
 export const STILI_FEEDBACK = {
   testo: "min-w-0 break-words",
 };

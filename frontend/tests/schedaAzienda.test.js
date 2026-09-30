@@ -1,14 +1,25 @@
-import { afterEach, test } from "node:test";
+import { afterEach, before, test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  caricaDettaglioConvenzioni,
   caricaPadreAzienda,
+  messaggioAzzeramento,
   nomeAzienda,
   noteCampiAzienda,
   pivaNonConforme,
+  salvaDettaglioConvenzioni,
   sottotitoloAzienda,
 } from "../src/lib/schedaAzienda.js";
 import { PROPRIETA_CAMPI, SEZIONI_AZIENDA } from "../src/config/campiAzienda.js";
 import { STILI_AZIENDA } from "../src/config/styles/azienda.js";
+import { salvaSessione } from "../src/lib/sessione.js";
+
+// salvaDettaglioConvenzioni fa una PUT: apiFetch le allega il CSRF di una
+// sessione gia' caricata, stesso schema di schedaPratica.test.js.
+before(() => {
+  globalThis.window = { localStorage: { removeItem() {} }, sessionStorage: { removeItem() {} } };
+  salvaSessione({ utente_id: 999, ruolo_codice: "Nazionale", csrf_token: "a".repeat(64) });
+});
 
 const PADRE = { azienda_id: 7, azienda_ragione_sociale: "BETA SPA" };
 
@@ -116,6 +127,80 @@ test("caricaPadreAzienda: padre non leggibile, resta l'id", async () => {
 test("caricaPadreAzienda: errore del server sull'arco", async () => {
   rispondi(json({ detail: "Errore interno." }, 500));
   await assert.rejects(caricaPadreAzienda(5));
+});
+
+test("caricaDettaglioConvenzioni: legge le percentuali dell'azienda", async () => {
+  const dettaglio = { universita_ecampus_lauree: 10, universita_ecampus_master: 0 };
+  const richieste = rispondi(json(dettaglio));
+  assert.deepEqual(await caricaDettaglioConvenzioni(5), dettaglio);
+  assert.match(richieste[0], /\/aziende\/5\/dettagli$/);
+});
+
+test("caricaDettaglioConvenzioni: errore del server", async () => {
+  rispondi(json({ detail: "Errore interno." }, 500));
+  await assert.rejects(caricaDettaglioConvenzioni(5));
+});
+
+test("salvaDettaglioConvenzioni: salva senza conferma quando non serve azzerare nulla", async () => {
+  const salvato = { universita_ecampus_lauree: 20 };
+  const richieste = rispondi(json(salvato));
+  const risultato = await salvaDettaglioConvenzioni(5, { universita_ecampus_lauree: 20 });
+  assert.deepEqual(risultato, { esito: "ok", dettaglio: salvato });
+  assert.match(richieste[0], /\/aziende\/5\/dettagli$/);
+});
+
+test("salvaDettaglioConvenzioni: 409 chiede conferma e non salva ancora nulla, con l'elenco dei campi", async () => {
+  const reset = [{ azienda_id: 9, azienda_ragione_sociale: "GAMMA SRL", campi: ["universita_ecampus_lauree"] }];
+  rispondi(json({ richiede_conferma: true, reset }, 409));
+  const risultato = await salvaDettaglioConvenzioni(5, { universita_ecampus_lauree: 0 });
+  assert.deepEqual(risultato, { esito: "richiedeConferma", reset });
+});
+
+test("salvaDettaglioConvenzioni: con conferma ripete la richiesta con conferma_reset=true", async () => {
+  const richieste = rispondi(json({ universita_ecampus_lauree: 0 }));
+  await salvaDettaglioConvenzioni(5, { universita_ecampus_lauree: 0 }, { conferma: true });
+  assert.match(richieste[0], /\/aziende\/5\/dettagli\?conferma_reset=true$/);
+});
+
+test("salvaDettaglioConvenzioni: un errore diverso da 409 si propaga", async () => {
+  rispondi(json({ detail: "Valore non valido." }, 422));
+  await assert.rejects(salvaDettaglioConvenzioni(5, {}));
+});
+
+test("messaggioAzzeramento: un solo ateneo, senza la tipologia", () => {
+  assert.equal(
+    messaggioAzzeramento([{ azienda_id: 1, campi: ["universita_ecampus_lauree"] }]),
+    "Le percentuali di eCampus verranno azzerate. Continuare?",
+  );
+});
+
+test("messaggioAzzeramento: piu' tipologie dello stesso ateneo contano una volta sola", () => {
+  assert.equal(
+    messaggioAzzeramento([
+      { azienda_id: 1, campi: ["universita_ecampus_master", "universita_ecampus_lauree"] },
+    ]),
+    "Le percentuali di eCampus verranno azzerate. Continuare?",
+  );
+});
+
+test("messaggioAzzeramento: piu' atenei, nell'ordine della tabella", () => {
+  assert.equal(
+    messaggioAzzeramento([
+      { azienda_id: 1, campi: ["universita_SSML_master", "universita_ecampus_lauree"] },
+    ]),
+    "Le percentuali di eCampus e SSML verranno azzerate. Continuare?",
+  );
+});
+
+test("messaggioAzzeramento: piu' aziende coinvolte, atenei deduplicati", () => {
+  assert.equal(
+    messaggioAzzeramento([
+      { azienda_id: 1, campi: ["universita_ecampus_lauree", "universita_link_master"] },
+      { azienda_id: 2, campi: ["universita_ecampus_lauree"] },
+      { azienda_id: 3, campi: ["universita_A4U_perfezionamenti"] },
+    ]),
+    "Le percentuali di eCampus, Link e A4U verranno azzerate. Continuare?",
+  );
 });
 
 test("finestra di creazione rapida: IBAN e BIC con le colonne di Coordinate bancarie", () => {

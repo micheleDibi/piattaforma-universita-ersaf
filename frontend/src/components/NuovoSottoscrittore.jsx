@@ -6,7 +6,7 @@ import { QUERY_ANAGRAFICA } from "../config/routes/query.js";
 import { PERCORSI } from "../config/routes/percorsi.js";
 import { ANAGRAFICA_INIZIALE } from "../config/anagraficaIniziale.js";
 import { useIngresso } from "../hooks/useIngresso.js";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
 import { leggiUtenteId } from "../lib/sessione";
@@ -64,6 +64,9 @@ function NuovoSottoscrittore({ tipoUtente }) {
 
   const [lettura, setLettura] = useState({ loading: isEditMode, errore: null });
   const [formData, setFormData] = useState(ANAGRAFICA_INIZIALE);
+  // La scheda Utente resta sempre montata (vedi il rendering piu' sotto):
+  // "Salva modifiche" la aziona da qui, qualunque sia la scheda attiva.
+  const schedaUtenteRef = useRef(null);
   const [avviso, setAvviso] = useState(null);
   const [anomalie, setAnomalie] = useState([]);
   // Valori letti dal server: una nota per campo resta visibile finche' il
@@ -84,9 +87,21 @@ function NuovoSottoscrittore({ tipoUtente }) {
         if (!res.ok) throw new Error("Errore nel recupero dei ruoli");
         return res.json();
       })
-      .then((data) => setRuoli(data))
+      .then((data) => {
+        setRuoli(data);
+        // In creazione la tendina parte gia' su "Aderente" (il default che
+        // il backend assegna comunque se non si manda cliente_ruolo): niente
+        // piu' una voce segnaposto "Aderente (default)" a se stante, che
+        // sembrava una scelta diversa dalla vera opzione "Aderente" subito
+        // sotto. In modifica ruoloSelezionato arriva gia' da cliente_ruolo,
+        // non va toccato.
+        if (!isEditMode) {
+          const aderente = data.find((r) => r.ruolo_codice === "Aderente");
+          if (aderente) setRuoloSelezionato((prec) => prec || String(aderente.ruolo_id));
+        }
+      })
       .catch((err) => console.error("Errore nel recupero dei ruoli:", err));
-  }, [tipoUtente]);
+  }, [tipoUtente, isEditMode]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -222,6 +237,20 @@ function NuovoSottoscrittore({ tipoUtente }) {
     if (utenteId === null) {
       setAvviso({ type: "error", text: testi.sessioneScaduta });
       navigate(ROTTE.accesso);
+      return;
+    }
+
+    // La scheda Utente (ruolo, username, stato, padre) si salva per prima:
+    // se fallisce (per esempio "Seleziona un ruolo prima di salvare"), non si
+    // procede con il resto - un solo salvataggio percepito. L'errore specifico
+    // resta visibile li' (AlertMessage di SchedaUtente): qui si passa alla
+    // scheda per farlo vedere subito, anche se non era quella aperta.
+    const utenteSalvato = schedaUtenteRef.current
+      ? await schedaUtenteRef.current.salva()
+      : true;
+    if (!utenteSalvato) {
+      setAvviso({ type: "error", text: testi.erroreSchedaUtente });
+      setActiveTab("utente");
       return;
     }
 
@@ -423,6 +452,14 @@ function NuovoSottoscrittore({ tipoUtente }) {
               PANNELLI_CON_MARGINE.has(activeTab) ? "" : "schede__pannello--sezioni"
             }`}
           >
+            {/* Sempre montata, a differenza delle altre schede: "Salva
+                modifiche" la aziona da qui (vedi schedaUtenteRef in
+                handleSubmit), qualunque sia la scheda aperta in quel momento.
+                Se si smontasse cambiando scheda, le modifiche non ancora
+                salvate del suo stato locale andrebbero perse. */}
+            <div hidden={activeTab !== "utente"}>
+              <SchedaUtente ref={schedaUtenteRef} />
+            </div>
             {activeTab === "dati-principali" ? (
               <div>
                 <FormInformazioniPersonali
@@ -449,7 +486,6 @@ function NuovoSottoscrittore({ tipoUtente }) {
                         onChange={(e) => setRuoloSelezionato(e.target.value)}
                         className={campo("comodo")}
                       >
-                        <option value="">{testi.ruolo.predefinito}</option>
                         {ruoli
                           .filter((r) =>
                             RUOLI_ATTUATORE.includes(r.ruolo_codice),
@@ -483,7 +519,7 @@ function NuovoSottoscrittore({ tipoUtente }) {
                 />
               </div>
             ) : activeTab === "utente" ? (
-              <SchedaUtente />
+              null
             ) : activeTab === "curriculum" ? (
               <SchedaCurriculumFormativo
                 formData={formData}

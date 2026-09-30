@@ -2,6 +2,7 @@ import PaginaNonTrovata from "./PaginaNonTrovata.jsx";
 import StatoCaricamentoDettaglio from "./shared/StatoCaricamentoDettaglio.jsx";
 import useNavigazioneElenco from "../hooks/useNavigazioneElenco.js";
 import usePadreAzienda from "../hooks/usePadreAzienda.js";
+import useDettaglioConvenzioni from "../hooks/useDettaglioConvenzioni.js";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { apiFetch, messaggioErrore } from "../lib/api";
@@ -38,6 +39,7 @@ export default function SchedaAzienda() {
   const [errore, setErrore] = useState("");
   const [salvataggio, setSalvataggio] = useState(false);
   const padre = usePadreAzienda(inModifica ? id : undefined);
+  const convenzioni = useDettaglioConvenzioni(inModifica ? id : undefined);
 
   useEffect(() => {
     if (!inModifica) return;
@@ -78,21 +80,32 @@ export default function SchedaAzienda() {
   const aggiorna = (evento) =>
     setDati((prec) => ({ ...prec, [evento.target.name]: evento.target.value }));
 
-  const invia = async (evento) => {
-    evento.preventDefault();
-    setErrore("");
-    setSalvataggio(true);
-
+  const salvaAnagrafica = async () => {
     const corpo = Object.fromEntries(
       Object.entries(dati).filter(([, valore]) => valore !== ""),
     );
+    const risposta = await apiFetch(
+      inModifica ? `/aziende/${id}` : "/aziende/",
+      { method: inModifica ? "PUT" : "POST", body: JSON.stringify(corpo) },
+    );
+    if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
+  };
 
+  // "Salva modifiche" fa anche le percentuali delle convenzioni: prima loro
+  // (l'unica parte che puo' chiedere conferma, per l'azzeramento a cascata
+  // sulle aziende figlie), poi l'anagrafica. Se le percentuali restano in
+  // sospeso in attesa di conferma (o falliscono), l'anagrafica non si tocca:
+  // un solo salvataggio percepito, tutto o niente. `conferma` e' true solo
+  // quando arriva dal pulsante "Conferma" dell'avviso di azzeramento.
+  const procedi = async (conferma) => {
+    setErrore("");
+    setSalvataggio(true);
     try {
-      const risposta = await apiFetch(
-        inModifica ? `/aziende/${id}` : "/aziende/",
-        { method: inModifica ? "PUT" : "POST", body: JSON.stringify(corpo) },
-      );
-      if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
+      if (inModifica) {
+        const completato = await convenzioni.salva(conferma);
+        if (!completato) return;
+      }
+      await salvaAnagrafica();
       navigate(ritorno);
     } catch (err) {
       setErrore(err.message);
@@ -100,6 +113,12 @@ export default function SchedaAzienda() {
       setSalvataggio(false);
     }
   };
+
+  const invia = (evento) => {
+    evento.preventDefault();
+    procedi(false);
+  };
+  const confermaEProsegui = () => procedi(true);
 
   if (erroreLettura?.status === 404) return <PaginaNonTrovata />;
   if (erroreLettura)
@@ -179,7 +198,17 @@ export default function SchedaAzienda() {
               descrizione={SEZIONI.convenzioni.descrizione}
               griglia={false}
             >
-              <DettaglioConvenzioniUniversitarie aziendaId={id} inSezione />
+              <DettaglioConvenzioniUniversitarie
+                inSezione
+                dettaglio={convenzioni.dettaglio}
+                caricamento={convenzioni.caricamento}
+                errore={convenzioni.errore}
+                onChangePercentuale={convenzioni.aggiornaPercentuale}
+                resetPendente={convenzioni.resetPendente}
+                onConferma={confermaEProsegui}
+                onAnnulla={convenzioni.annullaConferma}
+                salvataggio={salvataggio}
+              />
             </SezioneModulo>
           )}
         </div>
