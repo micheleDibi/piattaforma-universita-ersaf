@@ -130,7 +130,10 @@ sinistra e campi a destra:
   Donna), data di nascita, luogo e provincia di nascita, cittadinanza.
 - **Ruolo**, solo per gli attuatori: tendina «Ruolo attuatore», che parte già
   su Aderente (il ruolo assegnato se non lo si cambia), seguita da Regionale,
-  Provinciale e Nazionale, nell'ordine in cui i ruoli sono registrati.
+  Provinciale e Nazionale, nell'ordine in cui i ruoli sono registrati. Se la
+  persona ha un altro ruolo, per esempio Utente, compare anche quello. È lo
+  stesso valore del ruolo nella scheda Utente: cambiarne uno cambia anche
+  l'altro.
 - **Contatti**: email e cellulare, in due riquadri in evidenza; sotto, in
   «Altri recapiti», PEC e telefono, in campi più piccoli.
 - **Documento**: tipo (carta d'identità, passaporto, patente), numero, comune
@@ -148,8 +151,9 @@ selezionato.» finché l'anagrafica non è salvata.
 «Crea sottoscrittore» o «Crea attuatore», nella barra in fondo alla scheda,
 salva tutto insieme.
 
-Chiunque arrivi alla pagina può scegliere qualunque ruolo da attuatore,
-Nazionale compreso.
+Chi non è Nazionale vede la voce Nazionale ma non può sceglierla, e sulla
+propria scheda non può cambiarsi il ruolo; il server applica comunque le stesse
+regole (vedi [Ruoli e permessi](ruoli-e-permessi.md)).
 
 Nota: né l'interfaccia né il server limitano chi può assegnare un ruolo; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
@@ -331,12 +335,19 @@ caratteri. Sono due dati distinti, e nessuno dei due ha a che vedere con la
 
 La scheda ha due sezioni. «Account e ruolo» contiene:
 
-- il nome utente («Username»), modificabile;
+- il nome utente («Username»);
 - lo stato, un'etichetta verde «Attivo» o rossa «Disattivo»: un clic la fa
   passare all'altro valore;
 - il ruolo, con tutti i ruoli: Utente, Aderente, Regionale, Provinciale,
-  Consulente, Nazionale, Operatore;
+  Consulente, Nazionale, Operatore. Chi non è Nazionale vede Nazionale ma non
+  può sceglierlo, e sulla propria scheda la tendina è bloccata. Per un
+  attuatore è lo stesso valore della tendina «Ruolo attuatore» dei Dati
+  principali;
 - l'utente padre, in un riquadro con il nome e il pulsante «Cambia padre».
+
+Nome utente, stato e «Cambia padre» si modificano sulla propria scheda oppure
+da Regionale o Nazionale; per gli altri sono bloccati e il salvataggio manda
+solo il ruolo.
 
 Accanto al riquadro dell'utente padre compare «Accedi con questo utente» per
 un utente attivo con un ruolo da attuatore. Come si salva il ruolo, chi può
@@ -352,18 +363,13 @@ pagina, insieme al resto della scheda (vedi sopra). Se manca il ruolo, «Salva
 modifiche» si ferma con l'errore «Seleziona un ruolo prima di salvare.» e
 apre questa scheda per farlo vedere, anche se non era quella aperta.
 
-Restano quattro comportamenti propri di questa scheda:
+Restano due comportamenti propri di questa scheda:
 
-- se chi salva non può modificare nome utente, stato e utente padre, il ruolo
-  viene comunque salvato per primo: dopo il messaggio di errore il ruolo
-  risulta cambiato e il resto no;
-- per un attuatore, «Salva modifiche» scrive il ruolo due volte: prima quello
-  di questa scheda, poi quello scelto nei Dati principali. Se sono diversi,
-  vince quello dei Dati principali;
 - il nome utente si può cambiare anche in uno già usato da un altro utente. In
   quel caso nessuno dei due riesce più ad accedere;
-- il salvataggio di questa scheda invia sempre lo stato. Su un account ancora
-  in attesa, annulla l'attivazione automatica (vedi più avanti).
+- quando chi salva può modificare l'account, il salvataggio di questa scheda
+  invia sempre lo stato. Su un account ancora in attesa, annulla
+  l'attivazione automatica (vedi più avanti).
 
 Nota: su questi punti interfaccia e server non sono allineati; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
