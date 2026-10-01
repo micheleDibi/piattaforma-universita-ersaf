@@ -48,6 +48,9 @@ def avvia(accesso, conn=None):
 def aggiorna(accesso, coordinate, dopo, aggiorna_presenza):
     conn, sid = coordinate
     with sessioni.transazione(accesso) as (db, i):
+        # Quorum e ACK prendono prima questo lock e poi leggono la presenza.
+        # Rinnovare la lease prima del lock invertiva l'ordine tra dispositivi.
+        eventi.blocca(db, i.utente_id)
         online = None
         if aggiorna_presenza:
             presenza.rinnova(db, i, conn, sid)

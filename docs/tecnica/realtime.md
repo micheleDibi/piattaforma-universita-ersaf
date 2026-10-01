@@ -16,6 +16,11 @@ Le otto query in `backend/src/realtime/sql/` sono risorse applicative versionate
 distinte dai dump ignorati da Git. L'avvio verifica che siano tutte presenti e
 non vuote: una release incompleta si ferma prima di dichiararsi pronta.
 
+Il rinnovo della presenza prende il lock del flusso utente prima di aggiornare
+la lease, nello stesso ordine di quorum e ACK. Sessioni distinte dello stesso
+utente possono cosi rinnovare la connessione e confermare le consegne senza
+invertire i lock MariaDB.
+
 ## Responsabilità
 
 | Parte | Moduli |
