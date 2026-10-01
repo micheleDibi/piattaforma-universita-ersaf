@@ -86,7 +86,7 @@ Cosa succede quando riesce:
 
 Per tornare a sé stessi si usa "Esci" e si accede di nuovo con le proprie credenziali. Il Nazionale ripete anche il secondo fattore.
 
-Il pulsante compare quando la scheda mostra lo stato "Attivo" e un ruolo fra Aderente, Provinciale, Regionale e Nazionale, anche se non ancora salvati. Compare qualunque sia il ruolo di chi guarda: un Aderente o un Provinciale che lo preme riceve "Non hai i permessi per questa operazione.".
+Il pulsante compare solo al **Nazionale**, quando la scheda mostra lo stato "Attivo" e un ruolo fra Aderente, Provinciale, Regionale e Nazionale, anche se non ancora salvati. Il server accetta la richiesta anche da un Regionale, che però non ha più il pulsante.
 
 Nota: l'interfaccia mostra il pulsante anche a chi non può usarlo e anche davanti a un Nazionale, e il server rifiuta; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
