@@ -16,7 +16,16 @@ export function opzionePercorsoConDettaglio(prodotto, oggi) {
   const dettaglio = dettaglioAttuale(prodotto.dettagli, oggi);
   return { id: prodotto.listTesta_id, codice: prodotto.listTesta_codice || "",
     label: prodotto.listTesta_descrizione,
-    prezzo: dettaglio?.listDettaglio_prezzo ?? null, cfu: dettaglio?.listDettaglio_CFU ?? null };
+    prezzo: dettaglio?.listDettaglio_prezzo ?? null, cfu: dettaglio?.listDettaglio_CFU ?? null,
+    corsoLaurea: prodotto.listino_corsoLaurea_descrizione || "" };
+}
+
+/** Un corso di una pratica Corsi Singoli gia' salvata (PraticaResponse.corsi)
+ * nella stessa forma delle opzioni del modale, cosi' l'elenco dei corsi della
+ * scheda li mostra allo stesso modo in creazione e in visualizzazione. */
+export function opzioneCorsoPratica(corso) {
+  return { id: corso.listTesta_id, codice: corso.codice || "", label: corso.descrizione || "",
+    prezzo: corso.prezzo ?? null, cfu: corso.cfu ?? null, corsoLaurea: corso.corso_laurea || "" };
 }
 // ATTENZIONE: dati.map(opzionePercorsoConDettaglio) passerebbe anche l'indice
 // come secondo argomento (oggi), rompendo il confronto fra date in

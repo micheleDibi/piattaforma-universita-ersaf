@@ -5,15 +5,11 @@ import { pulsante, pulsanteIcona } from "../../config/styles/pulsante.js";
 import { STILI_MODALE_TABELLA as stili } from "../../config/styles/pratica.js";
 import { TESTI_MODALE_PERCORSO as testi } from "../../config/testi/pratiche.js";
 import { paginaPercorsi } from "../../lib/opzioniPratica.js";
-import { sommaPrezzi } from "../../lib/praticaForm.js";
+import { formattaImporto, sommaPrezzi } from "../../lib/praticaForm.js";
 import usePagineRemote from "../../hooks/usePagineRemote.js";
 import CampoRicerca from "../shared/CampoRicerca.jsx";
 
 const LIMITE = 20;
-
-function formattaImporto(numero) {
-  return Number(numero).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
 
 function costruisciEndpoint(universitaId, tipoCorsoIds, ricerca) {
   const params = new URLSearchParams({ limit: String(LIMITE), search: ricerca, attivo: "-1", valido_oggi: "true" });
@@ -106,6 +102,38 @@ export default function ModaleSelezionePercorso({ universitaId, tipoCorsoIds, mu
             </div>
           )}
         </div>
+        {multipla && (
+          // Riepilogo fisso sotto l'elenco (fuori dal corpo scorrevole): i
+          // corsi gia' scelti restano visibili mentre si cerca, e si tolgono
+          // dalla X senza doverli ritrovare nell'elenco.
+          // Una pillola per corso, su piu' righe: altezza limitata a circa tre
+          // righe, poi scorre, cosi' l'elenco sopra non si restringe.
+          <section className={stili.riepilogo} aria-labelledby="modale-percorso-riepilogo">
+            <h4 id="modale-percorso-riepilogo" className={stili.titoloRiepilogo}>
+              {testi.riepilogo}
+            </h4>
+            {selezionati.length ? (
+              <ul className={stili.elencoRiepilogo}>
+                {selezionati.map((corso) => {
+                  const prezzo = corso.prezzo == null ? "-" : `${formattaImporto(corso.prezzo)} €`;
+                  return (
+                    <li key={corso.id} className={stili.voceRiepilogo}
+                      title={`${corso.codice ? `${corso.codice} · ` : ""}${corso.label} · ${prezzo}`}>
+                      <span className={stili.testoVoceRiepilogo}>{corso.label}</span>
+                      <button type="button" onClick={() => clicca(corso)}
+                        className={stili.togliVoceRiepilogo}
+                        aria-label={testi.deseleziona(corso.label)}>
+                        <X aria-hidden="true" />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className={stili.riepilogoVuoto}>{testi.riepilogoVuoto}</p>
+            )}
+          </section>
+        )}
         {multipla && (
           <div className={stili.piede}>
             <span className={stili.totale}>{testi.scelti(selezionati.length)} · {testi.totale(formattaImporto(totale))}</span>

@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { X } from "../../config/icone.js";
 import ModaleSelezioneStudente from "./ModaleSelezioneStudente.jsx";
 import ModaleSelezionePercorso from "./ModaleSelezionePercorso.jsx";
 import { STILI_PRATICA as stili } from "../../config/styles/pratica.js";
-import { pulsante, pulsanteIcona } from "../../config/styles/pulsante.js";
+import { pulsante } from "../../config/styles/pulsante.js";
+import { TESTI_CORSI_PRATICA as testiCorsi } from "../../config/testi/pratiche.js";
 import { etichetta } from "../../config/styles/campo.js";
 
 export default function RelazioniPratica({ form, nuova, universitaId, tipoCorsoIds, corsiSingoli }) {
   const [modaleStudenteAperto, setModaleStudenteAperto] = useState(false);
   const [modalePercorsoAperto, setModalePercorsoAperto] = useState(false);
-  const percorsi = corsiSingoli ? form.corsiSelezionati : (form.percorso ? [form.percorso] : []);
+  const percorsi = corsiSingoli ? form.corsiPratica : (form.percorso ? [form.percorso] : []);
   return <section className={stili.sezione} aria-labelledby="iscrizione-pratica">
     <h2 id="iscrizione-pratica" className={stili.titolo}>Iscrizione</h2>
     <div className={stili.colonne}>
@@ -35,36 +35,24 @@ export default function RelazioniPratica({ form, nuova, universitaId, tipoCorsoI
       {/* Percorso formativo: un modale con tabella (Codice, Denominazione,
           Prezzo, CFU), filtrato per università e tipo di corso di provenienza
           (vedi leggiContestoUrl in lib/schedaPratica.js). A scelta multipla
-          solo per Corsi Singoli: gli altri corsi restano qui come elenco,
-          ognuno con il proprio pulsante per toglierlo. */}
+          solo per Corsi Singoli: qui resta solo quanti sono, l'elenco
+          completo sta in ElencoCorsiPratica, sotto la sezione. */}
       <div>
         <span className={etichetta()}>{corsiSingoli ? "Corsi" : "Percorso formativo"}</span>
         {nuova ? (
-          <div className="mt-1 space-y-2">
-            {corsiSingoli && !!percorsi.length && (
-              <ul className={stili.elencoCorsi}>
-                {percorsi.map((corso) => (
-                  <li key={corso.id} className={stili.rigaCorso}>
-                    <span className={stili.valore}>{corso.label}<small className="ml-1 text-testo-tenue">{corso.codice}</small></span>
-                    <button type="button" className={pulsanteIcona("neutro", "minima")}
-                      aria-label={`Rimuovi ${corso.label}`}
-                      onClick={() => form.setPercorsi(percorsi.filter((c) => c.id !== corso.id))}>
-                      <X aria-hidden="true" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="flex flex-wrap items-center gap-3">
-              {!corsiSingoli && <span className={stili.valore}>{form.percorso?.label || "Nessun percorso selezionato"}</span>}
-              <button type="button" className={pulsante("discreto", "piccolo")}
-                onClick={() => setModalePercorsoAperto(true)}>
-                {corsiSingoli ? (percorsi.length ? "Aggiungi o modifica" : "Seleziona") : (form.percorso ? "Cambia" : "Seleziona")}
-              </button>
-            </div>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <span className={stili.valore}>
+              {corsiSingoli ? testiCorsi.conteggio(percorsi.length) : form.percorso?.label || "Nessun percorso selezionato"}
+            </span>
+            <button type="button" className={pulsante("discreto", "piccolo")}
+              onClick={() => setModalePercorsoAperto(true)}>
+              {corsiSingoli ? (percorsi.length ? "Aggiungi o modifica" : "Seleziona") : (form.percorso ? "Cambia" : "Seleziona")}
+            </button>
           </div>
         ) : (
-          <p className={stili.valore}>{form.percorso?.label || "Non indicato"}</p>
+          <p className={stili.valore}>
+            {corsiSingoli ? testiCorsi.conteggio(percorsi.length) : form.percorso?.label || "Non indicato"}
+          </p>
         )}
       </div>
       <dl><dt className={etichetta()}>Università</dt>

@@ -1474,6 +1474,17 @@ Aggiorna Utente.
 | `pratica_stato_id` | `integer` | sì |
 | `totale` | `integer` | sì |
 
+### CorsoPratica
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `cfu` | `integer \| null` | no |
+| `codice` | `string \| null` | no |
+| `corso_laurea` | `string \| null` | no |
+| `descrizione` | `string \| null` | no |
+| `listTesta_id` | `integer` | sì |
+| `prezzo` | `number \| string \| null` | no |
+
 ### CorsoSingoloSelezionato
 
 | Campo | Tipo | Obbligatorio |
@@ -1770,6 +1781,7 @@ Aggiorna Utente.
 | `cliente_emittente_aderente_id` | `integer \| null` | no |
 | `cliente_id` | `integer \| null` | no |
 | `cliente_nome_completo` | `string \| null` | no |
+| `corsi` | `list[CorsoPratica] \| null` | no |
 | `emittente` | `EmittenteBreve \| null` | no |
 | `listTesta_corso2_id` | `integer \| null` | no |
 | `listTesta_corso3_id` | `integer \| null` | no |

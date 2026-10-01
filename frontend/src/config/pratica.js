@@ -11,12 +11,12 @@ export const CAMPI_PRATICA = [
 // scheda pratica (CaratteristichePercorso.jsx): quali dipende dal gruppo del
 // percorso scelto. listino_tipoCorso_id -> gruppo, stessa tassonomia di
 // lib/configPratiche.js (1,2,3 Master; 4 Corsi di perfezionamento; 6,7
-// Formazione ed Alta formazione; 8 Lauree; 9 Corsi singoli). I gruppi 5
-// (Percorso docenti) e 10 (Corsi speciali) non hanno caratteristiche da
-// mostrare qui.
+// Formazione ed Alta formazione; 8 Lauree; 9 Corsi singoli; 10 Corsi
+// speciali, con le stesse caratteristiche dei Corsi di perfezionamento). Il
+// gruppo 5 (Percorso docenti) non ha caratteristiche da mostrare qui.
 const GRUPPO_PER_TIPO_CORSO = {
   1: "master", 2: "master", 3: "master",
-  4: "perfezionamento",
+  4: "perfezionamento", 10: "perfezionamento",
   6: "formazione", 7: "formazione",
   8: "lauree",
   9: "corsiSingoli",
@@ -44,6 +44,13 @@ export function campiPercorsoVisibili(listinoTipoCorsoId) {
  * (vedi ModaleSelezionePercorso.jsx). */
 export function eContestoCorsiSingoli(tipoCorsoIds) {
   return tipoCorsoIds.some((id) => GRUPPO_PER_TIPO_CORSO[id] === "corsiSingoli");
+}
+
+/** Vero se il tipo di corso di una pratica gia' salvata
+ * (pratica.listino_tipo_corso_id) è Corsi singoli: in visualizzazione il
+ * contesto dell'indirizzo puo' mancare (vedi eContestoCorsiSingoli). */
+export function eGruppoCorsiSingoli(listinoTipoCorsoId) {
+  return GRUPPO_PER_TIPO_CORSO[listinoTipoCorsoId] === "corsiSingoli";
 }
 
 /** Vero se il percorso scelto (prodotto.listino_tipoCorso_id) è di tipo

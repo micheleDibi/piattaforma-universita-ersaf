@@ -92,6 +92,35 @@ def test_la_scheda_di_un_altra_azienda_come_inesistente(client, mondo):
     assert client.get(f"/pratiche/{ids['a_altrui']}", headers=sessione).status_code == 200
 
 
+def test_il_dettaglio_restituisce_tutti_i_corsi_singoli(client, db, mondo):
+    """Corsi Singoli: la scheda mostrava solo il primo corso, perche' la
+    risposta portava solo listTesta_id. L'elenco non li carica (None)."""
+    from src.pratiche_listini.models import PraticaListino
+
+    pratica_id, percorsi, io = mondo["ids"]["a_mio"], mondo["percorsi"], mondo["io"]
+    righe = [PraticaListino(pratica_id=pratica_id, listTesta_id=p.listTesta_id,
+                            pratica_listini_prezzo=prezzo,
+                            pratiche_listini_createdBy=io.utente_id,
+                            pratiche_listini_updatedBy=io.utente_id)
+             for p, prezzo in ((percorsi[0], 360), (percorsi[1], 240))]
+    db.add_all(righe)
+    db.commit()
+    try:
+        dettaglio = client.get(f"/pratiche/{pratica_id}", headers=mondo["sessione"])
+        assert dettaglio.status_code == 200, dettaglio.text
+        corsi = dettaglio.json()["corsi"]
+        assert [c["listTesta_id"] for c in corsi] == [percorsi[0].listTesta_id, percorsi[1].listTesta_id]
+        assert [c["codice"] for c in corsi] == [percorsi[0].listTesta_codice, percorsi[1].listTesta_codice]
+        assert [float(c["prezzo"]) for c in corsi] == [360, 240]
+
+        elenco = client.get("/pratiche/?limit=200", headers=mondo["sessione"]).json()
+        assert all(r["corsi"] is None for r in elenco)
+    finally:
+        for riga in righe:
+            db.delete(riga)
+        db.commit()
+
+
 def test_la_modifica_di_un_altra_azienda_non_tocca_nulla(client, db, mondo):
     pratica_id = mondo["ids"]["b"]
     risposta = client.put(f"/pratiche/{pratica_id}", json={"pratica_numero": "RUBATA"},

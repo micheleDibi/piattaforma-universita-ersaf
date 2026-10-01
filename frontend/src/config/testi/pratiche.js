@@ -67,4 +67,19 @@ export const TESTI_MODALE_PERCORSO = {
   conferma: "Conferma",
   scelti: (n) => `${n} ${n === 1 ? "corso scelto" : "corsi scelti"}`,
   totale: (importo) => `Totale: ${importo} €`,
+  riepilogo: "Corsi selezionati",
+  riepilogoVuoto: "Nessun corso selezionato.",
+  deseleziona: (corso) => `Togli ${corso} dalla selezione`,
+};
+
+// Elenco dei corsi di una pratica Corsi Singoli nella scheda (ElencoCorsiPratica.jsx),
+// al posto delle "Caratteristiche del percorso".
+export const TESTI_CORSI_PRATICA = {
+  titolo: "Corsi selezionati",
+  colonne: { codice: "Codice", denominazione: "Denominazione", corsoLaurea: "Corso di laurea",
+    cfu: "CFU", prezzo: "Prezzo (€)", azioni: "Azioni" },
+  vuoto: "Nessun corso selezionato.",
+  rimuovi: (corso) => `Rimuovi ${corso}`,
+  // Nel campo "Corsi" della sezione Iscrizione: l'elenco vero sta sotto.
+  conteggio: (n) => (n ? `${n} ${n === 1 ? "corso selezionato" : "corsi selezionati"}` : "Nessun corso selezionato"),
 };
