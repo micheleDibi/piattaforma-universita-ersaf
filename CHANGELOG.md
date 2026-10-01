@@ -11,6 +11,49 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 18 — 01/10/2026 16:11
+
+<!-- timbro: versione=18 sha=2982a755bd129cd6640b78cf20afc900086fd112 -->
+
+### Novità e correzioni
+
+**Aggiunto**
+
+- Nell'elenco del Nazionale ci sono le colonne Ultima modifica, Tipo corso e Università (al posto della data di creazione), la ricerca per sottoscrittore e i filtri Codice pratica e Stato.
+- Nell'elenco del Nazionale, sotto il titolo, i loghi dei quattro atenei filtrano le pratiche per ateneo; scorrendo restano in alto, più piccoli, accanto al titolo.
+- Nella scheda di una pratica eCampus il Nazionale vede e modifica il Codice ASG; gli altri ruoli non lo vedono.
+
+**Modificato**
+
+- Nella scheda Utente il pulsante "Accedi con questo utente" compare solo al Nazionale.
+- Per il Nazionale la pagina Pratiche non mostra più il pannello degli atenei ma un unico elenco con tutte le pratiche tranne le Bozze, ordinate per stato (Caricata, In lavorazione, In attesa di modifica, Conclusa, Rifiutata) e, dentro ogni stato, dalla modifica più recente. Senza ricerca né filtri l'elenco ha in testa "Tutte le pratiche" con il totale; con la ricerca o un filtro si divide in un gruppo per stato, con il numero di pratiche accanto a ogni stato.
+- In fondo a tutti gli elenchi la scritta "Hai raggiunto la fine dell'elenco", il caricamento e il pulsante "Carica altri elementi" sono centrati e staccati dall'ultima riga.
+- Nella scheda azienda, se una percentuale supera quella dell'azienda padre non viene più proposto di azzerarla: il salvataggio si ferma con un errore che indica i campi da correggere e il massimo ammesso per ciascuno.
+- La richiesta di conferma nel salvataggio delle percentuali ora compare solo quando i nuovi valori, più bassi, azzererebbero quelli di aziende figlie, e nomina sia gli atenei sia le aziende coinvolte. Il cambio di padre resta invariato.
+
+**Rimosso**
+
+- Il Nazionale non ha più il pulsante "Nuova" nelle pratiche: le gestisce, non le crea.
+
+### Dettagli tecnici
+
+**Aggiunto**
+
+- `GET /pratiche/` accetta `escludi_bozze` e `ordine=stato` (gruppi Caricata, In lavorazione, In attesa di modifica, Conclusa, Rifiutata, poi `COALESCE(pratica_updated_at, pratica_created_at, pratica_dataCreazione)` decrescente): l'ordine sta nella query, quindi la paginazione non spezza i gruppi.
+- `GET /pratiche/conteggi/stati`, il numero di pratiche per stato con gli stessi filtri dell'elenco.
+- `ElencoPraticheNazionale.jsx` e `useFiltriPraticheNazionale.js`; `SchedaPratica.jsx` riporta il Nazionale all'elenco da `/pratiche/nuova`.
+- `ConRuoloVerificato.jsx` e `ricaricaSessione` in `lib/api.js`: elenco e scheda pratica rileggono il ruolo da `GET /auth/session` prima di scegliere la vista, perché quello in memoria resta quello dell'accesso anche se il ruolo cambia dopo.
+- `messaggioSuperamento` e `messaggioAzzeramentoFiglie` in `frontend/src/lib/schedaAzienda.js`; `messaggioAzzeramento` resta per il cambio di padre.
+
+**Modificato**
+
+- `SchedaUtente.jsx`, il pulsante dipende anche dal ruolo di chi guarda; `POST /auth/login-as/{id}` resta invariato (accetta ancora Regionale e Nazionale).
+- `PUT /aziende/{id}/dettagli` risponde 422 con `detail.messaggio` e `detail.superamenti` (`campo`, `valore`, `limite`) quando un valore supera quello del padre, prima di calcolare la cascata; il 409 con `reset` riguarda ora solo le discendenti. Nuova `superamenti_padre` in `backend/src/aziende_xcod/servizi.py`.
+
+**Sicurezza**
+
+- `pratica_codiceASG` esce nelle risposte delle pratiche solo per il Nazionale (`null` per gli altri ruoli); `PUT /pratiche/{id}` lo accetta solo dal Nazionale e solo su pratiche eCampus (`nome_universita_id` 1), e lo ignora in silenzio negli altri casi; `POST /pratiche/` lo ignora sempre.
+
 ## Versione 17 — 01/10/2026 11:26
 
 <!-- timbro: versione=17 sha=5378e95aed4d4a5c0a23053eb99f9f79219f585b -->
