@@ -11,6 +11,12 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 19 — 01/10/2026 20:06
+
+<!-- timbro: versione=19 sha=03f0af263e9a278337829aab88e017271633a76d -->
+
+Nessuna modifica documentata.
+
 ## Versione 18 — 01/10/2026 16:11
 
 <!-- timbro: versione=18 sha=2982a755bd129cd6640b78cf20afc900086fd112 -->
