@@ -107,6 +107,11 @@ export function rigaPratica(item) {
       cliente: testo(item.cliente_nome_completo),
       corso: testo(item.listTesta_descrizione),
       dataCreazione: formattaData(item.pratica_dataCreazione),
+      // Lo stesso ripiego dell'ordinamento lato server: le pratiche vecchie
+      // possono non avere la data di ultima modifica.
+      ultimaModifica: formattaData(item.pratica_updated_at ?? item.pratica_created_at ?? item.pratica_dataCreazione),
+      tipo: testo(item.listino_tipoCorso_descrizione),
+      universita: testo(item.nome_universita_descrizione),
       stato: testo(item.pratica_stato_descrizione),
     },
   };

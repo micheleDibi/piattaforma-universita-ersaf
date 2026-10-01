@@ -2,12 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { rigaCliente, rigaAzienda, rigaPratica, rigaProdotto, campoIndicatori, idIndicatori } from "../src/lib/righeElenco.js";
-import { modelloClienti, MODELLO_AZIENDE, MODELLO_PRATICHE, MODELLO_PRODOTTI, RUOLI_FILTRO } from "../src/config/elenchi.js";
+import { modelloClienti, MODELLO_AZIENDE, MODELLO_PRATICHE, MODELLO_PRATICHE_NAZIONALE, MODELLO_PRODOTTI, RUOLI_FILTRO } from "../src/config/elenchi.js";
 import { ICONE_CAMPI_ELENCO } from "../src/config/icone.js";
 import { TESTI_ELENCO } from "../src/config/testi/elenco.js";
 
 test("ogni icona indicata dai campi degli elenchi esiste nel catalogo", () => {
-  const modelli = [MODELLO_AZIENDE, MODELLO_PRATICHE, MODELLO_PRODOTTI, modelloClienti({ attuatori: true, mostraAzienda: true })];
+  const modelli = [MODELLO_AZIENDE, MODELLO_PRATICHE, MODELLO_PRATICHE_NAZIONALE, MODELLO_PRODOTTI, modelloClienti({ attuatori: true, mostraAzienda: true })];
   for (const modello of modelli) {
     for (const campo of [...modello.mobile, ...modello.colonne.flatMap((c) => c.campi)]) {
       if (campo.icona) assert.ok(ICONE_CAMPI_ELENCO[campo.icona], `${modello.id}.${campo.id}: icona "${campo.icona}" assente`);
@@ -62,7 +62,7 @@ test("flag legacy prodotto: solo -1 significa attivo; codici e titoli non vengon
 });
 
 test("desktop e mobile espongono gli stessi campi per aziende, pratiche e prodotti", () => {
-  for (const modello of [MODELLO_AZIENDE, MODELLO_PRATICHE, MODELLO_PRODOTTI]) {
+  for (const modello of [MODELLO_AZIENDE, MODELLO_PRATICHE, MODELLO_PRATICHE_NAZIONALE, MODELLO_PRODOTTI]) {
     const desktop = modello.colonne.flatMap((c) => c.campi.map((campo) => campo.id)).sort();
     assert.deepEqual(desktop, modello.mobile.map((campo) => campo.id).sort());
   }
@@ -252,4 +252,18 @@ test("clienti: le larghezze delle colonne riproducono le proporzioni della grigl
     const primaAttesa = attese[0] + BORDO - 8;
     assert.ok(Math.abs(resto - primaAttesa) < 0.05, `${colonne[0]}: ${resto} invece di ${primaAttesa}`);
   }
+});
+
+test("elenco pratiche del Nazionale: tipo corso e universita', stato sempre ultima colonna", () => {
+  const colonne = MODELLO_PRATICHE_NAZIONALE.colonne.map((c) => c.id);
+  assert.deepEqual(colonne, ["numero", "ultimaModifica", "cliente", "corso", "tipo", "universita", "stato"]);
+  assert.equal(MODELLO_PRATICHE_NAZIONALE.mobile.at(-1).id, "stato");
+  const riga = rigaPratica({ pratica_id: 5, listino_tipoCorso_descrizione: "LAUREE",
+    nome_universita_descrizione: "Università Telematica eCampus", pratica_dataCreazione: "2026-01-10",
+    pratica_updated_at: "2026-09-30T10:15:00" });
+  assert.equal(riga.campi.tipo, "LAUREE");
+  assert.equal(riga.campi.universita, "Università Telematica eCampus");
+  assert.equal(riga.campi.ultimaModifica, "30-09-2026");
+  // Senza data di modifica (pratiche vecchie) vale la creazione.
+  assert.equal(rigaPratica({ pratica_id: 5, pratica_dataCreazione: "2026-01-10" }).campi.ultimaModifica, "10-01-2026");
 });

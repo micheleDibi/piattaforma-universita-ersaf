@@ -105,6 +105,22 @@ def valori_percentuali_di(db: Session, azienda_id: Optional[int]) -> dict:
     }
 
 
+def superamenti_padre(db: Session, azienda_id: int, valori_proposti: dict) -> list[dict]:
+    """Campi in cui `valori_proposti` supera il valore dell'azienda padre
+    attuale: [{"campo", "valore", "limite"}, ...], vuota se nessuno (o se
+    l'azienda e' una radice). Nel salvataggio delle percentuali e' un errore,
+    non un azzeramento da confermare: chi le modifica deve correggerle."""
+    padre_id = padre_id_di(db, azienda_id)
+    if padre_id is None:
+        return []
+    valori_padre = valori_percentuali_di(db, padre_id)
+    return [
+        {"campo": campo, "valore": valori_proposti.get(campo, 0), "limite": valori_padre[campo]}
+        for campo in CAMPI_PERCENTUALI
+        if valori_proposti.get(campo, 0) > valori_padre[campo]
+    ]
+
+
 def calcola_cascata_percentuali(
     db: Session,
     azienda_id: int,

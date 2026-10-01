@@ -47,7 +47,7 @@ Nota: le voci nascoste non proteggono le pagine. Attuatori e Prodotti formativi 
 
 La **Dashboard** è la prima pagina dopo l'accesso per tutti i ruoli che accedono; le sue scorciatoie sono le voci del menu del proprio ruolo. **EduNews24** mostra a tutti gli stessi contenuti. Vedi [EduNews24](edunews24.md).
 
-La pagina **Pratiche** ospita il pannello degli atenei e mostra le pratiche secondo le regole di visibilità descritte sotto. Il pannello mostra il numero di pratiche per ateneo, tipologia e stato; le sue righe si aprono solo con l'abilitazione generale e quella dell'ateneo; le abilitazioni non sostituiscono i controlli del server. Vedi [Pratiche](pratiche.md).
+La pagina **Pratiche** ospita il pannello degli atenei e mostra le pratiche secondo le regole di visibilità descritte sotto. Il Nazionale non ha il pannello né il pulsante "Nuova": vede un unico elenco di tutte le pratiche tranne le Bozze, raggruppato per stato, ed è l'unico a vedere e modificare il Codice ASG delle pratiche eCampus. Il pannello mostra il numero di pratiche per ateneo, tipologia e stato; le sue righe si aprono solo con l'abilitazione generale e quella dell'ateneo; le abilitazioni non sostituiscono i controlli del server. Vedi [Pratiche](pratiche.md).
 
 ### Dentro le pagine, solo per il Nazionale
 
@@ -86,7 +86,7 @@ Cosa succede quando riesce:
 
 Per tornare a sé stessi si usa "Esci" e si accede di nuovo con le proprie credenziali. Il Nazionale ripete anche il secondo fattore.
 
-Il pulsante compare quando la scheda mostra lo stato "Attivo" e un ruolo fra Aderente, Provinciale, Regionale e Nazionale, anche se non ancora salvati. Compare qualunque sia il ruolo di chi guarda: un Aderente o un Provinciale che lo preme riceve "Non hai i permessi per questa operazione.".
+Il pulsante compare solo al **Nazionale**, quando la scheda mostra lo stato "Attivo" e un ruolo fra Aderente, Provinciale, Regionale e Nazionale, anche se non ancora salvati. Il server accetta la richiesta anche da un Regionale, che però non ha più il pulsante.
 
 Nota: l'interfaccia mostra il pulsante anche a chi non può usarlo e anche davanti a un Nazionale, e il server rifiuta; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 

@@ -43,6 +43,9 @@
 /* Stato delle pratiche: vale anche sotto la soglia articolata, dove il
  * distintivo su una riga non starebbe nella colonna compatta. */
 .elenco-adattivo[data-modello="pratiche"] col[data-colonna="stato"] { width: var(--spacing-colonna-stato-pratiche); }
+/* Elenco del Nazionale: la data di ultima modifica su una riga, il resto
+ * dello spazio a sottoscrittore, corso, tipo e universita'. */
+.elenco-adattivo[data-modello="pratiche"] col[data-colonna="ultimaModifica"] { width: 7.5rem; }
 .elenco-adattivo__tabella td.elenco-adattivo__azione { @apply text-right; }
 .elenco-adattivo__tabella td > * + * { @apply mt-1; }
 /* Valori standard */
@@ -171,3 +174,19 @@
 .elenco-adattivo[data-modello="clienti"]:not(:has(col[data-colonna="azienda"])) col[data-colonna="ruolo"] { width: 18.169%; }
 .elenco-adattivo[data-modello="clienti"]:has(col[data-colonna="ruolo"]):not(:has(col[data-colonna="azienda"])) col[data-colonna="verifiche"] { width: 29.327%; }
 .elenco-adattivo[data-modello="clienti"]:not(:has(col[data-colonna="ruolo"])) col[data-colonna="verifiche"] { width: 37.161%; }
+
+/* Gruppi per stato dell'elenco del Nazionale (ElencoPraticheNazionale.jsx):
+ * una fascia col nome dello stato e il numero di pratiche sopra ogni tabella. */
+.gruppo-pratiche + .gruppo-pratiche { @apply border-t border-bordo; }
+.gruppo-pratiche__titolo {
+  @apply flex items-baseline gap-1.5 px-6 py-3 bg-superficie-tenue border-b border-bordo text-sm font-semibold text-testo;
+}
+.gruppo-pratiche__totale { @apply font-normal text-testo-attenuato; }
+
+/* Fondo di ogni elenco (StatoPagineElenco.jsx): caricamento, "Hai raggiunto la
+ * fine dell'elenco" e "Carica altri elementi", centrati e staccati dall'ultima
+ * riga. testo-tenue e non testo-attenuato per il contrasto (vedi edunews24.css).
+ * Vuoto, non occupa spazio. */
+.stato-pagine-elenco { @apply flex flex-col items-center gap-3 px-4 py-6 text-center text-sm text-testo-tenue; }
+.stato-pagine-elenco:empty { @apply hidden; }
+.stato-pagine-elenco [role="alert"] { @apply text-negativo; }

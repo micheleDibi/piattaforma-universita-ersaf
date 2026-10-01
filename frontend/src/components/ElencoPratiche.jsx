@@ -16,6 +16,8 @@ import { schedaElenco } from "../config/styles/tabella";
 import StatoPagineElenco from "./shared/StatoPagineElenco.jsx";
 import { BLOCCHI_PRATICHE } from "../lib/configPratiche.js";
 import PannelloPratiche from "./PannelloPratiche";
+import ElencoPraticheNazionale from "./ElencoPraticheNazionale.jsx";
+import ConRuoloVerificato from "./shared/ConRuoloVerificato.jsx";
 import { ArrowLeft } from "../config/icone.js";
 
 function costruisciTitolo(filtri) {
@@ -50,6 +52,18 @@ function costruisciTitolo(filtri) {
 }
 
 export default function ElencoPratiche() {
+  // Il Nazionale non ha il pannello per ateneo e non crea pratiche: le
+  // gestisce tutte da un unico elenco, raggruppato per stato. Il ruolo si
+  // rilegge dal server prima di scegliere: quello in memoria puo' essere
+  // vecchio (vedi ConRuoloVerificato).
+  return (
+    <ConRuoloVerificato>
+      {(ruolo) => (ruolo === "nazionale" ? <ElencoPraticheNazionale /> : <ElencoPraticheConPannello />)}
+    </ConRuoloVerificato>
+  );
+}
+
+function ElencoPraticheConPannello() {
   const risorsa = PERCORSI.pratiche;
   const { apri } = useNavigazioneElenco(risorsa.elenco);
   const filtri = useFiltriPratiche();

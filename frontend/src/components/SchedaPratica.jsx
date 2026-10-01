@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import { PERCORSI } from "../config/routes/percorsi.js";
 import { contenutoPagina } from "../config/styles/pagina.js";
 import { pulsante } from "../config/styles/pulsante.js";
@@ -9,6 +9,7 @@ import useSchedaPratica from "../hooks/useSchedaPratica.js";
 import { useDocumentoPratica } from "../hooks/useDocumentoPratica.js";
 import useNavigazioneElenco from "../hooks/useNavigazioneElenco.js";
 import { leggiContestoUrl } from "../lib/schedaPratica.js";
+import ConRuoloVerificato from "./shared/ConRuoloVerificato.jsx";
 import IntestazionePagina from "./shared/IntestazionePagina.jsx";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 import AlertMessage from "./AlertMessage.jsx";
@@ -46,6 +47,21 @@ function titoloCreazione({ nomeUniversita, nomeTipo }) {
 }
 
 export default function SchedaPratica() {
+  const { praticaId } = useParams();
+  // Il Nazionale gestisce le pratiche ma non le crea: il suo elenco non ha il
+  // tasto Nuova, e l'indirizzo di creazione aperto a mano riporta all'elenco.
+  // Il ruolo si rilegge dal server prima: anche il campo Codice ASG della
+  // scheda (DatiPratica.jsx) dipende da quello attuale.
+  return (
+    <ConRuoloVerificato>
+      {(ruolo) => (!praticaId && ruolo === "nazionale"
+        ? <Navigate to={PERCORSI.pratiche.elenco} replace />
+        : <ModuloPratica />)}
+    </ConRuoloVerificato>
+  );
+}
+
+function ModuloPratica() {
   const { praticaId } = useParams();
   const navigate = useNavigate();
   const [query, setQuery] = useSearchParams();

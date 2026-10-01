@@ -4,6 +4,8 @@ import {
   caricaDettaglioConvenzioni,
   caricaPadreAzienda,
   messaggioAzzeramento,
+  messaggioAzzeramentoFiglie,
+  messaggioSuperamento,
   nomeAzienda,
   noteCampiAzienda,
   pivaNonConforme,
@@ -219,4 +221,34 @@ test("asterisco degli obbligatori a 600 nella scheda e nella finestra di creazio
 test("convenzioni: la cella non prevista e' posizionata, il testo sr-only non esce dalla tabella", () => {
   assert.match(STILI_AZIENDA.cellaNonPrevista, /(^|\s)relative(\s|$)/);
   assert.match(STILI_AZIENDA.cellaPercentuale, /(^|\s)relative(\s|$)/);
+});
+
+test("salvaDettaglioConvenzioni: un valore sopra il padre e' un errore con i campi da correggere", async () => {
+  const superamenti = [
+    { campo: "universita_link_master", valore: 20, limite: 5 },
+    { campo: "universita_ecampus_lauree", valore: 15, limite: 10 },
+  ];
+  rispondi(json({ detail: { messaggio: "Alcune percentuali superano quelle dell'azienda padre.", superamenti } }, 422));
+  await assert.rejects(salvaDettaglioConvenzioni(5, {}), {
+    message: "Le percentuali non possono superare quelle dell'azienda padre. "
+      + "Correggi: eCampus - Lauree (massimo 10%), Link - Master (massimo 5%).",
+  });
+});
+
+test("messaggioSuperamento: un solo campo", () => {
+  assert.equal(
+    messaggioSuperamento([{ campo: "universita_A4U_perfezionamenti", valore: 3, limite: 0 }]),
+    "Le percentuali non possono superare quelle dell'azienda padre. Correggi: A4U - Perfezionamenti (massimo 0%).",
+  );
+});
+
+test("messaggioAzzeramentoFiglie: nomina atenei e aziende figlie", () => {
+  assert.equal(
+    messaggioAzzeramentoFiglie([
+      { azienda_id: 9, azienda_ragione_sociale: "GAMMA SRL", campi: ["universita_link_master"] },
+      { azienda_id: 10, azienda_ragione_sociale: null, campi: ["universita_ecampus_lauree"] },
+    ]),
+    "I nuovi valori sono più bassi di quelli di alcune aziende figlie: "
+      + "le percentuali di eCampus e Link di GAMMA SRL e azienda 10 verranno azzerate. Continuare?",
+  );
 });

@@ -1,4 +1,4 @@
-import { CAMPI_PRATICA, CAMPI_RINNOVO, eGruppoLauree } from "../../config/pratica.js";
+import { CAMPI_PRATICA, CAMPI_RINNOVO, codiceAsgModificabile, eGruppoLauree } from "../../config/pratica.js";
 import { campo, etichetta, sceltaInLinea, spunta } from "../../config/styles/campo.js";
 import { STILI_PRATICA as stili } from "../../config/styles/pratica.js";
 import { leggiRuolo } from "../../lib/sessione.js";
@@ -13,6 +13,9 @@ export default function DatiPratica({ form, nuova, prodotto }) {
   // visibilita' campi per percorso formativo"): gli altri tipi di corso non
   // hanno questo concetto.
   const mostraRinnovo = eGruppoLauree(prodotto?.listino_tipoCorso_id);
+  // Solo per il Nazionale e solo sulle pratiche eCampus: gli altri ruoli non
+  // lo ricevono nemmeno dal server.
+  const mostraCodiceAsg = !nuova && codiceAsgModificabile(leggiRuolo(), form.dati.nome_universita_id);
   return <section className={stili.sezione} aria-labelledby="dati-pratica">
     <h2 id="dati-pratica" className={stili.titolo}>Dati della pratica</h2>
     <div className={stili.colonne}>
@@ -21,6 +24,10 @@ export default function DatiPratica({ form, nuova, prodotto }) {
       <div><span className={etichetta()}>Codice pratica</span>
         <p className={stili.valore}>{form.dati.pratica_numero || "-"}</p>
       </div>
+      {mostraCodiceAsg && <div><label htmlFor="pratica_codiceASG" className={etichetta()}>Codice ASG</label>
+        <input id="pratica_codiceASG" name="pratica_codiceASG" maxLength={45} value={form.dati.pratica_codiceASG ?? ""}
+          onChange={form.aggiorna} className={campo("comodo")} />
+      </div>}
       {CAMPI_PRATICA.map(({ nome, label, ...opzioni }) => <div key={nome}>
         <label htmlFor={nome} className={etichetta()}>{label}</label>
         <input id={nome} name={nome} {...opzioni} value={form.dati[nome]} onChange={form.aggiorna} className={campo("comodo")} />

@@ -216,9 +216,10 @@ export default function SchedaUtente({ ref, ruoloId, onCambiaRuolo }) {
   const formattaData = (valore) => dataCronologia(valore) || testi.vuoto;
 
   const ruoliAttuatori = ["1", "2", "3", "5"];
-  // Mostra il login automatico solo se il ruolo è ammesso E l'utente è attivo
+  // Mostra il login automatico solo al Nazionale, e solo se il ruolo è
+  // ammesso E l'utente è attivo
   const mostraLoginAutomatico =
-    isAttivo && ruoliAttuatori.includes(String(ruoloId));
+    sessione?.ruoloCodice === "nazionale" && isAttivo && ruoliAttuatori.includes(String(ruoloId));
 
   return (
     <div>

@@ -23,8 +23,10 @@ cambia.
 ## Come si arriva alle pratiche
 
 La voce "Pratiche" è nel menu per Nazionale, Regionale, Provinciale e
-Aderente. Vedi [Ruoli e permessi](ruoli-e-permessi.md). Senza un ateneo
-selezionato, la pagina mostra il pannello degli atenei, con il numero di
+Aderente. Vedi [Ruoli e permessi](ruoli-e-permessi.md). Il Nazionale non ha
+il pannello: vede sempre il suo elenco (vedi
+[Elenco del Nazionale](#elenco-del-nazionale)). Per gli altri ruoli, senza un
+ateneo selezionato, la pagina mostra il pannello degli atenei, con il numero di
 pratiche per tipologia di corso e stato; scegliendo una riga si apre l'elenco
 filtrato. La pagina si apre anche scrivendo il suo indirizzo
 nel browser: il backend limita comunque le pratiche all'azienda visibile
@@ -173,6 +175,61 @@ fondo della pagina, oppure con il pulsante "Carica altri elementi". Alla fine
 compare "Hai raggiunto la fine dell'elenco". Se nessuna pratica corrisponde,
 compare "Nessuna pratica trovata."
 
+## Elenco del Nazionale
+
+Per il Nazionale la pagina Pratiche è sempre un unico elenco, "Elenco
+Pratiche", con tutte le pratiche tranne quelle in Bozza. Non c'è il pannello
+degli atenei e non c'è il pulsante "Nuova": il Nazionale gestisce le pratiche
+ma non le crea. Se apre a mano l'indirizzo di una pratica nuova torna
+all'elenco. Una Bozza resta comunque raggiungibile dal suo indirizzo diretto.
+
+### Gruppi e ordine
+
+Le pratiche sono ordinate per stato, in quest'ordine: Pratica Caricata,
+Pratica in Lavorazione, Pratica in Attesa di Modifica, Pratica Conclusa,
+Pratica Rifiutata. Senza ricerca né filtri l'elenco ha in testa una sola
+fascia, "Tutte le pratiche", con il totale fra parentesi. Con la ricerca o un
+filtro attivo l'elenco si divide in un gruppo per stato: ogni gruppo ha in
+testa il nome dello stato e, fra parentesi, quante pratiche ha con la ricerca
+e i filtri attivi, anche quelle non ancora caricate. Dentro ogni stato vengono prima le pratiche modificate
+più di recente; una pratica vecchia senza data di ultima modifica conta con
+la sua data di creazione.
+
+L'elenco si carica a blocchi come quello degli altri ruoli. Un blocco
+successivo continua il gruppo dove si era fermato, invece di ricominciarlo.
+
+### Colonne
+
+Codice, Ultima modifica, Sottoscrittore, Corso, Tipo corso, Università e,
+sempre per ultima, Stato. La data di creazione non c'è: si vede nella scheda. Tipo corso e università vanno a capo
+al massimo su due righe, come il corso.
+
+### Atenei
+
+Sotto il titolo ci sono quattro pulsanti con i loghi degli atenei (eCampus,
+Link Campus, SSML, Avatar4University), gli stessi del pannello Pratiche degli
+altri ruoli. Un logo scelto resta evidenziato e mostra solo le pratiche di
+quell'ateneo; scelto di nuovo, torna a tutti gli atenei. Se ne sceglie uno
+alla volta. Sul telefono stanno due per riga. Scorrendo l'elenco i loghi
+restano in alto, rimpiccioliti, accanto al titolo.
+
+### Ricerca e filtri
+
+Il campo "Cerca per sottoscrittore" funziona come nell'elenco degli altri
+ruoli. Il pulsante "Filtri" apre:
+
+- **Codice pratica**: mostra le pratiche il cui codice contiene il testo
+  scritto. Le pratiche senza codice, oggi quelle eCampus e Link, non
+  compaiono quando questo filtro è attivo.
+- **Stato**: uno degli stati dei gruppi, oppure "Tutti gli stati". Bozza non
+  c'è.
+
+"Azzera filtri" toglie codice e stato, non la ricerca né l'ateneo scelto con
+i loghi. Un ateneo scelto conta comunque come filtro per le fasce: l'elenco si
+divide per stato. Un collegamento che porta l'ateneo nell'indirizzo ne
+seleziona il logo; il tipo di corso dell'indirizzo invece si
+toglie, perché questo elenco non lo filtra.
+
 ## Scheda della pratica
 
 In creazione la scheda si intitola "Nuova Pratica - {università} - {tipo di
@@ -277,6 +334,7 @@ pratica](#dati-della-pratica), dove sono anche modificabili.
 | Campo | Regole |
 |---|---|
 | Codice pratica | Sempre di sola lettura: non si digita mai. Generato dal server al salvataggio, resta vuoto finché la pratica non è ancora stata creata |
+| Codice ASG | Solo per il Nazionale e solo sulle pratiche eCampus già salvate: testo libero, al massimo 45 caratteri; svuotato, si cancella. Gli altri ruoli non lo vedono |
 | Anno accademico | Facoltativo, al massimo 45 caratteri |
 | Sede di erogazione | Facoltativa, al massimo 255 caratteri |
 | Prezzo (€) | Sempre di sola lettura: non si digita mai |
@@ -296,7 +354,8 @@ università eCampus/LinkCampus/SSML/A4U che lo prevedono (oggi SSML e A4U): il
 prefisso dipende dal tipo di corso del percorso scelto, il numero è
 progressivo e non si ripete mai, nemmeno fra pratiche create nello stesso
 istante. Per SSML lo stesso codice viene copiato anche nel Codice ASG interno
-della pratica. Se il tipo di corso del percorso non ha un prefisso previsto,
+della pratica, che nella scheda non compare e non si modifica. Per eCampus il
+Codice ASG lo inserisce a mano il Nazionale dalla scheda. Se il tipo di corso del percorso non ha un prefisso previsto,
 il salvataggio è bloccato con un errore.
 
 Quando si crea una pratica SSML o A4U, il salvataggio prepara anche la sua
@@ -313,7 +372,9 @@ creazione: modificare la pratica, anche nel prezzo, non li cambia.
 Nota: le regole di sola lettura di codice, prezzo e data di creazione sono
 applicate solo dall'interfaccia; per lo stato, invece, il server ignora in
 silenzio la modifica se chi chiama non è Nazionale (la richiesta risponde
-comunque 200, lo stato resta quello di prima). Vedi
+comunque 200, lo stato resta quello di prima). Lo stesso vale per il Codice
+ASG, che il server scrive solo se chi chiama è Nazionale e la pratica è
+eCampus, e che non manda agli altri ruoli nemmeno in lettura. Vedi
 [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
 
 Il rinnovo compare solo quando il percorso scelto è di tipo Lauree; per gli

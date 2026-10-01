@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { praticaVuota, payloadPratica, dettaglioAttuale, prezzoAttuale, prezzoPerInput, sommaPrezzi, valoriRinnovo } from "../src/lib/praticaForm.js";
 import { opzioneStudente, paginaStudenti, opzionePercorsoConDettaglio, opzioneCorsoPratica, paginaPercorsi } from "../src/lib/opzioniPratica.js";
 import { creaPayloadProdotto, aggiungiDettaglio } from "../src/lib/prodottoPayload.js";
-import { campiPercorsoVisibili, eContestoCorsiSingoli, eGruppoCorsiSingoli, eGruppoLauree, CAMPI_RINNOVO } from "../src/config/pratica.js";
+import { campiPercorsoVisibili, codiceAsgModificabile, eContestoCorsiSingoli, eGruppoCorsiSingoli, eGruppoLauree, CAMPI_RINNOVO } from "../src/config/pratica.js";
 
 const dati = { ...praticaVuota(), pratica_numero: " TEST-42 ", pratica_prezzo: "120.50", pratica_stato_id: "2" };
 const scelta = { nuova: true, studente: { id: 17 }, percorso: { id: 42 },
@@ -197,4 +197,17 @@ test("estrazione del mapping prodotti conserva null, numeri italiani e validita"
   assert.equal(aggiunti[0].listDettaglio_dataFineValidazionoe, "2026-09-14");
   assert.equal(dettagli[0].listDettaglio_dataFineValidazionoe, undefined);
   assert.equal(aggiunti[1].isNew, true);
+});
+
+test("codice ASG: solo il Nazionale, solo eCampus, solo in modifica", () => {
+  assert.equal(codiceAsgModificabile("nazionale", 1), true);
+  assert.equal(codiceAsgModificabile("nazionale", "1"), true);
+  assert.equal(codiceAsgModificabile("nazionale", 3), false);
+  for (const ruolo of ["regionale", "provinciale", "aderente", ""]) assert.equal(codiceAsgModificabile(ruolo, 1), false);
+
+  const modifica = { nuova: false };
+  assert.equal(payloadPratica({ ...dati, pratica_codiceASG: " ASG-9 " }, { ...modifica, codiceAsg: true }).pratica_codiceASG, "ASG-9");
+  assert.equal(payloadPratica({ ...dati, pratica_codiceASG: "" }, { ...modifica, codiceAsg: true }).pratica_codiceASG, null);
+  assert.equal("pratica_codiceASG" in payloadPratica({ ...dati, pratica_codiceASG: "X" }, modifica), false);
+  assert.equal("pratica_codiceASG" in payloadPratica({ ...dati, pratica_codiceASG: "X" }, { ...scelta, codiceAsg: true }), false);
 });

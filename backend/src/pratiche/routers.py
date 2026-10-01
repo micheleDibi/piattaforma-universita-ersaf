@@ -8,9 +8,9 @@ from src.auth.visibilita import Visibilita, riga_di_me, visibilita_corrente
 from src.database import get_db
 from src.errori import CodicePraticaError, ContabilitaPraticaError
 from src.notifiche.backend_invio import Mailer, get_mailer
-from src.pratiche.codice import genera_codici_pratica
+from src.pratiche.codice import UNIVERSITA_ECAMPUS_ID, genera_codici_pratica
 from src.pratiche.dopo_salvataggio import dopo_creazione
-from src.pratiche.filtri import FiltriPratiche, query_filtrata
+from src.pratiche.filtri import FiltriPratiche, ordinamento, query_filtrata
 from src.pratiche.notifiche import invia_mail_nuova_pratica_ersaf, invia_mail_pratica_bozza
 from src.pratiche.opzioni import router as opzioni_router
 from src.pratiche.firma_rotte import router as firma_router
@@ -19,7 +19,9 @@ from src.pratiche.accesso import pratica_visibile
 from src.pratiche.storico_stati import STATO_BOZZA_ID, STATO_CARICATA_ID, registra_stato, stato_gia_raggiunto
 from src.documenti.rotte import router as documento_router
 from src.pratiche.models import Pratica
-from src.pratiche.schemi import ConteggioPratiche, PraticaCreate, PraticaResponse, PraticaUpdate
+from src.pratiche.schemi import (
+    ConteggioPratiche, ConteggioStato, PraticaCreate, PraticaResponse, PraticaUpdate,
+)
 from src.pratiche.rinnovi import verifica_modifica_rinnovo
 from src.pratiche_listini.models import PraticaListino
 from src.listini_testa.models import ListinoTestaDB
@@ -73,6 +75,18 @@ def _pratica_o_404(db: Session, pratica_id: int, vis: Visibilita) -> Pratica:
     return pratica_visibile(db, pratica_id, vis, opzioni=_RELAZIONI_DETTAGLIO)
 
 
+def _risposta(pratica: Pratica, vis: Visibilita) -> PraticaResponse:
+    """La pratica come la vede chi chiama: il codice ASG solo il Nazionale.
+
+    Toglierlo qui, e non solo nascondere il campo nella scheda, perche' gli
+    altri ruoli non lo trovino nemmeno nei dati che il browser riceve.
+    """
+    risposta = PraticaResponse.model_validate(pratica)
+    if not vis.nazionale:
+        risposta.pratica_codiceASG = None
+    return risposta
+
+
 # POST
 @router.post("/", response_model=PraticaResponse, status_code=status.HTTP_201_CREATED)
 def crea_pratica(
@@ -95,6 +109,9 @@ def crea_pratica(
     # Non e' una colonna di Pratica: si userebbe per costruire le righe di
     # pratiche_listini piu' sotto, Pratica(**dati) non lo accetterebbe.
     corsi_singoli = dati.pop("corsi_singoli", None) or []
+    # Il codice ASG non si sceglie in creazione: per SSML lo genera il server
+    # (sotto), per eCampus lo inserisce poi il Nazionale dalla scheda.
+    dati.pop("pratica_codiceASG", None)
 
     # Una pratica nasce sempre in Bozza: il valore eventualmente inviato non
     # conta, nemmeno per il Nazionale. Cambiare stato e' un'azione separata,
@@ -180,7 +197,7 @@ def crea_pratica(
     if email_cliente:
         attivita.add_task(invia_mail_pratica_bozza, mailer, email_cliente)
 
-    return pratica_salvata
+    return _risposta(pratica_salvata, vis)
 
 
 # GET ALL
@@ -190,9 +207,10 @@ def lista_pratiche(
     db: Session = Depends(get_db),
     vis: Visibilita = Depends(visibilita_corrente),
 ):
-    return (query_filtrata(db, filtri, vis).options(*_RELAZIONI_ELENCO)
-            .order_by(Pratica.pratica_dataCreazione.desc(), Pratica.pratica_id.desc())
-            .offset(filtri.skip).limit(filtri.limit).all())
+    pratiche = (query_filtrata(db, filtri, vis).options(*_RELAZIONI_ELENCO)
+                .order_by(*ordinamento(filtri))
+                .offset(filtri.skip).limit(filtri.limit).all())
+    return [_risposta(pratica, vis) for pratica in pratiche]
 
 
 # GET CONTEGGI: prima di /{pratica_id}, che altrimenti catturerebbe il percorso
@@ -218,6 +236,21 @@ def conteggi_pratiche(
     ]
 
 
+@router.get("/conteggi/stati", response_model=List[ConteggioStato])
+def conteggi_per_stato(
+    filtri: Annotated[FiltriPratiche, Query()],
+    db: Session = Depends(get_db),
+    vis: Visibilita = Depends(visibilita_corrente),
+):
+    """Quante pratiche ha ogni stato con gli stessi filtri dell'elenco: i
+    numeri accanto ai gruppi dell'elenco del Nazionale. skip, limit e ordine
+    non contano."""
+    righe = (query_filtrata(db, filtri, vis)
+             .with_entities(Pratica.pratica_stato_id, func.count(Pratica.pratica_id))
+             .group_by(Pratica.pratica_stato_id).order_by(Pratica.pratica_stato_id).all())
+    return [ConteggioStato(pratica_stato_id=stato, totale=totale) for stato, totale in righe]
+
+
 # GET BY ID
 @router.get("/{pratica_id}", response_model=PraticaResponse)
 def dettaglio_pratica(
@@ -225,7 +258,7 @@ def dettaglio_pratica(
     db: Session = Depends(get_db),
     vis: Visibilita = Depends(visibilita_corrente),
 ):
-    return _pratica_o_404(db, pratica_id, vis)
+    return _risposta(_pratica_o_404(db, pratica_id, vis), vis)
 
 
 # PUT
@@ -254,6 +287,10 @@ def aggiorna_pratica(
     if not vis.nazionale:
         modifiche.pop("azienda_id", None)
         modifiche.pop("pratica_stato_id", None)
+    # Il codice ASG si inserisce a mano solo sulle pratiche eCampus, e solo
+    # dal Nazionale. Quello delle SSML lo genera il server e non si tocca.
+    if not vis.nazionale or pratica.nome_universita_id != UNIVERSITA_ECAMPUS_ID:
+        modifiche.pop("pratica_codiceASG", None)
 
     try:
         verifica_modifica_rinnovo(pratica, modifiche)
@@ -286,4 +323,4 @@ def aggiorna_pratica(
     if manda_caricata:
         attivita.add_task(invia_mail_nuova_pratica_ersaf, mailer)
 
-    return pratica_salvata
+    return _risposta(pratica_salvata, vis)

@@ -1,10 +1,12 @@
 import { apiFetch, leggiJson, messaggioErrore } from "./api.js";
+import { descriviErrore } from "./erroriApi.js";
 import { anomaliePerCampo, noteVisibili } from "./anomalieCampi.js";
 import { TESTI_ANOMALIE } from "../config/testi/anomalie.js";
 import { TESTI_AZIENDA } from "../config/testi/azienda.js";
 import { CAMPI_PERCENTUALI, CONVENZIONI } from "../config/campiPercentuali.js";
 
 const ORDINE_PERCENTUALE = Object.fromEntries(CAMPI_PERCENTUALI.map(([chiave], indice) => [chiave, indice]));
+const ETICHETTA_PERCENTUALE = Object.fromEntries(CAMPI_PERCENTUALI);
 // L'ateneo di ogni campo percentuale (senza la tipologia: "eCampus", non
 // "eCampus - Lauree"), per il messaggio di conferma dell'azzeramento.
 const ATENEO_PER_CAMPO = Object.fromEntries(
@@ -102,8 +104,9 @@ export async function caricaDettaglioConvenzioni(aziendaId, signal) {
 
 /**
  * Salva le percentuali delle convenzioni universitarie (PUT
- * /aziende/{id}/dettagli). Se cambiarle azzererebbe delle convenzioni a
- * cascata sulle aziende figlie, il server risponde 409 finche' non si
+ * /aziende/{id}/dettagli). Un valore sopra quello dell'azienda padre e' un
+ * errore (422, vedi messaggioSuperamento). Se cambiarle azzererebbe delle
+ * convenzioni a cascata sulle aziende figlie, il server risponde 409 finche' non si
  * ripete la richiesta con `conferma: true`; `reset` e' l'elenco (per
  * azienda coinvolta) dei campi che verrebbero azzerati, vedi
  * messaggioAzzeramento per come diventa il testo dell'avviso.
@@ -122,8 +125,43 @@ export async function salvaDettaglioConvenzioni(aziendaId, valori, { conferma = 
     body: JSON.stringify(valori),
   });
   if (risposta.status === 409) return { esito: "richiedeConferma", reset: (await leggiJson(risposta))?.reset ?? [] };
-  if (!risposta.ok) throw new Error(await messaggioErrore(risposta));
+  if (!risposta.ok) {
+    const dati = await leggiJson(risposta);
+    const superamenti = dati?.detail?.superamenti;
+    throw new Error(superamenti?.length
+      ? messaggioSuperamento(superamenti)
+      : descriviErrore(risposta, dati, "Si è verificato un errore."));
+  }
   return { esito: "ok", dettaglio: await leggiJson(risposta) };
+}
+
+/**
+ * L'errore del salvataggio quando una percentuale supera quella dell'azienda
+ * padre (422 con `detail.superamenti`): niente azzeramento proposto, solo
+ * quali campi correggere e il massimo ammesso per ciascuno.
+ * @param {Array<{ campo: string, limite: number }>} superamenti
+ */
+export function messaggioSuperamento(superamenti) {
+  const voci = [...superamenti]
+    .sort((a, b) => ORDINE_PERCENTUALE[a.campo] - ORDINE_PERCENTUALE[b.campo])
+    .map(({ campo, limite }) => `${ETICHETTA_PERCENTUALE[campo] ?? campo} (massimo ${limite}%)`);
+  return `Le percentuali non possono superare quelle dell'azienda padre. Correggi: ${voci.join(", ")}.`;
+}
+
+/**
+ * Il testo della conferma nel salvataggio delle percentuali: qui `reset`
+ * contiene solo aziende figlie (i superamenti dell'azienda stessa sono un
+ * errore, vedi messaggioSuperamento), quindi le nomina insieme agli atenei.
+ * @param {Array<{ azienda_ragione_sociale: string|null, azienda_id: number, campi: string[] }>} reset
+ */
+export function messaggioAzzeramentoFiglie(reset) {
+  const lista = (voci) => new Intl.ListFormat("it", { style: "long", type: "conjunction" }).format(voci);
+  const chiavi = [...new Set(reset.flatMap((voce) => voce.campi))]
+    .sort((a, b) => ORDINE_PERCENTUALE[a] - ORDINE_PERCENTUALE[b]);
+  const atenei = [...new Set(chiavi.map((chiave) => ATENEO_PER_CAMPO[chiave] ?? chiave))];
+  const aziende = [...new Set(reset.map((voce) => voce.azienda_ragione_sociale || `azienda ${voce.azienda_id}`))];
+  return `I nuovi valori sono più bassi di quelli di ${aziende.length > 1 ? "alcune aziende figlie" : "un'azienda figlia"}: `
+    + `le percentuali di ${lista(atenei)} di ${lista(aziende)} verranno azzerate. Continuare?`;
 }
 
 /**

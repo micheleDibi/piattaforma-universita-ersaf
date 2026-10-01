@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { caricaProdottoPratica, caricaSchedaPratica, salvaPratica } from "../lib/schedaPratica.js";
 import { payloadPratica, praticaVuota, prezzoAttuale, prezzoPerInput, sommaPrezzi, valoriRinnovo } from "../lib/praticaForm.js";
 import { opzioneCorsoPratica, opzionePercorsoConDettaglio } from "../lib/opzioniPratica.js";
+import { codiceAsgModificabile } from "../config/pratica.js";
+import { leggiRuolo } from "../lib/sessione.js";
 
 const NESSUN_PREZZO_ATTIVO = "Il percorso formativo scelto non ha un prezzo attivo.";
 
@@ -101,7 +103,8 @@ export default function useSchedaPratica(id, { corsiSingoli = false } = {}) {
     setSalvataggio(true);
     setMessaggio(null);
     try {
-      const payload = payloadPratica(dati, { nuova: !id, studente, percorso, prodotto, corsiSingoli, corsiSelezionati });
+      const payload = payloadPratica(dati, { nuova: !id, studente, percorso, prodotto, corsiSingoli, corsiSelezionati,
+        codiceAsg: codiceAsgModificabile(leggiRuolo(), dati.nome_universita_id) });
       const pratica = await salvaPratica(id, payload);
       setMessaggio({ type: "success", text: "Pratica salvata." });
       return pratica;

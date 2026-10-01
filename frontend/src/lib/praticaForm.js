@@ -83,8 +83,11 @@ export function prezzoAttuale(dettagli, oggi = oggiLocale()) {
   return dettaglioAttuale(dettagli, oggi)?.listDettaglio_prezzo ?? null;
 }
 
-export function payloadPratica(dati, { nuova, studente, percorso, prodotto, corsiSingoli, corsiSelezionati }) {
+export function payloadPratica(dati, { nuova, studente, percorso, prodotto, corsiSingoli, corsiSelezionati, codiceAsg = false }) {
   const payload = Object.fromEntries(MODIFICABILI.map(nome => [nome, dati[nome] === "" ? null : dati[nome]]));
+  // Solo se la scheda mostra il campo (Nazionale, pratica eCampus, in
+  // modifica): negli altri casi il server lo ignorerebbe comunque.
+  if (codiceAsg && !nuova) payload.pratica_codiceASG = dati.pratica_codiceASG?.trim() || null;
   if (eGruppoLauree(prodotto?.listino_tipoCorso_id)) {
     Object.assign(payload, Object.fromEntries(CAMPI_RINNOVO.map(({ nome }) => [nome, dati[nome]])));
   }

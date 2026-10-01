@@ -27,6 +27,7 @@ from src.aziende_xcod.servizi import (
     calcola_cascata_percentuali,
     applica_cascata_percentuali,
     descrivi_cascata,
+    superamenti_padre,
 )
 
 
@@ -299,6 +300,18 @@ def aggiorna_dettaglio_azienda(
     _azienda_o_404(db, azienda_id, aziende_visibili_ids(db, utente_corrente))
 
     valori = dettaglio_in.model_dump()
+    # Un valore sopra quello dell'azienda padre e' un errore da correggere,
+    # non un azzeramento da confermare. Dopo questo controllo la cascata
+    # contiene solo discendenti: le figlie che superano i nuovi valori.
+    superamenti = superamenti_padre(db, azienda_id, valori)
+    if superamenti:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail={
+                "messaggio": "Alcune percentuali superano quelle dell'azienda padre.",
+                "superamenti": superamenti,
+            },
+        )
     cascata = calcola_cascata_percentuali(db, azienda_id, valori)
 
     if cascata and not conferma_reset:
