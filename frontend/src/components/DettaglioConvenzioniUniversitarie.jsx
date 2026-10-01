@@ -8,7 +8,7 @@ import {
 import { STILI_AZIENDA as stili } from "../config/styles/azienda.js";
 import { TESTI_AZIENDA } from "../config/testi/azienda.js";
 import { CONVENZIONI } from "../config/campiPercentuali.js";
-import { messaggioAzzeramento } from "../lib/schedaAzienda.js";
+import { messaggioAzzeramentoFiglie } from "../lib/schedaAzienda.js";
 import IndicatoreCaricamento from "./shared/IndicatoreCaricamento.jsx";
 import AlertMessage from "./AlertMessage.jsx";
 
@@ -126,8 +126,8 @@ export default function DettaglioConvenzioniUniversitarie({
             <AlertMessage
               message={{
                 type: "warning",
-                text: messaggioAzzeramento(resetPendente),
-                nota: TESTI_AZIENDA.azzeramento.nota,
+                text: messaggioAzzeramentoFiglie(resetPendente),
+                nota: TESTI_AZIENDA.azzeramento.notaFiglie,
               }}
               separato={false}
             />

@@ -93,6 +93,8 @@ export const TESTI_AZIENDA = {
   // lib/schedaAzienda.js.
   azzeramento: {
     nota: "Una percentuale non può superare quella dell'azienda padre.",
+    // Salvataggio delle percentuali: la conferma riguarda solo le figlie.
+    notaFiglie: "Una percentuale di un'azienda figlia non può superare quella della propria azienda padre.",
     conferma: "Conferma",
     annulla: "Annulla",
   },

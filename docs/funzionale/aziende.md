@@ -255,25 +255,37 @@ percentuali.
 ### Regola dell'azzeramento
 
 - Una percentuale non può superare la stessa percentuale dell'azienda padre.
-  Se la supera, viene portata a zero.
-- La regola scende lungo la gerarchia. In ogni azienda discendente, a
-  qualunque livello, una percentuale che supera quella del proprio padre viene
-  portata a zero. Il confronto usa i valori del padre dopo gli eventuali
+  Nel salvataggio delle percentuali è un errore: non si salva nulla e il
+  messaggio indica i campi da correggere con il massimo ammesso, per esempio
+  «Le percentuali non possono superare quelle dell'azienda padre. Correggi:
+  eCampus - Lauree (massimo 10%).». Non viene proposto alcun azzeramento.
+- La regola scende lungo la gerarchia. Se si abbassa una percentuale, in ogni
+  azienda discendente, a qualunque livello, una percentuale che supera quella
+  del proprio padre viene portata a zero, dopo la conferma descritta più
+  avanti. Il confronto usa i valori del padre dopo gli eventuali
   azzeramenti.
 - Un'azienda radice non ha limiti.
 - Se il padre non ha percentuali salvate, i suoi valori contano come zero:
   ogni valore maggiore di zero della figlia viene azzerato.
-- La stessa regola vale quando il Nazionale cambia il padre. Le percentuali
-  dell'azienda si confrontano con quelle del nuovo padre, e a cascata quelle
-  delle discendenti.
+- Quando il Nazionale cambia il padre, invece, le percentuali dell'azienda
+  che superano quelle del nuovo padre vengono portate a zero (con conferma),
+  e a cascata quelle delle discendenti.
 
 ### Richiesta di conferma
 
 Se il salvataggio, o il cambio del padre, azzererebbe qualche percentuale, il
-server non scrive nulla e chiede conferma. L'interfaccia elenca gli atenei
-coinvolti, per esempio «Le percentuali di eCampus e SSML verranno azzerate.
-Continuare?», seguito da una nota più piccola che ricorda la regola: «Una
-percentuale non può superare quella dell'azienda padre.», con due pulsanti:
+server non scrive nulla e chiede conferma.
+
+- Nel salvataggio delle percentuali gli azzeramenti riguardano solo le aziende
+  figlie. L'interfaccia nomina atenei e aziende, per esempio «I nuovi valori
+  sono più bassi di quelli di un'azienda figlia: le percentuali di eCampus di
+  GAMMA SRL verranno azzerate. Continuare?», con la nota «Una percentuale di
+  un'azienda figlia non può superare quella della propria azienda padre.».
+- Nel cambio del padre elenca gli atenei coinvolti, per esempio «Le
+  percentuali di eCampus e SSML verranno azzerate. Continuare?», con la nota
+  «Una percentuale non può superare quella dell'azienda padre.».
+
+In entrambi i casi ci sono due pulsanti:
 
 - «Conferma» salva e applica gli azzeramenti, poi salva anche il resto della
   scheda (con le percentuali non c'è una richiesta di conferma separata: finché
