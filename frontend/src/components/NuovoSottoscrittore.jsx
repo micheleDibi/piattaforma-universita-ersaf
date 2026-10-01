@@ -34,6 +34,10 @@ import BarraSchede from "./shared/BarraSchede.jsx";
 import SchedaAziendaAttuatori from "./SchedaAziendaAttuatori";
 import SchedaAbilitazioniPratiche from "./SchedaAbilitazioniPratiche";
 import { useSessione } from "../hooks/useSessione.js";
+import {
+  CODICE_RUOLO_NAZIONALE,
+  permessiSchedaUtente,
+} from "../lib/permessiSchedaUtente.js";
 
 // Schede non composte da SezioneModulo (Azienda e Abilitazioni
 // dell'attuatore): il pannello aggiunge il suo margine. Tutte le altre
@@ -47,7 +51,8 @@ function NuovoSottoscrittore({ tipoUtente }) {
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
 
-  const ruoloCodice = useSessione()?.ruoloCodice;
+  const sessione = useSessione();
+  const ruoloCodice = sessione?.ruoloCodice;
   const isNazionale = ruoloCodice === "nazionale";
   const mostraAbilitazioni =
     tipoUtente === "attuatore" && isNazionale && isEditMode;
@@ -79,6 +84,10 @@ function NuovoSottoscrittore({ tipoUtente }) {
   // sottoscrittori, che restano sempre ruolo "Utente" (0).
   const [ruoli, setRuoli] = useState([]);
   const [ruoloSelezionato, setRuoloSelezionato] = useState("");
+  // utente_id della persona della scheda: serve a sapere se e' la propria
+  // (chi non e' Nazionale non puo' cambiarsi il ruolo).
+  const [utenteIdScheda, setUtenteIdScheda] = useState(null);
+  const permessi = permessiSchedaUtente(sessione, utenteIdScheda);
 
   useEffect(() => {
     if (tipoUtente !== "attuatore") return;
@@ -120,9 +129,12 @@ function NuovoSottoscrittore({ tipoUtente }) {
           // sempre vuota.
           const uniData = data.curriculum || {};
 
-          if (data.cliente_ruolo != null) {
-            setRuoloSelezionato(String(data.cliente_ruolo));
-          }
+          // Stato condiviso con la scheda Utente: le due tendine del ruolo
+          // (qui e in SchedaUtente) leggono e scrivono lo stesso valore.
+          setRuoloSelezionato(
+            data.cliente_ruolo != null ? String(data.cliente_ruolo) : "",
+          );
+          setUtenteIdScheda(data.utente?.utente_id ?? data.utente_id ?? null);
 
           setAnomalie(data.anomalie ?? []);
           setAttivoSN(data.utente?.utente_attivoSN ?? null);
@@ -244,12 +256,11 @@ function NuovoSottoscrittore({ tipoUtente }) {
     // se fallisce (per esempio "Seleziona un ruolo prima di salvare"), non si
     // procede con il resto - un solo salvataggio percepito. L'errore specifico
     // resta visibile li' (AlertMessage di SchedaUtente): qui si passa alla
-    // scheda per farlo vedere subito, anche se non era quella aperta.
+    // scheda per farlo vedere subito, senza un secondo avviso generico.
     const utenteSalvato = schedaUtenteRef.current
       ? await schedaUtenteRef.current.salva()
       : true;
     if (!utenteSalvato) {
-      setAvviso({ type: "error", text: testi.erroreSchedaUtente });
       setActiveTab("utente");
       return;
     }
@@ -274,8 +285,9 @@ function NuovoSottoscrittore({ tipoUtente }) {
       // modifica (lo assegna un amministratore dalla scheda utente).
       // Attuatori: se in creazione l'operatore ha scelto un ruolo dalla
       // select lo si manda; altrimenti si omette e il backend assegna
-      // "Aderente" di default. In modifica il ruolo si manda solo se
-      // l'operatore lo ha effettivamente cambiato dalla select.
+      // "Aderente" di default. In modifica si manda il ruolo condiviso con
+      // la scheda Utente: e' lo stesso valore che quella ha appena salvato,
+      // qualunque delle due tendine l'operatore abbia usato.
       ...(isEditMode
         ? tipoUtente === "attuatore" && ruoloSelezionato
           ? { cliente_ruolo: Number(ruoloSelezionato) }
@@ -458,7 +470,11 @@ function NuovoSottoscrittore({ tipoUtente }) {
                 Se si smontasse cambiando scheda, le modifiche non ancora
                 salvate del suo stato locale andrebbero perse. */}
             <div hidden={activeTab !== "utente"}>
-              <SchedaUtente ref={schedaUtenteRef} />
+              <SchedaUtente
+                ref={schedaUtenteRef}
+                ruoloId={ruoloSelezionato}
+                onCambiaRuolo={setRuoloSelezionato}
+              />
             </div>
             {activeTab === "dati-principali" ? (
               <div>
@@ -484,14 +500,28 @@ function NuovoSottoscrittore({ tipoUtente }) {
                         name="ruolo"
                         value={ruoloSelezionato}
                         onChange={(e) => setRuoloSelezionato(e.target.value)}
+                        disabled={!permessi.ruolo}
                         className={campo("comodo")}
                       >
+                        {/* Oltre ai ruoli da attuatore, anche quello attuale
+                            se e' un altro (per esempio "Utente" scelto dalla
+                            scheda Utente): senza, la tendina mostrerebbe la
+                            prima voce pur avendo un valore diverso. */}
                         {ruoli
-                          .filter((r) =>
-                            RUOLI_ATTUATORE.includes(r.ruolo_codice),
+                          .filter(
+                            (r) =>
+                              RUOLI_ATTUATORE.includes(r.ruolo_codice) ||
+                              String(r.ruolo_id) === ruoloSelezionato,
                           )
                           .map((r) => (
-                            <option key={r.ruolo_id} value={r.ruolo_id}>
+                            <option
+                              key={r.ruolo_id}
+                              value={r.ruolo_id}
+                              disabled={
+                                r.ruolo_codice === CODICE_RUOLO_NAZIONALE &&
+                                !permessi.assegnaNazionale
+                              }
+                            >
                               {r.ruolo_codice}
                             </option>
                           ))}

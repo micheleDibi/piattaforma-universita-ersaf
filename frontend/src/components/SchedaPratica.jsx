@@ -4,7 +4,7 @@ import { PERCORSI } from "../config/routes/percorsi.js";
 import { contenutoPagina } from "../config/styles/pagina.js";
 import { pulsante } from "../config/styles/pulsante.js";
 import { STILI_PRATICA as stili } from "../config/styles/pratica.js";
-import { eContestoCorsiSingoli } from "../config/pratica.js";
+import { eContestoCorsiSingoli, eGruppoCorsiSingoli } from "../config/pratica.js";
 import useSchedaPratica from "../hooks/useSchedaPratica.js";
 import { useDocumentoPratica } from "../hooks/useDocumentoPratica.js";
 import useNavigazioneElenco from "../hooks/useNavigazioneElenco.js";
@@ -15,6 +15,7 @@ import AlertMessage from "./AlertMessage.jsx";
 import PaginaNonTrovata from "./PaginaNonTrovata.jsx";
 import RelazioniPratica from "./pratiche/RelazioniPratica.jsx";
 import CaratteristichePercorso from "./pratiche/CaratteristichePercorso.jsx";
+import ElencoCorsiPratica from "./pratiche/ElencoCorsiPratica.jsx";
 import DatiPratica from "./pratiche/DatiPratica.jsx";
 import AzioneDocumento from "./pratiche/AzioneDocumento.jsx";
 
@@ -62,6 +63,9 @@ export default function SchedaPratica() {
   const contestoUrl = leggiContestoUrl(ritorno);
   const corsiSingoli = eContestoCorsiSingoli(contestoUrl.tipoCorsoIds);
   const form = useSchedaPratica(praticaId, { corsiSingoli });
+  // Per mostrare la scheda conta anche il tipo di corso della pratica
+  // salvata: aprendola da un elenco senza ?tipoCorso= il contesto manca.
+  const mostraCorsiSingoli = corsiSingoli || (Boolean(praticaId) && eGruppoCorsiSingoli(form.dati.listino_tipo_corso_id));
   const invia = async evento => {
     evento.preventDefault();
     const salvata = await form.salva();
@@ -90,8 +94,13 @@ export default function SchedaPratica() {
         <AlertMessage message={form.messaggio} />
         <fieldset disabled={form.salvataggio} className={stili.sezione}>
           <RelazioniPratica form={form} nuova={!praticaId} universitaId={contestoUrl.universitaId}
-            tipoCorsoIds={contestoUrl.tipoCorsoIds} corsiSingoli={corsiSingoli} />
-          <CaratteristichePercorso prodotto={form.prodotto} />
+            tipoCorsoIds={contestoUrl.tipoCorsoIds} corsiSingoli={mostraCorsiSingoli} />
+          {/* Corsi Singoli: l'elenco dei corsi al posto delle caratteristiche
+              del percorso, che mostravano solo quelle del primo corso. */}
+          {mostraCorsiSingoli
+            ? <ElencoCorsiPratica corsi={form.corsiPratica}
+              onRimuovi={praticaId ? undefined : (corso) => form.setPercorsi(form.corsiSelezionati.filter((c) => c.id !== corso.id))} />
+            : <CaratteristichePercorso prodotto={form.prodotto} />}
           <hr className={stili.separatore} />
           <DatiPratica form={form} nuova={!praticaId} prodotto={form.prodotto} />
           <div className={stili.azioni}>

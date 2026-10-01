@@ -273,7 +273,7 @@ Il profilo si apre dal proprio nome in fondo al menu. Su uno schermo piccolo si 
 | "La sessione è scaduta o non è più valida. Accedi di nuovo per riprendere dalla pagina che avevi aperto." | Sessione scaduta o chiusa. |
 | "La sessione è cambiata. Ricarica la pagina prima di riprovare." | In un'altra scheda dello stesso browser si è acceduto di nuovo. |
 | "Non hai i permessi per questa operazione." | Accesso come altro utente tentato da chi non è Regionale o Nazionale. |
-| "Non hai i permessi per modificare un altro utente." | Salvataggio della scheda "Utente" di un'altra persona da parte di chi non è Regionale o Nazionale. |
+| "Non hai i permessi per modificare un altro utente." | Modifica di nome utente, stato o padre di un'altra persona da parte di chi non è Regionale o Nazionale. Dall'interfaccia non compare: quei campi sono bloccati per chi non ha il permesso. |
 | "Solo il nazionale può eseguire questa operazione." | Operazione riservata al Nazionale. |
 | "Il ruolo Nazionale richiede la verifica a due fattori." | Tentativo di accedere come un Nazionale. |
 | "Utente non trovato o non impersonabile." | La persona scelta non può essere usata per l'accesso come altro utente. |

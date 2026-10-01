@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { praticaVuota, payloadPratica, dettaglioAttuale, prezzoAttuale, prezzoPerInput, sommaPrezzi, valoriRinnovo } from "../src/lib/praticaForm.js";
-import { opzioneStudente, paginaStudenti, opzionePercorsoConDettaglio, paginaPercorsi } from "../src/lib/opzioniPratica.js";
+import { opzioneStudente, paginaStudenti, opzionePercorsoConDettaglio, opzioneCorsoPratica, paginaPercorsi } from "../src/lib/opzioniPratica.js";
 import { creaPayloadProdotto, aggiungiDettaglio } from "../src/lib/prodottoPayload.js";
-import { campiPercorsoVisibili, eContestoCorsiSingoli, eGruppoLauree, CAMPI_RINNOVO } from "../src/config/pratica.js";
+import { campiPercorsoVisibili, eContestoCorsiSingoli, eGruppoCorsiSingoli, eGruppoLauree, CAMPI_RINNOVO } from "../src/config/pratica.js";
 
 const dati = { ...praticaVuota(), pratica_numero: " TEST-42 ", pratica_prezzo: "120.50", pratica_stato_id: "2" };
 const scelta = { nuova: true, studente: { id: 17 }, percorso: { id: 42 },
@@ -103,9 +103,9 @@ test("caratteristiche visibili per il tipo di percorso seguono la tassonomia dei
   assert.deepEqual(campiPercorsoVisibili(7), ["modalita", "durata", "cfu"]); // Alta formazione
   assert.deepEqual(campiPercorsoVisibili(8), ["facolta", "tasse", "tipoLaurea"]); // Lauree
   assert.deepEqual(campiPercorsoVisibili(9), ["cfu", "corsoLaurea"]); // Corsi singoli
-  // Percorso docenti e corsi speciali: nessuna caratteristica prevista.
+  assert.deepEqual(campiPercorsoVisibili(10), ["modalita", "cfu"]); // Corsi speciali, come perfezionamento
+  // Percorso docenti: nessuna caratteristica prevista.
   assert.deepEqual(campiPercorsoVisibili(5), []);
-  assert.deepEqual(campiPercorsoVisibili(10), []);
   assert.deepEqual(campiPercorsoVisibili(undefined), []);
 });
 test("contesto Corsi Singoli: solo il gruppo 9 (Corsi singoli) permette la selezione multipla", () => {
@@ -151,7 +151,7 @@ test("percorso del modale: prezzo e CFU vengono dal dettaglio valido oggi, mai q
       { listDettaglio_dataInizioValidazione: "2026-01-01", listDettaglio_dataFineValidazionoe: "9999-12-31", listDettaglio_prezzo: "100", listDettaglio_CFU: 6 },
     ] };
   assert.deepEqual(opzionePercorsoConDettaglio(prodotto, oggi),
-    { id: 42, codice: "CS42", label: "Corso singolo", prezzo: "100", cfu: 6 });
+    { id: 42, codice: "CS42", label: "Corso singolo", prezzo: "100", cfu: 6, corsoLaurea: "" });
   assert.equal(opzionePercorsoConDettaglio({ listTesta_id: 1, listTesta_descrizione: "X", dettagli: [] }).prezzo, null);
 });
 test("paginaPercorsi (usata da Array.map nel modale) non riceve l'indice al posto della data di oggi", () => {
@@ -164,6 +164,18 @@ test("paginaPercorsi (usata da Array.map nel modale) non riceve l'indice al post
   const prodotti = ["100", "200", "300"].map((prezzo, i) =>
     ({ listTesta_id: i, listTesta_descrizione: `Corso ${i}`, dettagli: dettaglioValido(prezzo) }));
   assert.deepEqual(paginaPercorsi(prodotti).elementi.map((o) => o.prezzo), ["100", "200", "300"]);
+});
+test("i corsi di una pratica salvata hanno la stessa forma delle opzioni del modale", () => {
+  assert.deepEqual(opzioneCorsoPratica({ listTesta_id: 7, codice: "SECS-P/01", descrizione: "MACROECONOMIA",
+    prezzo: "360.00", cfu: 9, corso_laurea: "Economia" }),
+  { id: 7, codice: "SECS-P/01", label: "MACROECONOMIA", prezzo: "360.00", cfu: 9, corsoLaurea: "Economia" });
+  assert.deepEqual(opzioneCorsoPratica({ listTesta_id: 1 }),
+    { id: 1, codice: "", label: "", prezzo: null, cfu: null, corsoLaurea: "" });
+});
+test("una pratica salvata si riconosce Corsi Singoli dal suo tipo di corso", () => {
+  assert.equal(eGruppoCorsiSingoli(9), true);
+  assert.equal(eGruppoCorsiSingoli(8), false);
+  assert.equal(eGruppoCorsiSingoli(""), false);
 });
 test("payload Corsi Singoli: ogni corso scelto (compreso il primo) va in corsi_singoli", () => {
   const corsiSelezionati = [{ id: 42, prezzo: "100" }, { id: 43, prezzo: "50" }];

@@ -523,8 +523,8 @@ Questa sezione elenca i difetti noti di autorizzazione, visibilità e coerenza, 
 - **Ruoli amministrativi assegnabili da chiunque.**
   - Il ruolo Nazionale e il proprio ruolo sono protetti (vedi [Visibilità](#visibilità)), ma ogni altro ruolo resta assegnabile da qualunque utente autenticato, in creazione e su un'anagrafica visibile.
   - Fra questi c'è **Regionale**, che è amministrativo: chi lo assegna può creare un amministratore e usarne i permessi.
-  - La scheda Utente continua a offrire tutti i ruoli, compreso Nazionale, a chiunque: il rifiuto arriva solo al salvataggio.
-  - `backend/src/clienti/schemas.py:163`, `232`; `clienti/routers.py:120`, `232-246`, `311-312`; `auth/autorizzazioni.py:32`; `frontend/src/components/SchedaUtente.jsx:254-273`; `frontend/src/components/NuovoSottoscrittore.jsx:404-431`.
+  - Le tendine del ruolo (scheda Utente e Dati principali) mostrano Nazionale non selezionabile a chi non è Nazionale, e sono bloccate sulla propria scheda; il controllo vero resta sul server.
+  - `backend/src/clienti/schemas.py:163`, `232`; `clienti/routers.py:120`, `232-246`, `311-312`; `auth/autorizzazioni.py:32`; `frontend/src/lib/permessiSchedaUtente.js`; `frontend/src/components/SchedaUtente.jsx`; `frontend/src/components/NuovoSottoscrittore.jsx`.
 - **Abilitazioni alle pratiche.**
   - La scheda Abilitazioni compare solo al Nazionale, in modifica di un attuatore.
   - Il server accetta i cinque campi, in creazione e in modifica, da ogni utente autenticato.

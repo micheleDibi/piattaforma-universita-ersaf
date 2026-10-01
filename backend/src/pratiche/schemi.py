@@ -4,6 +4,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from sqlalchemy import inspect as sa_inspect
 from src.comune.flag_legacy import a_flag_legacy
 from src.pratiche.rinnovi import CAMPI_RINNOVO, verifica_rinnovo
 
@@ -168,6 +169,48 @@ class EmittenteBreve(BaseModel):
     cliente_codice: Optional[str] = None
 
 
+class CorsoPratica(BaseModel):
+    """Un corso di una pratica Corsi Singoli (una riga di pratiche_listini),
+    con i dati che la scheda mostra nell'elenco dei corsi. Il prezzo e'
+    quello salvato con la pratica; CFU dal dettaglio del listino valido alla
+    data di creazione della pratica (vedi _dettaglio_alla_data)."""
+
+    listTesta_id: int
+    codice: Optional[str] = None
+    descrizione: Optional[str] = None
+    prezzo: Optional[Decimal] = None
+    cfu: Optional[int] = None
+    corso_laurea: Optional[str] = None
+
+
+def _dettaglio_alla_data(dettagli, giorno: date):
+    """Il dettaglio di listino valido in `giorno`, il piu' recente se piu'
+    d'uno: stessa regola di dettaglioAttuale in frontend/src/lib/praticaForm.js."""
+    validi = [
+        d for d in dettagli
+        if (d.listDettaglio_dataInizioValidazione is None or d.listDettaglio_dataInizioValidazione <= giorno)
+        and (d.listDettaglio_dataFineValidazionoe is None or d.listDettaglio_dataFineValidazionoe >= giorno)
+    ]
+    return max(validi, key=lambda d: d.listDettaglio_dataInizioValidazione or date.min, default=None)
+
+
+def _corso_pratica(riga, giorno: date) -> dict:
+    listino = riga.listino
+    dettagli = list(getattr(listino, "dettagli", None) or [])
+    # Se alla data della pratica non c'era un dettaglio valido (listino
+    # ritoccato dopo), si ripiega su quello valido oggi.
+    dettaglio = _dettaglio_alla_data(dettagli, giorno) or _dettaglio_alla_data(dettagli, date.today())
+    corso_laurea = getattr(listino, "corso_laurea", None) if listino else None
+    return {
+        "listTesta_id": riga.listTesta_id,
+        "codice": getattr(listino, "listTesta_codice", None),
+        "descrizione": getattr(listino, "listTesta_descrizione", None),
+        "prezzo": riga.pratica_listini_prezzo,
+        "cfu": dettaglio.listDettaglio_CFU if dettaglio else None,
+        "corso_laurea": getattr(corso_laurea, "listino_corsoLaurea_descrizione", None),
+    }
+
+
 class PraticaResponse(PraticaBase):
     pratica_id: int
     pratica_created_at: Optional[datetime] = None
@@ -184,6 +227,11 @@ class PraticaResponse(PraticaBase):
     nome_universita_descrizione: Optional[str] = None
     listino_tipoCorso_descrizione: Optional[str] = None
     emittente: Optional[EmittenteBreve] = None
+    # Tutti i corsi di una pratica Corsi Singoli, nell'ordine di scelta. Solo
+    # nel dettaglio (GET /pratiche/{id}, che carica la relazione): None
+    # nell'elenco, dove servirebbe una query in piu' per ogni pratica. Lista
+    # vuota per le pratiche senza righe in pratiche_listini.
+    corsi: Optional[List[CorsoPratica]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -223,6 +271,14 @@ class PraticaResponse(PraticaBase):
                 "cliente_cognome": emittente_obj.cliente_cognome,
                 "cliente_codice": emittente_obj.cliente_codice,
             }
+
+        # Solo se la relazione e' gia' caricata: leggerla qui farebbe una
+        # query per ogni pratica dell'elenco.
+        if "listini" not in sa_inspect(data).unloaded:
+            creazione = data.pratica_dataCreazione
+            giorno = creazione.date() if isinstance(creazione, datetime) else (creazione or date.today())
+            righe = sorted(data.listini, key=lambda riga: riga.pratiche_listini_id)
+            item_dict["corsi"] = [_corso_pratica(riga, giorno) for riga in righe]
 
         return item_dict
 

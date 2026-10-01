@@ -15,7 +15,6 @@ export const TESTI_ANAGRAFICA = {
   erroreCaricamento: "Impossibile caricare l’anagrafica.",
   sessioneScaduta: "Sessione scaduta. Rifai il login prima di salvare.",
   salvataggioRiuscito: "Modifiche salvate con successo!",
-  erroreSchedaUtente: "Correggi l'errore nella scheda Utente prima di salvare.",
   // Schede: le chiavi sono gli id della query ?scheda=.
   etichettaSchede: "Schede anagrafica",
   schede: {

@@ -28,6 +28,12 @@ function oggiLocale(oggi = new Date()) {
   return new Date(oggi.getTime() - oggi.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 
+/** Un importo in euro come si legge in Italia: "2.520,00". Solo per
+ * mostrarlo, mai per calcolare (vedi sommaPrezzi). */
+export function formattaImporto(numero) {
+  return Number(numero).toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 /** Somma Decimal(20,8) senza gli arrotondamenti binari di Number. */
 export function sommaPrezzi(prezzi) {
   let totale = 0n;

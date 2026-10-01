@@ -139,6 +139,9 @@ def get_all(
     query = db.query(ListinoTestaDB).options(
         joinedload(ListinoTestaDB.universita),
         joinedload(ListinoTestaDB.tipo_corso),
+        # Il corso di laurea compare nella selezione dei Corsi Singoli di una
+        # pratica: senza, extract_relations lo leggerebbe riga per riga.
+        joinedload(ListinoTestaDB.corso_laurea),
         selectinload(ListinoTestaDB.dettagli),
     )
 

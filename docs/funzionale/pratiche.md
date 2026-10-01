@@ -182,7 +182,8 @@ tutti, separati da "/". Se questa informazione manca il titolo resta "Nuova
 pratica". In modifica il titolo è "Pratica" seguito dal numero. Ha due
 sezioni fisse, "Iscrizione" e "Dati della pratica", e una terza,
 "Caratteristiche del percorso", che compare solo per alcuni tipi di corso
-(vedi sotto).
+(vedi sotto). Per Corsi Singoli, al posto delle caratteristiche c'è la
+sezione "Corsi selezionati".
 
 ### Iscrizione
 
@@ -224,31 +225,42 @@ listino in corso.
 Per tutti i tipi di corso tranne Corsi Singoli si sceglie un solo percorso: un
 clic sceglie e chiude la finestra. Per Corsi Singoli si possono scegliere più
 corsi: un clic li aggiunge o li toglie dalla selezione, un pulsante "Conferma"
-in fondo alla finestra (con il totale) chiude quando si è finito. I corsi
-scelti compaiono come un elenco sotto il campo, ognuno con un pulsante per
-toglierlo; il prezzo della pratica è la somma dei prezzi dei corsi scelti, e
-si aggiorna man mano che se ne aggiungono o tolgono. Una volta salvata la
-pratica l'elenco dei corsi non si modifica più.
+in fondo alla finestra (con il totale) chiude quando si è finito. Sotto
+l'elenco della finestra, il riquadro "Corsi selezionati" mostra i corsi già
+scelti, ognuno con una X per toglierlo. Nel campo "Corsi" resta il numero dei
+corsi scelti; l'elenco completo sta nella sezione "Corsi selezionati" della
+scheda (vedi sotto). Il prezzo della pratica è la somma dei prezzi dei corsi
+scelti, e si aggiorna man mano che se ne aggiungono o tolgono. Una volta
+salvata la pratica l'elenco dei corsi non si modifica più.
+
+### Corsi selezionati (solo Corsi Singoli)
+
+Prende il posto di "Caratteristiche del percorso": una riga per corso, con
+Codice, Denominazione, Corso di laurea, CFU e Prezzo (€). In creazione ogni
+riga ha una X per togliere il corso; in una pratica salvata l'elenco è in sola
+lettura e mostra tutti i corsi della pratica. Il prezzo è quello salvato con
+la pratica; i CFU sono quelli del listino valido alla data di creazione della
+pratica. Alcune pratiche del 2022 hanno registrato un solo corso: mostrano
+quello.
 
 ### Caratteristiche del percorso
 
 Dopo aver scelto il percorso formativo (in creazione) o per una pratica già
 salvata, la scheda mostra alcune caratteristiche del percorso stesso, sempre
-in sola lettura: non si scelgono né si modificano qui. Per Corsi Singoli, con
-più corsi scelti, sono quelle del primo corso: gli altri restano nel loro
-elenco sopra, con prezzo e CFU propri. Quali compaiono dipende dal tipo di
-corso del percorso:
+in sola lettura: non si scelgono né si modificano qui. Non compaiono per
+Corsi Singoli (vedi sopra). Quali compaiono dipende dal tipo di corso del
+percorso:
 
 | Tipo di corso | Caratteristiche mostrate |
 |---|---|
 | Master | Modalità di erogazione, Durata, CFU, Livello |
 | Corsi di perfezionamento | Modalità di erogazione, CFU |
+| Corsi speciali | Modalità di erogazione, CFU |
 | Formazione ed Alta formazione | Modalità di erogazione, Durata, CFU |
 | Lauree | Facoltà, Tasse (€), Tipo di Laurea |
-| Corsi singoli | CFU, Corso di Laurea |
 
-Per un percorso di un altro tipo (Percorso docenti, Corsi speciali) la
-sezione non compare: non ha caratteristiche previste.
+Per un percorso di un altro tipo (Percorso docenti) la sezione non compare:
+non ha caratteristiche previste.
 
 Durata, CFU e Tasse vengono dal dettaglio del listino valido oggi, lo stesso
 usato per il prezzo (vedi [Dati della pratica](#dati-della-pratica)): se il

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { caricaProdottoPratica, caricaSchedaPratica, salvaPratica } from "../lib/schedaPratica.js";
 import { payloadPratica, praticaVuota, prezzoAttuale, prezzoPerInput, sommaPrezzi, valoriRinnovo } from "../lib/praticaForm.js";
+import { opzioneCorsoPratica, opzionePercorsoConDettaglio } from "../lib/opzioniPratica.js";
 
 const NESSUN_PREZZO_ATTIVO = "Il percorso formativo scelto non ha un prezzo attivo.";
 
@@ -30,6 +31,10 @@ export default function useSchedaPratica(id, { corsiSingoli = false } = {}) {
           pratica_prezzo: prezzoPerInput(pratica.pratica_prezzo) });
         setStudente({ id: pratica.cliente_id, label: pratica.cliente_nome_completo });
         setPercorso({ id: pratica.listTesta_id, label: pratica.listTesta_descrizione });
+        // Corsi Singoli: tutti i corsi salvati, non solo il primo (che e'
+        // anche in listTesta_id). Il prezzo non si ricalcola: in modifica
+        // l'effetto della somma sotto non agisce (!id).
+        setCorsiSelezionati((pratica.corsi ?? []).map(opzioneCorsoPratica));
       }
     }).catch(errore => {
       if (!controller.signal.aborted) setCatalogo({ loading: false, errore: errore.message, status: errore.status, stati: [], universita: [], tipiCorso: [] });
@@ -104,8 +109,14 @@ export default function useSchedaPratica(id, { corsiSingoli = false } = {}) {
     finally { invio.current = false; setSalvataggio(false); }
   };
   const universitaId = id ? dati.nome_universita_id : prodotto && prodotto.listTesta_id === percorsoId ? prodotto.nome_universita_id : null;
+  // I corsi da mostrare per Corsi Singoli. Una pratica salvata senza righe in
+  // pratiche_listini (per esempio creata prima che si salvassero) ha solo il
+  // corso principale: lo si mostra quello, con il prezzo della pratica.
+  const corsiPratica = corsiSelezionati.length || !id || !prodotto || prodotto.listTesta_id !== percorsoId
+    ? corsiSelezionati
+    : [{ ...opzionePercorsoConDettaglio(prodotto), prezzo: dati.pratica_prezzo === "" ? null : dati.pratica_prezzo }];
   return { dati, aggiorna, impostaRinnovo, ...catalogo, messaggio, salvataggio, salva, studente, setStudente,
-    percorso, corsiSelezionati, setPercorsi, prodotto, erroreProdotto,
+    percorso, corsiSelezionati, corsiPratica, setPercorsi, prodotto, erroreProdotto,
     universitaLabel: catalogo.universita.find(item => item.id === universitaId)?.descrizione,
     // Stato di una pratica nuova: fisso su "Bozza", non scelto dall'utente.
     statoIniziale: catalogo.stati?.find(stato => stato.label === "Bozza"),

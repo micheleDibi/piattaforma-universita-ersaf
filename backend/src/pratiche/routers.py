@@ -1,6 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 from typing import Annotated, List
 
 from src.auth.dipendenze import get_current_utente
@@ -22,6 +22,7 @@ from src.pratiche.models import Pratica
 from src.pratiche.schemi import ConteggioPratiche, PraticaCreate, PraticaResponse, PraticaUpdate
 from src.pratiche.rinnovi import verifica_modifica_rinnovo
 from src.pratiche_listini.models import PraticaListino
+from src.listini_testa.models import ListinoTestaDB
 from src.utenti.models import Utente
 
 # Stessa scelta di aziende/routers.py: autenticazione a livello di router,
@@ -58,8 +59,18 @@ _RELAZIONI_ELENCO = (
 AZIENDA_MANCANTE = "Per creare pratiche l'utente deve avere un'azienda associata."
 
 
+# Il dettaglio aggiunge all'elenco tutti i corsi di una pratica Corsi Singoli
+# (PraticaResponse.corsi), con codice, CFU e corso di laurea di ognuno.
+_LISTINO_DEI_CORSI = selectinload(Pratica.listini).joinedload(PraticaListino.listino)
+_RELAZIONI_DETTAGLIO = (
+    *_RELAZIONI_ELENCO,
+    _LISTINO_DEI_CORSI.joinedload(ListinoTestaDB.corso_laurea),
+    _LISTINO_DEI_CORSI.selectinload(ListinoTestaDB.dettagli),
+)
+
+
 def _pratica_o_404(db: Session, pratica_id: int, vis: Visibilita) -> Pratica:
-    return pratica_visibile(db, pratica_id, vis, opzioni=_RELAZIONI_ELENCO)
+    return pratica_visibile(db, pratica_id, vis, opzioni=_RELAZIONI_DETTAGLIO)
 
 
 # POST
