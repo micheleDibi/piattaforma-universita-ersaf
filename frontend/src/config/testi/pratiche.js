@@ -37,7 +37,11 @@ export const TESTI_PANNELLO_PRATICHE = {
 export const TESTI_MODALE_STUDENTE = {
   titolo: "Seleziona lo studente",
   segnaposto: "Cerca per nome e cognome",
-  colonne: { codiceFiscale: "Codice fiscale", denominazione: "Denominazione", stato: "Stato" },
+  colonne: { codiceFiscale: "Codice fiscale", denominazione: "Denominazione", stato: "Stato", azioni: "Azioni" },
+  modifica: "Modifica",
+  confermaModifica: "Sei sicuro di voler procedere con la modifica del sottoscrittore? In questo modo le modifiche effettuate sulla pratica non salvate andranno perse.",
+  conferma: "Conferma",
+  annulla: "Annulla",
   caricamento: "Ricerca in corso…",
   vuoto: "Nessun sottoscrittore trovato.",
   mostraAltri: "Mostra altri",

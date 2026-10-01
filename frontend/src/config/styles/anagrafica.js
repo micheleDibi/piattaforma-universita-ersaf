@@ -134,7 +134,8 @@ export function campoConSuffisso() {
 export function pillolaStato(attivo) {
   return (
     `${pillola(attivo ? "positivo" : "negativo", "grande")} cursor-pointer transition-colors ` +
-    `${attivo ? "hover:bg-positivo-bordo" : "hover:bg-negativo-bordo"} ` +
+    "disabled:cursor-not-allowed disabled:opacity-60 " +
+    `${attivo ? "not-disabled:hover:bg-positivo-bordo" : "not-disabled:hover:bg-negativo-bordo"} ` +
     "focus:outline-none focus-visible:ring-3 focus-visible:ring-fuoco/30"
   );
 }

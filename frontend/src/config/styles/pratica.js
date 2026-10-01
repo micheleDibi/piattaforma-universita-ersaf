@@ -31,9 +31,13 @@ export const STILI_PANNELLO_PRATICHE = {
 export const STILI_MODALE_TABELLA = {
   contenuto: "dialogo__selezione",
   titolo: "text-lg font-semibold text-testo",
-  corpo: "mt-4 min-h-0 flex-1 overflow-y-auto",
+  // relative: i testi sr-only delle righe (position absolute) devono restare
+  // dentro il corpo scorrevole; senza, il loro contenitore e' il <dialog>, che
+  // diventava a sua volta scorrevole (doppio scroll all'apertura).
+  corpo: "relative mt-4 min-h-0 flex-1 overflow-y-auto",
   intestazioneColonna: "px-3 py-2 text-left text-etichetta uppercase tracking-wider text-testo-tenue",
   cella: "px-3 py-2.5 align-top",
+  cellaAzione: "w-px text-right align-middle",
   riga: "border-t border-divisore",
   rigaSelezionabile: "cursor-pointer hover:bg-riga-hover",
   rigaScelta: "cursor-pointer bg-primario/10 hover:bg-primario/15",
@@ -41,4 +45,8 @@ export const STILI_MODALE_TABELLA = {
   // Piede della selezione multipla: conteggio/totale a sinistra, Conferma a destra.
   piede: "mt-3 flex items-center justify-between gap-3 border-t border-divisore pt-3",
   totale: "text-sm text-testo-forte",
+  // Conferma in linea (avviso + pulsanti), come STILI_AZIENDA.conferma.
+  conferma: "flex flex-wrap items-center gap-3",
+  messaggioConferma: "min-w-0 flex-[1_1_16rem]",
+  pulsantiConferma: "flex shrink-0 gap-3",
 };

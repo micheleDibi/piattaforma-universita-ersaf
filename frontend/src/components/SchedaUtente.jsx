@@ -5,6 +5,11 @@ import { useParams } from "react-router";
 import ModalCambiaPadre from "./ModalCambiaPadre";
 import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
 import { salvaSessione } from "../lib/sessione";
+import { useSessione } from "../hooks/useSessione.js";
+import {
+  CODICE_RUOLO_NAZIONALE,
+  permessiSchedaUtente,
+} from "../lib/permessiSchedaUtente.js";
 import { campo, etichetta } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
 import { colonnaCampo, pillolaStato, STILI_ANAGRAFICA as stili } from "../config/styles/anagrafica.js";
@@ -21,15 +26,20 @@ import AlertMessage from "./AlertMessage.jsx";
 // (nascosto da NuovoSottoscrittore con l'attributo hidden, non smontato):
 // altrimenti cambiare scheda prima di salvare perderebbe le modifiche non
 // ancora salvate insieme al resto del suo stato locale.
-export default function SchedaUtente({ ref }) {
+//
+// ruoloId / onCambiaRuolo: il ruolo e' uno stato di NuovoSottoscrittore,
+// condiviso con la tendina "Ruolo" di Dati principali. Con due stati separati
+// il salvataggio dell'anagrafica, partito dopo questo, riscriveva il ruolo con
+// il valore vecchio dell'altra tendina.
+export default function SchedaUtente({ ref, ruoloId, onCambiaRuolo }) {
   const { clienteId: id } = useParams();
+  const sessione = useSessione();
 
   const [cliente, setCliente] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const [username, setUsername] = useState("");
-  const [ruoloId, setRuoloId] = useState("");
   const [attivoSN, setAttivoSN] = useState(-1);
   const [avviso, setAvviso] = useState(null);
 
@@ -54,7 +64,6 @@ export default function SchedaUtente({ ref }) {
         if (annullato) return;
         setCliente(data);
         setUsername(data.utente?.utente_username || "");
-        setRuoloId(data.cliente_ruolo ?? "");
         setAttivoSN(data.utente?.utente_attivoSN ?? -1);
         setLoading(false);
       })
@@ -127,7 +136,9 @@ export default function SchedaUtente({ ref }) {
       const clienteAggiornato = await risposteCliente.json();
 
       const utenteId = cliente.utente?.utente_id;
-      if (utenteId) {
+      // Senza permesso i campi dell'account sono bloccati e non cambiano:
+      // mandarli farebbe solo rispondere al server "Non hai i permessi".
+      if (utenteId && permessi.account) {
         const rispostaUtente = await apiFetch(`/utenti/${utenteId}`, {
           method: "PUT",
           body: JSON.stringify({
@@ -151,6 +162,11 @@ export default function SchedaUtente({ ref }) {
   };
 
   useImperativeHandle(ref, () => ({ salva }));
+
+  const permessi = permessiSchedaUtente(
+    sessione,
+    cliente?.utente?.utente_id ?? cliente?.utente_id,
+  );
 
   const handleLoginAutomatico = async () => {
     const utenteId = cliente?.utente?.utente_id;
@@ -226,6 +242,7 @@ export default function SchedaUtente({ ref }) {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            disabled={!permessi.account}
             className={campo("comodo")}
           />
         </CampoModulo>
@@ -236,8 +253,9 @@ export default function SchedaUtente({ ref }) {
             <button
               type="button"
               onClick={() => setAttivoSN(isAttivo ? 0 : -1)}
+              disabled={!permessi.account}
               aria-pressed={isAttivo}
-              title={testi.cambiaStato}
+              title={permessi.account ? testi.cambiaStato : undefined}
               className={pillolaStato(isAttivo)}
             >
               {TESTI_ANAGRAFICA.stato(isAttivo)}
@@ -249,14 +267,24 @@ export default function SchedaUtente({ ref }) {
           <select
             id="utente-ruolo"
             value={ruoloId}
-            onChange={(e) => setRuoloId(e.target.value)}
+            onChange={(e) => onCambiaRuolo(e.target.value)}
+            disabled={!permessi.ruolo}
             className={campo("comodo")}
           >
             <option value="" data-segnaposto>
               {SEGNAPOSTI_SELEZIONE.ruolo}
             </option>
             {testi.ruoli.map(([valore, etichettaRuolo]) => (
-              <option key={valore} value={valore}>{etichettaRuolo}</option>
+              <option
+                key={valore}
+                value={valore}
+                disabled={
+                  etichettaRuolo === CODICE_RUOLO_NAZIONALE &&
+                  !permessi.assegnaNazionale
+                }
+              >
+                {etichettaRuolo}
+              </option>
             ))}
           </select>
         </CampoModulo>
@@ -268,6 +296,7 @@ export default function SchedaUtente({ ref }) {
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
+              disabled={!permessi.account}
               className={`${pulsante("contorno", "minimo")} shrink-0`}
             >
               {testi.cambiaPadre}

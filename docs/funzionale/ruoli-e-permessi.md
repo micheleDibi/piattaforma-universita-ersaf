@@ -132,10 +132,10 @@ Nota: il documento PDF di una pratica non segue questa regola, e alcune pagine r
 La scheda "Utente" di ogni persona ha la tendina **"Ruolo"** con tutti e sette i ruoli. La schermata e il suo salvataggio sono descritti in [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md). Qui contano solo le regole di permesso:
 
 - il **ruolo** lo può cambiare qualunque utente collegato, sulle schede che vede, con due eccezioni valide per chi non è Nazionale: non può assegnare il ruolo Nazionale a nessuno, e non può cambiare il proprio ruolo. In entrambi i casi il server risponde "Solo il nazionale può eseguire questa operazione.". Riconfermare il ruolo già presente è ammesso, perché la scheda lo rimanda a ogni salvataggio;
-- **nome utente, stato e utente padre** li può cambiare solo chi modifica la propria scheda, oppure un Regionale o un Nazionale. Agli altri il server risponde "Non hai i permessi per modificare un altro utente.". Attenzione: il salvataggio è già andato a metà, perché il ruolo viene salvato per primo. Dopo quel messaggio il ruolo risulta cambiato e il resto no;
+- **nome utente, stato e utente padre** li può cambiare solo chi modifica la propria scheda, oppure un Regionale o un Nazionale. Per gli altri questi campi (e il pulsante "Cambia padre") sono bloccati;
 - cambiare ruolo sposta la persona da un elenco all'altro: il ruolo Utente la porta fra i Sottoscrittori, un ruolo da attuatore fra gli Attuatori.
 
-Nota: la tendina continua a offrire tutti i ruoli, compreso Nazionale, anche a chi non può assegnarli: l'errore arriva al salvataggio; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Per chi non è Nazionale, nelle tendine del ruolo (scheda Utente e Dati principali) la voce Nazionale è visibile ma non selezionabile, e sulla propria scheda la tendina è bloccata. Le due tendine mostrano sempre lo stesso valore: cambiarne una cambia anche l'altra.
 
 Un cambio di ruolo non chiude le sessioni già aperte della persona. Il suo menu cambia al successivo caricamento della pagina.
 
