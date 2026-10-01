@@ -349,8 +349,8 @@ Nome utente, stato e «Cambia padre» si modificano sulla propria scheda oppure
 da Regionale o Nazionale; per gli altri sono bloccati e il salvataggio manda
 solo il ruolo.
 
-Accanto al riquadro dell'utente padre compare «Accedi con questo utente» per
-un utente attivo con un ruolo da attuatore. Come si salva il ruolo, chi può
+Accanto al riquadro dell'utente padre compare «Accedi con questo utente», solo
+al Nazionale, per un utente attivo con un ruolo da attuatore. Come si salva il ruolo, chi può
 salvare gli altri campi e cosa cambia per la persona dopo un cambio di ruolo
 sono descritti in [Ruoli e permessi](ruoli-e-permessi.md).
 
