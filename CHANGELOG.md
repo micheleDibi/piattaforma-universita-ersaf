@@ -11,6 +11,48 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 17 — 01/10/2026 11:26
+
+<!-- timbro: versione=17 sha=5378e95aed4d4a5c0a23053eb99f9f79219f585b -->
+
+### Novità e correzioni
+
+**Aggiunto**
+
+- Nella scheda di una pratica Corsi Speciali compare la sezione "Caratteristiche del percorso" con Modalità di erogazione e CFU, come per i Corsi di perfezionamento.
+- Nella selezione dei Corsi Singoli di una pratica, sotto l'elenco compare un riquadro fisso "Corsi selezionati" con un'etichetta per ogni corso già scelto (passandoci sopra si vedono codice e prezzo); la X su ogni etichetta toglie il corso dalla selezione senza doverlo ritrovare nell'elenco.
+- Nella finestra di selezione dello studente di una pratica nuova c'è una colonna con la matita che apre la scheda del sottoscrittore, anche per chi non è ancora selezionabile. Prima di lasciare la pratica viene chiesta conferma, perché le modifiche non salvate andrebbero perse.
+
+**Modificato**
+
+- Nella scheda di una pratica Corsi Singoli la sezione "Caratteristiche del percorso" è sostituita da "Corsi selezionati": una riga per corso con codice, denominazione, corso di laurea, CFU e prezzo; in creazione ogni riga ha una X per togliere il corso. Nel campo "Corsi" della sezione Iscrizione resta il numero dei corsi scelti.
+- Nella scheda Utente i campi che non si hanno i permessi di modificare sono bloccati: nome utente, stato e "Cambia padre" per chi non è Regionale o Nazionale (sulle schede degli altri), il ruolo sulla propria scheda per chi non è Nazionale, e la voce Nazionale delle tendine del ruolo per chi non è Nazionale.
+
+**Corretto**
+
+- Aprendo una pratica Corsi Singoli già salvata si vedono tutti i corsi scelti, non più solo il primo.
+- Cambiare il ruolo dalla scheda Utente di un attuatore ora viene salvato: prima "Salva modifiche" lo riportava al valore della tendina "Ruolo attuatore" di Dati principali. Le due tendine mostrano sempre lo stesso ruolo e funzionano entrambe.
+- All'apertura della finestra di selezione dello studente non compaiono più due barre di scorrimento, una per l'elenco e una per la finestra.
+
+**Rimosso**
+
+- Gli avvisi "Correggi l'errore nella scheda Utente prima di salvare." e "Non hai i permessi per modificare un altro utente." non compaiono più.
+
+### Dettagli tecnici
+
+**Aggiunto**
+
+- `GET /pratiche/{id}` (e la risposta di creazione e modifica) restituisce `corsi`, l'elenco delle righe di `pratiche_listini` con codice, descrizione, prezzo salvato, CFU del dettaglio di listino valido alla data di creazione e corso di laurea; `null` nell'elenco `GET /pratiche/`, che non carica la relazione. Le 12 pratiche Corsi Singoli del 2022 senza righe in `pratiche_listini` hanno `corsi` vuoto e la scheda mostra il solo corso principale; per 4 di queste gli altri corsi in `listTesta_corso2_id`/`listTesta_corso3_id`, senza prezzo per corso, restano esclusi per scelta.
+- `ElencoCorsiPratica.jsx`; `SchedaPratica.jsx` riconosce una pratica Corsi Singoli salvata anche dal suo `listino_tipo_corso_id`, quando l'indirizzo non porta il contesto. `formattaImporto` spostata in `lib/praticaForm.js`.
+- `lib/permessiSchedaUtente.js`, con i test, rispecchia i controlli di `PUT /utenti/{id}` e `verifica_ruolo_assegnabile`; `SchedaUtente.salva()` non manda `PUT /utenti/{id}` senza il permesso sull'account.
+
+**Modificato**
+
+- `config/pratica.js`, il tipo di corso 10 (Corsi speciali) usa i campi del gruppo `perfezionamento`.
+- `GET /listini-testa/` carica il corso di laurea con un join, per la selezione dei Corsi Singoli.
+- Il ruolo è uno stato di `NuovoSottoscrittore.jsx` passato a `SchedaUtente.jsx` (`ruoloId`, `onCambiaRuolo`), invece di due stati separati.
+- `ModaleSelezionePercorso.jsx`, solo con `multipla`: riepilogo a pillole fuori dal corpo scorrevole, alto al massimo circa tre righe e poi scorrevole; la X usa lo stesso `clicca()` delle righe dell'elenco.
+
 ## Versione 16 — 30/09/2026 19:04
 
 <!-- timbro: versione=16 sha=db8bf9d2767e3ca2be00695b163b5bf6a1b45e65 -->
