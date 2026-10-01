@@ -12,6 +12,10 @@ dismissione del servizio precedente sono attività successive e indipendenti
 dall'avvio di FastAPI. Il rilascio di collaudo usa un clone isolato. I vecchi delta per
 il solo trasporto delle pratiche non sono il piano di integrazione corrente.
 
+Le otto query in `backend/src/realtime/sql/` sono risorse applicative versionate,
+distinte dai dump ignorati da Git. L'avvio verifica che siano tutte presenti e
+non vuote: una release incompleta si ferma prima di dichiararsi pronta.
+
 ## Responsabilità
 
 | Parte | Moduli |

@@ -15,7 +15,7 @@ from src.chat_pratiche.configurazione import (
 )
 from src.database import SessionLocal
 from src.realtime import bridge_notifiche, manutenzione
-from src.realtime.dati import esegui
+from src.realtime.dati import esegui, verifica_query
 from src.realtime.risorse import Risorse
 
 logger = logging.getLogger("ersaf.realtime")
@@ -41,6 +41,7 @@ async def servizio(app):
 
 
 def verifica():
+    verifica_query()
     verifica_chat()
     c = configurazione()
     chiavi()

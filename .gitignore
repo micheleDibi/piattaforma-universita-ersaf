@@ -6,9 +6,10 @@
 
 # Dump ed export del database. dump.sql pesa 5,3 GB e contiene password in
 # chiaro, codici fiscali, numeri di documento e date di nascita di ~3.900
-# persone. Si ignora *ogni* .sql e si riammette solo db/, dove stanno le
-# migrazioni versionate.
+# persone. Si ignorano gli .sql salvo le migrazioni in db/ e le query
+# applicative necessarie al runtime realtime.
 *.sql
+!backend/src/realtime/sql/*.sql
 *.sql.gz
 *.sql.bz2
 *.sql.zip

@@ -9,6 +9,12 @@ from pathlib import Path
 from sqlalchemy import text
 from src.chat_pratiche.configurazione import configurazione
 
+QUERY_RICHIESTE = (
+    "conversazioni_persona", "conversazioni_pratica", "conversazioni_ticket",
+    "messaggi_persona", "messaggi_pratica", "messaggi_ticket",
+    "messaggi_visibili", "notifiche_raggruppate",
+)
+
 
 def ora():
     return datetime.now(timezone.utc).replace(tzinfo=None)
@@ -44,3 +50,14 @@ def esegui(db, sql, valori=None):
 def query(nome):
     # I nomi provengono esclusivamente dai moduli, mai dalla richiesta HTTP.
     return (Path(__file__).parent / "sql" / (nome + ".sql")).read_text(encoding="utf-8")
+
+
+def verifica_query():
+    query.cache_clear()
+    for nome in QUERY_RICHIESTE:
+        try:
+            presente = bool(query(nome).strip())
+        except OSError:
+            presente = False
+        if not presente:
+            raise RuntimeError("Risorsa SQL realtime mancante o vuota: " + nome)
