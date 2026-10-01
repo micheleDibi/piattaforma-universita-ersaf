@@ -589,22 +589,14 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
 ### Incoerenze dell'interfaccia
 
 - **Pulsante "Accedi con questo utente".**
-  - Compare a qualunque utente collegato, senza guardare il suo ruolo, e anche quando il bersaglio è Nazionale. Il filtro dell'interfaccia riguarda solo il bersaglio: attivo e con un ruolo da attuatore.
-  - Il server lo consente solo a Regionale e Nazionale e rifiuta sempre il bersaglio Nazionale.
-  - `SchedaUtente.jsx:155-175`, `202-205`, `278-288`; `auth/routers.py:267-270`, `290-302`.
-- **Salvataggio a metà nella scheda Utente.**
-  - "Salva modifiche" salva prima il ruolo, poi username, stato e padre (due `PUT` distinte).
-  - Per chi non è Regionale o Nazionale, e modifica un altro utente, il ruolo viene salvato e il resto rifiutato con 403.
-  - `SchedaUtente.jsx:106-151`; `utenti/routers.py:154-160`.
+  - L'interfaccia lo mostra solo al Nazionale, anche quando il bersaglio è Nazionale. Del bersaglio guarda solo che sia attivo e con un ruolo da attuatore.
+  - Il server lo consente anche al Regionale, che non ha più il pulsante, e rifiuta sempre il bersaglio Nazionale.
+  - `SchedaUtente.jsx:171`, `221-222`, `311`; `auth/routers.py:269`, `300-305`.
 - **Attivazione annullata dal salvataggio della scheda Utente.**
-  - La scheda invia sempre lo stato dell'account.
+  - Quando chi salva può modificare l'account (sulla propria scheda, oppure da Regionale o Nazionale), la scheda invia sempre lo stato dell'account.
   - Il server allora cancella l'attivazione in attesa, e la verifica dei contatti non attiva più l'account.
   - Il comportamento è dedotto dalla lettura del codice, non da un'esecuzione.
-  - `SchedaUtente.jsx:106-151`; `utenti/routers.py:172-174`; `otp/attivazione.py:11-16`.
-- **Due tendine "Ruolo" scollegate per gli attuatori.**
-  - La scheda Utente e la sezione Ruolo di Dati principali hanno ciascuna una propria tendina, entrambe scrivono `cliente_ruolo`.
-  - "Salva modifiche" scrive prima quella della scheda Utente, poi quella di Dati principali: se sono state cambiate entrambe con valori diversi, vince quella di Dati principali.
-  - `SchedaUtente.jsx:106-151`; `NuovoSottoscrittore.jsx:248-255`, `279-286`.
+  - `SchedaUtente.jsx:141-146`; `utenti/routers.py:194-196`; `otp/attivazione.py:11-16`.
 - **Contatti mostrati come verificati.**
   - Un account attivo senza alcuna verifica registrata vede email e cellulare come verificati ("Verificata", "Verificato"), senza il pulsante "Verifica".
   - Elenchi e scheda applicano la stessa funzione `otp/stato_contatti.py`: la regola legacy vale solo in assenza di storico. Se esiste una verifica di un valore precedente, il contatto corrente resta da verificare anche per un account attivo.
