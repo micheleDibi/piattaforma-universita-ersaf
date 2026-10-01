@@ -35,7 +35,6 @@ import SchedaAziendaAttuatori from "./SchedaAziendaAttuatori";
 import SchedaAbilitazioniPratiche from "./SchedaAbilitazioniPratiche";
 import { useSessione } from "../hooks/useSessione.js";
 import {
-  CODICE_RUOLO_NAZIONALE,
   permessiSchedaUtente,
 } from "../lib/permessiSchedaUtente.js";
 
@@ -43,8 +42,6 @@ import {
 // dell'attuatore): il pannello aggiunge il suo margine. Tutte le altre
 // poggiano direttamente sulla scheda.
 const PANNELLI_CON_MARGINE = new Set(["azienda", "abilitazioni"]);
-
-const RUOLI_ATTUATORE = ["Aderente", "Provinciale", "Regionale", "Nazionale"];
 
 function NuovoSottoscrittore({ tipoUtente }) {
   const { clienteId: id } = useParams();
@@ -87,7 +84,18 @@ function NuovoSottoscrittore({ tipoUtente }) {
   // utente_id della persona della scheda: serve a sapere se e' la propria
   // (chi non e' Nazionale non puo' cambiarsi il ruolo).
   const [utenteIdScheda, setUtenteIdScheda] = useState(null);
-  const permessi = permessiSchedaUtente(sessione, utenteIdScheda);
+  // Il ruolo salvato (in modifica): decide se la tendina si puo' toccare,
+  // come in SchedaUtente.
+  const [ruoloSalvato, setRuoloSalvato] = useState("");
+  const codiceRuoloSalvato =
+    ruoli.find((r) => String(r.ruolo_id) === ruoloSalvato)?.ruolo_codice ?? "";
+  const permessi = permessiSchedaUtente(sessione, utenteIdScheda, codiceRuoloSalvato);
+  // I ruoli da attuatore che chi guarda puo' scegliere, piu' quello scelto
+  // se e' un altro (per esempio "Utente" scelto dalla scheda Utente): senza,
+  // la tendina mostrerebbe la prima voce pur avendo un valore diverso.
+  const opzioniRuolo = ruoli.filter(
+    (r) => permessi.ruoliAttuatore.includes(r.ruolo_codice) || String(r.ruolo_id) === ruoloSelezionato,
+  );
 
   useEffect(() => {
     if (tipoUtente !== "attuatore") return;
@@ -134,6 +142,7 @@ function NuovoSottoscrittore({ tipoUtente }) {
           setRuoloSelezionato(
             data.cliente_ruolo != null ? String(data.cliente_ruolo) : "",
           );
+          setRuoloSalvato(data.cliente_ruolo != null ? String(data.cliente_ruolo) : "");
           setUtenteIdScheda(data.utente?.utente_id ?? data.utente_id ?? null);
 
           setAnomalie(data.anomalie ?? []);
@@ -495,37 +504,32 @@ function NuovoSottoscrittore({ tipoUtente }) {
                       etichetta={testi.ruolo.etichetta}
                       colonne={3}
                     >
-                      <select
-                        id="ruolo-attuatore"
-                        name="ruolo"
-                        value={ruoloSelezionato}
-                        onChange={(e) => setRuoloSelezionato(e.target.value)}
-                        disabled={!permessi.ruolo}
-                        className={campo("comodo")}
-                      >
-                        {/* Oltre ai ruoli da attuatore, anche quello attuale
-                            se e' un altro (per esempio "Utente" scelto dalla
-                            scheda Utente): senza, la tendina mostrerebbe la
-                            prima voce pur avendo un valore diverso. */}
-                        {ruoli
-                          .filter(
-                            (r) =>
-                              RUOLI_ATTUATORE.includes(r.ruolo_codice) ||
-                              String(r.ruolo_id) === ruoloSelezionato,
-                          )
-                          .map((r) => (
-                            <option
-                              key={r.ruolo_id}
-                              value={r.ruolo_id}
-                              disabled={
-                                r.ruolo_codice === CODICE_RUOLO_NAZIONALE &&
-                                !permessi.assegnaNazionale
-                              }
-                            >
+                      {/* Con una sola scelta (per esempio un Provinciale
+                          che crea un attuatore: solo Aderente) niente
+                          tendina, il ruolo si mostra come valore bloccato. */}
+                      {opzioniRuolo.length > 1 ? (
+                        <select
+                          id="ruolo-attuatore"
+                          name="ruolo"
+                          value={ruoloSelezionato}
+                          onChange={(e) => setRuoloSelezionato(e.target.value)}
+                          className={campo("comodo")}
+                        >
+                          {opzioniRuolo.map((r) => (
+                            <option key={r.ruolo_id} value={r.ruolo_id}>
                               {r.ruolo_codice}
                             </option>
                           ))}
-                      </select>
+                        </select>
+                      ) : (
+                        <input
+                          id="ruolo-attuatore"
+                          type="text"
+                          readOnly
+                          value={opzioniRuolo[0]?.ruolo_codice ?? ""}
+                          className={campo("comodo")}
+                        />
+                      )}
                     </CampoModulo>
                   </SezioneModulo>
                 )}

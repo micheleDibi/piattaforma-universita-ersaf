@@ -6,10 +6,7 @@ import ModalCambiaPadre from "./ModalCambiaPadre";
 import { apiFetch, leggiJson, messaggioErrore } from "../lib/api";
 import { salvaSessione } from "../lib/sessione";
 import { useSessione } from "../hooks/useSessione.js";
-import {
-  CODICE_RUOLO_NAZIONALE,
-  permessiSchedaUtente,
-} from "../lib/permessiSchedaUtente.js";
+import { permessiSchedaUtente } from "../lib/permessiSchedaUtente.js";
 import { campo, etichetta } from "../config/styles/campo";
 import { pulsante } from "../config/styles/pulsante";
 import { colonnaCampo, pillolaStato, STILI_ANAGRAFICA as stili } from "../config/styles/anagrafica.js";
@@ -163,9 +160,18 @@ export default function SchedaUtente({ ref, ruoloId, onCambiaRuolo }) {
 
   useImperativeHandle(ref, () => ({ salva }));
 
+  // Il ruolo salvato, non quello scelto nella tendina: decide se la tendina
+  // si puo' toccare (un ruolo piu' alto di chi guarda la blocca).
+  const codiceRuoloSalvato =
+    testi.ruoli.find(([valore]) => valore === String(cliente?.cliente_ruolo ?? ""))?.[1] ?? "";
   const permessi = permessiSchedaUtente(
     sessione,
     cliente?.utente?.utente_id ?? cliente?.utente_id,
+    codiceRuoloSalvato,
+  );
+  const opzioniRuolo = testi.ruoli.filter(
+    ([valore, etichettaRuolo]) =>
+      permessi.ruoliScheda.includes(etichettaRuolo) || valore === String(ruoloId ?? ""),
   );
 
   const handleLoginAutomatico = async () => {
@@ -265,29 +271,32 @@ export default function SchedaUtente({ ref, ruoloId, onCambiaRuolo }) {
         </div>
 
         <CampoModulo per="utente-ruolo" etichetta={testi.ruolo} colonne={3}>
-          <select
-            id="utente-ruolo"
-            value={ruoloId}
-            onChange={(e) => onCambiaRuolo(e.target.value)}
-            disabled={!permessi.ruolo}
-            className={campo("comodo")}
-          >
-            <option value="" data-segnaposto>
-              {SEGNAPOSTI_SELEZIONE.ruolo}
-            </option>
-            {testi.ruoli.map(([valore, etichettaRuolo]) => (
-              <option
-                key={valore}
-                value={valore}
-                disabled={
-                  etichettaRuolo === CODICE_RUOLO_NAZIONALE &&
-                  !permessi.assegnaNazionale
-                }
-              >
-                {etichettaRuolo}
+          {/* Solo i ruoli che chi guarda puo' scegliere, piu' quello scelto
+              (cambiato anche da Dati principali). Con una sola scelta niente
+              tendina: il ruolo si mostra come valore bloccato. */}
+          {opzioniRuolo.length > 1 ? (
+            <select
+              id="utente-ruolo"
+              value={ruoloId}
+              onChange={(e) => onCambiaRuolo(e.target.value)}
+              className={campo("comodo")}
+            >
+              <option value="" data-segnaposto>
+                {SEGNAPOSTI_SELEZIONE.ruolo}
               </option>
-            ))}
-          </select>
+              {opzioniRuolo.map(([valore, etichettaRuolo]) => (
+                <option key={valore} value={valore}>{etichettaRuolo}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              id="utente-ruolo"
+              type="text"
+              readOnly
+              value={opzioniRuolo[0]?.[1] ?? testi.vuoto}
+              className={campo("comodo")}
+            />
+          )}
         </CampoModulo>
 
         <div className={colonnaCampo(3)}>

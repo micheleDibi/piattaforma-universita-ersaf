@@ -174,7 +174,7 @@ def test_un_put_parziale_non_azzera_i_campi_omessi(client, db):
     _, intestazione = _operatore(client, db)
     creato = client.post(
         "/clienti/con-utente?tipo_utente=attuatore",
-        json=_anagrafica(cliente_ruolo=f.RUOLO_REGIONALE),
+        json=_anagrafica(cliente_ruolo=f.RUOLO_PROVINCIALE),
         headers=intestazione,
     ).json()
 
@@ -188,7 +188,7 @@ def test_un_put_parziale_non_azzera_i_campi_omessi(client, db):
     db.expire_all()
     cliente = db.get(Cliente, creato["cliente_id"])
     assert cliente.cliente_citta == "Torino"
-    assert cliente.cliente_ruolo == f.RUOLO_REGIONALE  # non azzerato
+    assert cliente.cliente_ruolo == f.RUOLO_PROVINCIALE  # non azzerato
     assert cliente.utente_id == creato["utente_id"]    # NOT NULL, non None
     assert cliente.cliente_abilPraticheUniv == -1      # non azzerata
     assert cliente.cliente_nome == "Mario"
