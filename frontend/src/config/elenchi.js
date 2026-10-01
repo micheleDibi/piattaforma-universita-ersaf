@@ -41,6 +41,14 @@ const dataCreazione = {
   icona: "data",
 };
 
+// Solo per l'elenco del Nazionale (MODELLO_PRATICHE_NAZIONALE): l'elenco e'
+// ordinato per ultima modifica, che prende il posto della data di creazione,
+// e mostra tipo di corso e universita' perche' raccoglie le pratiche di tutti
+// gli atenei.
+const ultimaModifica = { id: "ultimaModifica", etichetta: "Ultima modifica", icona: "data" };
+const tipoCorsoPratica = { ...tipo, etichetta: "Tipo corso", rilievo: "secondario", righe: 2 };
+const universitaPratica = { ...universita, rilievo: "secondario", righe: 2 };
+
 const colonna = (campo) => ({
   id: campo.id,
   etichetta: campo.etichetta,
@@ -96,6 +104,16 @@ export const MODELLO_PRATICHE = {
   ampiezza: "articolata",
   colonne: [numero, dataCreazione, cliente, corsoPratica, statoPratica].map(colonna),
   mobile: [numero, dataCreazione, cliente, corsoPratica, statoPratica],
+};
+
+// Stesso id di MODELLO_PRATICHE: stessi stili e stesso testo per la pratica
+// senza codice. Lo stato resta sempre l'ultima colonna.
+const CAMPI_PRATICHE_NAZIONALE = [numero, ultimaModifica, cliente, corsoPratica,
+  tipoCorsoPratica, universitaPratica, statoPratica];
+export const MODELLO_PRATICHE_NAZIONALE = {
+  ...MODELLO_PRATICHE,
+  colonne: CAMPI_PRATICHE_NAZIONALE.map(colonna),
+  mobile: CAMPI_PRATICHE_NAZIONALE,
 };
 
 export const MODELLO_PRODOTTI = {

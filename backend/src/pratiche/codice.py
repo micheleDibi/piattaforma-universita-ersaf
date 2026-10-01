@@ -45,6 +45,11 @@ CIFRE_NUMERO = 6
 # A4U sono quelle due, come nell'originale Instant Developer.
 UNIVERSITA_CON_CODICE = frozenset({"SSML", "A4U"})
 
+# eCampus non ha un codice ASG generato: lo inserisce a mano il Nazionale
+# dalla scheda (vedi aggiorna_pratica in routers.py). Per id, come gli stati
+# in storico_stati.py: e' lo stesso id che usa il frontend (configPratiche.js).
+UNIVERSITA_ECAMPUS_ID = 1
+
 # listino_tipoCorso_id -> prefisso, stessa tassonomia documentata in testa a
 # frontend/src/lib/configPratiche.js (1=MASTER, 2=MASTER AREA SCUOLA,
 # 3=MASTER CLASSI DI CONCORSO, 4=CORSI DI PERFEZIONAMENTO, 5=PERCORSO DOCENTI,

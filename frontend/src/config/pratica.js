@@ -2,6 +2,17 @@
 // non sono qui: sono sempre di sola lettura (pratica_numero in attesa di una
 // logica che lo compili, gli altri tre per le ragioni spiegate dove sono
 // definiti), quindi la scheda li tratta a parte in DatiPratica.jsx.
+// Il codice ASG si inserisce a mano solo sulle pratiche eCampus (id 1 in
+// nome_universita, come in lib/configPratiche.js), e solo dal Nazionale: il
+// server lo nasconde agli altri ruoli e ignora le loro modifiche (vedi
+// aggiorna_pratica in backend/src/pratiche/routers.py).
+export const UNIVERSITA_ECAMPUS_ID = 1;
+
+/** Vero se chi ha questo ruolo vede e modifica il codice ASG della pratica. */
+export function codiceAsgModificabile(ruoloCodice, nomeUniversitaId) {
+  return ruoloCodice === "nazionale" && Number(nomeUniversitaId) === UNIVERSITA_ECAMPUS_ID;
+}
+
 export const CAMPI_PRATICA = [
   { nome: "pratica_annoAccademico", label: "Anno accademico", maxLength: 45 },
   { nome: "pratica_sedeErogazione", label: "Sede di erogazione", maxLength: 255 },

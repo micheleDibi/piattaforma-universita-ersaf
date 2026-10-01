@@ -429,7 +429,7 @@ Sessione.
 Lista Pratiche.
 
 - **Accesso**: sessione
-- **Parametri**: `cliente_id` (query): `integer | null`; `limit` (query): `integer`; `listino_tipo_corso_id` (query): `list[integer]`; `nome_universita_id` (query): `integer | null`; `numero_pratica` (query): `string`; `pratica_stato_id` (query): `integer | null`; `search` (query): `string`; `skip` (query): `integer`; `studenti` (query): `list[integer]`
+- **Parametri**: `cliente_id` (query): `integer | null`; `escludi_bozze` (query): `boolean`; `limit` (query): `integer`; `listino_tipo_corso_id` (query): `list[integer]`; `nome_universita_id` (query): `integer | null`; `numero_pratica` (query): `string`; `ordine` (query): `"creazione" | "stato"`; `pratica_stato_id` (query): `integer | null`; `search` (query): `string`; `skip` (query): `integer`; `studenti` (query): `list[integer]`
 - **Corpo**: —
 - **Risposta**: `200` `list[PraticaResponse]`
 
@@ -450,6 +450,15 @@ Conteggi Pratiche.
 - **Parametri**: —
 - **Corpo**: —
 - **Risposta**: `200` `list[ConteggioPratiche]`
+
+### `GET /pratiche/conteggi/stati`
+
+Conteggi Per Stato.
+
+- **Accesso**: sessione
+- **Parametri**: `cliente_id` (query): `integer | null`; `escludi_bozze` (query): `boolean`; `limit` (query): `integer`; `listino_tipo_corso_id` (query): `list[integer]`; `nome_universita_id` (query): `integer | null`; `numero_pratica` (query): `string`; `ordine` (query): `"creazione" | "stato"`; `pratica_stato_id` (query): `integer | null`; `search` (query): `string`; `skip` (query): `integer`; `studenti` (query): `list[integer]`
+- **Corpo**: —
+- **Risposta**: `200` `list[ConteggioStato]`
 
 ### `GET /pratiche/filtri/stati`
 
@@ -1474,6 +1483,13 @@ Aggiorna Utente.
 | `pratica_stato_id` | `integer` | sì |
 | `totale` | `integer` | sì |
 
+### ConteggioStato
+
+| Campo | Tipo | Obbligatorio |
+|---|---|---|
+| `pratica_stato_id` | `integer` | sì |
+| `totale` | `integer` | sì |
+
 ### CorsoPratica
 
 | Campo | Tipo | Obbligatorio |
@@ -1839,6 +1855,7 @@ Aggiorna Utente.
 | `listTesta_corso3_id` | `integer \| null` | no |
 | `listino_tipo_corso_id` | `integer \| null` | no |
 | `pratica_annoAccademico` | `string \| null` | no |
+| `pratica_codiceASG` | `string \| null` | no |
 | `pratica_corso1_24CFU` | `integer \| null` | no |
 | `pratica_corso2_24CFU` | `integer \| null` | no |
 | `pratica_corso3_24CFU` | `integer \| null` | no |

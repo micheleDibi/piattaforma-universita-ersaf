@@ -33,6 +33,15 @@ export async function caricaSessione() {
   return caricamentoSessione;
 }
 
+/** Rilegge dal server la sessione gia' aperta, anche se ce n'e' una in
+ * memoria: il server calcola il ruolo dal database a ogni richiesta, quindi
+ * restituisce quello attuale anche se e' cambiato dopo l'accesso. */
+export async function ricaricaSessione() {
+  const risposta = await apiFetch("/auth/session", { cache: "no-store" });
+  if (!risposta.ok) throw new ErroreApi(await messaggioErrore(risposta), risposta.status);
+  salvaSessione(await leggiJson(risposta) ?? {});
+}
+
 export async function apiFetch(percorso, { auth = true, gestisci401 = true, headers, ...opzioni } = {}) {
   const metodo = (opzioni.method ?? "GET").toUpperCase();
   const scrittura = !["GET", "HEAD", "OPTIONS"].includes(metodo);

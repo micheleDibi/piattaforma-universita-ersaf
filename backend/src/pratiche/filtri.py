@@ -1,12 +1,20 @@
 """Filtri dell'elenco: gli studenti sono clienti, i percorsi listini_testa."""
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from src.auth.visibilita import Visibilita, condizione_azienda
 from src.pratiche.models import Pratica
+from src.pratiche.storico_stati import STATO_BOZZA_ID, STATO_CARICATA_ID
 from src.clienti.models import Cliente
+
+# Ordine dei gruppi nell'elenco del Nazionale: Caricata, In lavorazione, In
+# attesa di modifica, Conclusa, Rifiutata (id di pratiche_stati, gli stessi di
+# STATI_PANNELLO in frontend/src/lib/pannelloPratiche.js). Uno stato fuori
+# elenco, Bozza compresa, va in fondo.
+ORDINE_STATI = (STATO_CARICATA_ID, 4, 2, 3, 5)
 
 
 class FiltriPratiche(BaseModel):
@@ -19,6 +27,11 @@ class FiltriPratiche(BaseModel):
     pratica_stato_id: int | None = Field(None, gt=0)
     nome_universita_id: int | None = Field(None, gt=0)
     listino_tipo_corso_id: list[Annotated[int, Field(gt=0)]] = Field(default_factory=list, max_length=10)
+    # Elenco del Nazionale (ElencoPraticheNazionale.jsx): senza Bozze e
+    # raggruppato per stato. Il raggruppamento sta nell'ordine della query,
+    # cosi' le pagine successive continuano il gruppo invece di ricominciarlo.
+    escludi_bozze: bool = False
+    ordine: Literal["creazione", "stato"] = "creazione"
 
 
 def query_filtrata(db: Session, filtri: FiltriPratiche, vis: Visibilita):
@@ -48,4 +61,19 @@ def query_filtrata(db: Session, filtri: FiltriPratiche, vis: Visibilita):
         query = query.filter(Pratica.nome_universita_id == filtri.nome_universita_id)
     if filtri.listino_tipo_corso_id:
         query = query.filter(Pratica.listino_tipo_corso_id.in_(filtri.listino_tipo_corso_id))
+    if filtri.escludi_bozze:
+        query = query.filter(Pratica.pratica_stato_id != STATO_BOZZA_ID)
     return query
+
+
+def ordinamento(filtri: FiltriPratiche):
+    """Le colonne di ORDER BY dell'elenco; l'id chiude sempre a parita'."""
+    if filtri.ordine == "stato":
+        gruppo = case({stato: posizione for posizione, stato in enumerate(ORDINE_STATI)},
+                      value=Pratica.pratica_stato_id, else_=len(ORDINE_STATI))
+        # pratica_updated_at e' DEFAULT NULL a database: le pratiche vecchie
+        # che non ce l'hanno si ordinano per la data di creazione.
+        modifica = func.coalesce(Pratica.pratica_updated_at, Pratica.pratica_created_at,
+                                 Pratica.pratica_dataCreazione)
+        return gruppo, modifica.desc(), Pratica.pratica_id.desc()
+    return Pratica.pratica_dataCreazione.desc(), Pratica.pratica_id.desc()

@@ -47,7 +47,7 @@ Nota: le voci nascoste non proteggono le pagine. Attuatori e Prodotti formativi 
 
 La **Dashboard** è la prima pagina dopo l'accesso per tutti i ruoli che accedono; le sue scorciatoie sono le voci del menu del proprio ruolo. **EduNews24** mostra a tutti gli stessi contenuti. Vedi [EduNews24](edunews24.md).
 
-La pagina **Pratiche** ospita il pannello degli atenei e mostra le pratiche secondo le regole di visibilità descritte sotto. Il pannello mostra il numero di pratiche per ateneo, tipologia e stato; le sue righe si aprono solo con l'abilitazione generale e quella dell'ateneo; le abilitazioni non sostituiscono i controlli del server. Vedi [Pratiche](pratiche.md).
+La pagina **Pratiche** ospita il pannello degli atenei e mostra le pratiche secondo le regole di visibilità descritte sotto. Il Nazionale non ha il pannello né il pulsante "Nuova": vede un unico elenco di tutte le pratiche tranne le Bozze, raggruppato per stato, ed è l'unico a vedere e modificare il Codice ASG delle pratiche eCampus. Il pannello mostra il numero di pratiche per ateneo, tipologia e stato; le sue righe si aprono solo con l'abilitazione generale e quella dell'ateneo; le abilitazioni non sostituiscono i controlli del server. Vedi [Pratiche](pratiche.md).
 
 ### Dentro le pagine, solo per il Nazionale
 

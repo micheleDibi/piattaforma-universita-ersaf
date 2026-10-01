@@ -40,6 +40,10 @@
   /* Soglie del contenitore elenco, non della finestra. */
   --breakpoint-elenco-semplice: 40rem;
   --breakpoint-elenco-articolato: 52rem;
+  /* Testata agganciata con un selettore (i loghi degli atenei nell'elenco
+   * pratiche del Nazionale): da qui titolo, loghi, ricerca e Filtri stanno
+   * su una riga sola. */
+  --breakpoint-testata-selettore: 64rem;
   --spacing-colonna-azioni: calc(var(--spacing) * 12);
   --spacing-colonna-azioni-compatta: calc(var(--spacing) * 10);
   --spacing-colonna-ruolo: calc(var(--spacing) * 36);

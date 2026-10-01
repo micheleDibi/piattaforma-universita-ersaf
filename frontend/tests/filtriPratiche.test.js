@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { queryPratiche } from "../src/lib/pratiche.js";
+import { gruppoUnico, queryConteggiNazionale, queryPratiche, queryPraticheNazionale, raggruppaPerStato, statiNazionale } from "../src/lib/pratiche.js";
 import { cambiaSelezione } from "../src/lib/selezioneRicercabile.js";
 import { creaPaginazione } from "../src/lib/pagineRemote.js";
 
@@ -79,4 +79,56 @@ test("paginazione condivisa riconosce anche le identita cliente, azienda e prodo
     await pagine.prossima(); await pagine.prossima();
     assert.equal(stati.at(-1).elementi.length, 1, campo);
   }
+});
+
+const NAZIONALE_SENZA_FILTRI = { ricerca: "", numeroPratica: "", stato: "", universita: "" };
+
+test("elenco del Nazionale: senza Bozze, ordinato per stato, stessi filtri per i conteggi", () => {
+  const filtri = { ricerca: " Rossi ", numeroPratica: " MT0001 ", stato: "4", universita: "1" };
+  const elenco = new URL(queryPraticheNazionale(filtri), "https://example.org");
+  assert.equal(elenco.pathname, "/pratiche/");
+  assert.equal(elenco.searchParams.get("escludi_bozze"), "true");
+  assert.equal(elenco.searchParams.get("ordine"), "stato");
+  assert.equal(elenco.searchParams.get("limit"), "40");
+  assert.equal(elenco.searchParams.get("search"), "Rossi");
+  assert.equal(elenco.searchParams.get("numero_pratica"), "MT0001");
+  assert.equal(elenco.searchParams.get("pratica_stato_id"), "4");
+  assert.equal(elenco.searchParams.get("nome_universita_id"), "1");
+
+  const conteggi = new URL(queryConteggiNazionale(filtri), "https://example.org");
+  assert.equal(conteggi.pathname, "/pratiche/conteggi/stati");
+  for (const nome of ["escludi_bozze", "search", "numero_pratica", "pratica_stato_id", "nome_universita_id"]) {
+    assert.equal(conteggi.searchParams.get(nome), elenco.searchParams.get(nome));
+  }
+  assert.equal(conteggi.searchParams.has("limit"), false);
+  assert.equal(queryConteggiNazionale(NAZIONALE_SENZA_FILTRI), "/pratiche/conteggi/stati?escludi_bozze=true");
+});
+
+test("filtro Stato del Nazionale: ordine dei gruppi e niente Bozza", () => {
+  const stati = [1, 2, 3, 4, 5, 6].map((id) => ({ id, label: `S${id}` }));
+  assert.deepEqual(statiNazionale(stati).map((s) => s.id), [1, 4, 2, 3, 5]);
+  assert.deepEqual(statiNazionale([]), []);
+});
+
+test("gruppi per stato consecutivi, con il totale di tutte le pagine", () => {
+  const p = (id, stato) => ({ pratica_id: id, pratica_stato_id: stato, pratica_stato_descrizione: `Stato ${stato}` });
+  const pratiche = [p(1, 1), p(2, 1), p(3, 4), p(4, 3)];
+  const gruppi = raggruppaPerStato(pratiche, [{ pratica_stato_id: 1, totale: 7 }, { pratica_stato_id: 4, totale: 1 }]);
+  assert.deepEqual(gruppi.map((g) => [g.statoId, g.titolo, g.totale, g.pratiche.map((x) => x.pratica_id)]), [
+    [1, "Stato 1", 7, [1, 2]], [4, "Stato 4", 1, [3]], [3, "Stato 3", 0, [4]],
+  ]);
+  // Conteggi non ancora arrivati: i gruppi ci sono, senza numero.
+  assert.deepEqual(raggruppaPerStato(pratiche, null).map((g) => g.totale), [null, null, null]);
+  assert.deepEqual(raggruppaPerStato([], null), []);
+});
+
+test("senza filtri un solo gruppo, \"Tutte le pratiche\", con il totale di tutti gli stati", () => {
+  const pratiche = [{ pratica_id: 1, pratica_stato_id: 1 }, { pratica_id: 2, pratica_stato_id: 4 }];
+  const [tutte, ...altri] = gruppoUnico(pratiche, [{ pratica_stato_id: 1, totale: 18 }, { pratica_stato_id: 4, totale: 5 }]);
+  assert.deepEqual(altri, []);
+  assert.equal(tutte.titolo, "Tutte le pratiche");
+  assert.equal(tutte.totale, 23);
+  assert.deepEqual(tutte.pratiche, pratiche);
+  assert.equal(gruppoUnico(pratiche, null)[0].totale, null);
+  assert.deepEqual(gruppoUnico([], []), []);
 });

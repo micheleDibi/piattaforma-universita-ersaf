@@ -141,11 +141,20 @@ class PraticaUpdate(BaseModel):
     pratica_rinnPrimoAnno: Optional[int] = None
     pratica_rinnSecondoAnno: Optional[int] = None
     pratica_rinnTerzoAnno: Optional[int] = None
+    # Scritto solo se chi chiama e' Nazionale e la pratica e' eCampus (vedi
+    # aggiorna_pratica in routers.py): per tutti gli altri si ignora.
+    pratica_codiceASG: Optional[str] = Field(default=None, max_length=45)
 
     @field_validator(*CAMPI_RINNOVO, mode="before")
     @classmethod
     def _normalizza_flag_rinnovo(cls, v):
         return a_flag_legacy(v)
+
+    # Un campo svuotato nella scheda torna NULL, non una stringa vuota.
+    @field_validator("pratica_codiceASG")
+    @classmethod
+    def _normalizza_codice_asg(cls, v):
+        return (v or "").strip() or None
 
     @model_validator(mode="after")
     def _valida_rinnovo_singolo(self):
@@ -281,6 +290,13 @@ class PraticaResponse(PraticaBase):
             item_dict["corsi"] = [_corso_pratica(riga, giorno) for riga in righe]
 
         return item_dict
+
+
+class ConteggioStato(BaseModel):
+    """Quante pratiche, con i filtri dell'elenco, sono in un dato stato."""
+
+    pratica_stato_id: int
+    totale: int
 
 
 class ConteggioPratiche(BaseModel):
