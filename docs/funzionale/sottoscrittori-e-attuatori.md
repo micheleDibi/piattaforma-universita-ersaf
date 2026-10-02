@@ -128,10 +128,9 @@ sinistra e campi a destra:
 
 - **Informazioni personali**: nome, cognome, codice fiscale, genere (Uomo o
   Donna), data di nascita, luogo e provincia di nascita, cittadinanza.
-- **Ruolo**, solo per gli attuatori: tendina «Ruolo attuatore», che parte già
-  su Aderente (il ruolo assegnato se non lo si cambia), seguita da Regionale,
-  Provinciale e Nazionale, nell'ordine in cui i ruoli sono registrati. Se la
-  persona ha un altro ruolo, per esempio Utente, compare anche quello. È lo
+- **Ruolo**, solo per gli attuatori: «Ruolo attuatore» parte da Aderente e
+  propone solo i ruoli che chi accede può assegnare. Se c'è un solo valore,
+  lo mostra bloccato; in modifica conserva anche il ruolo attuale. È lo
   stesso valore del ruolo nella scheda Utente: cambiarne uno cambia anche
   l'altro.
 - **Contatti**: email e cellulare, in due riquadri in evidenza; sotto, in
@@ -151,11 +150,10 @@ selezionato.» finché l'anagrafica non è salvata.
 «Crea sottoscrittore» o «Crea attuatore», nella barra in fondo alla scheda,
 salva tutto insieme.
 
-Chi non è Nazionale vede la voce Nazionale ma non può sceglierla, e sulla
-propria scheda non può cambiarsi il ruolo; il server applica comunque le stesse
-regole (vedi [Ruoli e permessi](ruoli-e-permessi.md)).
-
-Nota: né l'interfaccia né il server limitano chi può assegnare un ruolo; vedi [Limiti noti](../tecnica/sicurezza.md#limiti-noti).
+Interfaccia e server applicano gli stessi limiti all'assegnazione dei ruoli.
+Chi non è Nazionale non può cambiare il proprio ruolo né quello di un
+attuatore che non potrebbe assegnare. Le scelte per ciascun ruolo e il
+declassamento a Utente sono descritti in [Ruoli e permessi](ruoli-e-permessi.md).
 
 ### Campi obbligatori
 
@@ -338,9 +336,8 @@ La scheda ha due sezioni. «Account e ruolo» contiene:
 - il nome utente («Username»);
 - lo stato, un'etichetta verde «Attivo» o rossa «Disattivo»: un clic la fa
   passare all'altro valore;
-- il ruolo, con tutti i ruoli: Utente, Aderente, Regionale, Provinciale,
-  Consulente, Nazionale, Operatore. Chi non è Nazionale vede Nazionale ma non
-  può sceglierlo, e sulla propria scheda la tendina è bloccata. Per un
+- il ruolo, con le sole scelte consentite a chi accede, oppure un valore
+  bloccato quando non si può cambiarlo. Per un
   attuatore è lo stesso valore della tendina «Ruolo attuatore» dei Dati
   principali;
 - l'utente padre, in un riquadro con il nome e il pulsante «Cambia padre».

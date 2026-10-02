@@ -21,6 +21,11 @@ la lease, nello stesso ordine di quorum e ACK. Sessioni distinte dello stesso
 utente possono cosi rinnovare la connessione e confermare le consegne senza
 invertire i lock MariaDB.
 
+Le socket cookie delle pratiche condividono le lease di presenza con quelle
+Bearer. Ammissione, quote e ordine dei lock sono comuni; la presenza cookie
+riusa i criteri di validità della sessione applicativa. Il contratto e il
+cleanup sono descritti in [chat e firma](chat-e-firma.md#contratto-http-e-websocket).
+
 ## Responsabilità
 
 | Parte | Moduli |
@@ -148,10 +153,13 @@ I messaggi, i grant, gli orari e gli stati di lettura restano conservati.
 
 La coda SQL recupera le consegne dopo una disconnessione. L'ACK è legato a
 utente e ID effettivamente inviato sulla connessione: non è una ricevuta di
-lettura. Serve la conferma di tutte le connessioni attive del destinatario;
+lettura. Serve la conferma di tutte le connessioni Bearer attive del destinatario;
 quelle nuove entrano nel quorum, quelle disconnesse ne escono. Una conferma
 parziale non blocca nuove consegne. La pianificazione è per connessione, con
 retry esponenziale da 5 a 300 secondi e recupero dopo riavvio.
+Le lease cookie partecipano alla presenza, ma sono escluse da questo quorum:
+il trasporto nativo usa il proprio recupero dello storico e non il protocollo
+ACK delle consegne Bearer.
 
 I comandi sono ordinati per utente, anche con più socket: due worker, 256
 operazioni totali ammesse, otto per utente. Le connessioni sono limitate a

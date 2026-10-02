@@ -638,6 +638,13 @@ precedenti e inviare un testo nuovo. Dopo un'interruzione della connessione
 la pagina si ricollega e recupera ciò che manca. Un messaggio resta in attesa
 finché il servizio non ne conferma il salvataggio; Riprova evita un doppio invio.
 
+I propri messaggi sono a destra, quelli ricevuti a sinistra. Il pallino verde
+accanto al nome degli altri autori indica che sono online; non compare su Tu.
+Il campo parte da una riga e cresce con il testo entro un limite; il pulsante
+d'invio rimane fuori a destra, allineato in basso. Su desktop Invio spedisce
+e Maiusc+Invio va a capo; su schermo compatto Invio va a capo. Durante la
+conferma di un invio si può già scrivere la prossima bozza.
+
 L'accesso è riservato ai partecipanti già autorizzati in Universo. Vedere una
 pratica, anche con ruolo Nazionale, non aggiunge automaticamente alla sua chat.
 Le conversazioni personali e i ticket non compaiono in questa pagina.
