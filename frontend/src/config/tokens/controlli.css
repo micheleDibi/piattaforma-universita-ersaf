@@ -73,4 +73,12 @@
    * di dettaglio con un modulo (1080). */
   --container-pagina: 70rem;
   --container-modulo: 67.5rem;
+
+  /* Conversazioni: lettura, larghezza dei messaggi e indicatore presenza. */
+  --spacing-storico-minimo: calc(var(--spacing) * 48);
+  --altezza-storico-chat: 52dvh;
+  --larghezza-messaggio-chat: 85%;
+  --spacing-presenza: calc(var(--spacing) * 2);
+  --spacing-compositore-chat-minimo: var(--spacing-controllo-compatto);
+  --spacing-compositore-chat-massimo: calc(var(--spacing) * 30);
 }

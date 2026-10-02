@@ -4,12 +4,13 @@ import hmac
 import json
 import logging
 import time
+import uuid
 from collections import deque
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from src.config import get_impostazioni
 from src.security.browser import nome_cookie, origine_url, token_csrf
 from src.chat_pratiche.socket_nativo import avvia, aggiorna, invia
-from src.chat_pratiche import segnali
+from src.chat_pratiche import presenza, segnali, socket_presenza
 
 router = APIRouter()
 PROTOCOLLO = "ersaf.pratiche.v1"
@@ -65,11 +66,14 @@ async def osserva(browser, token, contesto, ultimo):
 
 async def esegui(browser, token, dati):
     contesto, ultimo = dati
-    await browser.accept(subprotocol=PROTOCOLLO)
-    await browser.send_json({"tipo": "connesso"})
-    lavori = [asyncio.create_task(ricevi(browser, token, contesto)),
-              asyncio.create_task(osserva(browser, token, contesto, ultimo))]
+    connessione, lavori = str(uuid.uuid4()), []
     try:
+        await browser.app.state.realtime_risorse.letture.esegui(connessione, presenza.apri, token, contesto, connessione)
+        await browser.accept(subprotocol=PROTOCOLLO)
+        await browser.send_json({"tipo": "connesso"})
+        lavori = [asyncio.create_task(ricevi(browser, token, contesto)),
+                  asyncio.create_task(osserva(browser, token, contesto, ultimo)),
+                  asyncio.create_task(socket_presenza.osserva(browser, token, contesto, connessione))]
         completati, _ = await asyncio.wait(lavori, return_when=asyncio.FIRST_COMPLETED)
         for lavoro in completati:
             lavoro.result()
@@ -77,6 +81,7 @@ async def esegui(browser, token, dati):
         for lavoro in lavori:
             lavoro.cancel()
         await asyncio.gather(*lavori, return_exceptions=True)
+        await socket_presenza.termina(browser, connessione)
 
 
 @router.websocket("/pratiche/{pratica_id}/messaggi/socket")

@@ -1,4 +1,27 @@
-.chat-pratica { display: grid; gap: 1.25rem; min-width: 0; }
-.chat-pratica__storico { min-height: 12rem; max-height: 52dvh; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding-right: .5rem; }
-.chat-pratica__messaggio { padding-inline-start: .75rem; border-inline-start: 2px solid var(--color-divisore); }
-.chat-pratica__messaggio--mio { border-inline-start-color: var(--color-primario); }
+.chat-pratica { @apply grid gap-5 min-w-0; }
+.chat-pratica__storico {
+  @apply pr-2;
+  min-height: var(--spacing-storico-minimo);
+  max-height: var(--altezza-storico-chat);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.chat-pratica__elenco { @apply flex flex-col gap-5; }
+.chat-pratica__messaggio {
+  @apply rounded-riquadro bg-superficie-tenue p-3 min-w-0;
+  width: fit-content;
+  max-width: var(--larghezza-messaggio-chat);
+}
+.chat-pratica__messaggio--mio { @apply bg-primario-velo text-right; margin-inline-start: auto; }
+.chat-pratica__metadati { @apply flex flex-wrap items-center gap-x-3 gap-y-1; }
+.chat-pratica__messaggio--mio .chat-pratica__metadati { @apply justify-end; }
+.chat-pratica__testo { overflow-wrap: anywhere; }
+.chat-pratica__presenza { @apply rounded-full bg-positivo shrink-0; width: var(--spacing-presenza); height: var(--spacing-presenza); }
+.chat-pratica__campo {
+  @apply block min-w-0 resize-none;
+  min-height: var(--spacing-compositore-chat-minimo);
+  max-height: var(--spacing-compositore-chat-massimo);
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}

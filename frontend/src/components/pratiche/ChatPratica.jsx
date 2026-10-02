@@ -1,21 +1,14 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { useChatPratica } from "../../hooks/useChatPratica.js";
 import { TESTI_CHAT as testi } from "../../config/testi/chatPratica.js";
 import { STILI_CHAT as stili } from "../../config/styles/chatPratica.js";
 import { pulsante } from "../../config/styles/pulsante.js";
-import { Send } from "../../config/icone.js";
 import AlertMessage from "../AlertMessage.jsx";
-
-const dataMessaggio = value => {
-  if (!value) return "";
-  const data = new Date(value);
-  return Number.isNaN(data.getTime()) ? "" : new Intl.DateTimeFormat("it-IT", { dateStyle: "short", timeStyle: "short" }).format(data);
-};
+import MessaggioChat from "./MessaggioChat.jsx";
+import CompositoreChat from "./CompositoreChat.jsx";
 
 export default function ChatPratica({ praticaId }) {
   const { chat, ...stato } = useChatPratica(praticaId);
-  const [testo, setTesto] = useState("");
-  const [errore, setErrore] = useState("");
   const lista = useRef(null);
   const posizione = useRef({ vicino: true, altezza: 0, precedenti: false });
   const ultimo = stato.elementi.at(-1)?.id;
@@ -32,16 +25,14 @@ export default function ChatPratica({ praticaId }) {
     posizione.current = { ...posizione.current, altezza: lista.current.scrollHeight, precedenti: true };
     chat.aggiorna(true);
   };
-  const invia = async evento => {
-    evento.preventDefault(); setErrore("");
-    try { if (await chat.invia(testo)) { setTesto(""); posizione.current.vicino = true; } }
-    catch (e) { setErrore(e.message); }
+  const invia = async testo => {
+    const accettato = await chat.invia(testo);
+    if (accettato) posizione.current.vicino = true;
+    return accettato;
   };
   return <section className={stili.sezione} aria-label={testi.titolo}>
-    <div className={stili.testata}>
-      <div><h2 className={stili.titolo}>{testi.titolo}</h2><p className={stili.nota}>{testi.descrizione}</p></div>
-      <p className={stili.nota} role="status">{testi[stato.connessione]}</p>
-    </div>
+    <h2 className={stili.titolo}>{testi.titolo}</h2>
+    {stato.connessione === "disconnesso" && <p className={stili.nota} role="status">{testi.disconnesso}</p>}
     <AlertMessage message={stato.errore ? { type: "error", text: stato.errore } : null} />
     {stato.errore && <button type="button" className={pulsante("secondario")} onClick={() => { chat.stop(); chat.start(); }}>{testi.riprova}</button>}
     <div ref={lista} className={stili.storico} tabIndex={0} aria-label={testi.storico}
@@ -49,10 +40,7 @@ export default function ChatPratica({ praticaId }) {
       {stato.altri && <button type="button" className={pulsante("secondario")} disabled={stato.precedente} onClick={precedenti}>{stato.precedente ? testi.caricamento : testi.precedenti}</button>}
       {stato.caricamento ? <p className={stili.nota}>{testi.caricamento}</p> : !stato.errore && !stato.elementi.length && <p className={stili.nota}>{testi.vuota}</p>}
       <ol className={stili.elenco}>
-        {stato.elementi.map(m => <li key={m.id} className={m.mio ? stili.mio : stili.messaggio}>
-          <div className={stili.metadati}><span className={stili.autore}>{m.mio ? testi.tu : m.autore}</span><time dateTime={m.data}>{dataMessaggio(m.data)}</time></div>
-          <p className={stili.testo}>{m.testo}</p>
-        </li>)}
+        {stato.elementi.map(m => <MessaggioChat key={m.id} messaggio={m} online={stato.online.includes(m.autoreId)} />)}
       </ol>
     </div>
     {stato.invio && <div className={stili.pendente} aria-live="polite">
@@ -60,16 +48,7 @@ export default function ChatPratica({ praticaId }) {
       <p className={stato.invio.errore ? stili.errore : stili.nota}>{stato.invio.errore || testi.attesa}</p>
       {stato.invio.errore && <button type="button" className={pulsante("secondario")} disabled={stato.connessione !== "connesso"} onClick={() => chat.riprovaInvio()}>{testi.riprova}</button>}
     </div>}
-    <form onSubmit={invia} className={stili.compositore}>
-      <label htmlFor={`messaggio-${praticaId}`} className={stili.nota}>{testi.campo}</label>
-      <textarea id={`messaggio-${praticaId}`} className={stili.campo} value={testo} maxLength={1000} rows={3}
-        disabled={!!stato.invio} onChange={e => setTesto(e.target.value)} />
-      <div className={stili.azioni}>
-        <p className={stili.errore} role="alert">{errore}</p>
-        <button type="submit" className={pulsante("primario")} disabled={!testo.trim() || !!stato.invio || stato.connessione !== "connesso"}>
-          <Send aria-hidden="true" className={stili.icona} />{testi.invia}
-        </button>
-      </div>
-    </form>
+    <CompositoreChat key={praticaId} id={`messaggio-${praticaId}`} invia={invia}
+      occupato={!!stato.invio} connesso={stato.connessione === "connesso"} />
   </section>;
 }

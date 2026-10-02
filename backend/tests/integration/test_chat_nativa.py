@@ -30,6 +30,14 @@ def collega(client, pratica_id):
         subprotocols=[socket.PROTOCOLLO, "csrf." + token_csrf(token)], headers={"Origin": "https://test.example.org"})
 
 
+def ricevi_messaggio(ws):
+    for _ in range(10):
+        frame = ws.receive_json()
+        if frame["tipo"] != "presenza":
+            return frame
+    pytest.fail("Messaggio non ricevuto")
+
+
 def test_invio_storico_e_retry_senza_java(client, db, chat, monkeypatch):
     import httpx
     monkeypatch.setattr(httpx.Client, "request", lambda *a, **k: pytest.fail("Richiesta HTTP esterna"))
@@ -38,7 +46,7 @@ def test_invio_storico_e_retry_senza_java(client, db, chat, monkeypatch):
     with collega(client, p.pratica_id) as ws:
         assert ws.receive_json() == {"tipo": "connesso"}
         ws.send_json(comando)
-        evento = ws.receive_json()
+        evento = ricevi_messaggio(ws)
         assert evento["clientMessageId"] == "messaggio-1"
     token = client.cookies.get(nome_cookie())
     ctx, _ = socket_nativo.avvia(token, p.pratica_id)
@@ -66,7 +74,7 @@ def test_logout_chiude_socket_aperta(client, chat):
         assert ws.receive_json()["tipo"] == "connesso"
         client.post("/auth/logout")
         with pytest.raises(WebSocketDisconnect) as exc:
-            ws.receive_json()
+            ricevi_messaggio(ws)
         assert exc.value.code == 4401
 
 
@@ -120,7 +128,7 @@ def test_eventi_tra_connessioni_e_revoca_partecipante(client, db, chat):
         assert ws.receive_json()["tipo"] == "connesso"
         # Scrittura da una sessione SQL distinta dal lettore socket.
         evento = socket_nativo.invia(token, ctx, preparato(client, p.pratica_id))
-        assert ws.receive_json()["id"] == evento["id"]
+        assert ricevi_messaggio(ws)["id"] == evento["id"]
     assert socket_nativo.aggiorna(token, ctx, prima)[0]["id"] == evento["id"]
     p.utente_id = None
     p.cliente_emittente_aderente_id = p.cliente_id

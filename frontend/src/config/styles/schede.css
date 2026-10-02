@@ -1,15 +1,12 @@
 /* Schede sottolineate (predefinite): una riga che scorre in orizzontale, la
  * scheda attiva e' sottolineata nella tinta primaria. La variante segmentata
  * (sotto-schede) e' un gruppo di pulsanti su fondo grigio.
- * margin-bottom:-1px e overflow-y:hidden vanno insieme: la sottolineatura
- * copre il bordo della barra senza farla scorrere in verticale. */
+ * Solo la selezione ha un indicatore: nessun divisore lungo la barra. */
 .schede { container-type: inline-size; isolation: isolate; min-width: 0; }
 .schede__barra {
   display: flex;
   flex-wrap: nowrap;
-  gap: 4px;
-  padding: 0 24px;
-  border-bottom: 1px solid var(--color-bordo);
+  @apply gap-1 px-2 sm:px-6;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
@@ -23,7 +20,6 @@
   padding: 0 16px;
   border: 0;
   border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
   background: transparent;
   color: var(--color-testo-tenue);
   font-size: var(--text-sm);

@@ -76,3 +76,32 @@ test("ricifra solo dopo il rifiuto definitivo per chiave scaduta", async t => {
   assert.equal(f.sent[2].clientMessageId, id);
   assert.notEqual(f.sent[2].cifrato, f.sent[1].cifrato);
 });
+
+test("la presenza usa ID utente, sostituisce il quadro precedente e scarta frame malformati", async t => {
+  const f = fixture({ leggi: async () => ({ ...pagina(["1"]), elementi: [{ id: "1", autoreId: "4845", mio: false }] }) });
+  t.after(() => f.chat.stop()); f.chat.start(); await tick();
+  f.evento({ tipo: "connesso" }); await tick();
+  assert.deepEqual(f.chat.snapshot().online, []);
+  f.evento({ tipo: "presenza", utenti: ["4845", "4845", "3956", 4846, "0", "", "Elena"] });
+  assert.deepEqual(f.chat.snapshot().online, ["4845", "3956"]);
+  assert.ok(f.chat.snapshot().online.includes(f.chat.snapshot().elementi[0].autoreId));
+  f.evento({ tipo: "presenza", utenti: null });
+  assert.deepEqual(f.chat.snapshot().online, ["4845", "3956"]);
+  f.evento({ tipo: "presenza", utenti: [] });
+  assert.deepEqual(f.chat.snapshot().online, []);
+});
+
+test("disconnessione e chiusura rimuovono la presenza, e i vecchi socket non la ripristinano", async t => {
+  const f = fixture(); t.after(() => f.chat.stop());
+  f.chat.start(); await tick(); f.evento({ tipo: "connesso" });
+  f.evento({ tipo: "presenza", utenti: ["4845"] });
+  f.ws.onclose();
+  assert.deepEqual(f.chat.snapshot().online, []);
+  f.evento({ tipo: "presenza", utenti: ["4845"] });
+  assert.deepEqual(f.chat.snapshot().online, []);
+  f.chat.stop();
+  f.evento({ tipo: "presenza", utenti: ["4845"] });
+  assert.deepEqual(f.chat.snapshot().online, []);
+  f.chat.start(); await tick();
+  assert.deepEqual(f.chat.snapshot().online, []);
+});

@@ -71,6 +71,25 @@ def crea_sessione(
     return token, sessione.sess_expires_at
 
 
+def sessioni_valide():
+    """Query comune per accesso cookie e presenza: identici criteri di revoca."""
+    return (
+        select(AuthSessione.sess_id, AuthSessione.utente_id)
+        .join(Utente, Utente.utente_id == AuthSessione.utente_id)
+        .where(
+            AuthSessione.sess_revoked_at.is_(None),
+            AuthSessione.sess_expires_at > func.now(),
+            AuthSessione.sess_created_at
+            > istante_meno_giorni(get_impostazioni().session_durata_massima_giorni),
+            Utente.utente_attivoSN == ATTIVO,
+            or_(
+                Utente.utente_password_changed_at.is_(None),
+                AuthSessione.sess_created_at >= Utente.utente_password_changed_at,
+            ),
+        )
+    )
+
+
 def valida_sessione(db: Session, token: str) -> tuple[int, int] | None:
     """Query [B] della migrazione 004. Restituisce (sess_id, utente_id).
 
@@ -84,20 +103,7 @@ def valida_sessione(db: Session, token: str) -> tuple[int, int] | None:
         return None
 
     riga = db.execute(
-        select(AuthSessione.sess_id, AuthSessione.utente_id)
-        .join(Utente, Utente.utente_id == AuthSessione.utente_id)
-        .where(
-            AuthSessione.sess_token_hash == impronta(token, TipoToken.SESSIONE),
-            AuthSessione.sess_revoked_at.is_(None),
-            AuthSessione.sess_expires_at > func.now(),
-            AuthSessione.sess_created_at
-            > istante_meno_giorni(get_impostazioni().session_durata_massima_giorni),
-            Utente.utente_attivoSN == ATTIVO,
-            or_(
-                Utente.utente_password_changed_at.is_(None),
-                AuthSessione.sess_created_at >= Utente.utente_password_changed_at,
-            ),
-        )
+        sessioni_valide().where(AuthSessione.sess_token_hash == impronta(token, TipoToken.SESSIONE))
     ).first()
     return (riga.sess_id, riga.utente_id) if riga else None
 

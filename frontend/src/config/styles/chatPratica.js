@@ -1,12 +1,15 @@
+import { pulsanteIcona } from "./pulsante.js";
 import { campo } from "./campo.js";
 export const STILI_CHAT = {
-  sezione: "chat-pratica", testata: "flex flex-wrap items-start justify-between gap-3",
-  titolo: "text-base font-semibold text-testo", nota: "text-sm text-testo-tenue",
-  storico: "chat-pratica__storico", elenco: "space-y-5", messaggio: "chat-pratica__messaggio",
+  sezione: "chat-pratica", titolo: "sr-only", nota: "text-sm text-testo-tenue",
+  storico: "chat-pratica__storico", elenco: "chat-pratica__elenco", messaggio: "chat-pratica__messaggio",
   mio: "chat-pratica__messaggio chat-pratica__messaggio--mio",
-  metadati: "flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs text-testo-tenue",
-  autore: "font-semibold text-testo", testo: "whitespace-pre-wrap break-words text-sm text-testo mt-1",
-  compositore: "space-y-3 border-t border-divisore pt-4", campo: `${campo()} min-h-24 resize-y`,
-  azioni: "flex flex-wrap items-center justify-between gap-3", icona: "size-icona-piccola",
-  pendente: "border-l-2 border-attenzione pl-3 space-y-2", errore: "text-sm text-negativo",
+  metadati: "chat-pratica__metadati text-xs text-testo-tenue",
+  autore: "inline-flex items-center gap-1.5 font-semibold text-testo", presenza: "chat-pratica__presenza",
+  testo: "chat-pratica__testo whitespace-pre-wrap text-sm text-testo mt-1",
+  compositore: "grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2 min-w-0",
+  campo: `${campo()} chat-pratica__campo`, etichettaCampo: "sr-only",
+  invia: `${pulsanteIcona("primario", "grande")} self-end`, icona: "size-icona",
+  erroreCompositore: "col-span-full text-sm text-negativo",
+  pendente: "chat-pratica__messaggio chat-pratica__messaggio--mio border border-attenzione space-y-2", errore: "text-sm text-negativo",
 };

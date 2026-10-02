@@ -36,6 +36,30 @@ Il proxy pubblico mantiene il prefisso `/api`; Nginx lo rimuove prima di
 inoltrare a FastAPI e gestisce Upgrade/Connection. I frame della socket cookie
 sono limitati a 4096 byte. I cursori sono firmati e legati a utente e pratica.
 
+Lo storico include `autoreId`, l'ID **utente** del mittente, distinto dall'ID
+cliente. I messaggi propri sono allineati a destra, quelli ricevuti a sinistra;
+il pallino accanto agli altri autori indica la presenza effettiva (nessun
+pallino su «Tu»), senza uno stato generico «Connesso» né descrizioni della
+condivisione fra applicazioni.
+
+La barra delle schede mostra solo l'indicatore della selezione, senza un
+divisore continuo. Il campo parte da una sola riga e cresce fino all'altezza
+massima del tema, poi scorre internamente. Il pulsante d'invio sta a destra del
+campo, fuori dal bordo e allineato al suo margine inferiore. Su schermo desktop
+Invio spedisce e Maiusc+Invio va a capo; su schermo compatto Invio va a capo.
+La composizione IME non spedisce il testo e tenere premuto Invio non duplica
+il messaggio. Durante un invio pendente si può già preparare la prossima
+bozza; una modifica al testo durante la preparazione non viene cancellata.
+
+La socket cookie emette `{"tipo":"presenza","utenti":["123"]}`: un quadro
+completo dei soli partecipanti online, aggiornato ogni cinque secondi quando
+cambia. Riusa le lease SQL del realtime con sessioni interne `cookie:<sess_id>`,
+senza creare token Bearer o salvare il cookie. Entrambi i trasporti riconoscono
+queste presenze; revoca, scadenza, disattivazione e account ambiguo le escludono.
+Le connessioni cookie rispettano le quote comuni e sono escluse dal quorum ACK
+del protocollo Bearer. La chiusura attende i rinnovi già avviati prima di
+rimuovere la lease. Il client azzera i pallini mentre si riconnette.
+
 `chat_pratiche/scrittura.py` adatta il comando cookie al servizio comune
 `realtime/scrittura.py`. Una transazione salva messaggio u3, ricevuta
 idempotente, orario UTC, grant, consegne e notifiche legacy. Le notifiche

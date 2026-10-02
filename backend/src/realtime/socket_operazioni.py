@@ -23,24 +23,8 @@ from src.realtime.transazioni import ritenta
 def avvia(accesso, conn=None):
     conn, claims = conn or str(uuid.uuid4()), token.decodifica(accesso)
     with sessioni.transazione(accesso, attivita=True) as (db, i):
-        eventi.blocca(db, 0)
-        eventi.blocca(db, i.utente_id)
-        totale, utente, sessione = esegui(
-            db,
-            """SELECT COUNT(*),COALESCE(SUM(utente_id=:u),0),COALESCE(SUM(session_id=:sid),0)
-            FROM realtime_presenza WHERE scadenza>UTC_TIMESTAMP(6)""",
-            dict(u=i.utente_id, sid=claims["sid"]),
-        ).one()
-        c = configurazione()
-        richiedi(
-            totale < c.realtime_max_connections
-            and utente < c.realtime_max_connections_per_user
-            and sessione < c.realtime_max_connections_per_auth_session,
-            "too_many_connections",
-            429,
-        )
+        presenza.apri(db, i, conn, claims["sid"])
         posizione = eventi.posizione(db, i.utente_id)
-        presenza.rinnova(db, i, conn, claims["sid"])
     return i, conn, claims["sid"], posizione
 
 

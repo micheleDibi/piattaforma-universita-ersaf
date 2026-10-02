@@ -59,7 +59,7 @@ def elemento(db, contesto, riga):
         testo = "Messaggio non disponibile per questo account"
     except Exception:
         testo = "Messaggio non decifrabile"
-    return dict(id=str(riga["messageId"]), autore=riga["senderName"],
+    return dict(id=str(riga["messageId"]), autore=riga["senderName"], autoreId=str(riga["senderUserId"]),
                 mio=riga["senderUserId"] == contesto.utente_id, testo=testo, data=data_record(riga))
 
 

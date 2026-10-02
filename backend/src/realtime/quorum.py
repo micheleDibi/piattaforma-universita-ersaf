@@ -16,7 +16,9 @@ def riconcilia(db, uid, did):
     esegui(
         db,
         """INSERT IGNORE INTO realtime_delivery_connessione (delivery_id,connessione,prossimo_at)
-        SELECT :id,connessione,:now FROM realtime_presenza WHERE utente_id=:u AND scadenza>:now""",
+        SELECT :id,p.connessione,:now FROM realtime_presenza p
+        JOIN realtime_auth_session s ON s.session_id=p.session_id
+        WHERE p.utente_id=:u AND p.scadenza>:now""",
         dict(id=did, u=uid, now=ora()),
     )
     return completo(db, did)
@@ -30,9 +32,11 @@ def concludi(db, uid):
         WHERE d.recipient_user_id=:u AND d.acknowledged_at IS NULL AND d.expires_at>:now
         AND EXISTS (SELECT 1 FROM realtime_presenza p JOIN realtime_delivery_connessione q
             ON q.connessione=p.connessione AND q.delivery_id=d.delivery_id
+            JOIN realtime_auth_session s ON s.session_id=p.session_id
             WHERE p.utente_id=:u AND p.scadenza>:now AND q.confermata_at IS NOT NULL)
         AND NOT EXISTS (SELECT 1 FROM realtime_presenza p LEFT JOIN realtime_delivery_connessione q
             ON q.connessione=p.connessione AND q.delivery_id=d.delivery_id
+            JOIN realtime_auth_session s ON s.session_id=p.session_id
             WHERE p.utente_id=:u AND p.scadenza>:now AND q.confermata_at IS NULL)
         LIMIT 64""",
         dict(u=uid, now=ora()),

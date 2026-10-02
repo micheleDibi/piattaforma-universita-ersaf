@@ -9,7 +9,7 @@ export function unisciMessaggi(attuali, nuovi) {
 export class ConversazionePratica {
   constructor(id, api) {
     this.id = id; this.api = api; this.listeners = new Set();
-    this.stato = { elementi: [], caricamento: true, errore: "", connessione: "connessione", altri: false, precedente: false, invio: null };
+    this.stato = { elementi: [], online: [], caricamento: true, errore: "", connessione: "connessione", altri: false, precedente: false, invio: null };
     this.consegne = new Map(); this.tentativi = 0; this.serie = 0;
   }
   snapshot = () => this.stato;
@@ -17,11 +17,13 @@ export class ConversazionePratica {
   cambia(patch) { this.stato = { ...this.stato, ...patch }; this.listeners.forEach(fn => fn()); }
   start() {
     this.controller = new AbortController(); this.attiva = true; this.serie++; this.caricamento = false;
+    this.cambia({ connessione: "connessione", online: [] });
     this.aggiorna().then(ok => { if (ok && this.attiva) this.collega(); });
   }
   stop() {
     this.attiva = false; this.serie++; this.controller?.abort();
     clearTimeout(this.timer); clearTimeout(this.timerInvio); const socket = this.socket; this.socket = null; socket?.close();
+    this.cambia({ connessione: "disconnesso", online: [] });
   }
   async aggiorna(precedenti = false) {
     const serie = this.serie;
@@ -73,6 +75,8 @@ export class ConversazionePratica {
         if (dato.tipo === "connesso") {
           this.tentativi = 0; this.cambia({ connessione: "connesso" }); this.aggiorna();
           if (this.stato.invio?.cifrato) this.riprovaInvio();
+        } else if (dato.tipo === "presenza" && Array.isArray(dato.utenti)) {
+          this.cambia({ online: [...new Set(dato.utenti.filter(id => typeof id === "string" && /^[1-9]\d*$/.test(id)))] });
         } else if (dato.tipo === "messaggio") {
           if (dato.consegna) this.consegne.set(dato.id, dato.consegna);
           if (dato.clientMessageId === this.stato.invio?.clientMessageId) {
@@ -87,13 +91,14 @@ export class ConversazionePratica {
       };
       socket.onclose = () => {
         if (this.socket !== socket || !this.attiva) return;
+        this.socket = null;
         this.consegne.clear(); this.riconnetti();
       };
       socket.onerror = () => socket.close();
     } catch { if (this.attiva && serie === this.serie) this.riconnetti(); }
   }
   riconnetti() {
-    this.cambia({ connessione: "disconnesso" });
+    this.cambia({ connessione: "disconnesso", online: [] });
     clearTimeout(this.timer);
     this.timer = setTimeout(async () => {
       // L'HTTP offre errori leggibili e gestisce il 401 nella sessione comune.

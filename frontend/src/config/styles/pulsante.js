@@ -108,6 +108,7 @@ export function pulsante(
 }
 
 const COLORI_ICONA = {
+  primario: VARIANTI.primario,
   neutro: "text-testo-tenue hover:bg-superficie-alta hover:text-testo",
   pericolo: "text-negativo hover:bg-negativo-tenue hover:text-negativo-forte",
   // Solo il guscio: stessa tinta dorata della voce attiva del menu.
@@ -124,14 +125,15 @@ const DIMENSIONI_ICONA = {
 
 /**
  * Pulsante con sola icona: apertura e chiusura del menu, avvisi delle righe.
- * @param {"neutro"|"pericolo"|"selezionato"|"avviso"} variante
+ * @param {"primario"|"neutro"|"pericolo"|"selezionato"|"avviso"} variante
  * @param {"minima"|"normale"|"grande"} dimensione  minima 28, normale 36, grande 44
  */
 export function pulsanteIcona(variante = "neutro", dimensione = "normale") {
   return (
     `inline-flex ${DIMENSIONI_ICONA[dimensione] ?? DIMENSIONI_ICONA.normale} shrink-0 items-center justify-center ` +
     `${COLORI_ICONA[variante] ?? COLORI_ICONA.neutro} transition-colors cursor-pointer ` +
-    "focus:outline-none focus-visible:ring-3 focus-visible:ring-fuoco"
+    "focus:outline-none focus-visible:ring-3 focus-visible:ring-fuoco " +
+    "disabled:opacity-50 disabled:cursor-not-allowed"
   );
 }
 

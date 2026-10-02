@@ -6,6 +6,7 @@ from src.chat_pratiche.configurazione import configurazione
 from src.realtime.conversazioni import autorizza
 from src.realtime.dati import esegui, iso, ora
 from src.realtime.errori import ErroreRealtime, richiedi
+from src.realtime import eventi, presenza_cookie
 
 
 def visibili(db, i):
@@ -61,8 +62,23 @@ def rinnova(db, i, connessione, sid):
     )
 
 
-def online(db, i):
-    permessi = visibili(db, i)
+def apri(db, i, connessione, sid):
+    # Tutti i trasporti seguono lo stesso ordine di lock e le stesse quote.
+    eventi.blocca(db, 0)
+    eventi.blocca(db, i.utente_id)
+    totale, utente, sessione = esegui(
+        db,
+        """SELECT COUNT(*),COALESCE(SUM(utente_id=:u),0),COALESCE(SUM(session_id=:sid),0)
+        FROM realtime_presenza WHERE scadenza>UTC_TIMESTAMP(6)""",
+        dict(u=i.utente_id, sid=sid),
+    ).one()
+    c = configurazione()
+    richiedi(totale < c.realtime_max_connections and utente < c.realtime_max_connections_per_user
+             and sessione < c.realtime_max_connections_per_auth_session, "too_many_connections", 429)
+    rinnova(db, i, connessione, sid)
+
+
+def online_utenti(db):
     candidati = esegui(
         db,
         """SELECT DISTINCT p.utente_id FROM realtime_presenza p
@@ -77,7 +93,11 @@ def online(db, i):
         AND (SELECT COUNT(*) FROM clienti uc WHERE uc.utente_id=u.utente_id)=1""",
         dict(now=ora(), idle=ora() - timedelta(seconds=configurazione().chat_universo_inattivita_secondi)),
     ).scalars()
-    return set(candidati) & permessi
+    return set(candidati) | presenza_cookie.online(db)
+
+
+def online(db, i):
+    return online_utenti(db) & visibili(db, i)
 
 
 def lista(i, ids):
