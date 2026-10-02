@@ -11,6 +11,43 @@ Il file non si modifica a mano. Chi fa una modifica scrive un frammento in `chan
 
 <!-- nuove-versioni: il timbro del deploy inserisce qui sotto le versioni pubblicate; non spostare questa riga -->
 
+## Versione 21 — 02/10/2026 13:55
+
+<!-- timbro: versione=21 sha=8d9e2702bb32ee487e7821fc8d0d074ae5142e66 -->
+
+### Novità e correzioni
+
+**Aggiunto**
+
+- Nella scheda Utente di un attuatore, Regionale e Provinciale possono riportare a Utente chi sta sotto di loro (il Regionale un Aderente o un Provinciale, il Provinciale un Aderente).
+- Un pallino verde accanto agli altri autori indica quando sono online.
+
+**Modificato**
+
+- Il ruolo di una persona si assegna secondo chi lo assegna, sia creando un attuatore sia nella scheda Utente di sottoscrittori e attuatori: il Nazionale assegna qualunque ruolo, il Regionale solo Provinciale o Aderente, il Provinciale solo Aderente; l'Aderente non cambia ruoli. Le tendine mostrano solo le scelte ammesse.
+- Dove c'è una sola scelta possibile il ruolo non ha la tendina e compare come valore bloccato: per esempio un Provinciale che crea un attuatore (solo Aderente), la propria scheda (tranne che per il Nazionale), la scheda di chi ha un ruolo più alto (un Regionale che apre un altro Regionale) e ogni scheda vista da un Aderente.
+- Un nuovo sottoscrittore nasce sempre con ruolo Utente, chiunque lo crei.
+- Nella chat delle pratiche i propri messaggi compaiono a destra e quelli ricevuti a sinistra.
+- Il campo messaggio cresce con il testo e il pulsante d'invio resta esterno a destra, allineato in basso.
+- Le schede mostrano solo l'indicatore della selezione, senza un divisore continuo.
+
+**Rimosso**
+
+- La chat non mostra più descrizioni superflue o lo stato generico di connessione.
+
+### Dettagli tecnici
+
+**Aggiunto**
+
+- Presenza condivisa fra socket cookie delle pratiche e sessioni realtime, con verifica dei partecipanti e dei criteri comuni di revoca.
+- Prove di presenza, revoca, cleanup delle connessioni, quorum e tastiera. Nessuna nuova migrazione o configurazione.
+
+**Modificato**
+
+- `verifica_ruolo_assegnabile` (`backend/src/clienti/servizio.py`) applica `RUOLI_ASSEGNABILI` (`auth/autorizzazioni.py`) in `POST /clienti/con-utente` e `PUT /clienti/{id}`; un ruolo non ammesso risponde 403 "Non puoi assegnare questo ruolo.". Gemella lato client in `frontend/src/lib/permessiSchedaUtente.js`.
+- Quote e ordine dei lock delle connessioni sono comuni ai due trasporti; le lease cookie sono escluse dal quorum ACK Bearer.
+- Il composer gestisce crescita limitata, invio desktop, nuova riga mobile e composizione IME senza duplicare gli invii o cancellare nuove bozze.
+
 ## Versione 20 — 01/10/2026 20:21
 
 <!-- timbro: versione=20 sha=dc04a99b510b0b575e86da23cd2c035996d67a87 -->
