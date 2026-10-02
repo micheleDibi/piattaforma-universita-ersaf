@@ -124,18 +124,29 @@ Nota: il documento PDF di una pratica non segue questa regola, e alcune pagine r
 
 ### Alla creazione
 
-- Un **nuovo sottoscrittore** riceve il ruolo Utente.
-- Un **nuovo attuatore** ha, fra i "Dati principali", il campo "Ruolo attuatore". Le scelte sono Aderente (proposto), Provinciale, Regionale e Nazionale. Se non si sceglie nulla, il ruolo è Aderente. Il campo resta modificabile anche dopo.
+Chi può assegnare quali ruoli, sia alla creazione sia nella scheda "Utente":
+
+| Chi | Ruoli che può assegnare |
+|---|---|
+| Nazionale | tutti e sette |
+| Regionale | Aderente, Provinciale |
+| Provinciale | Aderente |
+| Aderente | nessuno |
+
+- Un **nuovo sottoscrittore** riceve sempre il ruolo Utente, chiunque lo crei; nella sua scheda "Utente" il ruolo si può poi cambiare con le regole della tabella.
+- Un **nuovo attuatore** ha, fra i "Dati principali", il campo "Ruolo attuatore". Le scelte sono i ruoli da attuatore (Aderente, Provinciale, Regionale, Nazionale) che chi crea può assegnare; parte su Aderente. Il campo resta modificabile anche dopo, con le stesse regole.
+
+Dove c'è una sola scelta possibile (per esempio un Provinciale che crea un attuatore, che può solo Aderente, o chi guarda un ruolo che non può cambiare) non c'è la tendina: il ruolo compare come valore bloccato.
 
 ### Dalla scheda "Utente"
 
-La scheda "Utente" di ogni persona ha la tendina **"Ruolo"** con tutti e sette i ruoli. La schermata e il suo salvataggio sono descritti in [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md). Qui contano solo le regole di permesso:
+La scheda "Utente" di ogni persona ha la tendina **"Ruolo"**, con i ruoli che chi guarda può assegnare e quello attuale della persona. La schermata e il suo salvataggio sono descritti in [Sottoscrittori e attuatori](sottoscrittori-e-attuatori.md). Qui contano solo le regole di permesso:
 
-- il **ruolo** lo può cambiare qualunque utente collegato, sulle schede che vede, con due eccezioni valide per chi non è Nazionale: non può assegnare il ruolo Nazionale a nessuno, e non può cambiare il proprio ruolo. In entrambi i casi il server risponde "Solo il nazionale può eseguire questa operazione.". Riconfermare il ruolo già presente è ammesso, perché la scheda lo rimanda a ogni salvataggio;
+- il **ruolo** si cambia secondo la tabella sopra, con in più, per chi non è Nazionale: non si cambia il proprio ruolo, e non si tocca quello di chi ha un ruolo da attuatore che non si potrebbe assegnare (un Regionale non cambia il ruolo di un altro Regionale o di un Nazionale). Chi ha un ruolo senza accesso (Utente, Consulente, Operatore) si può promuovere. Chi sta sotto (ha un ruolo che si potrebbe assegnare) si può anche declassare a **Utente**, solo da questa scheda: un Regionale riporta a Utente un Aderente o un Provinciale, un Provinciale un Aderente. Nei casi non ammessi il ruolo è bloccato; se la richiesta arriva comunque al server, risponde "Non puoi assegnare questo ruolo." (o "Solo il nazionale può eseguire questa operazione." per il ruolo Nazionale e il proprio). Riconfermare il ruolo già presente è ammesso, perché la scheda lo rimanda a ogni salvataggio;
 - **nome utente, stato e utente padre** li può cambiare solo chi modifica la propria scheda, oppure un Regionale o un Nazionale. Per gli altri questi campi (e il pulsante "Cambia padre") sono bloccati;
 - cambiare ruolo sposta la persona da un elenco all'altro: il ruolo Utente la porta fra i Sottoscrittori, un ruolo da attuatore fra gli Attuatori.
 
-Per chi non è Nazionale, nelle tendine del ruolo (scheda Utente e Dati principali) la voce Nazionale è visibile ma non selezionabile, e sulla propria scheda la tendina è bloccata. Le due tendine mostrano sempre lo stesso valore: cambiarne una cambia anche l'altra.
+Le due tendine del ruolo di un attuatore (scheda Utente e Dati principali) seguono le stesse regole e mostrano sempre lo stesso valore: cambiarne una cambia anche l'altra.
 
 Un cambio di ruolo non chiude le sessioni già aperte della persona. Il suo menu cambia al successivo caricamento della pagina.
 

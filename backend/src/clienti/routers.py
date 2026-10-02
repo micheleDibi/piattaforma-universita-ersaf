@@ -122,7 +122,10 @@ def crea_cliente_e_utente(
 ):
     """Crea in una transazione la riga utenti (disattivata), la riga clienti
     e il curriculum. L'utente si attiva dopo la verifica di email e cellulare."""
-    verifica_ruolo_assegnabile(db, vis, current_utente, dati.cliente_ruolo)
+    verifica_ruolo_assegnabile(
+        db, vis, current_utente, dati.cliente_ruolo,
+        nuovo_sottoscrittore=tipo_utente is TipoUtente.SOTTOSCRITTORE,
+    )
     try:
         esito = crea_cliente_con_utente(
             db, dati.model_dump(), tipo_utente, current_utente.utente_id

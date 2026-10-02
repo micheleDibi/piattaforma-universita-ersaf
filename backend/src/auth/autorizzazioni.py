@@ -34,6 +34,15 @@ RUOLI_AMMINISTRATIVI = frozenset({"nazionale", "regionale"})
 # Ruoli che non accedono alla piattaforma: 0 Utente, 4 Consulente, 6 Operatore.
 RUOLI_SENZA_ACCESSO = frozenset({0, 4, 6})
 
+# Ruoli che chi non e' Nazionale puo' assegnare (codici in minuscolo). Il
+# Nazionale assegna tutto; chi non e' in elenco (Aderente, ruoli senza
+# accesso) non assegna nulla. Gemella di RUOLI_ASSEGNABILI in
+# frontend/src/lib/permessiSchedaUtente.js.
+RUOLI_ASSEGNABILI = {
+    "regionale": frozenset({"aderente", "provinciale"}),
+    "provinciale": frozenset({"aderente"}),
+}
+
 
 def ruolo_di(db: Session, utente_id: int) -> str | None:
     """Il codice di ruolo di un utente, o None se non ha una riga `clienti`.

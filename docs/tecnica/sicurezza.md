@@ -470,7 +470,7 @@ Il Nazionale non ha filtri. La regola delle anagrafiche e quella delle pratiche 
 
 La riga `clienti` dell'utente collegato è sempre visibile a se stesso, quindi il filtro non la protegge da sola. I due campi che la regola legge sono protetti a parte, in modifica e in creazione:
 
-- il **ruolo**: chi non è Nazionale non può promuovere nessuno a Nazionale né cambiare il proprio (`clienti/servizio.py:72-110`);
+- il **ruolo**: chi non è Nazionale non può promuovere nessuno a Nazionale né cambiare il proprio, e assegna solo i ruoli di `RUOLI_ASSEGNABILI` (Regionale: Aderente e Provinciale; Provinciale: Aderente; gli altri nulla), senza toccare chi ha un ruolo da attuatore che non potrebbe assegnare; in modifica può riportare a Utente chi ha un ruolo che potrebbe assegnare. Un sottoscrittore nuovo nasce Utente chiunque lo crei (`clienti/servizio.py`, `verifica_ruolo_assegnabile`; `auth/autorizzazioni.py`, `RUOLI_ASSEGNABILI`);
 - l'**azienda**: chi non è Nazionale non può cambiare l'azienda della propria riga, mentre resta libero di assegnarla a un'altra riga che vede (`clienti/servizio.py:113-139`).
 
 In entrambi i casi riassegnare il valore già presente è ammesso, perché la scheda rimanda tutti i campi a ogni salvataggio. Il null esplicito sul ruolo conta come cambio: con la `sql_mode` non strict di produzione MariaDB lo salverebbe come 0.
@@ -520,11 +520,6 @@ Questa sezione elenca i difetti noti di autorizzazione, visibilità e coerenza, 
   - Sulle anagrafiche la portata è ora limitata a quelle visibili, ma sul curriculum e sugli utenti non è cambiato nulla.
   - Lo stesso vale per la creazione diretta di utenti, che l'interfaccia non usa.
   - `backend/src/clienti/routers.py:51-55`, `110-350`; `backend/src/universita/routers.py:18-22`, `49`, `79`, `85`, `109`; `backend/src/utenti/routers.py:67-117`.
-- **Ruoli amministrativi assegnabili da chiunque.**
-  - Il ruolo Nazionale e il proprio ruolo sono protetti (vedi [Visibilità](#visibilità)), ma ogni altro ruolo resta assegnabile da qualunque utente autenticato, in creazione e su un'anagrafica visibile.
-  - Fra questi c'è **Regionale**, che è amministrativo: chi lo assegna può creare un amministratore e usarne i permessi.
-  - Le tendine del ruolo (scheda Utente e Dati principali) mostrano Nazionale non selezionabile a chi non è Nazionale, e sono bloccate sulla propria scheda; il controllo vero resta sul server.
-  - `backend/src/clienti/schemas.py:163`, `232`; `clienti/routers.py:120`, `232-246`, `311-312`; `auth/autorizzazioni.py:32`; `frontend/src/lib/permessiSchedaUtente.js`; `frontend/src/components/SchedaUtente.jsx`; `frontend/src/components/NuovoSottoscrittore.jsx`.
 - **Abilitazioni alle pratiche.**
   - La scheda Abilitazioni compare solo al Nazionale, in modifica di un attuatore.
   - Il server accetta i cinque campi, in creazione e in modifica, da ogni utente autenticato.
@@ -591,12 +586,12 @@ Il filtro esiste per anagrafiche, pratiche e aziende (vedi [Visibilità](#visibi
 - **Pulsante "Accedi con questo utente".**
   - L'interfaccia lo mostra solo al Nazionale, anche quando il bersaglio è Nazionale. Del bersaglio guarda solo che sia attivo e con un ruolo da attuatore.
   - Il server lo consente anche al Regionale, che non ha più il pulsante, e rifiuta sempre il bersaglio Nazionale.
-  - `SchedaUtente.jsx:171`, `221-222`, `311`; `auth/routers.py:269`, `300-305`.
+  - `SchedaUtente.jsx`; `auth/routers.py`.
 - **Attivazione annullata dal salvataggio della scheda Utente.**
   - Quando chi salva può modificare l'account (sulla propria scheda, oppure da Regionale o Nazionale), la scheda invia sempre lo stato dell'account.
   - Il server allora cancella l'attivazione in attesa, e la verifica dei contatti non attiva più l'account.
   - Il comportamento è dedotto dalla lettura del codice, non da un'esecuzione.
-  - `SchedaUtente.jsx:141-146`; `utenti/routers.py:194-196`; `otp/attivazione.py:11-16`.
+  - `SchedaUtente.jsx`; `utenti/routers.py`; `otp/attivazione.py:11-16`.
 - **Contatti mostrati come verificati.**
   - Un account attivo senza alcuna verifica registrata vede email e cellulare come verificati ("Verificata", "Verificato"), senza il pulsante "Verifica".
   - Elenchi e scheda applicano la stessa funzione `otp/stato_contatti.py`: la regola legacy vale solo in assenza di storico. Se esiste una verifica di un valore precedente, il contatto corrente resta da verificare anche per un account attivo.

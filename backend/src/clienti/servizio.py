@@ -21,7 +21,12 @@ from fastapi import HTTPException, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from src.auth.autorizzazioni import richiedi_nazionale
+from src.auth.autorizzazioni import (
+    RUOLI_ASSEGNABILI,
+    RUOLI_SENZA_ACCESSO,
+    richiedi_nazionale,
+    ruolo_di,
+)
 from src.auth.models import ATTIVO
 from src.auth.servizio_login import codice_ruolo
 from src.clienti.models import Cliente
@@ -75,9 +80,18 @@ def verifica_ruolo_assegnabile(
     utente: Utente,
     nuovo_ruolo: int | None,
     riga_attuale=None,
+    *,
+    nuovo_sottoscrittore: bool = False,
 ) -> None:
     """Chi non e' Nazionale non puo' promuovere nessuno a Nazionale, ne'
-    cambiare il proprio ruolo.
+    cambiare il proprio ruolo. Per il resto assegna solo i ruoli di
+    RUOLI_ASSEGNABILI (Regionale: Aderente e Provinciale; Provinciale:
+    Aderente; Aderente: nessuno), e non tocca chi ha un ruolo da attuatore
+    che lui non potrebbe assegnare (un Regionale non declassa un altro
+    Regionale). Chi ha un ruolo senza accesso (Utente, Consulente, Operatore)
+    si puo' promuovere, e chi sta sotto (un ruolo che si potrebbe assegnare)
+    si puo' declassare a Utente. Un sottoscrittore nuovo nasce sempre Utente
+    (`nuovo_sottoscrittore`): quello lo crea chiunque.
 
     Senza questa regola il filtro di visibilita' si scavalcava con una sola
     richiesta: la propria riga "me" e' sempre visibile, e scriverci
@@ -91,13 +105,11 @@ def verifica_ruolo_assegnabile(
     """
     if vis.nazionale:
         return
-    # In creazione un ruolo assente lascia il default dello schema. In modifica
+    # In creazione un ruolo assente lascia il default (vedi sotto). In modifica
     # invece un null esplicito E' un cambio: con la sql_mode non strict di
     # produzione MariaDB lo salva come 0, con il solo warning 1048. Trattarlo
     # come "niente da controllare" permetteva di cambiare il proprio ruolo, e
     # con due righe clienti di far diventare principale quella con piu' diritti.
-    if riga_attuale is None and nuovo_ruolo is None:
-        return
     if riga_attuale is not None and nuovo_ruolo == riga_attuale.cliente_ruolo:
         return
     promuove = (
@@ -108,6 +120,41 @@ def verifica_ruolo_assegnabile(
     if promuove or proprio:
         # Solleva il 403 di sempre, con la stessa traccia nel log.
         richiedi_nazionale(db, utente, "assegnazione del ruolo")
+    if riga_attuale is None and not nuovo_ruolo:
+        # Creazione senza ruolo (o con 0, il default dello schema): un
+        # sottoscrittore nasce Utente, un attuatore Aderente
+        # (crea_cliente_con_utente). Il primo lo crea chiunque; il secondo
+        # si controlla come un Aderente scelto esplicitamente.
+        if nuovo_sottoscrittore:
+            return
+        nuovo = "aderente"
+    else:
+        nuovo = (codice_ruolo(db, nuovo_ruolo) or "").lower() if nuovo_ruolo is not None else ""
+
+    chiamante = (ruolo_di(db, utente.utente_id) or "").lower()
+    assegnabili = RUOLI_ASSEGNABILI.get(chiamante, frozenset())
+    attuale = (
+        (codice_ruolo(db, riga_attuale.cliente_ruolo) or "").lower()
+        if riga_attuale is not None else ""
+    )
+    attuale_bloccato = (
+        riga_attuale is not None
+        and riga_attuale.cliente_ruolo not in RUOLI_SENZA_ACCESSO
+        and attuale not in assegnabili
+    )
+    # Declassare a Utente chi sta sotto (un ruolo che si potrebbe assegnare):
+    # solo in modifica, un nuovo attuatore non nasce Utente.
+    declassa = nuovo == "utente" and attuale in assegnabili
+    if (nuovo not in assegnabili and not declassa) or attuale_bloccato:
+        logger.warning(
+            "assegnazione del ruolo negata: utente_id=%s con ruolo=%s, da %s a %s",
+            utente.utente_id, chiamante,
+            getattr(riga_attuale, "cliente_ruolo", None), nuovo_ruolo,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Non puoi assegnare questo ruolo.",
+        )
 
 
 def verifica_azienda_assegnabile(

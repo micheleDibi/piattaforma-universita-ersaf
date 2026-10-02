@@ -360,6 +360,88 @@ def test_con_utente_non_crea_nazionali(client, db):
     assert db.query(Utente).count() == prima
 
 
+NON_ASSEGNABILE = {"detail": "Non puoi assegnare questo ruolo."}
+
+
+@pytest.mark.parametrize("chi, ruolo, ammesso", [
+    (f.RUOLO_REGIONALE, f.RUOLO_ADERENTE, True),
+    (f.RUOLO_REGIONALE, f.RUOLO_PROVINCIALE, True),
+    (f.RUOLO_REGIONALE, f.RUOLO_REGIONALE, False),
+    (f.RUOLO_REGIONALE, f.RUOLO_CONSULENTE, False),
+    (f.RUOLO_REGIONALE, f.RUOLO_OPERATORE, False),
+    (f.RUOLO_PROVINCIALE, f.RUOLO_ADERENTE, True),
+    (f.RUOLO_PROVINCIALE, f.RUOLO_PROVINCIALE, False),
+    (f.RUOLO_ADERENTE, f.RUOLO_ADERENTE, False),
+])
+def test_ruoli_assegnabili_secondo_chi_modifica(client, db, chi, ruolo, ammesso):
+    io, sessione = accedi(client, db, ruolo=chi)
+    sottoscrittore = f.crea_attuatore(db, email="sotto@example.org", padre=io.utente_id,
+                                      ruolo=f.RUOLO_SOTTOSCRITTORE)
+    risposta = client.put(f"/clienti/{sottoscrittore.cliente_id}", json={"cliente_ruolo": ruolo}, headers=sessione)
+    if ammesso:
+        assert risposta.status_code == 200, risposta.text
+        assert _ruolo(db, sottoscrittore.cliente_id) == ruolo
+    else:
+        assert (risposta.status_code, risposta.json()) == (403, NON_ASSEGNABILE)
+        assert _ruolo(db, sottoscrittore.cliente_id) == f.RUOLO_SOTTOSCRITTORE
+
+
+@pytest.mark.parametrize("chi, ruolo, ammesso", [
+    (f.RUOLO_PROVINCIALE, f.RUOLO_ADERENTE, True),
+    (f.RUOLO_PROVINCIALE, f.RUOLO_PROVINCIALE, False),
+    (f.RUOLO_REGIONALE, f.RUOLO_ADERENTE, True),
+    (f.RUOLO_REGIONALE, f.RUOLO_PROVINCIALE, True),
+    (f.RUOLO_REGIONALE, f.RUOLO_REGIONALE, False),
+    (f.RUOLO_ADERENTE, f.RUOLO_ADERENTE, False),
+])
+def test_si_declassa_a_utente_solo_chi_sta_sotto(client, db, chi, ruolo, ammesso):
+    io, sessione = accedi(client, db, ruolo=chi)
+    persona = f.crea_attuatore(db, email="sotto@example.org", padre=io.utente_id, ruolo=ruolo)
+    risposta = client.put(f"/clienti/{persona.cliente_id}", json={"cliente_ruolo": f.RUOLO_SOTTOSCRITTORE}, headers=sessione)
+    if ammesso:
+        assert risposta.status_code == 200, risposta.text
+        assert _ruolo(db, persona.cliente_id) == f.RUOLO_SOTTOSCRITTORE
+    else:
+        assert risposta.status_code == 403
+        assert _ruolo(db, persona.cliente_id) == ruolo
+
+
+def test_creando_un_attuatore_non_lo_si_fa_nascere_utente_ne_si_tocca_un_ruolo_piu_alto(client, db):
+    from tests.integration.test_clienti import _anagrafica
+
+    io, sessione = accedi(client, db, ruolo=f.RUOLO_PROVINCIALE)
+    regionale = f.crea_attuatore(db, email="reg@example.org", padre=io.utente_id, ruolo=f.RUOLO_REGIONALE)
+    # Un attuatore nuovo senza ruolo (o con 0) nasce Aderente, non Utente.
+    nuovo = client.post("/clienti/con-utente?tipo_utente=attuatore",
+                        json=_anagrafica(cliente_ruolo=f.RUOLO_SOTTOSCRITTORE), headers=sessione)
+    assert nuovo.status_code == 201, nuovo.text
+    assert _ruolo(db, nuovo.json()["cliente_id"]) == f.RUOLO_ADERENTE
+    tocca = client.put(f"/clienti/{regionale.cliente_id}", json={"cliente_ruolo": f.RUOLO_ADERENTE}, headers=sessione)
+    assert (tocca.status_code, tocca.json()) == (403, NON_ASSEGNABILE)
+    assert _ruolo(db, regionale.cliente_id) == f.RUOLO_REGIONALE
+    # Rimandare il ruolo attuale resta ammesso (la scheda lo fa a ogni salvataggio).
+    uguale = client.put(f"/clienti/{regionale.cliente_id}", json={"cliente_ruolo": f.RUOLO_REGIONALE}, headers=sessione)
+    assert uguale.status_code == 200, uguale.text
+
+
+def test_creazione_secondo_chi_crea(client, db):
+    from tests.integration.test_clienti import _anagrafica
+
+    _, sessione = accedi(client, db, ruolo=f.RUOLO_PROVINCIALE)
+    url = "/clienti/con-utente?tipo_utente="
+    regionale = client.post(url + "attuatore", json=_anagrafica(cliente_ruolo=f.RUOLO_REGIONALE), headers=sessione)
+    assert (regionale.status_code, regionale.json()) == (403, NON_ASSEGNABILE)
+    aderente = client.post(url + "attuatore", json=_anagrafica(cliente_ruolo=f.RUOLO_ADERENTE), headers=sessione)
+    assert aderente.status_code == 201, aderente.text
+    # Un sottoscrittore nasce Utente: lo crea anche chi non assegna quel ruolo.
+    sottoscrittore = client.post(url + "sottoscrittore",
+                                 json=_anagrafica(cliente_ruolo=f.RUOLO_SOTTOSCRITTORE,
+                                                  cliente_email="altro@example.org",
+                                                  cliente_documento="AA0000002"),
+                                 headers=sessione)
+    assert sottoscrittore.status_code == 201, sottoscrittore.text
+
+
 def test_il_nazionale_assegna_il_ruolo_nazionale(client, db, mailer):
     estraneo = f.crea_attuatore(db, email="estraneo@example.org")
     _, sessione = accedi_nazionale(client, db, mailer)
